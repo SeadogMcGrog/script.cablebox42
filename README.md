@@ -97,7 +97,7 @@ hardware video decoding works exactly as it does for the rest of your library.
 
 ## Installing
 
-**From the official Kodi repository** (once it's accepted):
+**From the official Kodi repository** (pending approval):
 *Add-ons → Install from repository → Kodi Add-on repository → Program add-ons → CableBox 42*.
 
 **From a zip file:**
