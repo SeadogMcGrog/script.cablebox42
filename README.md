@@ -441,9 +441,10 @@ colour fringing, scanlines and a faint flicker.
 - **Appliance mode:** *Settings → Viewing → Turn the TV on when Kodi starts*.
   Combine it with *Go straight to TV when opened*.
 
-**Home-screen widgets.** Skins that preview the content of a home-menu add-on
-(e.g. Marquee) get a **"what's on now" channel list** from CableBox. Selecting
-a channel turns the TV on at that channel.
+**Home-screen widgets.** If your skin lets you put CableBox 42 on the home
+menu and shows a preview widget of that item's content, the widget becomes a
+**"what's on now" channel list**. Selecting a channel turns the TV on at that
+channel.
 
 **Phone remotes.** Yatse, Kore and other Kodi remotes work as CableBox remotes.
 The channel and number buttons map to standard Kodi buttons. Browsing CableBox
@@ -586,8 +587,8 @@ videos.** It's very likely AV1 on a device without AV1 hardware decoding. See
 [Video formats and AV1](#video-formats-and-av1).
 
 **The CableBox menu opens by itself at startup or after a movie.** Update to
-1.3.2 or later. Older versions didn't understand home-menu widget requests from
-skins like Marquee.
+1.3.2 or later. Older versions didn't understand the content requests that some
+skins make for add-ons placed on their home menu.
 
 **The guide says "Updating listings…"** That's normal right after installing or
 updating. Listings appear within a minute or two as each channel is prepared.

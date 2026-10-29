@@ -22,7 +22,7 @@ v1.4.0 (2026-10-28)
 - Off the air: 1950s "Please stand by" test card or color bars, optional sign-off and sign-on clips
 - Station ID clips per channel, played between programs
 - CRT-style "CH 03" channel number; optional CRT effect (scanlines, curved glass, phosphor mask, rolling hum bar)
-- Skins that preview home-menu add-ons (e.g. Marquee) get a "what's on now" channel list instead of opening the menu
+- Skins that preview home-menu add-ons get a "what's on now" channel list instead of opening the CableBox menu
 - Leaving the TV with the Home button now switches CableBox off; it never touches playback it didn't start
 
 v1.3.0 (2026-10-27)

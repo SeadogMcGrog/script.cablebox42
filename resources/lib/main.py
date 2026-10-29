@@ -8,7 +8,7 @@ from . import kodiutil as K
 def run(args):
     K.ensure_dirs()
     if sys.argv and sys.argv[0].startswith("plugin://"):
-        # A skin/home-menu widget is asking for a content listing (Marquee etc.)
+        # A skin/home-menu widget is asking for a content listing
         # - answer with the channel list instead of opening the menu.
         from . import widget
         widget.run(sys.argv)

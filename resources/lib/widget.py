@@ -1,6 +1,6 @@
 """Content listing for skin widgets and home-menu items.
 
-Skins such as Marquee ask an add-on on the home menu for a directory to show as
+Some skins ask an add-on on the home menu for a directory to show as
 a preview widget (plugin://script.cablebox42/).  We answer with the channel
 lineup and what's on now; selecting a channel turns the TV on at that channel.
 """
