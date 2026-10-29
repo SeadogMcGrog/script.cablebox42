@@ -120,6 +120,38 @@ msgctxt "#32030"
 msgid "Celsius"
 msgstr ""
 
+msgctxt "#32031"
+msgid "CRT effect"
+msgstr ""
+
+msgctxt "#32032"
+msgid "Off"
+msgstr ""
+
+msgctxt "#32033"
+msgid "Subtle (scanlines, dark corners)"
+msgstr ""
+
+msgctxt "#32034"
+msgid "Full (curved glass, phosphor mask, rolling hum bar)"
+msgstr ""
+
+msgctxt "#32035"
+msgid "AV1 videos"
+msgstr ""
+
+msgctxt "#32036"
+msgid "Automatic (skip if this device can't decode AV1)"
+msgstr ""
+
+msgctxt "#32037"
+msgid "Always skip"
+msgstr ""
+
+msgctxt "#32038"
+msgid "Always play"
+msgstr ""
+
 msgctxt "#32900"
 msgid "CHANNEL"
 msgstr ""
@@ -297,10 +329,6 @@ msgctxt "#32134"
 msgid "Weather channel"
 msgstr ""
 
-msgctxt "#32135"
-msgid "[B]Remote control[/B]\nCH+ / CH-, Up / Down, Page Up / Down ... change channel\nNumber keys ...................................... go to channel\nLeft ................................................... last channel\nRight ................................................ what's on now\nOK / Info ........................................... channel banner\nMenu / Context ................................. sleep timer & more\nBack / Stop ...................................... turn off the TV\n\n[B]How the schedule works[/B]\nNothing to compile.  Each channel pulls from your Kodi library (shows, genres,\ndecades, movies, smart playlists) or from folders, and its schedule writes itself\nas time goes by.  'Same show same time every day' channels air a fixed daily\nlineup and series always continue with the next episode.  Time blocks let you put\ncartoons on Saturday mornings or movies in prime time.\n\nEdit a channel and its schedule rebuilds itself from now on - episode progress is kept.\n\n[B]Fine-tuning[/B]\n'Move shows between channels': pick a show (say, Good Eats) and tick the channels it\nshould air on.  Unticking hides it there even if the channel's genre includes it.\nEach channel also has 'What's on this channel' - a checklist of everything it airs.\n\n[B]Studio channels[/B]\nAdd programming > 'A studio / network' makes e.g. a Disney channel from every movie\nand show whose studio contains 'Disney'.  Kodi tags work the same way.\n\n[B]Commercials & bumps[/B]\nPoint Settings at a folder of commercials and (optionally) bumps.  Breaks are cut\ninto shows to fill each half hour, like real cable.  Movie channels play commercials\nbetween films.  Without commercials the gap is filled with an 'Up next' card.\n'Check my commercials & bumps' shows which clips can't be used.\n\n[B]Files[/B]\nYour lineup lives in userdata/addon_data/script.cablebox42/channels.json if you\nprefer editing it by hand."
-msgstr ""
-
 msgctxt "#32136"
 msgid "Include"
 msgstr ""
@@ -403,14 +431,6 @@ msgstr ""
 
 msgctxt "#32161"
 msgid "Checking every clip (first time can take a while)..."
-msgstr ""
-
-msgctxt "#32162"
-msgid "Tip: a few dozen clips of mixed lengths (15/30/60s) fill breaks almost exactly. Unreadable files can be remuxed to .mp4 or .mkv."
-msgstr ""
-
-msgctxt "#32163"
-msgid "Commercial check"
 msgstr ""
 
 msgctxt "#32164"
@@ -585,10 +605,6 @@ msgctxt "#32206"
 msgid "Time blocks override the normal programming"
 msgstr ""
 
-msgctxt "#32207"
-msgid "Sign-off hours (color bars)"
-msgstr ""
-
 msgctxt "#32208"
 msgid "%d %s - next 12 hours"
 msgstr ""
@@ -627,10 +643,6 @@ msgstr ""
 
 msgctxt "#32217"
 msgid "Bumps"
-msgstr ""
-
-msgctxt "#32218"
-msgid "No commercials or bumps folder is set.[CR]Set them in Settings > Programming."
 msgstr ""
 
 msgctxt "#32219"
@@ -795,10 +807,6 @@ msgstr ""
 
 msgctxt "#32259"
 msgid "Build my lineup automatically"
-msgstr ""
-
-msgctxt "#32260"
-msgid "Check my commercials & bumps"
 msgstr ""
 
 msgctxt "#32261"
@@ -1339,4 +1347,408 @@ msgstr ""
 
 msgctxt "#32395"
 msgid "TOMORROW"
+msgstr ""
+
+msgctxt "#32396"
+msgid "Open CableBox 42"
+msgstr ""
+
+msgctxt "#32397"
+msgid "Build your channel lineup"
+msgstr ""
+
+msgctxt "#32398"
+msgid "Watch TV"
+msgstr ""
+
+msgctxt "#32399"
+msgid "Turn on the TV"
+msgstr ""
+
+msgctxt "#32400"
+msgid "Now: %s  (until %s)"
+msgstr ""
+
+msgctxt "#32401"
+msgid "[B]Remote control[/B]\nCH+ / CH-, Up / Down, Page Up / Down ... change channel\nNumber keys ...................................... go to channel\nLeft ................................................... last channel\nRight ................................................ what's on now\nOK / Info ........................................... channel banner\nMenu / Context ................................. sleep timer & more\nBack / Stop ...................................... turn off the TV\n\n[B]How the schedule works[/B]\nNothing to compile.  Each channel pulls from your Kodi library (shows, genres,\ndecades, movies, smart playlists) or from folders, and its schedule writes itself\nas time goes by.  'Same show same time every day' channels air a fixed daily\nlineup and series always continue with the next episode.  Time blocks let you put\ncartoons on Saturday mornings or movies in prime time.\n\nEdit a channel and its schedule rebuilds itself from now on - episode progress is kept.\n\n[B]Fine-tuning[/B]\n'Move shows between channels': pick a show (say, Good Eats) and tick the channels it\nshould air on.  Unticking hides it there even if the channel's genre includes it.\nEach channel also has 'What's on this channel' - a checklist of everything it airs.\n\n[B]Studio channels[/B]\nAdd programming > 'A studio / network' makes e.g. a Disney channel from every movie\nand show whose studio contains 'Disney'.  Kodi tags work the same way.\n\n[B]Weekly planner[/B]\nEach channel has a 7-day grid (Channel manager > channel > Weekly planner, or\nWeekly planner in the main menu).  Press OK on a half-hour to pin a show there -\ne.g. Seinfeld, Fridays 8:00 PM, one hour, in order: every week it continues with\nthe next episodes.  Pinned slots always start on time; the automatic scheduler\nfills everything else and never runs into them.  You can also paint off-air\nhours, copy a day to other days, or clear a day (Menu button).\n\n[B]Off the air[/B]\nOff-air hours show a 1950s 'Please stand by' test card (or color bars), with an\noptional sign-off clip (anthem, farewell) and sign-on clip from your own folders.\n\n[B]Station IDs[/B]\nGive a channel a folder of station ID clips (\"You're watching...\") and one plays\nbetween programs, right before the next show starts.\n\n[B]Commercials & bumps[/B]\nPoint Settings at a folder of commercials and (optionally) bumps.  Breaks are cut\ninto shows to fill each half hour, like real cable.  Movie channels play commercials\nbetween films.  Without commercials the gap is filled with an 'Up next' card.\n'Check my commercials & bumps' shows which clips can't be used.\n\n[B]Files[/B]\nYour lineup lives in userdata/addon_data/script.cablebox42/channels.json if you\nprefer editing it by hand."
+msgstr ""
+
+msgctxt "#32402"
+msgid "Custom days"
+msgstr ""
+
+msgctxt "#32403"
+msgid "Monday"
+msgstr ""
+
+msgctxt "#32404"
+msgid "Tuesday"
+msgstr ""
+
+msgctxt "#32405"
+msgid "Wednesday"
+msgstr ""
+
+msgctxt "#32406"
+msgid "Thursday"
+msgstr ""
+
+msgctxt "#32407"
+msgid "Friday"
+msgstr ""
+
+msgctxt "#32408"
+msgid "Saturday"
+msgstr ""
+
+msgctxt "#32409"
+msgid "Sunday"
+msgstr ""
+
+msgctxt "#32410"
+msgid "Pick days..."
+msgstr ""
+
+msgctxt "#32411"
+msgid "1950s 'Please stand by' test card"
+msgstr ""
+
+msgctxt "#32412"
+msgid "Color bars"
+msgstr ""
+
+msgctxt "#32413"
+msgid "Off-air hours"
+msgstr ""
+
+msgctxt "#32414"
+msgid "Off-air screen: %s"
+msgstr ""
+
+msgctxt "#32415"
+msgid "Sign-off clip (anthem, farewell...): %s"
+msgstr ""
+
+msgctxt "#32416"
+msgid "Sign-on clip (morning start-up): %s"
+msgstr ""
+
+msgctxt "#32417"
+msgid "Which nights?"
+msgstr ""
+
+msgctxt "#32418"
+msgid "Weekly planner"
+msgstr ""
+
+msgctxt "#32419"
+msgid "[B]Weekly planner[/B] (%d pinned shows)"
+msgstr ""
+
+msgctxt "#32420"
+msgid "Station ID clips (between programs): %s"
+msgstr ""
+
+msgctxt "#32421"
+msgid "none"
+msgstr ""
+
+msgctxt "#32422"
+msgid "never"
+msgstr ""
+
+msgctxt "#32423"
+msgid "global"
+msgstr ""
+
+msgctxt "#32424"
+msgid "Change days"
+msgstr ""
+
+msgctxt "#32425"
+msgid "Off-air screen"
+msgstr ""
+
+msgctxt "#32426"
+msgid "None"
+msgstr ""
+
+msgctxt "#32427"
+msgid "Plan which channel?"
+msgstr ""
+
+msgctxt "#32428"
+msgid "Station ID clips"
+msgstr ""
+
+msgctxt "#32429"
+msgid "every day"
+msgstr ""
+
+msgctxt "#32430"
+msgid "weekdays"
+msgstr ""
+
+msgctxt "#32431"
+msgid "weekends"
+msgstr ""
+
+msgctxt "#32432"
+msgid "%d min"
+msgstr ""
+
+msgctxt "#32433"
+msgid "Mon"
+msgstr ""
+
+msgctxt "#32434"
+msgid "Tue"
+msgstr ""
+
+msgctxt "#32435"
+msgid "Wed"
+msgstr ""
+
+msgctxt "#32436"
+msgid "Thu"
+msgstr ""
+
+msgctxt "#32437"
+msgid "Fri"
+msgstr ""
+
+msgctxt "#32438"
+msgid "Sat"
+msgstr ""
+
+msgctxt "#32439"
+msgid "Sun"
+msgstr ""
+
+msgctxt "#32440"
+msgid "%ss"
+msgstr ""
+
+msgctxt "#32441"
+msgid "1 hr"
+msgstr ""
+
+msgctxt "#32442"
+msgid "%d hr %d min"
+msgstr ""
+
+msgctxt "#32443"
+msgid "OK: pin / edit    Menu: copy / clear day    Back: done"
+msgstr ""
+
+msgctxt "#32444"
+msgid "%s:  automatic programming  -  press OK to pin a show here"
+msgstr ""
+
+msgctxt "#32445"
+msgid "Pin a show here"
+msgstr ""
+
+msgctxt "#32446"
+msgid "Make off-air from here"
+msgstr ""
+
+msgctxt "#32447"
+msgid "How long is this slot?"
+msgstr ""
+
+msgctxt "#32448"
+msgid "Length in minutes"
+msgstr ""
+
+msgctxt "#32449"
+msgid "Which days?"
+msgstr ""
+
+msgctxt "#32450"
+msgid "Episode order"
+msgstr ""
+
+msgctxt "#32451"
+msgid "Change the show"
+msgstr ""
+
+msgctxt "#32452"
+msgid "Change start time"
+msgstr ""
+
+msgctxt "#32453"
+msgid "Start the series over from the first episode"
+msgstr ""
+
+msgctxt "#32454"
+msgid "Rename"
+msgstr ""
+
+msgctxt "#32455"
+msgid "Back on the air at"
+msgstr ""
+
+msgctxt "#32456"
+msgid "Off-air screen and sign-off clips..."
+msgstr ""
+
+msgctxt "#32457"
+msgid "Preview what airs next"
+msgstr ""
+
+msgctxt "#32458"
+msgid "%d hr"
+msgstr ""
+
+msgctxt "#32459"
+msgid "Weekly planner  -  %d  %s"
+msgstr ""
+
+msgctxt "#32460"
+msgid "in order"
+msgstr ""
+
+msgctxt "#32461"
+msgid "random episodes"
+msgstr ""
+
+msgctxt "#32462"
+msgid "%s:  [B]%s[/B]  -  %s at %s, %s, %s"
+msgstr ""
+
+msgctxt "#32463"
+msgid "%s:  [B]Off the air[/B] %s - %s, %s"
+msgstr ""
+
+msgctxt "#32464"
+msgid "%s:  time block '%s' - picked automatically from its own programming"
+msgstr ""
+
+msgctxt "#32465"
+msgid "Change these off-air hours"
+msgstr ""
+
+msgctxt "#32466"
+msgid "Remove these off-air hours"
+msgstr ""
+
+msgctxt "#32467"
+msgid "Other..."
+msgstr ""
+
+msgctxt "#32468"
+msgid "%ss only"
+msgstr ""
+
+msgctxt "#32469"
+msgid "In order - continues where it left off each week"
+msgstr ""
+
+msgctxt "#32470"
+msgid "Random episodes"
+msgstr ""
+
+msgctxt "#32471"
+msgid "Change length (%s)"
+msgstr ""
+
+msgctxt "#32472"
+msgid "Change days (%s)"
+msgstr ""
+
+msgctxt "#32473"
+msgid "Order: %s"
+msgstr ""
+
+msgctxt "#32474"
+msgid "Copy %s's pinned shows to other days"
+msgstr ""
+
+msgctxt "#32475"
+msgid "Clear %s's pinned shows"
+msgstr ""
+
+msgctxt "#32476"
+msgid "Copy to"
+msgstr ""
+
+msgctxt "#32477"
+msgid "This overlaps %s.[CR]Replace it on the overlapping days?"
+msgstr ""
+
+msgctxt "#32478"
+msgid "random"
+msgstr ""
+
+msgctxt "#32479"
+msgid "Match the show (%s)"
+msgstr ""
+
+msgctxt "#32480"
+msgid "Clear every pinned show on %ss?"
+msgstr ""
+
+msgctxt "#32481"
+msgid "OFF AIR"
+msgstr ""
+
+msgctxt "#32482"
+msgid "%s starts from episode 1 next time"
+msgstr ""
+
+msgctxt "#32483"
+msgid "Remove %s"
+msgstr ""
+
+msgctxt "#32484"
+msgid "Only on %ss"
+msgstr ""
+
+msgctxt "#32485"
+msgid "Every day it airs (%s)"
+msgstr ""
+
+msgctxt "#32486"
+msgid "Station Break"
+msgstr ""
+
+msgctxt "#32487"
+msgid "Sign-on"
+msgstr ""
+
+msgctxt "#32488"
+msgid "Sign-off"
+msgstr ""
+
+msgctxt "#32489"
+msgid "Tip: a few dozen clips of mixed lengths (15/30/60s) fill breaks almost exactly. Unreadable files can be remuxed to .mp4 or .mkv; AV1 videos can be re-encoded to H.264 or H.265."
+msgstr ""
+
+msgctxt "#32490"
+msgid "Video check"
+msgstr ""
+
+msgctxt "#32491"
+msgid "[B]AV1 videos[/B]  [COLOR grey]this box can't decode AV1 in hardware, so CableBox skips them[/COLOR]"
+msgstr ""
+
+msgctxt "#32492"
+msgid "  None in your channels."
+msgstr ""
+
+msgctxt "#32493"
+msgid "Check my videos (commercials, bumps, AV1)"
+msgstr ""
+
+msgctxt "#32494"
+msgid "  [COLOR orange]%d AV1 clips skipped (no hardware decoding):[/COLOR]"
+msgstr ""
+
+msgctxt "#32495"
+msgid "  %d  %s: %s"
+msgstr ""
+
+msgctxt "#32496"
+msgid "Updating listings..."
 msgstr ""

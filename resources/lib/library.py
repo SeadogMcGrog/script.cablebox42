@@ -15,11 +15,14 @@ SMB/NFS/local path that Kodi can read works):
 """
 import json
 import re
+import threading
 import time
 
 import xbmcvfs
 
-from .kodiutil import rpc, load_json, save_json, DURATIONS_FILE, log
+import os
+
+from .kodiutil import rpc, load_json, save_json, DURATIONS_FILE, PROFILE, log, setting_int
 from . import probe
 
 VIDEO_EXT = (".mkv", ".mp4", ".m4v", ".avi", ".ts", ".m2ts", ".mts", ".mov",
@@ -37,12 +40,56 @@ def natural_key(s):
     return [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", s)]
 
 
+CODECS_FILE = os.path.join(PROFILE, "codecs.json")
+_AV1_OK = None
+SKIPPED = {}        # resolve key -> titles skipped because the box can't decode them
+
+
+def av1_blocked():
+    """Should AV1 videos be skipped?  Setting: 0 automatic, 1 always skip, 2 always play.
+    Automatic asks the Amlogic driver which codecs it decodes in hardware; other
+    devices are assumed to cope (PCs, Shield, newer boxes)."""
+    mode = setting_int("av1_mode", 0)
+    if mode in (1, 2):
+        return mode == 1
+    global _AV1_OK
+    if _AV1_OK is None:
+        try:
+            with open("/sys/class/amstream/vcodec_profile") as f:
+                _AV1_OK = "av1" in f.read().lower()
+        except (IOError, OSError):
+            _AV1_OK = True
+    return not _AV1_OK
+
+
+def item_codec(it):
+    if it.get("codec") is None:
+        it["codec"] = durations().codec(it["path"])
+    return it["codec"]
+
+
+def _stream_codec(entry):
+    vids = (entry.get("streamdetails") or {}).get("video") or []
+    return (vids[0].get("codec") or "").lower() if vids else None
+
+
 class Durations(object):
     """Persistent cache of probed media durations (path -> seconds)."""
 
     def __init__(self):
         self.data = load_json(DURATIONS_FILE, {})
         self.dirty = False
+        self.lock = threading.Lock()
+        self.codecs = load_json(CODECS_FILE, {})
+        self.codecs_dirty = False
+
+    def codec(self, path):
+        c = self.codecs.get(path)
+        if c is None:
+            c = probe.video_codec(path)
+            self.codecs[path] = c
+            self.codecs_dirty = True
+        return c
 
     def get(self, path, probe_if_missing=True):
         d = self.data.get(path)
@@ -62,9 +109,13 @@ class Durations(object):
             self.dirty = True
 
     def save(self):
-        if self.dirty:
-            save_json(DURATIONS_FILE, self.data)
-            self.dirty = False
+        with self.lock:
+            if self.dirty:
+                self.dirty = False
+                save_json(DURATIONS_FILE, dict(self.data))
+            if self.codecs_dirty:
+                self.codecs_dirty = False
+                save_json(CODECS_FILE, dict(self.codecs))
 
 
 DURATIONS = None
@@ -101,14 +152,15 @@ def _episode_item(ep):
     if ep.get("season", -1) >= 0 and ep.get("episode", -1) >= 0:
         label = "S%02dE%02d" % (ep["season"], ep["episode"])
     return {"path": ep["file"], "title": ep.get("showtitle") or ep.get("title", ""),
-            "sub": ep.get("title", ""), "label": label, "dur": _lib_duration(ep)}
+            "sub": ep.get("title", ""), "label": label, "dur": _lib_duration(ep), "codec": _stream_codec(ep)}
 
 
 def _movie_item(m):
     title = m.get("title", "")
     if m.get("year"):
         title = "%s (%s)" % (title, m["year"])
-    return {"path": m["file"], "title": title, "sub": "", "label": "", "dur": _lib_duration(m)}
+    return {"path": m["file"], "title": title, "sub": "", "label": "", "dur": _lib_duration(m),
+            "codec": _stream_codec(m)}
 
 
 # ------------------------------------------------------------- library helpers
@@ -406,6 +458,20 @@ def resolve(sources):
             seen_paths.add(i["path"])
             singles.append(i)
     pool["singles"] = singles
+    if av1_blocked():
+        skipped = []
+        for s in pool["series"]:
+            keep = [e for e in s["episodes"] if item_codec(e) != "av1"]
+            if len(keep) != len(s["episodes"]):
+                skipped.append("%s (%d)" % (s["title"], len(s["episodes"]) - len(keep)))
+            s["episodes"] = keep
+        pool["series"] = [s for s in pool["series"] if s["episodes"]]
+        keep = [i for i in pool["singles"] if item_codec(i) != "av1"]
+        skipped += [i["title"] for i in pool["singles"] if i not in keep]
+        pool["singles"] = keep
+        SKIPPED[key] = skipped
+        if skipped:
+            log("Skipping AV1 videos this device can't decode: %s" % ", ".join(skipped[:20]))
     durations().save()
     _POOL_CACHE[key] = (time.time(), pool)
     return pool
@@ -420,9 +486,10 @@ def filler_pool(path):
     if hit and time.time() - hit[0] < _POOL_TTL:
         return hit[1]
     out = []
+    skip_av1 = av1_blocked()
     for p in _walk(path, VIDEO_EXT):
         d = durations().get(p)
-        if 0 < d <= 600:
+        if 0 < d <= 600 and not (skip_av1 and durations().codec(p) == "av1"):
             out.append({"path": p, "dur": d, "title": _file_item(p)["title"]})
     durations().save()
     _POOL_CACHE[key] = (time.time(), out)
@@ -430,18 +497,21 @@ def filler_pool(path):
 
 
 def filler_report(path):
-    """(usable items, unreadable paths, too-long paths) for a commercials/bumps folder."""
-    ok, bad, long_ = [], [], []
+    """(usable durations, unreadable paths, too-long paths, AV1 paths) for a clip folder."""
+    ok, bad, long_, av1 = [], [], [], []
+    skip_av1 = av1_blocked()
     for p in _walk(path, VIDEO_EXT):
         d = durations().get(p)
-        if d <= 0:
+        if skip_av1 and durations().codec(p) == "av1":
+            av1.append(p)
+        elif d <= 0:
             bad.append(p)
         elif d > 600:
             long_.append(p)
         else:
             ok.append(d)
     durations().save()
-    return ok, bad, long_
+    return ok, bad, long_, av1
 
 
 def clear_cache():

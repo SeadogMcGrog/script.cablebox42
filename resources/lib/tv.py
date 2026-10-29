@@ -37,7 +37,7 @@ MUTE = {_a("ACTION_MUTE", 91)}
 DIGITS = dict((58 + i, i) for i in range(10))
 DIGITS.update(dict((140 + i, i) for i in range(2, 10)))  # JUMP_SMS2..9 numeric keypads
 
-VIDEO_KINDS = ("show", "ad", "bump")
+VIDEO_KINDS = ("show", "ad", "bump", "clip")
 LOAD_TIMEOUT = 12.0
 
 
@@ -97,13 +97,20 @@ class TVWindow(xbmcgui.WindowXML):
         self.guide_music = K.setting("guide_music_path")
         self.weather_music = K.setting("weather_music_path")
         self.weather = weather.WeatherScreen(self)
+        self.win_id = None
+        self.guide_pending = False
+        self.away_since = 0
+        self.our_files = set()
 
     # ----------------------------------------------------------- lifecycle
     def onInit(self):
         if self.started:
             return
         self.started = True
+        self.win_id = xbmcgui.getCurrentWindowId()
         xbmcgui.Window(10000).setProperty("cablebox42.running", "1")
+        crt = K.setting_int("crt_mode", 0)   # 0 off, 1 subtle, 2 full
+        self.setProperty("crt", str(crt) if crt in (1, 2) else "")
         xbmc.executebuiltin("InhibitScreensaver(true)")
         if not self.lineup.channels:
             self.set_mode("card")
@@ -112,8 +119,13 @@ class TVWindow(xbmcgui.WindowXML):
         start = self.start_channel()
         self.tune(start, static=True)
         threading.Thread(target=self.loop, name="cablebox42-loop").start()
+        threading.Thread(target=self.builder, name="cablebox42-builder").start()
 
     def start_channel(self):
+        if getattr(self, "wanted_channel", None):
+            ch = self.lineup.by_number(self.wanted_channel)
+            if ch:
+                return ch
         state = K.load_json(K.STATE_FILE, {})
         fixed = K.setting_int("start_channel", 0)
         want = fixed or state.get("last_channel")
@@ -122,6 +134,13 @@ class TVWindow(xbmcgui.WindowXML):
             # follow the channel itself, even if it was renumbered since
             ch = next((c for c in self.lineup.channels if c["id"] == state["last_channel_id"]), ch)
         return ch or self.lineup.channels[0]
+
+    def playing_ours(self):
+        """True if Kodi's player is currently playing something CableBox started."""
+        try:
+            return self.player.isPlaying() and self.player.getPlayingFile() in self.our_files
+        except Exception:
+            return False
 
     def shutdown(self):
         if self.closing:
@@ -132,10 +151,11 @@ class TVWindow(xbmcgui.WindowXML):
             st["last_channel"] = self.ch["number"]
             st["last_channel_id"] = self.ch["id"]
             K.save_json(K.STATE_FILE, st)
-        try:
-            self.player.stop()
-        except Exception:
-            pass
+        if self.playing_ours():
+            try:
+                self.player.stop()
+            except Exception:
+                pass
         library.durations().save()
         xbmc.executebuiltin("InhibitScreensaver(false)")
         xbmcgui.Window(10000).clearProperty("cablebox42.running")
@@ -220,6 +240,31 @@ class TVWindow(xbmcgui.WindowXML):
             self.banner_until = time.time() + self.banner_secs
             self.setProperty("banner", "1")
 
+    # ----------------------------------------------------------- background builder
+    def builder(self):
+        """Keep every channel's schedule ready without ever blocking the picture:
+        nearby channels first, then the rest; top up every few minutes."""
+        while not self.closing:
+            chans = list(self.lineup.channels)
+            if self.ch and self.ch in chans:
+                i, n = chans.index(self.ch), len(chans)
+                order = sorted(range(n), key=lambda j: min((j - i) % n, (i - j) % n))
+                chans = [chans[j] for j in order]
+            for c in chans:
+                if self.closing or self.monitor.waitForAbort(0.05):
+                    return
+                try:
+                    self.lineup.schedule(c)
+                except Exception as exc:
+                    K.log_err("background build %s: %s" % (c.get("name"), exc))
+            library.durations().save()
+            if self.guide_pending:
+                self.guide_pending = False
+                self.guide_next = 0          # redraw the guide with the new listings
+            for _w in range(300):
+                if self.closing or self.monitor.waitForAbort(1):
+                    return
+
     # ----------------------------------------------------------- main loop
     def loop(self):
         while not self.closing:
@@ -232,9 +277,27 @@ class TVWindow(xbmcgui.WindowXML):
             except Exception as exc:
                 K.log_err("tick failed: %s" % exc)
 
+    def left_tv(self, now):
+        """The viewer navigated away (Home button etc.) - our window is no longer
+        on screen.  Kodi would otherwise keep this script alive in the background."""
+        if not self.win_id:
+            return False
+        cur = xbmcgui.getCurrentWindowId()
+        here = cur == self.win_id or (cur == 12005 and self.playing_ours())
+        if here:
+            self.away_since = 0
+            return False
+        if not self.away_since:
+            self.away_since = now
+        return now - self.away_since > 1.5
+
     def tick(self):
         now = time.time()
         if self.closing or not self.ch:
+            return
+        if self.left_tv(now):
+            K.log("TV window left - switching CableBox off")
+            self.shutdown()
             return
         if self.digits and now - self.digits_at > 1.8:
             self.commit_digits()
@@ -311,6 +374,7 @@ class TVWindow(xbmcgui.WindowXML):
                     b = self.lineup.schedule(self.ch, ensure=False).block_at(now)
                     resume = fmt_time(b["e"]) if b else ""
                     self.setProperty("offair_line", _("Programming resumes at %s") % resume)
+                    self.setProperty("offair_style", e.get("sub") or "bars")
                     self.set_mode("offair")
                 else:
                     self.card_for(e, now)
@@ -330,10 +394,13 @@ class TVWindow(xbmcgui.WindowXML):
             li.setProperty("StartOffset", "%.2f" % offset)
         self.play_token += 1
         self.play_started_at = time.time()
+        self.our_files.add(e["p"])
         self.player.play(e["p"], li, True)
 
     def watchdog(self, e, key, now):
         """Detect files that never started or ended early."""
+        if self.closing:
+            return
         if time.time() - self.play_started_at < LOAD_TIMEOUT:
             return
         if self.player.isPlaying():
@@ -379,6 +446,8 @@ class TVWindow(xbmcgui.WindowXML):
 
     # player callbacks (other thread)
     def on_av_started(self):
+        if self.closing or not self.playing_ours():
+            return
         tok = self.play_token
         self.av_started_token = tok
         try:
@@ -390,6 +459,8 @@ class TVWindow(xbmcgui.WindowXML):
             pass
 
     def on_error(self):
+        if self.closing:
+            return
         self.play_started_at = 0  # let the watchdog react immediately
 
     # ----------------------------------------------------------- screens
@@ -423,9 +494,12 @@ class TVWindow(xbmcgui.WindowXML):
         self.set_mode("card")
 
     def show_digits(self, text):
+        """'CH 03' style: at least two digits (leading zero), left-aligned after CH."""
         text = (text or "")[-3:]
+        if text.isdigit():
+            text = text.zfill(2)
         names = [("digits/%s.png" % ("u" if c == "_" else c)) for c in text]
-        names = [""] * (3 - len(names)) + names
+        names = names + [""] * (3 - len(names))
         for i, n in enumerate(names):
             self.setProperty("d%d" % (i + 1), n)
         self.setProperty("osd", "1")
@@ -493,8 +567,15 @@ class TVWindow(xbmcgui.WindowXML):
         for n, ch in enumerate(self.lineup.channels):
             if ch["type"] == "guide":
                 continue
-            sched = self.lineup.schedule(ch)
+            # never build schedules here - that froze the guide after upgrades
+            sched = self.lineup.schedule(ch, ensure=False)
             li = xbmcgui.ListItem(str(ch["number"]), ch["name"])
+            if sched.block_at(now) is None:
+                self.guide_pending = True
+                li.setProperty("c1", _("Updating listings..."))
+                li.setProperty("rowbg", "guide_row_a.png" if n % 2 == 0 else "guide_row_b.png")
+                items.append(li)
+                continue
             for i, c in enumerate(cols):
                 b = sched.block_at(c + 1)
                 txt = ""
@@ -536,6 +617,7 @@ class TVWindow(xbmcgui.WindowXML):
         random.shuffle(files)
         for f in files[:50]:
             pl.add(f)
+            self.our_files.add(f)
         self.play_token += 1
         self.play_started_at = time.time()
         self.player.play(pl, windowed=True)
@@ -594,9 +676,10 @@ class TVWindow(xbmcgui.WindowXML):
         self.tune(ch)
 
 
-def run():
+def run(channel=None):
     K.ensure_dirs()
     win = TVWindow("script-cablebox42-tv.xml", K.ADDON_PATH, "Default", "1080i")
+    win.wanted_channel = channel
     win.doModal()
     win.shutdown()
     del win

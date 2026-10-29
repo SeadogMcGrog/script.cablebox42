@@ -24,11 +24,19 @@ def run():
         library.durations().save()
 
     K.ensure_dirs()
+    for key in ("weather_source", "weather_units"):  # 1.1 stored text, 1.3 uses numbers
+        if not K.ADDON.getSetting(key).isdigit():
+            K.set_setting(key, "0")
     if K.setting_bool("autostart", False) and os.path.exists(K.CHANNELS_FILE):
         # wait for the home screen, then switch the TV on
-        for _ in range(120):
+        # Only right after Kodi starts, and never once the viewer has started
+        # watching something else (otherwise stopping that video would land
+        # them in CableBox).
+        for _tick in range(60):
             if monitor.waitForAbort(1):
                 return
+            if xbmc.getCondVisibility("Player.HasMedia"):
+                break
             if xbmc.getCondVisibility("Window.IsActive(home)") and \
                     not xbmc.getCondVisibility("System.HasModalDialog"):
                 xbmc.executebuiltin("RunScript(script.cablebox42,watch)")

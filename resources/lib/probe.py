@@ -325,3 +325,43 @@ def _flv(r):
             ts = (tag[4] << 16) | (tag[5] << 8) | tag[6] | (tag[7] << 24)
             return ts / 1000.0
     return 0
+
+
+# ---------------------------------------------------------------- video codec
+_MKV_CODECS = ((b"V_AV1", "av1"), (b"V_MPEGH/ISO/HEVC", "hevc"), (b"V_MPEG4/ISO/AVC", "h264"),
+               (b"V_VP9", "vp9"), (b"V_VP8", "vp8"), (b"V_MPEG2", "mpeg2"))
+_MP4_CODECS = ((b"av01", "av1"), (b"hvc1", "hevc"), (b"hev1", "hevc"), (b"avc1", "h264"),
+               (b"avc3", "h264"), (b"vp09", "vp9"), (b"mp4v", "mpeg4"))
+
+
+def video_codec(path):
+    """Short codec name ('av1', 'hevc', 'h264', 'vp9'...) from the container
+    headers, or '' if unknown.  Only reads a small part of the file."""
+    try:
+        r, close = open_reader(path)
+    except Exception:
+        return ""
+    try:
+        head = r.read_at(0, 16)
+        if head[4:8] in (b"ftyp", b"moov", b"mdat", b"free", b"wide", b"skip", b"pnot"):
+            for typ, s, e in _mp4_boxes(r, 0, r.size):
+                if typ == b"moov":
+                    data = r.read_at(s, min(e - s, 256 * 1024))
+                    for tag, name in _MP4_CODECS:
+                        if tag in data:
+                            return name
+                    return ""
+            return ""
+        if head[:4] == b"\x1a\x45\xdf\xa3":
+            data = r.read_at(0, 512 * 1024)
+            for tag, name in _MKV_CODECS:
+                if tag in data:
+                    return name
+        return ""
+    except Exception:
+        return ""
+    finally:
+        try:
+            close()
+        except Exception:
+            pass

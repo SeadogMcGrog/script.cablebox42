@@ -21,7 +21,7 @@ DEFAULTS = {
 
 def new_channel(number, name, ctype="network", sources=None, **extra):
     ch = {"id": uuid.uuid4().hex[:8], "number": int(number), "name": name, "type": ctype,
-          "sources": sources or [], "dayparts": [], "offair": []}
+          "sources": sources or [], "dayparts": [], "offair": [], "slots": []}
     ch.update(DEFAULTS.get(ctype, DEFAULTS["network"]))
     ch.update(extra)
     return ch
@@ -40,6 +40,7 @@ def load():
             c.setdefault(k, v)
         c.setdefault("dayparts", [])
         c.setdefault("offair", [])
+        c.setdefault("slots", [])
         c.setdefault("sources", [])
     return sorted(chans, key=lambda c: c["number"])
 
@@ -50,7 +51,10 @@ def save(chans):
 
 def config_hash(ch):
     """Hash of everything that affects the schedule (not name/number)."""
-    keep = {k: v for k, v in ch.items() if k not in ("name", "number", "callsign")}
+    # Empty/unset fields are ignored, so adding new options in an update does
+    # not throw away every channel's schedule.
+    keep = {k: v for k, v in ch.items()
+            if k not in ("name", "number", "callsign") and v not in ([], {}, None, "")}
     return hashlib.md5(json.dumps(keep, sort_keys=True).encode("utf-8")).hexdigest()[:12]
 
 

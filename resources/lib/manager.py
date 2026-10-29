@@ -316,6 +316,8 @@ def wizard():
     if D.yesno(TITLE, _("Your lineup is ready:[CR]%s[CR][CR]Start watching?") % names):
         from . import tv
         tv.run()
+        return True
+    return False
 
 
 def prebuild(chans=None):
@@ -469,9 +471,10 @@ def edit_channel(cid):
             ("callsign", _("Call letters: %s") % ch.get("callsign", "")),
             ("type", _("Type: %s") % TYPE_LABELS.get(ch["type"], ch["type"])),
             ("sources", _("Programming: %d source(s)") % len(ch["sources"])),
+            ("planner", _("[B]Weekly planner[/B] (%d pinned shows)") % len(ch.get("slots", []))),
             ("dayparts", _("Time blocks (prime time, Saturday mornings...): %d") % len(ch["dayparts"])),
             ("offair", _("Off-air hours: %s") % (", ".join("%s-%s" % (w["start"], w["end"])
-                                                       for w in ch["offair"]) or "never")),
+                                                       for w in ch["offair"]) or _("never"))),
             ("shows", _("[B]What's on this channel[/B] (%d hidden)") % len(ch.get("exclude", []))),
             ("commercials", _("Commercials: %s") % onoff(ch.get("commercials"))),
             ("midroll", _("Break into shows for commercials: %s") % onoff(ch.get("midroll", ch["type"] != "movies"))),
@@ -481,8 +484,10 @@ def edit_channel(cid):
             ("slot", _("Programs start on: %s") % ({0: _("no clock (back to back)"), 15: ":00 :15 :30 :45",
                                                  30: _(":00 and :30"), 60: _("the hour")}.get(ch.get("slot"),
                                                                                        str(ch.get("slot"))))),
-            ("cpath", _("Channel commercials folder: %s") % (ch.get("commercials_path") or "global")),
-            ("bpath", _("Channel bumps folder: %s") % (ch.get("bumps_path") or "global")),
+            ("cpath", _("Channel commercials folder: %s") % (ch.get("commercials_path") or _("global"))),
+            ("bpath", _("Channel bumps folder: %s") % (ch.get("bumps_path") or _("global"))),
+            ("ids", _("Station ID clips (between programs): %s") % (
+                os.path.basename(ch.get("ids_path", "").rstrip("/\\")) or _("none"))),
             ("preview", _("[B]Preview today's schedule[/B]")),
             ("delete", _("[COLOR red]Delete channel[/COLOR]")),
         ]
@@ -536,6 +541,19 @@ def edit_channel(cid):
                 p = D.browse(0, _("Folder"), "video")
                 if p:
                     ch[field] = p
+        elif key == "ids":
+            j = D.select(_("Station ID clips"), [_("None"), _("Choose folder...")])
+            if j == 0:
+                ch.pop("ids_path", None)
+            elif j == 1:
+                p = D.browse(0, _("Station ID clips"), "video")
+                if p:
+                    ch["ids_path"] = p
+        elif key == "planner":
+            C.save(chans)
+            from . import planner
+            planner.open_planner(cid)
+            continue
         elif key == "preview":
             C.save(chans)
             preview(ch)
@@ -607,19 +625,75 @@ def edit_dayparts(ch):
                 del ch["dayparts"][i - 1]
 
 
+def _days_label(days):
+    return dict((str(k), v) for k, v in DAY_OPTS).get(str(days if days is not None else "all"), _("Custom days"))
+
+
+def pick_days(heading, current="all"):
+    """Every day / weekdays / weekends / Saturdays / Sundays / pick days."""
+    names = [_("Monday"), _("Tuesday"), _("Wednesday"), _("Thursday"), _("Friday"), _("Saturday"), _("Sunday")]
+    opts = [x[1] for x in DAY_OPTS] + [_("Pick days...")]
+    j = D.select(heading, opts)
+    if j < 0:
+        return None
+    if j < len(DAY_OPTS):
+        return DAY_OPTS[j][0]
+    pre = current if isinstance(current, list) else []
+    sel = D.multiselect(heading, names, preselect=pre)
+    return sorted(sel) if sel else None
+
+
 def edit_offair(ch):
+    styles = [("standby", _("1950s 'Please stand by' test card")), ("bars", _("Color bars"))]
     while True:
-        rows = [_("[B]+ Add off-air hours[/B]")] + ["%s - %s" % (w["start"], w["end"]) for w in ch["offair"]]
-        i = D.select(_("Sign-off hours (color bars)"), rows)
+        style = ch.get("offair_style", "standby")
+        rows = [_("[B]+ Add off-air hours[/B]")]
+        rows += ["%s - %s   %s" % (w["start"], w["end"], _days_label(w.get("days"))) for w in ch["offair"]]
+        n = len(rows)
+        rows += [_("Off-air screen: %s") % dict(styles).get(style, style),
+                 _("Sign-off clip (anthem, farewell...): %s") % (
+                     os.path.basename(ch.get("signoff_path", "").rstrip("/\\")) or _("none")),
+                 _("Sign-on clip (morning start-up): %s") % (
+                     os.path.basename(ch.get("signon_path", "").rstrip("/\\")) or _("none"))]
+        i = D.select(_("Off-air hours"), rows)
         if i < 0:
             return
         if i == 0:
-            a = ask_time(_("Sign off at"), "02:00")
-            b = ask_time(_("Sign on at"), "06:00")
-            if a and b:
-                ch["offair"].append({"start": a, "end": b})
-        elif D.yesno(TITLE, _("Remove %s?") % rows[i]):
-            del ch["offair"][i - 1]
+            a = ask_time(_("Sign off at"), "00:00")
+            b = ask_time(_("Sign on at"), "07:00")
+            if not (a and b):
+                continue
+            days = pick_days(_("Which nights?"))
+            if days is None:
+                continue
+            ch["offair"].append({"start": a, "end": b, "days": days})
+        elif i < n:
+            w = ch["offair"][i - 1]
+            j = D.select(rows[i], [_("Change times"), _("Change days"), _("Remove")])
+            if j == 0:
+                a = ask_time(_("Sign off at"), w["start"])
+                b = ask_time(_("Sign on at"), w["end"])
+                if a and b:
+                    w["start"], w["end"] = a, b
+            elif j == 1:
+                days = pick_days(_("Which nights?"), w.get("days", "all"))
+                if days is not None:
+                    w["days"] = days
+            elif j == 2:
+                del ch["offair"][i - 1]
+        elif i == n:
+            j = D.select(_("Off-air screen"), [x[1] for x in styles])
+            if j >= 0:
+                ch["offair_style"] = styles[j][0]
+        else:
+            field = "signoff_path" if i == n + 1 else "signon_path"
+            j = D.select(rows[i], [_("None"), _("Choose folder...")])
+            if j == 0:
+                ch.pop(field, None)
+            elif j == 1:
+                p = D.browse(0, rows[i], "video")
+                if p:
+                    ch[field] = p
 
 
 def preview(ch):
@@ -752,15 +826,30 @@ def check_fillers():
         for label, key in ((_("Commercials"), "commercials_path"), (_("Bumps"), "bumps_path")):
             if c.get(key):
                 paths.append((_("%s for %s") % (label, c["name"]), c[key]))
-    if not paths:
-        D.ok(TITLE, _("No commercials or bumps folder is set.[CR]Set them in Settings > Programming."))
-        return
+    chans = [c for c in C.load() if c["type"] in PROGRAM_TYPES]
     pd = xbmcgui.DialogProgress()
     pd.create(TITLE, _("Checking every clip (first time can take a while)..."))
     out = []
+    if library.av1_blocked():
+        out.append(_("[B]AV1 videos[/B]  [COLOR grey]this box can't decode AV1 in hardware, so CableBox skips them[/COLOR]"))
+        library.clear_cache()
+        found = False
+        for n, c in enumerate(chans):
+            pd.update(int(50.0 * n / max(1, len(chans))), c["name"])
+            for srcs in [c.get("sources", [])] + [dp.get("sources", []) for dp in c.get("dayparts", [])] + \
+                    [r.get("sources", []) for r in c.get("slots", [])]:
+                library.resolve(srcs)
+                skipped = library.SKIPPED.get(library.json.dumps(srcs, sort_keys=True)) or []
+                if skipped:
+                    found = True
+                    out.append(_("  %d  %s: %s") % (c["number"], c["name"], ", ".join(skipped[:8]) +
+                                                     (" ..." if len(skipped) > 8 else "")))
+        if not found:
+            out.append(_("  None in your channels."))
+        out.append("")
     for n, (label, path) in enumerate(paths):
         pd.update(int(100.0 * n / len(paths)), label)
-        ok, bad, long_ = library.filler_report(path)
+        ok, bad, long_, av1 = library.filler_report(path)
         out.append(_("[B]%s[/B]  [COLOR grey]%s[/COLOR]") % (label, path))
         if ok:
             out.append(_("  %d usable clips, %d minutes total, %ds to %ds long") % (
@@ -775,12 +864,17 @@ def check_fillers():
                 out.append("     ...")
         if long_:
             out.append(_("  %d clips longer than 10 minutes skipped") % len(long_))
+        if av1:
+            out.append(_("  [COLOR orange]%d AV1 clips skipped (no hardware decoding):[/COLOR]") % len(av1))
+            out += ["     " + os.path.basename(b) for b in av1[:12]]
+            if len(av1) > 12:
+                out.append("     ...")
         out.append("")
     pd.close()
     library.clear_cache()
     out.append(_("Tip: a few dozen clips of mixed lengths (15/30/60s) fill breaks almost exactly. "
-               "Unreadable files can be remuxed to .mp4 or .mkv."))
-    D.textviewer(_("Commercial check"), "[CR]".join(out))
+               "Unreadable files can be remuxed to .mp4 or .mkv; AV1 videos can be re-encoded to H.264 or H.265."))
+    D.textviewer(_("Video check"), "[CR]".join(out))
 
 
 def help_text():
@@ -811,6 +905,22 @@ Each channel also has 'What's on this channel' - a checklist of everything it ai
 Add programming > 'A studio / network' makes e.g. a Disney channel from every movie
 and show whose studio contains 'Disney'.  Kodi tags work the same way.
 
+[B]Weekly planner[/B]
+Each channel has a 7-day grid (Channel manager > channel > Weekly planner, or
+Weekly planner in the main menu).  Press OK on a half-hour to pin a show there -
+e.g. Seinfeld, Fridays 8:00 PM, one hour, in order: every week it continues with
+the next episodes.  Pinned slots always start on time; the automatic scheduler
+fills everything else and never runs into them.  You can also paint off-air
+hours, copy a day to other days, or clear a day (Menu button).
+
+[B]Off the air[/B]
+Off-air hours show a 1950s 'Please stand by' test card (or color bars), with an
+optional sign-off clip (anthem, farewell) and sign-on clip from your own folders.
+
+[B]Station IDs[/B]
+Give a channel a folder of station ID clips ("You're watching...") and one plays
+between programs, right before the next show starts.
+
 [B]Commercials & bumps[/B]
 Point Settings at a folder of commercials and (optionally) bumps.  Breaks are cut
 into shows to fill each half hour, like real cable.  Movie channels play commercials
@@ -830,8 +940,9 @@ def main_menu():
             opts.append(("watch", _("[B]Watch TV[/B]")))
         opts += [("wizard", _("Build my lineup automatically")),
                  ("manager", _("Channel manager")),
+                 ("planner", _("Weekly planner")),
                  ("shows", _("Move shows between channels")),
-                 ("fillers", _("Check my commercials & bumps")),
+                 ("fillers", _("Check my videos (commercials, bumps, AV1)")),
                  ("rebuild", _("Rebuild schedules")),
                  ("settings", _("Settings")),
                  ("help", _("Help"))]
@@ -844,9 +955,16 @@ def main_menu():
             tv.run()
             return
         if k == "wizard":
-            wizard()
+            if wizard():
+                return  # watched TV straight after the wizard - don't reopen the menu
         elif k == "manager":
             manager()
+        elif k == "planner":
+            progs = [c for c in C.load() if c["type"] in PROGRAM_TYPES]
+            j = D.select(_("Plan which channel?"), ["%3d  %s" % (c["number"], c["name"]) for c in progs]) if progs else -1
+            if j >= 0:
+                from . import planner
+                planner.open_planner(progs[j]["id"])
         elif k == "shows":
             shows_and_channels()
         elif k == "fillers":

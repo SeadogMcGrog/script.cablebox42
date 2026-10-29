@@ -49,8 +49,33 @@
         </control>
 
         <!-- ============ Off the air ============ -->
+        <!-- 1950s stand-by test card -->
+        <control type="group" id="111">
+            <visible>String.IsEqual(Window.Property(mode),offair) + String.IsEqual(Window.Property(offair_style),standby)</visible>
+            <control type="image">
+                <left>0</left><top>0</top><width>1920</width><height>1080</height>
+                <texture>standby.jpg</texture>
+                <animation effect="fade" start="100" end="88" time="1400" condition="true" pulse="true">Conditional</animation>
+            </control>
+            <control type="label">
+                <left>720</left><top>400</top><width>480</width><height>150</height>
+                <align>center</align><aligny>center</aligny><font>font60</font><textcolor>FFEBEBEB</textcolor>
+                <label>$INFO[Window.Property(ch_number)]</label>
+            </control>
+            <control type="label">
+                <left>730</left><top>560</top><width>460</width><height>60</height>
+                <align>center</align><aligny>center</aligny><font>font27</font><textcolor>FFEBEBEB</textcolor>
+                <label>$INFO[Window.Property(ch_name)]</label>
+            </control>
+            <control type="label">
+                <left>760</left><top>625</top><width>400</width><height>50</height>
+                <align>center</align><aligny>center</aligny><font>font12</font><textcolor>FFB0B0B0</textcolor>
+                <label>$INFO[Window.Property(offair_line)]</label>
+            </control>
+        </control>
+
         <control type="group" id="110">
-            <visible>String.IsEqual(Window.Property(mode),offair)</visible>
+            <visible>String.IsEqual(Window.Property(mode),offair) + !String.IsEqual(Window.Property(offair_style),standby)</visible>
             <control type="image">
                 <left>0</left><top>0</top><width>1920</width><height>1080</height>
                 <texture>bars.png</texture>
@@ -522,17 +547,24 @@
         <!-- ============ VCR style channel number, top right ============ -->
         <control type="group" id="300">
             <visible>String.IsEqual(Window.Property(osd),1)</visible>
+            <!-- emitted by the tube, not pasted on: slight transparency + faint interference flicker -->
+            <animation effect="fade" start="92" end="78" time="120" condition="true" pulse="true">Conditional</animation>
+            <!-- "CH 03": stroke-style cable-box digits, left-aligned after the CH label -->
             <control type="image">
-                <left>1490</left><top>60</top><width>110</width><height>140</height>
-                <texture>$INFO[Window.Property(d1)]</texture>
+                <left>1290</left><top>60</top><width>230</width><height>140</height>
+                <texture colordiffuse="E6FFFFFF">digits/ch.png</texture>
             </control>
             <control type="image">
-                <left>1600</left><top>60</top><width>110</width><height>140</height>
-                <texture>$INFO[Window.Property(d2)]</texture>
+                <left>1560</left><top>60</top><width>110</width><height>140</height>
+                <texture colordiffuse="E6FFFFFF">$INFO[Window.Property(d1)]</texture>
             </control>
             <control type="image">
-                <left>1710</left><top>60</top><width>110</width><height>140</height>
-                <texture>$INFO[Window.Property(d3)]</texture>
+                <left>1652</left><top>60</top><width>110</width><height>140</height>
+                <texture colordiffuse="E6FFFFFF">$INFO[Window.Property(d2)]</texture>
+            </control>
+            <control type="image">
+                <left>1744</left><top>60</top><width>110</width><height>140</height>
+                <texture colordiffuse="E6FFFFFF">$INFO[Window.Property(d3)]</texture>
             </control>
         </control>
 
@@ -542,6 +574,34 @@
             <font>font30_title</font><textcolor>FF33FF66</textcolor><shadowcolor>FF000000</shadowcolor>
             <label>$INFO[Window.Property(toast)]</label>
             <visible>!String.IsEmpty(Window.Property(toast))</visible>
+        </control>
+        <!-- CRT effect (Settings > Viewing): flat overlays only, the video itself is untouched -->
+        <control type="group" id="400">
+            <visible>!String.IsEmpty(Window.Property(crt))</visible>
+            <control type="image">
+                <left>0</left><top>0</top><width>1920</width><height>1080</height>
+                <texture>crt_mask.png</texture>
+                <visible>String.IsEqual(Window.Property(crt),2)</visible>
+            </control>
+            <control type="image">
+                <left>0</left><top>0</top><width>1920</width><height>1080</height>
+                <texture>scanlines.png</texture>
+            </control>
+            <control type="image">
+                <left>0</left><top>-260</top><width>1920</width><height>260</height>
+                <texture>crt_humbar.png</texture>
+                <visible>String.IsEqual(Window.Property(crt),2)</visible>
+                <animation effect="slide" start="0,1340" end="0,0" time="11000" condition="true" loop="true">Conditional</animation>
+            </control>
+            <control type="image">
+                <left>0</left><top>0</top><width>1920</width><height>1080</height>
+                <texture>crt_vignette.png</texture>
+            </control>
+            <control type="image">
+                <left>0</left><top>0</top><width>1920</width><height>1080</height>
+                <texture>crt_bezel.png</texture>
+                <visible>String.IsEqual(Window.Property(crt),2)</visible>
+            </control>
         </control>
     </controls>
 </window>

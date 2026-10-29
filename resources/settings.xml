@@ -6,6 +6,7 @@
         <setting id="breaks_per_slot" type="labelenum" label="32005" values="0|1|2|3|4" default="2"/>
         <setting id="guide_music_path" type="folder" label="32003" source="music" default=""/>
         <setting id="guide_title" type="text" label="32004" default="CableBox 42 Program Guide"/>
+        <setting id="av1_mode" type="enum" label="32035" lvalues="32036|32037|32038" default="0"/>
         <setting id="horizon_hours" type="labelenum" label="32006" values="6|12|24" default="12"/>
     </category>
     <category label="32010">
@@ -13,6 +14,7 @@
         <setting id="banner_secs" type="labelenum" label="32012" values="3|6|10" default="6"/>
         <setting id="static_effect" type="bool" label="32013" default="true"/>
         <setting id="static_sound" type="bool" label="32014" default="true" enable="eq(-1,true)"/>
+        <setting id="crt_mode" type="enum" label="32031" lvalues="32032|32033|32034" default="0"/>
         <setting id="confirm_exit" type="bool" label="32015" default="true"/>
         <setting id="skip_menu" type="bool" label="32016" default="false"/>
         <setting id="autostart" type="bool" label="32017" default="false"/>
