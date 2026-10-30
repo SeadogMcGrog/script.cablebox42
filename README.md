@@ -19,6 +19,12 @@ but it's a separate implementation built for Kodi. It runs inside Kodi on
 anything Kodi 21 runs on, and plays every file through Kodi's own player, so
 hardware video decoding works exactly as it does for the rest of your library.
 
+### ▶ See it in action
+
+[![CableBox 42 video tour on YouTube](https://img.youtube.com/vi/VDaUOxNVePA/hqdefault.jpg)](https://youtu.be/VDaUOxNVePA)
+
+*Click to watch the video tour on YouTube.*
+
 | | |
 |---|---|
 | ![Changing channel](resources/screenshots/screenshot-01.jpg) | ![Weekly planner](resources/screenshots/screenshot-02.jpg) |
