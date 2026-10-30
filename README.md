@@ -684,7 +684,10 @@ version, device, what you were doing, and a link to your log on
 
 ## Credits and license
 
-Created by **Seadog McGrog**.
+CableBox 42 is designed, tested and maintained by **Seadog McGrog**. Much of
+the code was written with the help of [Claude](https://www.anthropic.com/claude),
+an AI assistant made by Anthropic. Anthropic is not affiliated with this project
+and has not reviewed or endorsed it.
 
 Inspired by [FieldStation42](https://github.com/shane-mason/FieldStation42) by
 Shane Mason, which pioneered this channel-flipping way of watching your own
