@@ -165,7 +165,7 @@ def _movie_item(m):
 
 # ------------------------------------------------------------- library helpers
 def all_tvshows():
-    res = rpc("VideoLibrary.GetTVShows", {"properties": ["title", "genre", "year", "episode"]})
+    res = rpc("VideoLibrary.GetTVShows", {"properties": ["title", "genre", "year", "episode", "rating"]})
     return res.get("tvshows", [])
 
 
@@ -399,7 +399,15 @@ def _resolve_playlist(src, pool):
         pool["series"].append({"key": "tv:%s" % title, "title": title, "episodes": eps})
 
 
+def _resolve_alltv(src, pool):
+    for show in all_tvshows():
+        ser = _series_from_show(show)
+        if ser:
+            pool["series"].append(ser)
+
+
 RESOLVERS = {
+    "alltv": _resolve_alltv,
     "tvshow": _resolve_tvshow,
     "tvgenre": _resolve_tvgenre,
     "tvdecade": _resolve_tvdecade,
@@ -426,55 +434,81 @@ def titles(pool):
     return [s["title"] for s in pool["series"]] + [i["title"] for i in pool["singles"]]
 
 
-def resolve(sources):
-    """Resolve a list of sources into a pool (cached for a while)."""
-    key = json.dumps(sources, sort_keys=True)
+def _resolve_one(src):
+    """Pool for a single source (cached).  Channel pools are merged from these,
+    so the one-channel-per-show logic can see where each title came from."""
+    key = json.dumps(src, sort_keys=True)
     hit = _POOL_CACHE.get(key)
     if hit and time.time() - hit[0] < _POOL_TTL:
         return hit[1]
     pool = {"series": [], "singles": []}
-    seen = set()
-    for src in sources or []:
-        fn = RESOLVERS.get(src.get("type"))
-        if not fn:
-            continue
+    fn = RESOLVERS.get(src.get("type"))
+    if fn:
         try:
             fn(src, pool)
         except Exception as exc:  # never let one bad source kill the channel
             log("Source %s failed: %s" % (src, exc))
-    # de-duplicate series and drop items without duration
-    series = []
-    for s in pool["series"]:
-        if s["key"] in seen:
+    series, seen = [], set()
+    for ser in pool["series"]:
+        if ser["key"] in seen:
             continue
-        seen.add(s["key"])
-        s["episodes"] = [e for e in s["episodes"] if e["dur"] > 0]
-        if s["episodes"]:
-            series.append(s)
-    pool["series"] = series
+        seen.add(ser["key"])
+        ser["episodes"] = [e for e in ser["episodes"] if e["dur"] > 0]
+        if ser["episodes"]:
+            series.append(ser)
     singles, seen_paths = [], set()
     for i in pool["singles"]:
         if i["dur"] > 0 and i["path"] not in seen_paths:
             seen_paths.add(i["path"])
             singles.append(i)
-    pool["singles"] = singles
+    skipped = []
     if av1_blocked():
-        skipped = []
-        for s in pool["series"]:
-            keep = [e for e in s["episodes"] if item_codec(e) != "av1"]
-            if len(keep) != len(s["episodes"]):
-                skipped.append("%s (%d)" % (s["title"], len(s["episodes"]) - len(keep)))
-            s["episodes"] = keep
-        pool["series"] = [s for s in pool["series"] if s["episodes"]]
-        keep = [i for i in pool["singles"] if item_codec(i) != "av1"]
-        skipped += [i["title"] for i in pool["singles"] if i not in keep]
-        pool["singles"] = keep
-        SKIPPED[key] = skipped
+        for ser in series:
+            keep = [e for e in ser["episodes"] if item_codec(e) != "av1"]
+            if len(keep) != len(ser["episodes"]):
+                skipped.append("%s (%d)" % (ser["title"], len(ser["episodes"]) - len(keep)))
+            ser["episodes"] = keep
+        series = [ser for ser in series if ser["episodes"]]
+        keep = [i for i in singles if item_codec(i) != "av1"]
+        skipped += [i["title"] for i in singles if i not in keep]
+        singles = keep
         if skipped:
             log("Skipping AV1 videos this device can't decode: %s" % ", ".join(skipped[:20]))
+    SKIPPED[key] = skipped
+    pool = {"series": series, "singles": singles}
     durations().save()
     _POOL_CACHE[key] = (time.time(), pool)
     return pool
+
+
+def resolve(sources):
+    """Resolve a list of sources into one pool (cached for a while)."""
+    key = json.dumps(sources, sort_keys=True)
+    hit = _POOL_CACHE.get(key)
+    if hit and time.time() - hit[0] < _POOL_TTL:
+        return hit[1]
+    series, singles, seen, seen_paths, skipped = [], [], set(), set(), []
+    for src in sources or []:
+        one = _resolve_one(src)
+        skipped += SKIPPED.get(json.dumps(src, sort_keys=True), [])
+        for ser in one["series"]:
+            if ser["key"] not in seen:
+                seen.add(ser["key"])
+                series.append(ser)
+        for it in one["singles"]:
+            if it["path"] not in seen_paths:
+                seen_paths.add(it["path"])
+                singles.append(it)
+    SKIPPED[key] = skipped
+    pool = {"series": series, "singles": singles}
+    _POOL_CACHE[key] = (time.time(), pool)
+    return pool
+
+
+def keep_titles(pool, allowed):
+    """Copy of a pool limited to titles for which allowed(title_lower) is True."""
+    return {"series": [s for s in pool["series"] if allowed(s["title"].lower(), False)],
+            "singles": [i for i in pool["singles"] if allowed(i["title"].lower(), True)]}
 
 
 def filler_pool(path):

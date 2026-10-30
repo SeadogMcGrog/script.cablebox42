@@ -14,6 +14,7 @@ from . import kodiutil as K
 from . import channels as C
 from . import library
 from . import scheduler
+from . import assign
 from .kodiutil import _
 
 D = xbmcgui.Dialog()
@@ -271,7 +272,7 @@ def wizard():
             K.set_setting("bumps_path", p)
 
     if not K.setting("weather_location") and not xbmc.getCondVisibility("Weather.IsFetched"):
-        city = D.input(_("Your city for the Weather Channel (optional, e.g. Dickson, TN)"), "")
+        city = D.input(_("Your city for the Weather Channel (optional, e.g. Springfield, IL)"), "")
         if city:
             K.set_setting("weather_location", city)
 
@@ -310,7 +311,24 @@ def wizard():
         chans = new
     for c in chans:
         c.setdefault("callsign", C.callsign(c["name"]))
+    overnight = D.yesno(TITLE, _("Sign channels off overnight, like real TV?[CR][CR]From 12 AM to 5 AM a "
+                                 "'Please stand by' card shows; the guide and weather stay on."),
+                        nolabel=_("No, run all night"), yeslabel=_("Yes (recommended)"))
+    prime = D.yesno(TITLE, _("Give channels a prime-time lineup?[CR][CR]From 8 to 11 PM each channel airs its best "
+                             "shows in fixed weekly slots (movie channels: a movie at 8). You can change any of "
+                             "it in the weekly planner."),
+                    nolabel=_("No thanks"), yeslabel=_("Yes (recommended)"))
+    from . import presets
+    if overnight:
+        presets.set_overnight(chans)
     C.save(chans)
+    if prime:
+        pd = xbmcgui.DialogProgress()
+        pd.create(TITLE, _("Building prime-time lineups..."))
+        a, _changed = assign.refresh(chans)
+        presets.prime_time(chans, a)
+        pd.close()
+        C.save(chans)
     names = "[CR]".join("%3d  %s" % (c["number"], c["name"]) for c in C.load())
     prebuild()
     if D.yesno(TITLE, _("Your lineup is ready:[CR]%s[CR][CR]Start watching?") % names):
@@ -324,6 +342,7 @@ def prebuild(chans=None):
     lineup = scheduler.Lineup(K.schedule_cfg())
     if chans is not None:
         lineup.channels = chans
+    lineup.refresh_assignment()
     pd = xbmcgui.DialogProgress()
     pd.create(TITLE, _("Programming the channels..."))
     n = max(1, len(lineup.channels))
@@ -360,6 +379,7 @@ def manager():
                 "" if len(c["sources"]) == 1 else "s"))
         i = D.select(_("Channel manager"), rows)
         if i < 0:
+            refresh_assignments()
             return
         if i == 0:
             add_channel(chans)
@@ -721,35 +741,78 @@ def raw_titles(ch):
     return out
 
 
+def effective_titles(ch, assignment):
+    """Titles this channel actually airs: its home shows + your explicit picks
+    (automatic part), everything in its time blocks, minus anything hidden."""
+    ok = assign.allowed_fn(assignment, ch["id"])
+    hidden = set(x.lower() for x in ch.get("exclude", []))
+    out = []
+    pool = library.resolve(ch.get("sources", []))
+    out += [s["title"] for s in pool["series"] if ok(s["title"].lower(), False)]
+    out += [i["title"] for i in pool["singles"] if ok(i["title"].lower(), True)]
+    for dp in ch.get("dayparts", []):
+        out += library.titles(library.resolve(dp.get("sources", [])))
+    seen, res = set(), []
+    for t in out:
+        if t.lower() not in seen and t.lower() not in hidden:
+            seen.add(t.lower())
+            res.append(t)
+    return res
+
+
+def refresh_assignments():
+    """Recompute every show's home channel after an edit (shows a progress box)."""
+    pd = xbmcgui.DialogProgress()
+    pd.create(TITLE, _("Working out which channel each show belongs on..."))
+    try:
+        a, _changed = assign.refresh(C.load())
+    finally:
+        pd.close()
+    return a
+
+
 def whats_on(ch):
     busy = xbmcgui.DialogProgress()
     busy.create(TITLE, _("Reading %s...") % ch["name"])
-    titles = sorted(raw_titles(ch), key=library.natural_key)
+    others = [c for c in C.load() if c["id"] != ch["id"]] + [ch]
+    a = assign.compute(others)
+    titles = sorted(effective_titles(ch, a), key=library.natural_key)
+    elsewhere = len(raw_titles(ch)) - len(titles) - len(ch.get("exclude", []))
     busy.close()
     if not titles:
         D.ok(TITLE, _("Nothing on this channel yet - add programming first."))
         return
-    hidden = set(x.lower() for x in ch.get("exclude", []))
-    pre = [t for t in titles if t.lower() not in hidden]
-    sel = search_pick(_("Untick what doesn't belong on %s") % ch["name"], titles, multi=True, preselected=pre)
+    head = _("Untick what doesn't belong on %s") % ch["name"]
+    if elsewhere > 0 and a.get("mode") != assign.MODE_OFF:
+        D.notification(TITLE, _("%d more shows from this channel's sources air on their own home channels") % elsewhere,
+                       time=4000)
+    sel = search_pick(head, titles, multi=True, preselected=list(titles))
     if sel is None:
         return
     keep = set(t.lower() for t in sel)
-    others = [x for x in ch.get("exclude", []) if x.lower() not in set(t.lower() for t in titles)]
-    ch["exclude"] = others + [t for t in titles if t.lower() not in keep]
+    ch["exclude"] = [x for x in ch.get("exclude", []) if x.lower() not in set(t.lower() for t in titles)] + \
+        [t for t in titles if t.lower() not in keep]
 
 
 def _add_title(ch, title, is_movie):
+    """Your explicit pick: airs on this channel even if its home is elsewhere."""
     kind = "movie" if is_movie else "tvshow"
     for src in ch["sources"]:
-        if src.get("type") == kind:
+        if src.get("type") == kind and src.get("explicit"):
             v = src.get("value")
             v = v if isinstance(v, list) else [v]
             if title not in v:
                 v.append(title)
             src["value"] = v
             return
-    ch["sources"].append({"type": kind, "value": [title]})
+    ch["sources"].append({"type": kind, "value": [title], "explicit": True})
+
+
+def _remove_pick(ch, title):
+    for src in ch.get("sources", []):
+        if src.get("explicit") and isinstance(src.get("value"), list):
+            src["value"] = [v for v in src["value"] if v.lower() != title.lower()]
+    ch["sources"] = [s for s in ch.get("sources", []) if not (s.get("explicit") and not s.get("value"))]
 
 
 def shows_and_channels():
@@ -758,16 +821,19 @@ def shows_and_channels():
     if k < 0:
         return
     is_movie = k == 1
-    chans = [c for c in C.load() if c["type"] in PROGRAM_TYPES]
-    if not chans:
+    if not [c for c in C.load() if c["type"] in PROGRAM_TYPES]:
         D.ok(TITLE, _("No program channels yet."))
         return
     pd = xbmcgui.DialogProgress()
     pd.create(TITLE, _("Working out what airs where..."))
-    raw = {}
-    for i, c in enumerate(chans):
-        pd.update(int(100.0 * i / len(chans)), c["name"])
-        raw[c["id"]] = set(t.lower() for t in raw_titles(c))
+    state = {}
+
+    def recompute():
+        chans = [c for c in C.load() if c["type"] in PROGRAM_TYPES]
+        a = assign.compute(C.load())
+        state["chans"] = chans
+        state["on"] = dict((c["id"], set(t.lower() for t in effective_titles(c, a))) for c in chans)
+    recompute()
     if is_movie:
         movies = library.all_movies(["title", "year"])
         items = sorted(set("%s (%s)" % (m["title"], m["year"]) if m.get("year") else m["title"]
@@ -777,11 +843,12 @@ def shows_and_channels():
     pd.close()
 
     def on(c, title):
-        t = title.lower()
-        return t in raw[c["id"]] and t not in set(x.lower() for x in c.get("exclude", []))
+        return title.lower() in state["on"][c["id"]]
 
     query = ""
+    changed = False
     while True:
+        chans = state["chans"]
         det = {}
         for title in items:
             where = ", ".join("%d %s" % (c["number"], c["name"]) for c in chans if on(c, title))
@@ -789,7 +856,7 @@ def shows_and_channels():
         title = search_pick(_("Pick a %s, then tick its channels") % ("movie" if is_movie else "show"),
                             items, details=det, query=query)
         if not title:
-            return
+            break
         query = getattr(search_pick, "last_query", "")
         labels = ["%3d  %s" % (c["number"], c["name"]) for c in chans]
         pre = [j for j, c in enumerate(chans) if on(c, title)]
@@ -807,14 +874,80 @@ def shows_and_channels():
             ex = [x for x in c.get("exclude", []) if x.lower() != title.lower()]
             if want:
                 c["exclude"] = ex
-                if title.lower() not in raw[c["id"]]:
-                    _add_title(c, title, is_movie)
-                    raw[c["id"]].add(title.lower())
+                _add_title(c, title, is_movie)
             else:
+                _remove_pick(c, title)
                 c["exclude"] = ex + [title]
-            c0.clear()
-            c0.update(c)
         C.save(all_chans)
+        changed = True
+        recompute()
+    if changed:
+        refresh_assignments()
+
+
+def clean_in_progress():
+    """Clear resume points left by channel surfing (before CableBox protected them)."""
+    from . import progress
+    items = progress.in_progress_items()
+    if not items:
+        D.ok(TITLE, _("Nothing is marked 'in progress'."))
+        return
+    labels = [i[0] for i in items]
+    det = dict((i[0], _("stopped at %d of %d min") % (int(i[3].get("position", 0)) // 60,
+                                                      int(i[3].get("total", 0)) // 60)) for i in items)
+    keep = search_pick(_("Tick what you're REALLY in the middle of - the rest is cleared"), labels,
+                       multi=True, preselected=[], details=det)
+    if keep is None:
+        return
+    keep = set(keep)
+    clear = [i for i in items if i[0] not in keep]
+    if not clear or not D.yesno(TITLE, _("Clear the resume point of %d items?[CR](%d kept)") % (len(clear), len(keep))):
+        return
+    for _label, kind, item, _r in clear:
+        progress.clear_resume(kind, item)
+    D.notification(TITLE, _("Cleared %d items") % len(clear), time=3000)
+
+
+def quick_setup():
+    """One-step changes for every channel at once."""
+    from . import presets
+    while True:
+        opts = [_("Sign off overnight on all channels (choose hours)"),
+                _("Never sign off (remove off-air hours from all channels)"),
+                _("Build prime-time lineups on all channels (choose hours)"),
+                _("Remove the automatic prime-time lineups")]
+        i = D.select(_("Quick setup"), opts)
+        if i < 0:
+            return
+        chans = C.load()
+        if i == 0:
+            a = ask_time(_("Sign off at"), presets.OFF_START)
+            b = ask_time(_("Back on the air at"), presets.OFF_END)
+            if not (a and b):
+                continue
+            presets.set_overnight(chans, a, b)
+            C.save(chans)
+            D.notification(TITLE, _("Channels now sign off %s - %s") % (a, b), time=3000)
+        elif i == 1:
+            presets.clear_overnight(chans)
+            C.save(chans)
+        elif i == 2:
+            a = ask_time(_("Prime time starts at"), presets.PRIME_START)
+            b = ask_time(_("Prime time ends at"), presets.PRIME_END)
+            if not (a and b):
+                continue
+            pd = xbmcgui.DialogProgress()
+            pd.create(TITLE, _("Building prime-time lineups..."))
+            asg, _changed = assign.refresh(chans)
+            made = presets.prime_time(chans, asg, a, b)
+            pd.close()
+            C.save(chans)
+            D.ok(TITLE, _("Prime-time lineups built for %d channels.[CR]See them in the weekly planner - "
+                          "change or remove any slot there.") % len(made))
+        elif i == 3:
+            presets.clear_prime(chans)
+            C.save(chans)
+        refresh_assignments()
 
 
 def check_fillers():
@@ -896,6 +1029,12 @@ cartoons on Saturday mornings or movies in prime time.
 
 Edit a channel and its schedule rebuilds itself from now on - episode progress is kept.
 
+[B]One channel per show[/B]
+Each TV show has one home channel - the one it fits best (your own picks first,
+then folders/tags/studios, then its main genre, then decades and the 'everything'
+channel).  And the same show is never on two channels at the same time.
+Settings > Programming > 'Shows on more than one channel' changes this.
+
 [B]Fine-tuning[/B]
 'Move shows between channels': pick a show (say, Good Eats) and tick the channels it
 should air on.  Unticking hides it there even if the channel's genre includes it.
@@ -912,6 +1051,16 @@ e.g. Seinfeld, Fridays 8:00 PM, one hour, in order: every week it continues with
 the next episodes.  Pinned slots always start on time; the automatic scheduler
 fills everything else and never runs into them.  You can also paint off-air
 hours, copy a day to other days, or clear a day (Menu button).
+
+[B]Your watch progress[/B]
+CableBox puts back resume points, watched status and last-played dates after it
+airs something, so surfing doesn't fill your 'In progress' list (Settings >
+Viewing).  'Clean up my In progress list' tidies up an older list.
+
+[B]Quick setup[/B]
+Main menu > Quick setup: overnight sign-off (default 12 AM - 5 AM) and automatic
+prime-time lineups (default 8 - 11 PM) for every channel at once.  Prime-time
+slots appear in the weekly planner; edit any of them and it becomes yours.
 
 [B]Off the air[/B]
 Off-air hours show a 1950s 'Please stand by' test card (or color bars), with an
@@ -941,8 +1090,10 @@ def main_menu():
         opts += [("wizard", _("Build my lineup automatically")),
                  ("manager", _("Channel manager")),
                  ("planner", _("Weekly planner")),
+                 ("quick", _("Quick setup (sign-off hours, prime time)")),
                  ("shows", _("Move shows between channels")),
                  ("fillers", _("Check my videos (commercials, bumps, AV1)")),
+                 ("progress", _("Clean up my 'In progress' list")),
                  ("rebuild", _("Rebuild schedules")),
                  ("settings", _("Settings")),
                  ("help", _("Help"))]
@@ -959,6 +1110,10 @@ def main_menu():
                 return  # watched TV straight after the wizard - don't reopen the menu
         elif k == "manager":
             manager()
+        elif k == "progress":
+            clean_in_progress()
+        elif k == "quick":
+            quick_setup()
         elif k == "planner":
             progs = [c for c in C.load() if c["type"] in PROGRAM_TYPES]
             j = D.select(_("Plan which channel?"), ["%3d  %s" % (c["number"], c["name"]) for c in progs]) if progs else -1

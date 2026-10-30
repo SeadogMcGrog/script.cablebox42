@@ -113,7 +113,7 @@ def auto_lineup(progress=None, min_shows=3, min_movies=8, max_tv=14, max_movie=6
     # one "everything" channel first - the local independent station
     if shows:
         chans.append(new_channel(num, _("Channel %d") % num, "network",
-                                 [{"type": "tvshow", "value": [s["title"] for s in shows]}]))
+                                 [{"type": "alltv"}]))
         num += 1
 
     used_names = set()

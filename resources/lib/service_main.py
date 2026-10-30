@@ -24,6 +24,11 @@ def run():
         library.durations().save()
 
     K.ensure_dirs()
+    try:
+        from . import progress
+        progress.repair_pending()            # resume points a crash/power cut left changed
+    except Exception as exc:
+        K.log_err("progress repair failed: %s" % exc)
     for key in ("weather_source", "weather_units"):  # 1.1 stored text, 1.3 uses numbers
         if not K.ADDON.getSetting(key).isdigit():
             K.set_setting(key, "0")

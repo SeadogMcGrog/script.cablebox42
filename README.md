@@ -2,6 +2,11 @@
 
 **Retro cable TV from your own Kodi library. Flip channels, not menus.**
 
+> **Beta:** CableBox 42 is new and actively developed. It's tested on CoreELEC
+> (ODROID N2); reports from other devices are very welcome in the
+> [support thread](https://forum.kodi.tv/showthread.php?tid=389521) or on
+> [GitHub issues](https://github.com/SeadogMcGrog/script.cablebox42/issues).
+
 CableBox 42 turns the movies and TV shows you already have in Kodi into a live
 cable lineup. Shows air on a real clock with commercial breaks, bumpers and
 station IDs. There's a scrolling program guide channel, a retro weather
@@ -121,7 +126,12 @@ settings are kept.
 3. Type your city for the weather channel, or skip it if Kodi's own weather
    service is already set up.
 4. Untick any suggested channels you don't want.
-5. Choose **Start watching**.
+5. Say **Yes** to the two recommended extras:
+   - **Overnight sign-off:** channels go off the air from 12 AM to 5 AM with a
+     *Please Stand By* card. The guide and weather channels stay on.
+   - **Prime time:** from 8 to 11 PM, each channel airs its best shows in fixed
+     weekly slots, and movie channels show a movie at 8.
+6. Choose **Start watching**.
 
 That's it. To fine-tune, use the **Channel manager**, the **Weekly planner**
 and **Move shows between channels**.
@@ -149,6 +159,16 @@ episode title), its time slot and progress, and what's on next.
 **Leaving the TV.** Press Back to turn it off. If you press **Home** instead,
 CableBox notices within a couple of seconds and switches itself off. It never
 stops, replaces or interferes with videos you play yourself from the library.
+
+**Your watch progress is left alone.** Kodi normally saves a resume point
+and can mark an episode as watched whenever *anything* plays it, so channel
+surfing would fill your "In progress" list. CableBox notes each show's
+resume point, watched status and last-played date before airing it, and puts
+them back afterwards (even after a crash or power cut). Turn this off in
+*Settings → Viewing → Keep my watch progress untouched*. To tidy a list that
+filled up before this protection existed, use **Clean up my 'In progress'
+list** in the main menu: tick what you're really watching and the rest is
+cleared.
 
 **Sleep timer.** Menu → *Sleep timer* (15 minutes to 2 hours). There's an
 optional setting to put the TV into standby through HDMI-CEC when it runs out.
@@ -188,6 +208,38 @@ What airs when:
 Editing a channel rebuilds its schedule from now. Episode progress is kept, so
 your shows carry on where they were.
 
+### One home channel per show
+
+Like real cable, each TV show has **one home channel**: the channel it fits
+best. In order of priority:
+
+1. Your explicit choices: shows picked by name, or ticked in *Move shows
+   between channels*.
+2. Specific matches: a folder, a movie collection, a tag, a smart playlist, a
+   studio.
+3. The show's **main genre**. Kodi lists genres most important first, so *Good
+   Eats* (Documentary, Comedy) lands on the documentary channel.
+4. Decade channels, then the catch-all "everything" channel, which gets
+   whatever fits nowhere else.
+
+A channel left with almost nothing is topped up with a few shows that suit it
+nearly as well, so no channel runs the same two shows all day. Your pinned
+slots and time blocks always air what you put there.
+
+**Never the same show on two channels at once.** Even when a show is
+allowed on several channels (because you chose that, or with repeats
+allowed), CableBox checks what every other channel is airing, including their
+pinned slots, before it picks. Flipping from channel to channel, you won't land
+on the same episode twice.
+
+*Settings → Programming → Shows on more than one channel*:
+
+| Option | Behaviour |
+|---|---|
+| **TV shows on one channel each** (default) | Movies can still repeat across movie channels, as on real cable (never at the same time) |
+| **Everything on one channel each** | Movies too |
+| **Allow repeats on any channel** | The old behaviour; still never at the same time |
+
 ---
 
 ## Building and editing channels
@@ -200,8 +252,10 @@ your shows carry on where they were.
 | **Build my lineup automatically** | Create a lineup from your library: replace yours, or add to it |
 | **Channel manager** | Add, edit, delete and renumber channels |
 | **Weekly planner** | Open a channel's 7-day grid |
-| **Move shows between channels** | Pick a show or movie, then tick the channels it should air on |
+| **Quick setup** | For every channel at once: overnight sign-off hours on or off, and prime-time lineups built or removed, with your choice of hours |
+| **Move shows between channels** | Pick a show or movie, then tick the channels it should air on. It airs exactly there |
 | **Check my videos** | Lists commercials, bumps and videos that can't be used, and why |
+| **Clean up my 'In progress' list** | Clears resume points left by channel surfing. You keep the ones you tick |
 | **Rebuild schedules** | Plan every channel again from now (episode progress is kept) |
 | **Settings** / **Help** | |
 
@@ -259,7 +313,7 @@ Open a channel in the **Channel manager**:
 | **Weekly planner** | Pinned shows and painted off-air hours |
 | Time blocks | Different programming at certain times, e.g. *Prime Time 8–11 PM: movies* |
 | Off-air hours | Sign-off times, the off-air screen, sign-off and sign-on clips |
-| **What's on this channel** | A checklist of every show and movie the channel can air. Untick what doesn't belong |
+| **What's on this channel** | A checklist of every show and movie the channel airs. Untick what doesn't belong |
 | Commercials / Break into shows / Bumps | On or off for this channel |
 | Lineup style | Same show same time every day, or shuffle |
 | Programs start on | :00 and :30, the hour, every 15 minutes, or no clock |
@@ -313,6 +367,18 @@ automatically.
 
 If a new pin overlaps an existing one, CableBox asks before replacing it on
 the overlapping days.
+
+**Automatic prime time.** *Quick setup → Build prime-time lineups* (also
+offered when you first build your lineup) fills 8–11 PM, or hours you choose,
+with pins:
+- **Network channels:** their best shows by your library's ratings, then the
+  most episodes. Half-hour comedies come first and hour-long dramas later, each
+  night has its own lineup, and each slot continues in order week to week.
+- **Movie channels:** a *Movie at 8* every night.
+
+These pins are labelled *(automatic prime time)* in the planner. Edit one and
+it becomes yours, so rebuilding prime time later leaves it alone. Pins you made
+yourself are never touched.
 
 A show you pin can still air at other times through the channel's automatic
 programming. To keep it to its pinned slot only, untick it in **What's on this
@@ -393,7 +459,7 @@ A conditions ticker scrolls along the bottom.
 
 - **Automatic** (default): Kodi's own weather service if one is set up
   (*Settings → Services → Weather*), otherwise Open-Meteo.
-- **Open-Meteo**: free, no account or key. Type a city (e.g. `Dickson, TN`) or
+- **Open-Meteo**: free, no account or key. Type a city (e.g. `Springfield, IL`) or
   `latitude,longitude`.
 - Units follow Kodi's regional settings, or force °F or °C.
 
@@ -464,6 +530,7 @@ tap to tune. Yatse custom commands can call the `RunScript` actions above.
 | Commercial breaks per half hour | 2 | 0–4 |
 | Guide channel music folder | – | Music behind the guide |
 | Guide title | *CableBox 42 Program Guide* | |
+| Shows on more than one channel | TV shows on one channel each | Or everything on one channel each, or allow repeats |
 | AV1 videos | Automatic | Automatic / Always skip / Always play (see below) |
 | Schedule ahead (hours) | 12 | 6, 12 or 24 |
 
@@ -475,6 +542,7 @@ tap to tune. Yatse custom commands can call the `RunScript` actions above.
 | Show channel banner for | 6 s | 3, 6 or 10 seconds |
 | Static between channels / Static sound | On / On | |
 | CRT effect | Off | Off / Subtle / Full |
+| Keep my watch progress untouched | On | Puts back resume points, watched status and last-played dates after CableBox plays something |
 | Ask before turning off | On | |
 | Go straight to TV when opened | Off | Skip the CableBox menu |
 | Turn the TV on when Kodi starts | Off | Only right after Kodi starts, and never if you've already started watching something else |
@@ -606,9 +674,11 @@ today's schedule*, or use *Rebuild schedules*.
 
 CableBox's lines are tagged `script.cablebox42`.
 
-Please report issues at
-<https://github.com/SeadogMcGrog/script.cablebox42/issues> with your Kodi
-version, device, what you were doing, and the log.
+Please report issues in the
+[Kodi forum support thread](https://forum.kodi.tv/showthread.php?tid=389521) or at
+<https://github.com/SeadogMcGrog/script.cablebox42/issues>, with your Kodi
+version, device, what you were doing, and a link to your log on
+<https://paste.kodi.tv/>.
 
 ---
 

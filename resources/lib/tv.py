@@ -15,6 +15,7 @@ from . import kodiutil as K
 from . import library
 from . import scheduler
 from . import weather
+from . import progress
 from .kodiutil import _
 
 
@@ -97,6 +98,8 @@ class TVWindow(xbmcgui.WindowXML):
         self.guide_music = K.setting("guide_music_path")
         self.weather_music = K.setting("weather_music_path")
         self.weather = weather.WeatherScreen(self)
+        self.progress = progress.Guard()     # put the viewer's resume points back afterwards
+        self.progress.release(delay=0.5)     # anything a crash left behind
         self.win_id = None
         self.guide_pending = False
         self.away_since = 0
@@ -156,6 +159,9 @@ class TVWindow(xbmcgui.WindowXML):
                 self.player.stop()
             except Exception:
                 pass
+        if self.progress.pending:
+            xbmc.sleep(1500)                 # let Kodi write its resume point first, then undo it
+            self.progress.release_now()
         library.durations().save()
         xbmc.executebuiltin("InhibitScreensaver(false)")
         xbmcgui.Window(10000).clearProperty("cablebox42.running")
@@ -245,6 +251,10 @@ class TVWindow(xbmcgui.WindowXML):
         """Keep every channel's schedule ready without ever blocking the picture:
         nearby channels first, then the rest; top up every few minutes."""
         while not self.closing:
+            try:
+                self.lineup.refresh_assignment()
+            except Exception as exc:
+                K.log_err("assignment: %s" % exc)
             chans = list(self.lineup.channels)
             if self.ch and self.ch in chans:
                 i, n = chans.index(self.ch), len(chans)
@@ -395,6 +405,8 @@ class TVWindow(xbmcgui.WindowXML):
         self.play_token += 1
         self.play_started_at = time.time()
         self.our_files.add(e["p"])
+        if e.get("k") in ("show", "clip"):
+            self.progress.remember(e["p"])
         self.player.play(e["p"], li, True)
 
     def watchdog(self, e, key, now):
@@ -443,6 +455,7 @@ class TVWindow(xbmcgui.WindowXML):
                 self.player.stop()
         except Exception:
             pass
+        self.progress.release()
 
     # player callbacks (other thread)
     def on_av_started(self):
@@ -450,6 +463,10 @@ class TVWindow(xbmcgui.WindowXML):
             return
         tok = self.play_token
         self.av_started_token = tok
+        try:
+            self.progress.release(keep=self.player.getPlayingFile())   # the file before this one
+        except Exception:
+            pass
         try:
             path = self.player.getPlayingFile()
             total = self.player.getTotalTime()
@@ -671,6 +688,7 @@ class TVWindow(xbmcgui.WindowXML):
                     ex.append(title)
         C.save(chans)
         self.lineup.reload_channels()
+        threading.Thread(target=self.lineup.refresh_assignment, name="cablebox42-assign").start()
         ch = self.lineup.by_number(self.ch["number"])
         self.toast(_("'%s' removed from %s") % (title, ch["name"]), 4)
         self.tune(ch)

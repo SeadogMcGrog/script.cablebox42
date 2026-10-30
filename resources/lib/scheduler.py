@@ -16,6 +16,7 @@ import time
 from .kodiutil import SCHEDULE_DIR, load_json, save_json, log, ensure_dirs
 from . import library
 from . import channels as chmod
+from . import assign
 from .kodiutil import _
 
 DAY = 86400
@@ -115,6 +116,7 @@ class ChannelSchedule(object):
         self.cfg = cfg
         self.path = os.path.join(SCHEDULE_DIR, "%s.json" % ch["id"])
         self.mtime = 0
+        self.lineup = None
         self.data = None
         self._starts = []
         self._bstarts = []
@@ -157,12 +159,20 @@ class ChannelSchedule(object):
         return int(self.ch.get("slot", 30)) * 60
 
     # -- public api
+    def assignment(self):
+        return self.lineup.assignment if self.lineup is not None else None
+
+    def full_hash(self):
+        """Channel settings + which shows this channel may air automatically."""
+        a = self.assignment() or {}
+        return chmod.config_hash(self.ch) + (a.get("digest", {}).get(self.ch["id"], "") if a else "")
+
     def needs_work(self, now=None):
         """Cheap check: is the schedule stale or running short?"""
         now = now or time.time()
         self.reload()
         d = self.data
-        return (d["hash"] != chmod.config_hash(self.ch) or not d["entries"] or
+        return (d["hash"] != self.full_hash() or not d["entries"] or
                 d["until"] < now + self.cfg.get("low_water", 3 * 3600))
 
     def ensure(self, now=None, horizon=None, low_water=None):
@@ -172,7 +182,7 @@ class ChannelSchedule(object):
         low_water = low_water or self.cfg.get("low_water", 3 * 3600)
         self.reload()
         d = self.data
-        h = chmod.config_hash(self.ch)
+        h = self.full_hash()
         changed = False
         if d["hash"] != h or not d["entries"] or d["until"] < now:
             start = floor_slot(now, self.slot or 1800) - (1800 if self.slot else 0)
@@ -270,6 +280,43 @@ class ChannelSchedule(object):
                     best = st
         return best
 
+    def _busy(self, t, span=4 * 3600):
+        """{title_lower: [(start, end)]} airing on *other* channels in [t, t+span):
+        their scheduled programmes plus their pinned slots."""
+        lu = self.lineup
+        out = {}
+        if lu is None:
+            return out
+        for c in lu.channels:
+            if c["id"] == self.ch["id"] or c.get("type") not in assign.PROGRAM_TYPES:
+                continue
+            other = lu.sched.get(c["id"]) or lu.schedule(c, ensure=False)
+            for b in other.blocks_between(t, t + span):
+                if b.get("k") == "show":
+                    out.setdefault(b["t"].lower(), []).append((b["s"], b["e"]))
+            for r in c.get("slots", []):
+                if r.get("order") == "random":
+                    continue        # its actual pick shows up in that channel's schedule above
+                occ = rule_occurrences(r, t, t + span)
+                if occ and r.get("sources"):
+                    for title in library.titles(library.resolve(r["sources"])):
+                        out.setdefault(title.lower(), []).extend(occ)
+        return out
+
+    def _clash_free(self, pool, t):
+        """Drop titles that would be on another channel at the same time."""
+        busy = self._busy(t)
+        if not busy:
+            return pool
+        slot = self.slot or 1800
+
+        def free(title, dur):
+            end = t + dur + slot
+            return not any(s < end and e > t for s, e in busy.get(title.lower(), ()))
+        return {"series": [s for s in pool["series"]
+                           if free(s["title"], self._next_episode(s, s["key"])["dur"])],
+                "singles": [i for i in pool["singles"] if free(i["title"], i["dur"])]}
+
     def _fillers(self):
         ch = self.ch
         ads = library.filler_pool(ch.get("commercials_path") or self.cfg.get("commercials_path")) \
@@ -293,6 +340,10 @@ class ChannelSchedule(object):
         rule, _rs, _re = self._rule_at(t)
         if rule:
             pool = library.resolve(rule["sources"])
+            if rule.get("order") == "random":       # e.g. "Movie at 8": don't pick what's on elsewhere
+                free = self._clash_free(pool, t)
+                if free["series"] or free["singles"]:
+                    pool = free
             prog = self._pick_rule(pool, t, rule)
             if prog:
                 return self._program(t, prog, hard)
@@ -302,9 +353,25 @@ class ChannelSchedule(object):
             end = until if hard is None else min(until, hard)
             return self._offair(t, end, until)
 
-        pool = library.without(library.resolve(sources), ch.get("exclude"))
+        full = library.without(library.resolve(sources), ch.get("exclude"))
+        mine = full
+        if key == "base":    # time blocks are the user's own choice - never filtered
+            mine = library.keep_titles(full, assign.allowed_fn(self.assignment(), ch["id"]))
         room = (hard - t - 2) if hard else None
-        prog = self._pick(pool, t, key, maxdur=room)
+        # Never the same show on two channels at once.  Preference:
+        # 1) this channel's own shows that are free, 2) anything else on its list
+        # that is free, 3) any free show from the library (a fill-in, like a
+        # network would run), 4) only if nothing at all is free, its own shows.
+        prog = None
+        for i, cand in enumerate((mine, full, None, mine)):
+            if cand is None:
+                cand = library.resolve([{"type": "alltv"}])
+            if i < 3:
+                cand = self._clash_free(cand, t)
+            prog = self._pick(cand, t, key, maxdur=room)
+            if prog:
+                break
+        pool = full
         if prog:
             return self._program(t, prog, hard)
         if room is not None and (pool["series"] or pool["singles"]):
@@ -530,6 +597,7 @@ class Lineup(object):
         self.channels = chmod.load()
         self.sched = {}
         self.lock = threading.RLock()   # one schedule build at a time (TV + background builder)
+        self.assignment = assign.load()  # one home channel per show (assign.py)
 
     def reload_channels(self):
         self.channels = chmod.load()
@@ -551,6 +619,7 @@ class Lineup(object):
         s = self.sched.get(ch["id"])
         if s is None:
             s = self.sched[ch["id"]] = ChannelSchedule(ch, self.cfg)
+            s.lineup = self
         if ensure:
             try:
                 if s.needs_work(now):
@@ -560,11 +629,17 @@ class Lineup(object):
                 log("Schedule build failed for %s: %s" % (ch.get("name"), exc))
         return s
 
+    def refresh_assignment(self):
+        """Work out every show's home channel again (slow: resolves all sources)."""
+        self.assignment, changed = assign.refresh(self.channels)
+        return changed
+
     def is_ready(self, ch, now=None):
         s = self.schedule(ch, ensure=False)
         return s.block_at(now or time.time()) is not None
 
     def ensure_all(self, now=None, abort=None):
+        self.refresh_assignment()
         for c in self.channels:
             if abort and abort():
                 return

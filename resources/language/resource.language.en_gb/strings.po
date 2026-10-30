@@ -152,6 +152,26 @@ msgctxt "#32038"
 msgid "Always play"
 msgstr ""
 
+msgctxt "#32039"
+msgid "Shows on more than one channel"
+msgstr ""
+
+msgctxt "#32040"
+msgid "TV shows on one channel each (movies can repeat)"
+msgstr ""
+
+msgctxt "#32041"
+msgid "Everything on one channel each"
+msgstr ""
+
+msgctxt "#32042"
+msgid "Allow repeats on any channel"
+msgstr ""
+
+msgctxt "#32043"
+msgid "Keep my watch progress untouched (resume points, watched)"
+msgstr ""
+
 msgctxt "#32900"
 msgid "CHANNEL"
 msgstr ""
@@ -550,7 +570,7 @@ msgid "Bumps folder"
 msgstr ""
 
 msgctxt "#32193"
-msgid "Your city for the Weather Channel (optional, e.g. Dickson, TN)"
+msgid "Your city for the Weather Channel (optional, e.g. Springfield, IL)"
 msgstr ""
 
 msgctxt "#32194"
@@ -1369,10 +1389,6 @@ msgctxt "#32400"
 msgid "Now: %s  (until %s)"
 msgstr ""
 
-msgctxt "#32401"
-msgid "[B]Remote control[/B]\nCH+ / CH-, Up / Down, Page Up / Down ... change channel\nNumber keys ...................................... go to channel\nLeft ................................................... last channel\nRight ................................................ what's on now\nOK / Info ........................................... channel banner\nMenu / Context ................................. sleep timer & more\nBack / Stop ...................................... turn off the TV\n\n[B]How the schedule works[/B]\nNothing to compile.  Each channel pulls from your Kodi library (shows, genres,\ndecades, movies, smart playlists) or from folders, and its schedule writes itself\nas time goes by.  'Same show same time every day' channels air a fixed daily\nlineup and series always continue with the next episode.  Time blocks let you put\ncartoons on Saturday mornings or movies in prime time.\n\nEdit a channel and its schedule rebuilds itself from now on - episode progress is kept.\n\n[B]Fine-tuning[/B]\n'Move shows between channels': pick a show (say, Good Eats) and tick the channels it\nshould air on.  Unticking hides it there even if the channel's genre includes it.\nEach channel also has 'What's on this channel' - a checklist of everything it airs.\n\n[B]Studio channels[/B]\nAdd programming > 'A studio / network' makes e.g. a Disney channel from every movie\nand show whose studio contains 'Disney'.  Kodi tags work the same way.\n\n[B]Weekly planner[/B]\nEach channel has a 7-day grid (Channel manager > channel > Weekly planner, or\nWeekly planner in the main menu).  Press OK on a half-hour to pin a show there -\ne.g. Seinfeld, Fridays 8:00 PM, one hour, in order: every week it continues with\nthe next episodes.  Pinned slots always start on time; the automatic scheduler\nfills everything else and never runs into them.  You can also paint off-air\nhours, copy a day to other days, or clear a day (Menu button).\n\n[B]Off the air[/B]\nOff-air hours show a 1950s 'Please stand by' test card (or color bars), with an\noptional sign-off clip (anthem, farewell) and sign-on clip from your own folders.\n\n[B]Station IDs[/B]\nGive a channel a folder of station ID clips (\"You're watching...\") and one plays\nbetween programs, right before the next show starts.\n\n[B]Commercials & bumps[/B]\nPoint Settings at a folder of commercials and (optionally) bumps.  Breaks are cut\ninto shows to fill each half hour, like real cable.  Movie channels play commercials\nbetween films.  Without commercials the gap is filled with an 'Up next' card.\n'Check my commercials & bumps' shows which clips can't be used.\n\n[B]Files[/B]\nYour lineup lives in userdata/addon_data/script.cablebox42/channels.json if you\nprefer editing it by hand."
-msgstr ""
-
 msgctxt "#32402"
 msgid "Custom days"
 msgstr ""
@@ -1751,4 +1767,112 @@ msgstr ""
 
 msgctxt "#32496"
 msgid "Updating listings..."
+msgstr ""
+
+msgctxt "#32497"
+msgid "Working out which channel each show belongs on..."
+msgstr ""
+
+msgctxt "#32498"
+msgid "%d more shows from this channel's sources air on their own home channels"
+msgstr ""
+
+msgctxt "#32501"
+msgid "Sign channels off overnight, like real TV?[CR][CR]From 12 AM to 5 AM a 'Please stand by' card shows; the guide and weather stay on."
+msgstr ""
+
+msgctxt "#32502"
+msgid "Give channels a prime-time lineup?[CR][CR]From 8 to 11 PM each channel airs its best shows in fixed weekly slots (movie channels: a movie at 8). You can change any of it in the weekly planner."
+msgstr ""
+
+msgctxt "#32503"
+msgid "No, run all night"
+msgstr ""
+
+msgctxt "#32504"
+msgid "Yes (recommended)"
+msgstr ""
+
+msgctxt "#32505"
+msgid "No thanks"
+msgstr ""
+
+msgctxt "#32506"
+msgid "Building prime-time lineups..."
+msgstr ""
+
+msgctxt "#32507"
+msgid "Sign off overnight on all channels (choose hours)"
+msgstr ""
+
+msgctxt "#32508"
+msgid "Never sign off (remove off-air hours from all channels)"
+msgstr ""
+
+msgctxt "#32509"
+msgid "Build prime-time lineups on all channels (choose hours)"
+msgstr ""
+
+msgctxt "#32510"
+msgid "Remove the automatic prime-time lineups"
+msgstr ""
+
+msgctxt "#32511"
+msgid "Quick setup"
+msgstr ""
+
+msgctxt "#32512"
+msgid "Quick setup (sign-off hours, prime time)"
+msgstr ""
+
+msgctxt "#32513"
+msgid "Channels now sign off %s - %s"
+msgstr ""
+
+msgctxt "#32514"
+msgid "Prime time starts at"
+msgstr ""
+
+msgctxt "#32515"
+msgid "Prime time ends at"
+msgstr ""
+
+msgctxt "#32516"
+msgid "Prime-time lineups built for %d channels.[CR]See them in the weekly planner - change or remove any slot there."
+msgstr ""
+
+msgctxt "#32517"
+msgid "  (automatic prime time)"
+msgstr ""
+
+msgctxt "#32518"
+msgid "Movie at %s"
+msgstr ""
+
+msgctxt "#32519"
+msgid "Tick what you're REALLY in the middle of - the rest is cleared"
+msgstr ""
+
+msgctxt "#32520"
+msgid "Nothing is marked 'in progress'."
+msgstr ""
+
+msgctxt "#32521"
+msgid "Cleared %d items"
+msgstr ""
+
+msgctxt "#32522"
+msgid "Clean up my 'In progress' list"
+msgstr ""
+
+msgctxt "#32523"
+msgid "stopped at %d of %d min"
+msgstr ""
+
+msgctxt "#32524"
+msgid "Clear the resume point of %d items?[CR](%d kept)"
+msgstr ""
+
+msgctxt "#32525"
+msgid "[B]Remote control[/B]\nCH+ / CH-, Up / Down, Page Up / Down ... change channel\nNumber keys ...................................... go to channel\nLeft ................................................... last channel\nRight ................................................ what's on now\nOK / Info ........................................... channel banner\nMenu / Context ................................. sleep timer & more\nBack / Stop ...................................... turn off the TV\n\n[B]How the schedule works[/B]\nNothing to compile.  Each channel pulls from your Kodi library (shows, genres,\ndecades, movies, smart playlists) or from folders, and its schedule writes itself\nas time goes by.  'Same show same time every day' channels air a fixed daily\nlineup and series always continue with the next episode.  Time blocks let you put\ncartoons on Saturday mornings or movies in prime time.\n\nEdit a channel and its schedule rebuilds itself from now on - episode progress is kept.\n\n[B]One channel per show[/B]\nEach TV show has one home channel - the one it fits best (your own picks first,\nthen folders/tags/studios, then its main genre, then decades and the 'everything'\nchannel).  And the same show is never on two channels at the same time.\nSettings > Programming > 'Shows on more than one channel' changes this.\n\n[B]Fine-tuning[/B]\n'Move shows between channels': pick a show (say, Good Eats) and tick the channels it\nshould air on.  Unticking hides it there even if the channel's genre includes it.\nEach channel also has 'What's on this channel' - a checklist of everything it airs.\n\n[B]Studio channels[/B]\nAdd programming > 'A studio / network' makes e.g. a Disney channel from every movie\nand show whose studio contains 'Disney'.  Kodi tags work the same way.\n\n[B]Weekly planner[/B]\nEach channel has a 7-day grid (Channel manager > channel > Weekly planner, or\nWeekly planner in the main menu).  Press OK on a half-hour to pin a show there -\ne.g. Seinfeld, Fridays 8:00 PM, one hour, in order: every week it continues with\nthe next episodes.  Pinned slots always start on time; the automatic scheduler\nfills everything else and never runs into them.  You can also paint off-air\nhours, copy a day to other days, or clear a day (Menu button).\n\n[B]Your watch progress[/B]\nCableBox puts back resume points, watched status and last-played dates after it\nairs something, so surfing doesn't fill your 'In progress' list (Settings >\nViewing).  'Clean up my In progress list' tidies up an older list.\n\n[B]Quick setup[/B]\nMain menu > Quick setup: overnight sign-off (default 12 AM - 5 AM) and automatic\nprime-time lineups (default 8 - 11 PM) for every channel at once.  Prime-time\nslots appear in the weekly planner; edit any of them and it becomes yours.\n\n[B]Off the air[/B]\nOff-air hours show a 1950s 'Please stand by' test card (or color bars), with an\noptional sign-off clip (anthem, farewell) and sign-on clip from your own folders.\n\n[B]Station IDs[/B]\nGive a channel a folder of station ID clips (\"You're watching...\") and one plays\nbetween programs, right before the next show starts.\n\n[B]Commercials & bumps[/B]\nPoint Settings at a folder of commercials and (optionally) bumps.  Breaks are cut\ninto shows to fill each half hour, like real cable.  Movie channels play commercials\nbetween films.  Without commercials the gap is filled with an 'Up next' card.\n'Check my commercials & bumps' shows which clips can't be used.\n\n[B]Files[/B]\nYour lineup lives in userdata/addon_data/script.cablebox42/channels.json if you\nprefer editing it by hand."
 msgstr ""

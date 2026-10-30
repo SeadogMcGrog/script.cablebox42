@@ -228,7 +228,7 @@ class Planner(xbmcgui.WindowXMLDialog):
             order = _("in order") if r.get("order", "inorder") == "inorder" else _("random episodes")
             return _("%s:  [B]%s[/B]  -  %s at %s, %s, %s") % (
                 where, r.get("label", ""), days_text(r.get("days")), clock(mins(r["start"])),
-                length_text(int(r.get("minutes", 30))), order)
+                length_text(int(r.get("minutes", 30))), order) + (_("  (automatic prime time)") if r.get("auto") else "")
         if kind == "off":
             w = self.ch["offair"][idx]
             return _("%s:  [B]Off the air[/B] %s - %s, %s") % (
@@ -430,6 +430,7 @@ class Planner(xbmcgui.WindowXMLDialog):
             return
         if j in (1, 2, 3) and not self.resolve_conflicts(new, skip=idx):
             return
+        new.pop("auto", None)        # edited by hand: Quick setup will leave it alone from now on
         r.clear()
         r.update(new)
         self.save()

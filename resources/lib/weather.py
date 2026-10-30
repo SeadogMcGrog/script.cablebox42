@@ -139,7 +139,7 @@ def _geocode(place):
             res = _get_json("https://geocoding-api.open-meteo.com/v1/search?count=5&language=en&name=%s"
                             % quote(parts[0]))
             results = res.get("results") or []
-            if len(parts) > 1:  # "Dickson, TN" -> prefer matching admin/country
+            if len(parts) > 1:  # "Springfield, IL" -> prefer matching admin/country
                 want = parts[1].lower()
                 results = [r for r in results if want in (r.get("admin1", "") + r.get("country_code", "") +
                                                           r.get("country", "")).lower()] or results
