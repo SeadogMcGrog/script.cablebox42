@@ -21,9 +21,12 @@ hardware video decoding works exactly as it does for the rest of your library.
 
 ### ▶ See it in action
 
-[![CableBox 42: the TV Guide and Weather channels on YouTube](https://img.youtube.com/vi/VDaUOxNVePA/hqdefault.jpg)](https://youtu.be/VDaUOxNVePA)
+| Part 1: the tour | Part 2: guide and weather |
+|---|---|
+| [![CableBox 42 part 1: channel surfing and the tour](https://img.youtube.com/vi/38CTQFPLdgg/hqdefault.jpg)](https://youtu.be/38CTQFPLdgg) | [![CableBox 42 part 2: the TV Guide and Weather channels](https://img.youtube.com/vi/VDaUOxNVePA/hqdefault.jpg)](https://youtu.be/VDaUOxNVePA) |
+| *Channel surfing, commercials and the menus* | *The TV Guide channel and the Weather Channel* |
 
-*Video: the TV Guide channel and the Weather Channel (click to watch on YouTube).*
+*Click a picture to watch on YouTube.*
 
 | | |
 |---|---|
