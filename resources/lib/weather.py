@@ -6,6 +6,8 @@ Data comes from (in order, configurable in Settings):
   * Open-Meteo (free, no API key) for a city / "lat,lon" you type in.
 """
 import json
+import os
+import re
 import threading
 import time
 
@@ -126,8 +128,62 @@ def from_kodi():
     return d
 
 
+# ------------------------------------------------------------------ cache
+# Kept in its own file (not state.json, which the TV writes too) so a weather
+# thread can never clobber the viewer's state.
+CACHE_FILE = os.path.join(K.PROFILE, "weather_cache.json")
+STALE_OK = 6 * 3600          # show a saved forecast up to 6 hours old if every source fails
+COMPLETE = 4
+
+
+def _cache():
+    c = K.load_json(CACHE_FILE, {})
+    return c if isinstance(c, dict) else {}
+
+
+def _save_cache(c):
+    try:
+        K.save_json(CACHE_FILE, c)
+    except Exception as exc:
+        K.log_err("weather cache: %s" % exc)
+
+
+def remember(d):
+    c = _cache()
+    c["last"] = {"at": time.time(), "data": d}
+    _save_cache(c)
+
+
+def last_good(max_age=STALE_OK):
+    hit = _cache().get("last") or {}
+    if hit.get("data") and time.time() - float(hit.get("at") or 0) < max_age:
+        return hit["data"]
+    return None
+
+
+def quality(d):
+    """How complete a forecast is: 0 (nothing) to 5 (current, days and hours)."""
+    if not d:
+        return 0
+    n = d.get("now") or {}
+    q = (1 if n.get("temp") else 0) + (1 if n.get("cond") else 0)
+    q += 2 if len(d.get("days") or []) >= 3 else (1 if d.get("days") else 0)
+    q += 1 if len(d.get("hours") or []) >= 3 else 0
+    return q
+
+
+def kodi_place():
+    """The location Kodi's weather service is set to, cleaned up for geocoding
+    ('Springfield, IL (US)' -> 'Springfield, IL')."""
+    try:
+        loc = xbmc.getInfoLabel("Weather.Location") or xbmcgui.Window(12600).getProperty("Location") or ""
+    except Exception:
+        return ""
+    return re.sub(r"\s*\(.*?\)\s*", " ", loc).strip(" ,")
+
+
 def _geocode(place):
-    st = K.load_json(K.STATE_FILE, {})
+    st = _cache()
     cache = st.get("geocode", {})
     if place in cache:
         return cache[place]
@@ -150,9 +206,9 @@ def _geocode(place):
     except Exception as exc:
         K.log_err("geocode failed: %s" % exc)
         return None
-    cache[place] = hit
-    st["geocode"] = cache
-    K.save_json(K.STATE_FILE, st)
+    st = _cache()
+    st.setdefault("geocode", {})[place] = hit
+    _save_cache(st)
     return hit
 
 
@@ -255,6 +311,34 @@ def narrative(d):
     return out
 
 
+def _safe(fn, *a):
+    try:
+        return fn(*a)
+    except Exception as exc:
+        K.log_err("weather source %s: %s" % (getattr(fn, "__name__", fn), exc))
+        return None
+
+
+def fetch():
+    """Best forecast available right now.
+
+    Automatic: Kodi's weather if it's complete; if it's missing, broken or
+    half-filled (a weather add-on that crashed part-way), Open-Meteo for your
+    city - or, with no city typed in, for the place Kodi's weather is set to.
+    A partial Kodi forecast is still used when nothing better is reachable."""
+    src = K.setting_int("weather_source", 0)  # 0 auto, 1 kodi only, 2 open-meteo only
+    if src == 1:
+        return _safe(from_kodi)
+    kd = _safe(from_kodi) if src == 0 else None
+    if quality(kd) >= COMPLETE:
+        return kd
+    place = K.setting("weather_location", "").strip() or kodi_place()
+    om = _safe(from_open_meteo, place) if place else None
+    if om and quality(om) >= quality(kd):
+        return om
+    return kd or om
+
+
 # ------------------------------------------------------------------ screen
 class WeatherScreen(object):
     def __init__(self, win):
@@ -266,20 +350,18 @@ class WeatherScreen(object):
         self.page = 0
 
     def _fetch(self):
-        src = K.setting_int("weather_source", 0)  # 0 auto, 1 kodi only, 2 open-meteo only
-        place = K.setting("weather_location", "").strip()
-        d = None
         try:
-            if src in (0, 1):
-                d = from_kodi()
-            if d is None and src != 1 and place:
-                d = from_open_meteo(place)
-        except Exception as exc:
+            d = fetch()
+        except Exception as exc:          # never let the weather take the TV down
             K.log_err("weather fetch: %s" % exc)
+            d = None
         if d:
             self.data = d
             self.fetched_at = time.time()
+            remember(d)
         else:
+            if not self.data:
+                self.data = last_good()     # an older forecast beats a blank screen
             self.fetched_at = time.time() - REFRESH_SECS + 60  # retry in a minute
         self.fetching = False
         self.render()
@@ -287,7 +369,9 @@ class WeatherScreen(object):
     def tick(self, now, force=False):
         if (force or now - self.fetched_at > REFRESH_SECS) and not self.fetching:
             self.fetching = True
-            threading.Thread(target=self._fetch).start()
+            t = threading.Thread(target=self._fetch)
+            t.daemon = True
+            t.start()
         if force:
             self.page = 0
             self.page_at = now + PAGE_SECS
@@ -298,6 +382,12 @@ class WeatherScreen(object):
             self.render()
 
     def render(self):
+        try:
+            self._render()
+        except Exception as exc:          # a bad value from a weather add-on mustn't stop the TV
+            K.log_err("weather render: %s" % exc)
+
+    def _render(self):
         w = self.win
         P = w.setProperty
         P("wx_title", K.setting("weather_title", _("Your Local Forecast")))

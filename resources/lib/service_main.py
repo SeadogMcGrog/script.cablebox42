@@ -48,11 +48,26 @@ def run():
                 break
     if monitor.waitForAbort(90):
         return
+    from . import progress
+    was_on = tv_running()
+    idle = 0
     while not monitor.abortRequested():
-        if not tv_running():
+        on = tv_running()
+        if was_on and not on:
+            # TV just switched off: confirm every resume point is back (twice,
+            # in case Kodi was still writing when the TV closed)
+            for wait in (10, 60):
+                if monitor.waitForAbort(wait):
+                    return
+                progress.repair_pending()
+        was_on = on
+        if not on and idle <= 0:
             try:
+                progress.repair_pending()
                 topup()
             except Exception as exc:
                 K.log_err("schedule top-up failed: %s" % exc)
-        if monitor.waitForAbort(20 * 60):
+            idle = 20 * 60
+        if monitor.waitForAbort(15):
             break
+        idle -= 15

@@ -34,8 +34,10 @@ def log_err(msg):
 
 
 def setting(key, default=""):
+    """Read a setting fresh every time: an Addon object created earlier can keep
+    returning old values after the user changes settings elsewhere in Kodi."""
     try:
-        v = ADDON.getSetting(key)
+        v = xbmcaddon.Addon(ADDON_ID).getSetting(key)
     except Exception:
         return default
     return v if v != "" else default
@@ -56,7 +58,7 @@ def setting_int(key, default=0):
 
 
 def set_setting(key, value):
-    ADDON.setSetting(key, str(value))
+    xbmcaddon.Addon(ADDON_ID).setSetting(key, str(value))
 
 
 def lang(string_id):
@@ -106,7 +108,27 @@ def schedule_cfg():
         "breaks_per_slot": max(0, setting_int("breaks_per_slot", 2)),
         "horizon": max(4, setting_int("horizon_hours", 12)) * 3600,
         "low_water": 3 * 3600,
+        "shorts_mode": setting_int("shorts_mode", 0),
+        "seasons": seasons_cfg(),
     }
+
+
+def _raw(key):
+    """A text setting exactly as typed - an emptied field means 'none', not 'default'."""
+    try:
+        return xbmcaddon.Addon(ADDON_ID).getSetting(key)
+    except Exception:
+        return None
+
+
+def seasons_cfg():
+    out = {"on": setting_bool("seasons_on", True), "intensity": setting_int("season_intensity", 1),
+           "hold": setting_bool("season_hold", True)}
+    for name in ("halloween", "thanksgiving", "christmas"):
+        out[name] = {"on": setting_bool("%s_on" % name, True),
+                     "ads": setting("%s_commercials" % name), "bumps": setting("%s_bumps" % name),
+                     "tags": _raw("%s_tags" % name), "genres": _raw("%s_genres" % name)}
+    return out
 
 
 # ------------------------------------------------------------------ localisation

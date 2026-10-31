@@ -10,6 +10,7 @@ import time
 
 import xbmc
 import xbmcgui
+import xbmcvfs
 
 from . import kodiutil as K
 from . import library
@@ -78,6 +79,8 @@ class TVWindow(xbmcgui.WindowXML):
         self.av_started_token = -1
         self.retries = 0
         self.failed_key = None
+        self.sub = None              # stand-in for a programme Kodi couldn't open
+        self.sub_at = 0
         self.digits = ""
         self.digits_at = 0
         self.osd_until = 0
@@ -87,6 +90,8 @@ class TVWindow(xbmcgui.WindowXML):
         self.sleep_at = 0
         self.guide_next = 0
         self.promo_next = 0
+        self.scroll_top = 0          # first guide row on screen
+        self.scroll_next = 0
         self.promos = []
         self.closing = False
         self.started = False
@@ -160,7 +165,7 @@ class TVWindow(xbmcgui.WindowXML):
             except Exception:
                 pass
         if self.progress.pending:
-            xbmc.sleep(1500)                 # let Kodi write its resume point first, then undo it
+            xbmc.sleep(2500)                 # let Kodi write its resume point first, then undo it
             self.progress.release_now()
         library.durations().save()
         xbmc.executebuiltin("InhibitScreensaver(false)")
@@ -231,6 +236,8 @@ class TVWindow(xbmcgui.WindowXML):
             self.cur_key = None
             self.failed_key = None
             self.retries = 0
+            self.sub = None
+            self.sub_at = 0
             self.show_digits(str(ch["number"]))
             self.setProperty("ch_number", str(ch["number"]))
             self.setProperty("ch_name", ch["name"])
@@ -344,6 +351,8 @@ class TVWindow(xbmcgui.WindowXML):
         key = (self.ch["id"], e["s"])
         if key != self.cur_key:
             self.start_entry(e, key, now)
+        elif key == self.failed_key:
+            self.cover_failure(e, now)
         elif self.is_video(e):
             self.watchdog(e, key, now)
         if e["k"] == "guide":
@@ -358,12 +367,20 @@ class TVWindow(xbmcgui.WindowXML):
         return bool(e) and e.get("k") in VIDEO_KINDS
 
     def start_entry(self, e, key, now):
+        self.save_sub_position()
         self.cur_key = key
         self.cur_entry = e
+        self.retries = 0
         kind = e["k"]
         if kind in VIDEO_KINDS:
             if key == self.failed_key:
                 self.trouble()
+                return
+            if kind == "show" and (library.is_bad(e["p"]) or (self.sub and self.sub["for"] == e["p"])):
+                # a programme already known not to open: go straight to the stand-in
+                self.failed_key = key
+                self.sub_at = 0
+                self.play_substitute(e, now)
                 return
             self.play(e, now)
             self.set_mode("video")
@@ -372,12 +389,14 @@ class TVWindow(xbmcgui.WindowXML):
                 self.set_mode("guide")
                 self.guide_next = 0
                 self.promo_next = 0
+                self.scroll_top = 0
+                self.scroll_next = now + 5.0
                 self.guide_tick(now)
-                self.background_audio(self.guide_music)
+                self.background_audio(K.setting("guide_music_path"))
             elif kind == "weather":
                 self.set_mode("weather")
                 self.weather.tick(now, force=True)
-                self.background_audio(self.weather_music)
+                self.background_audio(K.setting("weather_music_path"))
             else:
                 self.stop_player()
                 if kind == "offair":
@@ -437,7 +456,94 @@ class TVWindow(xbmcgui.WindowXML):
             self.play(e, now)
         else:
             self.failed_key = key
-            self.trouble()
+            self.give_up(e)
+
+    # ----------------------------------------------------------- unplayable files
+    @staticmethod
+    def really_bad(path):
+        """The file is there (or its folder is) but Kodi can't open it.  If the
+        whole folder is gone, the drive or share is probably just offline -
+        don't blacklist a library's worth of files for that."""
+        try:
+            if xbmcvfs.exists(path):
+                return True
+            folder = path.replace("\\", "/").rsplit("/", 1)[0] + "/"
+            return bool(folder.strip("/")) and xbmcvfs.exists(folder)
+        except Exception:
+            return False
+
+    def give_up(self, e):
+        """Kodi couldn't open this.  'Technical difficulties' for a few
+        seconds, then something else from the channel fills the time."""
+        path = e.get("p") or ""
+        K.log_err("Couldn't play %s" % path)
+        if self.really_bad(path):
+            library.mark_bad(path, _("Kodi couldn't open it"))
+        self.trouble()
+        self.sub = None
+        self.sub_at = time.time() + 6 if e.get("k") == "show" else 0
+
+    def cover_failure(self, e, now):
+        """While a failed programme's time runs: keep a stand-in playing."""
+        if e.get("k") != "show" or not self.sub_at and not self.sub:
+            return
+        if self.sub is None:
+            if time.time() >= self.sub_at:
+                self.play_substitute(e, now)
+            return
+        if self.player.isPlaying() or time.time() - self.play_started_at < LOAD_TIMEOUT:
+            return
+        # the stand-in ended (or failed too) before the slot did: another one
+        self.sub = dict(self.sub, p=None, pos=0.0, tried=self.sub.get("tried", []) + [self.sub["p"]])
+        self.play_substitute(e, now)
+
+    def _substitute_pick(self, avoid, room):
+        try:
+            pool = library.resolve(self.ch.get("sources") or [])
+        except Exception:
+            return None
+        items = [ep for ser in pool["series"] for ep in ser["episodes"]] + pool["singles"]
+        items = [i for i in items if i["path"] not in avoid and not library.is_bad(i["path"])]
+        if not items:
+            return None
+        long_enough = [i for i in items if i["dur"] >= room * 0.8]
+        return random.choice(long_enough or items)
+
+    def play_substitute(self, e, now):
+        sub = self.sub
+        if sub is None or not sub.get("p"):
+            b = self.lineup.schedule(self.ch, ensure=False).block_at(now)
+            room = (b["e"] - now) if b else 1800
+            avoid = {e["p"]} | ({sub["p"]} if sub and sub.get("p") else set()) | set((sub or {}).get("tried", []))
+            it = self._substitute_pick(avoid, room)
+            if it is None:
+                self.sub = None
+                self.sub_at = 0
+                self.trouble()
+                return
+            sub = {"for": e["p"], "p": it["path"], "pos": 0.0, "t": it.get("title") or "",
+                   "s": " ".join(x for x in (it.get("label"), it.get("sub")) if x),
+                   "tried": list(avoid)}
+        sub["started"] = time.time()
+        sub["base"] = sub["pos"]
+        self.sub = sub
+        self.play({"k": "show", "p": sub["p"], "o": sub["pos"], "s": now, "t": sub["t"], "sub": sub["s"]}, now)
+        self.set_mode("video")
+        self.setProperty("now_title", sub["t"])
+        self.setProperty("now_sub", sub["s"])
+
+    def save_sub_position(self):
+        """Leaving a stand-in for a commercial break: remember where it was."""
+        if not self.sub or not self.sub.get("p") or "started" not in self.sub:
+            return
+        pos = self.sub.get("base", 0.0) + (time.time() - self.sub["started"])
+        try:
+            if self.player.isPlaying() and self.player.getPlayingFile() == self.sub["p"]:
+                pos = self.player.getTime()
+        except Exception:
+            pass
+        self.sub["pos"] = max(0.0, pos - 2)
+        self.sub.pop("started", None)
 
     def channel_ads(self):
         if not self.ch or not self.ch.get("commercials"):
@@ -572,6 +678,33 @@ class TVWindow(xbmcgui.WindowXML):
             self.setProperty("guide_promo", self.promos[0])
             self.promos = self.promos[1:] + self.promos[:1]
             self.promo_next = now + 8
+        if now >= self.scroll_next:
+            self.guide_scroll(now)
+
+    GUIDE_ROWS = 7          # rows visible in the guide list (620 / 88)
+    SCROLL_STEP = 2.5       # seconds per row
+    SCROLL_HOLD = 5.0       # pause at the bottom (and top) before moving on
+
+    def guide_scroll(self, now):
+        """Scroll one row at a time; hold at the end, then jump back to the top."""
+        try:
+            lst = self.getControl(50)
+            n = lst.size()
+        except Exception:
+            return
+        last_top = max(0, n - self.GUIDE_ROWS)
+        if last_top == 0:                      # everything fits - nothing to scroll
+            self.scroll_next = now + 30
+            return
+        if self.scroll_top >= last_top:        # held at the bottom long enough
+            self.scroll_top = 0
+            lst.selectItem(0)
+            self.scroll_next = now + self.SCROLL_HOLD
+            return
+        self.scroll_top += 1
+        # selecting the row just below the screen pushes the view down by one
+        lst.selectItem(min(n - 1, self.scroll_top + self.GUIDE_ROWS - 1))
+        self.scroll_next = now + (self.SCROLL_HOLD if self.scroll_top >= last_top else self.SCROLL_STEP)
 
     def fill_guide(self, now):
         t0 = scheduler.floor_slot(now, 1800)
@@ -614,6 +747,11 @@ class TVWindow(xbmcgui.WindowXML):
             lst = self.getControl(50)
             lst.reset()
             lst.addItems(items)
+            # keep the scroll position across the 5-minute refresh
+            self.scroll_top = min(self.scroll_top, max(0, len(items) - self.GUIDE_ROWS))
+            if self.scroll_top:
+                lst.selectItem(0)
+                lst.selectItem(min(len(items) - 1, self.scroll_top + self.GUIDE_ROWS - 1))
         except Exception as exc:
             K.log_err("guide list: %s" % exc)
         random.shuffle(promos)

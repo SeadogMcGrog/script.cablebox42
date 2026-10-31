@@ -1005,9 +1005,24 @@ def check_fillers():
         out.append("")
     pd.close()
     library.clear_cache()
+    bad_now = library.bad_files()
+    out.insert(0, "")
+    if bad_now:
+        out[0:0] = [_("[B]Videos that wouldn't play[/B]  [COLOR grey]kept off the air for 3 days, "
+                      "then tried again[/COLOR]")] + \
+            ["  %s  [COLOR grey]%s[/COLOR]" % (os.path.basename(p), time.strftime("%b %d %H:%M", time.localtime(at)))
+             for p, at, _why in bad_now[:30]] + (["  ..."] if len(bad_now) > 30 else []) + \
+            [_("  Check that each file plays from Kodi's own menus.  A damaged file can often be "
+               "re-downloaded or remuxed.")]
+    else:
+        out[0:0] = [_("[B]Videos that wouldn't play[/B]  [COLOR grey]none[/COLOR]")]
     out.append(_("Tip: a few dozen clips of mixed lengths (15/30/60s) fill breaks almost exactly. "
                "Unreadable files can be remuxed to .mp4 or .mkv; AV1 videos can be re-encoded to H.264 or H.265."))
     D.textviewer(_("Video check"), "[CR]".join(out))
+    if bad_now and D.yesno(TITLE, _("%d videos are being kept off the air because they wouldn't play.[CR][CR]"
+                                    "Fixed them?  Put them back on the schedule now.") % len(bad_now),
+                           nolabel=_("Leave them off"), yeslabel=_("Try them again")):
+        library.forget_bad()
 
 
 def help_text():
@@ -1035,9 +1050,16 @@ then folders/tags/studios, then its main genre, then decades and the 'everything
 channel).  And the same show is never on two channels at the same time.
 Settings > Programming > 'Shows on more than one channel' changes this.
 
+[B]Menu and tools[/B]
+The menu keeps to the everyday things: Watch TV, What's on now (tune straight to a
+show), the Channel manager, the Weekly planner, Settings and Help.  Lineup tools
+(build a new lineup, quick setup, move shows) and maintenance (check my videos,
+clean up In progress, rebuild schedules) are on the Tools page in Settings.
+
 [B]Fine-tuning[/B]
-'Move shows between channels': pick a show (say, Good Eats) and tick the channels it
-should air on.  Unticking hides it there even if the channel's genre includes it.
+Settings > Tools > 'Move shows between channels': pick a show (say, Good Eats) and tick the channels it
+should air on.
+Unticking hides it there even if the channel's genre includes it.
 Each channel also has 'What's on this channel' - a checklist of everything it airs.
 
 [B]Studio channels[/B]
@@ -1055,12 +1077,20 @@ hours, copy a day to other days, or clear a day (Menu button).
 [B]Your watch progress[/B]
 CableBox puts back resume points, watched status and last-played dates after it
 airs something, so surfing doesn't fill your 'In progress' list (Settings >
-Viewing).  'Clean up my In progress list' tidies up an older list.
+Viewing).  Settings > Tools > 'Clean up my In progress list' tidies up an older list.
 
 [B]Quick setup[/B]
-Main menu > Quick setup: overnight sign-off (default 12 AM - 5 AM) and automatic
+Settings > Tools > Quick setup: overnight sign-off (default 12 AM - 5 AM) and automatic
 prime-time lineups (default 8 - 11 PM) for every channel at once.  Prime-time
 slots appear in the weekly planner; edit any of them and it becomes yours.
+
+[B]Holidays[/B]
+Halloween (October, all-out on the 31st), Thanksgiving Day and Christmas (from the day
+after Thanksgiving, all-out on the 24th and 25th): each channel mixes in its own holiday
+episodes and movies (Kodi tags first, then genres such as Horror and Mystery, then titles) - a few at
+first, more as the day gets closer, all day on the day itself.  Optional holiday
+commercial and bump folders.  The rest of the year Christmas and Thanksgiving episodes
+are saved for their season.  Settings > Seasons.
 
 [B]Off the air[/B]
 Off-air hours show a 1950s 'Please stand by' test card (or color bars), with an
@@ -1078,26 +1108,136 @@ between films.  Without commercials the gap is filled with an 'Up next' card.
 
 [B]Files[/B]
 Your lineup lives in userdata/addon_data/script.cablebox42/channels.json if you
-prefer editing it by hand.""")
+prefer editing it by hand.
+
+[B]About[/B]
+CableBox 42 is designed, tested and maintained by Seadog McGrog.  Much of the code
+was written with the help of Claude, an AI assistant made by Anthropic.  Anthropic is
+not affiliated with this project and has not reviewed or endorsed it.
+Inspired by FieldStation42 by Shane Mason (no shared code).""")
+
+
+def _menu_row(label, desc):
+    li = xbmcgui.ListItem(label, desc)
+    return li
+
+
+def whats_on_now():
+    """Every channel with what's airing right now; pick one to tune straight to it."""
+    from .tv import fmt_time
+    lineup = scheduler.Lineup(K.schedule_cfg())
+    now = time.time()
+    chans = [c for c in lineup.channels]
+    rows = []
+    for c in chans:
+        b = lineup.schedule(c, ensure=False).block_at(now)
+        if b:
+            title = b["t"]
+            when = "%s - %s" % (fmt_time(b["s"]), fmt_time(b["e"]))
+            sub = " ".join(x for x in (b.get("lb", ""), b.get("sub", "")) if x)
+            desc = "%s   %s" % (when, sub) if sub else when
+        else:
+            title, desc = _("Listings not ready yet"), ""
+        rows.append(_menu_row("%3d  %s   [COLOR grey]%s[/COLOR]" % (c["number"], c["name"], title), desc))
+    if not rows:
+        return None
+    i = D.select(_("What's on now"), rows, useDetails=True)
+    return chans[i]["number"] if i >= 0 else None
+
+
+def pick_planner_channel():
+    progs = [c for c in C.load() if c["type"] in PROGRAM_TYPES]
+    if not progs:
+        D.ok(TITLE, _("Add a channel first."))
+        return
+    j = D.select(_("Plan which channel?"), ["%3d  %s" % (c["number"], c["name"]) for c in progs])
+    if j >= 0:
+        from . import planner
+        planner.open_planner(progs[j]["id"])
+
+
+# Tools reached from Settings > Tools (RunScript(script.cablebox42,tool,<name>)).
+TOOLS = {
+    "wizard": lambda: wizard(),
+    "quick": lambda: quick_setup(),
+    "shows": lambda: shows_and_channels(),
+    "fillers": lambda: check_fillers(),
+    "progress": lambda: clean_in_progress(),
+    "rebuild": lambda: rebuild_all(),
+}
+TOOL_BUSY = "script.cablebox42.tool"
+
+
+def run_tool(name):
+    fn = TOOLS.get(name)
+    if fn is None:
+        return
+    home = xbmcgui.Window(10000)
+    home.setProperty(TOOL_BUSY, name)
+    try:
+        fn()
+    finally:
+        home.clearProperty(TOOL_BUSY)
+
+
+def open_settings():
+    """Settings; if a tool was started from its Tools page, wait for it to
+    finish before showing the menu again (so two dialogs never collide)."""
+    K.ADDON.openSettings()
+    home = xbmcgui.Window(10000)
+    mon = xbmc.Monitor()
+    for _i in range(8):                      # the tool starts a moment after Settings closes
+        if home.getProperty(TOOL_BUSY) or mon.waitForAbort(0.25):
+            break
+    while home.getProperty(TOOL_BUSY) and not mon.waitForAbort(0.3):
+        pass
+
+
+def welcome():
+    """First start on a new install.  Returns True if the viewer went on to watch TV."""
+    rows = [_menu_row(_("[B]Set it all up for me[/B]"),
+                      _("Reads your Kodi library and builds a full lineup - channels, guide, weather, "
+                        "overnight sign-off, prime time. About a minute.")),
+            _menu_row(_("I'll set it up myself"),
+                      _("Starts with just the TV Guide and Weather Channel. You add channels in the "
+                        "Channel manager.")),
+            _menu_row(_("Not now"), _("Go to the menu. You'll be asked again next time."))]
+    i = D.select(_("Welcome to CableBox 42"), rows, useDetails=True)
+    if i == 0:
+        return bool(wizard())
+    if i == 1:
+        chans = [C.new_channel(2, _("TV Guide"), "guide"), C.new_channel(3, _("Weather Channel"), "weather")]
+        for c in chans:
+            c["callsign"] = C.callsign(c["name"])
+        C.save(chans)
+        D.ok(TITLE, _("You have a TV Guide on 2 and the Weather Channel on 3.[CR][CR]"
+                      "Next: Channel manager > Add a channel.  Commercials, bumps and music folders are "
+                      "in Settings, and Settings > Tools > 'Build my lineup automatically' can still build "
+                      "channels for you any time."))
+        manager()
+    return False
 
 
 def main_menu():
+    if not os.path.exists(K.CHANNELS_FILE) and welcome():
+        return
     while True:
         chans = C.load()
-        opts = []
         if chans:
-            opts.append(("watch", _("[B]Watch TV[/B]")))
-        opts += [("wizard", _("Build my lineup automatically")),
-                 ("manager", _("Channel manager")),
-                 ("planner", _("Weekly planner")),
-                 ("quick", _("Quick setup (sign-off hours, prime time)")),
-                 ("shows", _("Move shows between channels")),
-                 ("fillers", _("Check my videos (commercials, bumps, AV1)")),
-                 ("progress", _("Clean up my 'In progress' list")),
-                 ("rebuild", _("Rebuild schedules")),
-                 ("settings", _("Settings")),
-                 ("help", _("Help"))]
-        i = D.select(TITLE, [o[1] for o in opts])
+            start = K.setting_int("start_channel", 0)
+            opts = [("watch", _("[B]Watch TV[/B]"),
+                     (_("Start on channel %d") % start) if start else _("Pick up where you left off")),
+                    ("now", _("What's on now"), _("See every channel's current show and tune straight to it")),
+                    ("manager", _("Channel manager"), _("Add, edit, rename and renumber channels")),
+                    ("planner", _("Weekly planner"), _("Pin shows to days and times")),
+                    ("settings", _("Settings and tools"),
+                     _("Commercials, music, weather, picture - plus lineup tools and maintenance")),
+                    ("help", _("Help"), _("How everything works"))]
+        else:
+            opts = [("wizard", _("[B]Set up my channels[/B]"), _("Builds a lineup from your Kodi library in a minute")),
+                    ("settings", _("Settings and tools"), _("Commercials, music, weather, picture")),
+                    ("help", _("Help"), _("How everything works"))]
+        i = D.select(TITLE, [_menu_row(o[1], o[2]) for o in opts], useDetails=True)
         if i < 0:
             return
         k = opts[i][0]
@@ -1105,28 +1245,20 @@ def main_menu():
             from . import tv
             tv.run()
             return
-        if k == "wizard":
+        if k == "now":
+            n = whats_on_now()
+            if n is not None:
+                from . import tv
+                tv.run(n)
+                return
+        elif k == "wizard":
             if wizard():
                 return  # watched TV straight after the wizard - don't reopen the menu
         elif k == "manager":
             manager()
-        elif k == "progress":
-            clean_in_progress()
-        elif k == "quick":
-            quick_setup()
         elif k == "planner":
-            progs = [c for c in C.load() if c["type"] in PROGRAM_TYPES]
-            j = D.select(_("Plan which channel?"), ["%3d  %s" % (c["number"], c["name"]) for c in progs]) if progs else -1
-            if j >= 0:
-                from . import planner
-                planner.open_planner(progs[j]["id"])
-        elif k == "shows":
-            shows_and_channels()
-        elif k == "fillers":
-            check_fillers()
-        elif k == "rebuild":
-            rebuild_all()
+            pick_planner_channel()
         elif k == "settings":
-            K.ADDON.openSettings()
+            open_settings()
         elif k == "help":
             D.textviewer(TITLE, help_text())

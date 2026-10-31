@@ -17,9 +17,11 @@ from .kodiutil import SCHEDULE_DIR, load_json, save_json, log, ensure_dirs
 from . import library
 from . import channels as chmod
 from . import assign
+from . import seasons
 from .kodiutil import _
 
 DAY = 86400
+SHORTS_PACK, SHORTS_PINNED_ONLY, SHORTS_ONE_PER_SLOT = 0, 1, 2
 
 
 # ----------------------------------------------------------------- time utils
@@ -263,11 +265,15 @@ class ChannelSchedule(object):
     def _rules(self):
         return [r for r in self.ch.get("slots", []) if r.get("sources")]
 
+    def _suspended(self, rule, st):
+        """Automatic prime-time pins step aside on a holiday's big days."""
+        return bool(rule.get("auto")) and seasons.phase(st, self.cfg)[1] >= seasons.FULL
+
     def _rule_at(self, t):
         """A pinned weekly slot airing at t (with at least a minute left)."""
         for r in self._rules():
             for st, en in rule_occurrences(r, t, t + 1):
-                if st <= t < en - 60:
+                if st <= t < en - 60 and not self._suspended(r, st):
                     return r, st, en
         return None, None, None
 
@@ -276,7 +282,7 @@ class ChannelSchedule(object):
         best = None
         for r in self._rules():
             for st, _en in rule_occurrences(r, t + 1, t + horizon):
-                if st > t + 0.5 and (best is None or st < best):
+                if st > t + 0.5 and (best is None or st < best) and not self._suspended(r, st):
                     best = st
         return best
 
@@ -317,14 +323,61 @@ class ChannelSchedule(object):
                            if free(s["title"], self._next_episode(s, s["key"])["dur"])],
                 "singles": [i for i in pool["singles"] if free(i["title"], i["dur"])]}
 
-    def _fillers(self):
+    def _fillers(self, t=None):
         ch = self.ch
         ads = library.filler_pool(ch.get("commercials_path") or self.cfg.get("commercials_path")) \
             if ch.get("commercials") else []
         bumps = library.filler_pool(ch.get("bumps_path") or self.cfg.get("bumps_path")) \
             if ch.get("bumps") else []
         ids = library.filler_pool(ch.get("ids_path")) if ch.get("ids_path") else []
+        if t is not None:
+            ads, bumps = self._seasonal_fillers(t, ads, bumps)
         return ads, bumps, ids
+
+    def _seasonal_fillers(self, t, ads, bumps):
+        """Holiday commercials/bumps: all of them on the big days, a growing
+        share of breaks in the run-up."""
+        sea, level = seasons.phase(t, self.cfg)
+        if not sea:
+            return ads, bumps
+        sc = (self.cfg.get("seasons") or {}).get(sea, {})
+        rng = random.Random("%s|%.0f|sfill" % (self.ch["id"], t))
+        use = level >= seasons.FULL or rng.random() < max(level, 0.3)
+        if not use:
+            return ads, bumps
+        if ads and sc.get("ads"):
+            ads = library.filler_pool(sc["ads"]) or ads
+        if bumps and sc.get("bumps"):
+            bumps = library.filler_pool(sc["bumps"]) or bumps
+        return ads, bumps
+
+    def _pick_seasonal(self, sea, level, pool, t, room):
+        """A holiday episode or movie from this channel's own programming that
+        isn't on elsewhere right now and hasn't aired here lately."""
+        its = [i for i in seasons.items(pool, sea, self.cfg) if not library.is_bad(i["path"])]
+        if not its:
+            return None
+        st = self.data["state"]
+        rec = st.setdefault("srecent", {})
+        for p in [p for p, when in rec.items() if when < t - 9 * DAY]:
+            del rec[p]
+        gap = 18 * 3600 if level >= seasons.FULL else 7 * DAY
+        aired = dict(rec)          # holiday specials aired on any channel count
+        for other in (self.lineup.sched.values() if self.lineup is not None else ()):
+            if other is not self:
+                for p, when in other.data.get("state", {}).get("srecent", {}).items():
+                    if when > aired.get(p, 0):
+                        aired[p] = when
+        its = [i for i in its if aired.get(i["path"], 0) < t - gap and (room is None or i["dur"] <= room)]
+        if its:
+            its = self._clash_free({"series": [], "singles": its}, t)["singles"]
+        if not its:
+            return None
+        rng = random.Random("%s|%.0f|spick" % (self.ch["id"], t))
+        it = rng.choice(its)
+        rec[it["path"]] = t
+        self._cont = ("singles", its, "season")
+        return it
 
     def _block(self, t):
         ch = self.ch
@@ -344,6 +397,7 @@ class ChannelSchedule(object):
                 free = self._clash_free(pool, t)
                 if free["series"] or free["singles"]:
                     pool = free
+            self._cont = None
             prog = self._pick_rule(pool, t, rule)
             if prog:
                 return self._program(t, prog, hard)
@@ -358,25 +412,51 @@ class ChannelSchedule(object):
         if key == "base":    # time blocks are the user's own choice - never filtered
             mine = library.keep_titles(full, assign.allowed_fn(self.assignment(), ch["id"]))
         room = (hard - t - 2) if hard else None
+        sea, level = seasons.phase(t, self.cfg)
+        if sea:
+            # Holiday programming: everything on the big days (when the channel
+            # has any), a growing share in the run-up - more on movie channels.
+            share = level if level >= seasons.FULL else \
+                min(0.9, level * (1.6 if ch["type"] == "movies" else 1.0))
+            if random.Random("%s|%.0f|season" % (ch["id"], t)).random() < share:
+                self._cont = None
+                prog = self._pick_seasonal(sea, level, mine, t, room)
+                if prog:
+                    return self._program(t, prog, hard)
         # Never the same show on two channels at once.  Preference:
         # 1) this channel's own shows that are free, 2) anything else on its list
         # that is free, 3) any free show from the library (a fill-in, like a
         # network would run), 4) only if nothing at all is free, its own shows.
+        prog = None
+        self._season_t = t
+        try:
+            prog = self._auto_pick(mine, full, t, key, room)
+        finally:
+            self._season_t = None
+        pool = full
+        if prog:
+            return self._program(t, prog, hard)
+        return self._no_programme(t, hard, pool)
+
+    def _auto_pick(self, mine, full, t, key, room):
         prog = None
         for i, cand in enumerate((mine, full, None, mine)):
             if cand is None:
                 cand = library.resolve([{"type": "alltv"}])
             if i < 3:
                 cand = self._clash_free(cand, t)
+            self._cont = None
             prog = self._pick(cand, t, key, maxdur=room)
             if prog:
                 break
-        pool = full
-        if prog:
-            return self._program(t, prog, hard)
+        return prog
+
+    def _no_programme(self, t, hard, pool):
+        ch, slot = self.ch, self.slot
+        room = (hard - t - 2) if hard else None
         if room is not None and (pool["series"] or pool["singles"]):
             # Nothing short enough before the next pinned show: station break.
-            ads, bumps, ids = self._fillers()
+            ads, bumps, ids = self._fillers(t)
             rng = random.Random("%s|%.0f|gap" % (ch["id"], t))
             self._fill(t, hard - t, ads, bumps, rng, final=True, ids=ids)
             self._add_block(t, hard, _("Station Break"), "card")
@@ -421,7 +501,13 @@ class ChannelSchedule(object):
         slot = self.slot
         rng = random.Random("%s|%.0f" % (ch["id"], t))
         dur = float(prog["dur"])
-        ads, bumps, ids = self._fillers()
+        ads, bumps, ids = self._fillers(t)
+        cont, self._cont = getattr(self, "_cont", None), None
+        if slot and cont and dur <= self.short_limit() and \
+                self.cfg.get("shorts_mode", 0) != SHORTS_ONE_PER_SLOT:
+            more = self._more_shorts(t, prog, cont, hard, bool(ads), rng)
+            if more:
+                return self._shorts_block(t, [prog] + more, hard, ads, bumps, ids, rng, cont)
 
         if slot:
             end = ceil_slot(t + dur + 2, slot)
@@ -450,6 +536,85 @@ class ChannelSchedule(object):
             blen = brk if i < k else end - pos
             pos = self._fill(pos, blen, ads, bumps, rng, final=(i == k), ids=ids if i == k else None)
         self._add_block(t, end, prog["title"], "show", prog.get("sub", ""), prog.get("label", ""))
+        return end
+
+    # ------------------------------------------------------------- shorts
+    def short_limit(self):
+        """Anything up to 40% of a half hour (12 min) counts as a short."""
+        return 0.4 * min(self.slot or 1800, 1800)
+
+    def _shorts_end(self, t, dur, hard):
+        end = ceil_slot(t + dur + 2, self.slot)
+        return min(end, hard) if hard is not None else end
+
+    def _more_shorts(self, t, first, cont, hard, have_ads, rng):
+        """More shorts to fill the rest of the slot, like a cartoon block:
+        the next episodes of the same series, or other short films."""
+        end = self._shorts_end(t, float(first["dur"]), hard)
+        reserve = 60 if have_ads else 0          # room for a break after each one
+        total = float(first["dur"]) + reserve
+        used = {first["path"]}
+        out = []
+        kind, src, ptr = cont
+        st = self.data["state"]
+        auto = not (ptr or "").startswith("rule:") and ptr != "season"
+        if auto and kind == "singles":
+            src = [it for it in src if not seasons.out_of_season(it, t, self.cfg)]
+        self._season_t = t if auto else None
+        try:
+            return self._more_shorts_loop(t, end, reserve, total, used, out, kind, src, ptr, st, rng)
+        finally:
+            self._season_t = None
+
+    def _more_shorts_loop(self, t, end, reserve, total, used, out, kind, src, ptr, st, rng):
+        while len(out) < 11:
+            room = end - t - total - reserve
+            if kind == "series":
+                ep = self._next_episode(src, ptr)
+                if ep["path"] in used or ep["dur"] > room or ep["dur"] > self.short_limit():
+                    break
+                st["last"][ptr] = ep["path"]
+            else:
+                fit = [it for it in src if it["path"] not in used
+                       and 0 < it["dur"] <= min(room, self.short_limit())]
+                if not fit:
+                    break
+                ep = rng.choice(fit)
+                if ptr == "season":
+                    st.setdefault("srecent", {})[ep["path"]] = t
+                elif ptr:
+                    rec = st["recent"].setdefault(ptr, [])
+                    rec.append(ep["path"])
+            used.add(ep["path"])
+            out.append(ep)
+            total += float(ep["dur"]) + reserve
+        return out
+
+    def _shorts_block(self, t, items, hard, ads, bumps, ids, rng, cont):
+        """Several shorts back to back in one slot, a break after each."""
+        total = sum(float(it["dur"]) for it in items)
+        end = self._shorts_end(t, total, hard)
+        gap = max(0.0, end - t - total)
+        brk = gap / len(items)
+        pos = t
+        for i, it in enumerate(items):
+            self._add(pos, pos + float(it["dur"]), "show", p=it["path"], o=round(it.get("o0", 0), 2),
+                      t=it["title"], sub=it.get("sub"), lb=it.get("label"))
+            pos += float(it["dur"])
+            last = i == len(items) - 1
+            pos = self._fill(pos, (end - pos) if last else brk, ads, bumps, rng,
+                             final=last, ids=ids if last else None)
+        titles = []
+        for it in items:
+            if it["title"] not in titles:
+                titles.append(it["title"])
+        if len(titles) == 1:
+            title = titles[0]
+            sub = ", ".join(x for x in (it.get("label") or it.get("sub") for it in items) if x)
+        else:
+            title = cont[1]["title"] if cont[0] == "series" else _("Short Subjects")
+            sub = ", ".join(titles)
+        self._add_block(t, end, title, "show", sub, "")
         return end
 
     def _fill(self, pos, length, ads, bumps, rng, final, ids=None):
@@ -518,6 +683,16 @@ class ChannelSchedule(object):
                 if e["path"] == last:
                     idx = (i + 1) % len(eps)
                     break
+        when = getattr(self, "_season_t", None)
+        # skip files Kodi couldn't open lately, and (automatic programming only)
+        # holiday episodes outside their season
+        for k in range(len(eps)):
+            e = eps[(idx + k) % len(eps)]
+            if library.is_bad(e["path"]):
+                continue
+            if when is not None and seasons.out_of_season(e, when, self.cfg):
+                continue
+            return e
         return eps[idx]
 
     def _pick_rule(self, pool, t, rule):
@@ -532,6 +707,8 @@ class ChannelSchedule(object):
         if rule.get("order", "inorder") == "random":
             rng = random.Random("%s|%.0f|%s" % (self.ch["id"], t, rid))
             every = [e for ser in series for e in ser["episodes"]] + singles
+            every = [e for e in every if not library.is_bad(e["path"])] or every
+            self._cont = ("singles", every, None)
             return rng.choice(every)
         shows = [("s", ser) for ser in series] + ([("m", None)] if singles else [])
         rr = st.setdefault("rr", {})
@@ -541,7 +718,9 @@ class ChannelSchedule(object):
         if kind == "s":
             ep = self._next_episode(ser, rid + "|" + ser["key"])
             st["last"][rid + "|" + ser["key"]] = ep["path"]
+            self._cont = ("series", ser, rid + "|" + ser["key"])
             return ep
+        self._cont = ("singles", singles, None)
         ep = self._next_episode({"episodes": singles}, rid + "|movies")
         st["last"][rid + "|movies"] = ep["path"]
         return ep
@@ -555,6 +734,14 @@ class ChannelSchedule(object):
             singles = [it for it in singles if it["dur"] <= maxdur]
         if not series and not singles:
             return None
+        if self.cfg.get("shorts_mode", 0) == SHORTS_PINNED_ONLY:
+            # Shorts only where the viewer put them: skip them while there's
+            # anything longer to air (a channel made only of shorts still runs them).
+            thr = self.short_limit()
+            ls = [ser for ser in series if self._next_episode(ser, ser["key"])["dur"] > thr]
+            lg = [it for it in singles if it["dur"] > thr]
+            if ls or lg:
+                series, singles = ls, lg
         cands = [(s, math.sqrt(min(len(s["episodes"]), 60))) for s in series]
         if singles:
             cands.append((None, math.sqrt(min(len(singles), 60)) * (2 if not series else 1)))
@@ -577,10 +764,16 @@ class ChannelSchedule(object):
         if choice is not None:
             ep = self._next_episode(choice, choice["key"])
             st["last"][choice["key"]] = ep["path"]
+            self._cont = ("series", choice, choice["key"])
             return ep
+        self._cont = ("singles", singles, key)
         recent = st["recent"].setdefault(key, [])
         keep = min(len(singles) // 2, 200)
         avoid = set(recent[-keep:]) if keep else set()
+        singles = [s for s in singles if not library.is_bad(s["path"])] or singles
+        when = getattr(self, "_season_t", None)
+        if when is not None:
+            singles = [s for s in singles if not seasons.out_of_season(s, when, self.cfg)] or singles
         fresh = [s for s in singles if s["path"] not in avoid] or singles
         r2 = random.Random("%s|%.0f|single" % (self.ch["id"], t))
         it = r2.choice(fresh)

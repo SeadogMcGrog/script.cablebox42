@@ -523,7 +523,7 @@ def filler_pool(path):
     skip_av1 = av1_blocked()
     for p in _walk(path, VIDEO_EXT):
         d = durations().get(p)
-        if 0 < d <= 600 and not (skip_av1 and durations().codec(p) == "av1"):
+        if 0 < d <= 600 and not (skip_av1 and durations().codec(p) == "av1") and not is_bad(p):
             out.append({"path": p, "dur": d, "title": _file_item(p)["title"]})
     durations().save()
     _POOL_CACHE[key] = (time.time(), out)
@@ -548,5 +548,50 @@ def filler_report(path):
     return ok, bad, long_, av1
 
 
+# ------------------------------------------------------------- unplayable files
+BAD_FILE = os.path.join(PROFILE, "unplayable.json")
+BAD_RETRY = 3 * 86400        # give a bad file another chance after 3 days (it may have been fixed)
+_BAD = None
+
+
+def _bad():
+    global _BAD
+    if _BAD is None:
+        data = load_json(BAD_FILE, {})
+        _BAD = data if isinstance(data, dict) else {}
+    return _BAD
+
+
+def mark_bad(path, reason=""):
+    """A file Kodi couldn't open: keep it off the schedule for a few days."""
+    _bad()[path] = {"at": time.time(), "why": reason}
+    try:
+        save_json(BAD_FILE, _bad())
+    except Exception as exc:
+        log("unplayable save: %s" % exc)
+
+
+def is_bad(path):
+    hit = _bad().get(path)
+    return bool(hit) and time.time() - float(hit.get("at") or 0) < BAD_RETRY
+
+
+def bad_files():
+    """[(path, when, reason)] of files currently kept off the air."""
+    return sorted(((p, v.get("at", 0), v.get("why", "")) for p, v in _bad().items() if is_bad(p)),
+                  key=lambda x: -x[1])
+
+
+def forget_bad():
+    global _BAD
+    _BAD = {}
+    try:
+        save_json(BAD_FILE, {})
+    except Exception:
+        pass
+
+
 def clear_cache():
     _POOL_CACHE.clear()
+    from . import seasons          # holiday matches follow library changes too
+    seasons.clear_cache()

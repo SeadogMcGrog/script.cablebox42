@@ -172,6 +172,122 @@ msgctxt "#32043"
 msgid "Keep my watch progress untouched (resume points, watched)"
 msgstr ""
 
+msgctxt "#32044"
+msgid "Short programmes (under 12 min)"
+msgstr ""
+
+msgctxt "#32045"
+msgid "Pack several into one time slot"
+msgstr ""
+
+msgctxt "#32046"
+msgid "Only air them where I pinned them"
+msgstr ""
+
+msgctxt "#32047"
+msgid "One per time slot (rest is commercials)"
+msgstr ""
+
+msgctxt "#32048"
+msgid "Tools"
+msgstr ""
+
+msgctxt "#32049"
+msgid "Lineup"
+msgstr ""
+
+msgctxt "#32050"
+msgid "Build my lineup automatically..."
+msgstr ""
+
+msgctxt "#32051"
+msgid "Quick setup: sign-off hours, prime time..."
+msgstr ""
+
+msgctxt "#32052"
+msgid "Move shows between channels..."
+msgstr ""
+
+msgctxt "#32053"
+msgid "Maintenance"
+msgstr ""
+
+msgctxt "#32054"
+msgid "Check my videos (commercials, bumps, AV1)..."
+msgstr ""
+
+msgctxt "#32055"
+msgid "Clean up my 'In progress' list..."
+msgstr ""
+
+msgctxt "#32056"
+msgid "Rebuild schedules..."
+msgstr ""
+
+msgctxt "#32057"
+msgid "Seasons"
+msgstr ""
+
+msgctxt "#32058"
+msgid "Holiday programming"
+msgstr ""
+
+msgctxt "#32059"
+msgid "How much in the weeks before"
+msgstr ""
+
+msgctxt "#32060"
+msgid "A little"
+msgstr ""
+
+msgctxt "#32061"
+msgid "Some (grows toward the day)"
+msgstr ""
+
+msgctxt "#32062"
+msgid "Lots"
+msgstr ""
+
+msgctxt "#32063"
+msgid "Halloween - October, all-out on the 31st"
+msgstr ""
+
+msgctxt "#32064"
+msgid "Thanksgiving - on the day"
+msgstr ""
+
+msgctxt "#32065"
+msgid "Christmas - from the day after Thanksgiving, all-out Dec 24-25"
+msgstr ""
+
+msgctxt "#32066"
+msgid "On"
+msgstr ""
+
+msgctxt "#32067"
+msgid "Holiday commercials folder (optional)"
+msgstr ""
+
+msgctxt "#32068"
+msgid "Holiday bumps folder (optional)"
+msgstr ""
+
+msgctxt "#32069"
+msgid "Save holiday episodes and movies for their season"
+msgstr ""
+
+msgctxt "#32070"
+msgid "The rest of the year"
+msgstr ""
+
+msgctxt "#32071"
+msgid "Tags (any containing these words, comma separated)"
+msgstr ""
+
+msgctxt "#32072"
+msgid "Genres (comma separated)"
+msgstr ""
+
 msgctxt "#32900"
 msgid "CHANNEL"
 msgstr ""
@@ -823,18 +939,6 @@ msgstr ""
 
 msgctxt "#32258"
 msgid "  [COLOR red]No usable clips found[/COLOR]"
-msgstr ""
-
-msgctxt "#32259"
-msgid "Build my lineup automatically"
-msgstr ""
-
-msgctxt "#32261"
-msgid "Rebuild schedules"
-msgstr ""
-
-msgctxt "#32262"
-msgid "Settings"
 msgstr ""
 
 msgctxt "#32263"
@@ -1753,10 +1857,6 @@ msgctxt "#32492"
 msgid "  None in your channels."
 msgstr ""
 
-msgctxt "#32493"
-msgid "Check my videos (commercials, bumps, AV1)"
-msgstr ""
-
 msgctxt "#32494"
 msgid "  [COLOR orange]%d AV1 clips skipped (no hardware decoding):[/COLOR]"
 msgstr ""
@@ -1821,10 +1921,6 @@ msgctxt "#32511"
 msgid "Quick setup"
 msgstr ""
 
-msgctxt "#32512"
-msgid "Quick setup (sign-off hours, prime time)"
-msgstr ""
-
 msgctxt "#32513"
 msgid "Channels now sign off %s - %s"
 msgstr ""
@@ -1861,10 +1957,6 @@ msgctxt "#32521"
 msgid "Cleared %d items"
 msgstr ""
 
-msgctxt "#32522"
-msgid "Clean up my 'In progress' list"
-msgstr ""
-
 msgctxt "#32523"
 msgid "stopped at %d of %d min"
 msgstr ""
@@ -1873,6 +1965,122 @@ msgctxt "#32524"
 msgid "Clear the resume point of %d items?[CR](%d kept)"
 msgstr ""
 
-msgctxt "#32525"
-msgid "[B]Remote control[/B]\nCH+ / CH-, Up / Down, Page Up / Down ... change channel\nNumber keys ...................................... go to channel\nLeft ................................................... last channel\nRight ................................................ what's on now\nOK / Info ........................................... channel banner\nMenu / Context ................................. sleep timer & more\nBack / Stop ...................................... turn off the TV\n\n[B]How the schedule works[/B]\nNothing to compile.  Each channel pulls from your Kodi library (shows, genres,\ndecades, movies, smart playlists) or from folders, and its schedule writes itself\nas time goes by.  'Same show same time every day' channels air a fixed daily\nlineup and series always continue with the next episode.  Time blocks let you put\ncartoons on Saturday mornings or movies in prime time.\n\nEdit a channel and its schedule rebuilds itself from now on - episode progress is kept.\n\n[B]One channel per show[/B]\nEach TV show has one home channel - the one it fits best (your own picks first,\nthen folders/tags/studios, then its main genre, then decades and the 'everything'\nchannel).  And the same show is never on two channels at the same time.\nSettings > Programming > 'Shows on more than one channel' changes this.\n\n[B]Fine-tuning[/B]\n'Move shows between channels': pick a show (say, Good Eats) and tick the channels it\nshould air on.  Unticking hides it there even if the channel's genre includes it.\nEach channel also has 'What's on this channel' - a checklist of everything it airs.\n\n[B]Studio channels[/B]\nAdd programming > 'A studio / network' makes e.g. a Disney channel from every movie\nand show whose studio contains 'Disney'.  Kodi tags work the same way.\n\n[B]Weekly planner[/B]\nEach channel has a 7-day grid (Channel manager > channel > Weekly planner, or\nWeekly planner in the main menu).  Press OK on a half-hour to pin a show there -\ne.g. Seinfeld, Fridays 8:00 PM, one hour, in order: every week it continues with\nthe next episodes.  Pinned slots always start on time; the automatic scheduler\nfills everything else and never runs into them.  You can also paint off-air\nhours, copy a day to other days, or clear a day (Menu button).\n\n[B]Your watch progress[/B]\nCableBox puts back resume points, watched status and last-played dates after it\nairs something, so surfing doesn't fill your 'In progress' list (Settings >\nViewing).  'Clean up my In progress list' tidies up an older list.\n\n[B]Quick setup[/B]\nMain menu > Quick setup: overnight sign-off (default 12 AM - 5 AM) and automatic\nprime-time lineups (default 8 - 11 PM) for every channel at once.  Prime-time\nslots appear in the weekly planner; edit any of them and it becomes yours.\n\n[B]Off the air[/B]\nOff-air hours show a 1950s 'Please stand by' test card (or color bars), with an\noptional sign-off clip (anthem, farewell) and sign-on clip from your own folders.\n\n[B]Station IDs[/B]\nGive a channel a folder of station ID clips (\"You're watching...\") and one plays\nbetween programs, right before the next show starts.\n\n[B]Commercials & bumps[/B]\nPoint Settings at a folder of commercials and (optionally) bumps.  Breaks are cut\ninto shows to fill each half hour, like real cable.  Movie channels play commercials\nbetween films.  Without commercials the gap is filled with an 'Up next' card.\n'Check my commercials & bumps' shows which clips can't be used.\n\n[B]Files[/B]\nYour lineup lives in userdata/addon_data/script.cablebox42/channels.json if you\nprefer editing it by hand."
+msgctxt "#32527"
+msgid "Short Subjects"
+msgstr ""
+
+msgctxt "#32528"
+msgid "Add a channel first."
+msgstr ""
+
+msgctxt "#32529"
+msgid "Listings not ready yet"
+msgstr ""
+
+msgctxt "#32530"
+msgid "See every channel's current show and tune straight to it"
+msgstr ""
+
+msgctxt "#32532"
+msgid "Add, edit, rename and renumber channels"
+msgstr ""
+
+msgctxt "#32533"
+msgid "Pin shows to days and times"
+msgstr ""
+
+msgctxt "#32534"
+msgid "Settings and tools"
+msgstr ""
+
+msgctxt "#32535"
+msgid "Commercials, music, weather, picture - plus lineup tools and maintenance"
+msgstr ""
+
+msgctxt "#32536"
+msgid "How everything works"
+msgstr ""
+
+msgctxt "#32537"
+msgid "[B]Set up my channels[/B]"
+msgstr ""
+
+msgctxt "#32538"
+msgid "Builds a lineup from your Kodi library in a minute"
+msgstr ""
+
+msgctxt "#32539"
+msgid "Commercials, music, weather, picture"
+msgstr ""
+
+msgctxt "#32540"
+msgid "Pick up where you left off"
+msgstr ""
+
+msgctxt "#32541"
+msgid "Start on channel %d"
+msgstr ""
+
+msgctxt "#32543"
+msgid "Welcome to CableBox 42"
+msgstr ""
+
+msgctxt "#32544"
+msgid "[B]Set it all up for me[/B]"
+msgstr ""
+
+msgctxt "#32545"
+msgid "Reads your Kodi library and builds a full lineup - channels, guide, weather, overnight sign-off, prime time. About a minute."
+msgstr ""
+
+msgctxt "#32546"
+msgid "I'll set it up myself"
+msgstr ""
+
+msgctxt "#32547"
+msgid "Starts with just the TV Guide and Weather Channel. You add channels in the Channel manager."
+msgstr ""
+
+msgctxt "#32548"
+msgid "Not now"
+msgstr ""
+
+msgctxt "#32549"
+msgid "Go to the menu. You'll be asked again next time."
+msgstr ""
+
+msgctxt "#32550"
+msgid "You have a TV Guide on 2 and the Weather Channel on 3.[CR][CR]Next: Channel manager > Add a channel.  Commercials, bumps and music folders are in Settings, and Settings > Tools > 'Build my lineup automatically' can still build channels for you any time."
+msgstr ""
+
+msgctxt "#32552"
+msgid "[B]Videos that wouldn't play[/B]  [COLOR grey]none[/COLOR]"
+msgstr ""
+
+msgctxt "#32553"
+msgid "  Check that each file plays from Kodi's own menus.  A damaged file can often be re-downloaded or remuxed."
+msgstr ""
+
+msgctxt "#32554"
+msgid "%d videos are being kept off the air because they wouldn't play.[CR][CR]Fixed them?  Put them back on the schedule now."
+msgstr ""
+
+msgctxt "#32555"
+msgid "Leave them off"
+msgstr ""
+
+msgctxt "#32556"
+msgid "Try them again"
+msgstr ""
+
+msgctxt "#32557"
+msgid "[B]Videos that wouldn't play[/B]  [COLOR grey]kept off the air for 3 days, then tried again[/COLOR]"
+msgstr ""
+
+msgctxt "#32558"
+msgid "Kodi couldn't open it"
+msgstr ""
+
+msgctxt "#32559"
+msgid "[B]Remote control[/B]\nCH+ / CH-, Up / Down, Page Up / Down ... change channel\nNumber keys ...................................... go to channel\nLeft ................................................... last channel\nRight ................................................ what's on now\nOK / Info ........................................... channel banner\nMenu / Context ................................. sleep timer & more\nBack / Stop ...................................... turn off the TV\n\n[B]How the schedule works[/B]\nNothing to compile.  Each channel pulls from your Kodi library (shows, genres,\ndecades, movies, smart playlists) or from folders, and its schedule writes itself\nas time goes by.  'Same show same time every day' channels air a fixed daily\nlineup and series always continue with the next episode.  Time blocks let you put\ncartoons on Saturday mornings or movies in prime time.\n\nEdit a channel and its schedule rebuilds itself from now on - episode progress is kept.\n\n[B]One channel per show[/B]\nEach TV show has one home channel - the one it fits best (your own picks first,\nthen folders/tags/studios, then its main genre, then decades and the 'everything'\nchannel).  And the same show is never on two channels at the same time.\nSettings > Programming > 'Shows on more than one channel' changes this.\n\n[B]Menu and tools[/B]\nThe menu keeps to the everyday things: Watch TV, What's on now (tune straight to a\nshow), the Channel manager, the Weekly planner, Settings and Help.  Lineup tools\n(build a new lineup, quick setup, move shows) and maintenance (check my videos,\nclean up In progress, rebuild schedules) are on the Tools page in Settings.\n\n[B]Fine-tuning[/B]\nSettings > Tools > 'Move shows between channels': pick a show (say, Good Eats) and tick the channels it\nshould air on.\nUnticking hides it there even if the channel's genre includes it.\nEach channel also has 'What's on this channel' - a checklist of everything it airs.\n\n[B]Studio channels[/B]\nAdd programming > 'A studio / network' makes e.g. a Disney channel from every movie\nand show whose studio contains 'Disney'.  Kodi tags work the same way.\n\n[B]Weekly planner[/B]\nEach channel has a 7-day grid (Channel manager > channel > Weekly planner, or\nWeekly planner in the main menu).  Press OK on a half-hour to pin a show there -\ne.g. Seinfeld, Fridays 8:00 PM, one hour, in order: every week it continues with\nthe next episodes.  Pinned slots always start on time; the automatic scheduler\nfills everything else and never runs into them.  You can also paint off-air\nhours, copy a day to other days, or clear a day (Menu button).\n\n[B]Your watch progress[/B]\nCableBox puts back resume points, watched status and last-played dates after it\nairs something, so surfing doesn't fill your 'In progress' list (Settings >\nViewing).  Settings > Tools > 'Clean up my In progress list' tidies up an older list.\n\n[B]Quick setup[/B]\nSettings > Tools > Quick setup: overnight sign-off (default 12 AM - 5 AM) and automatic\nprime-time lineups (default 8 - 11 PM) for every channel at once.  Prime-time\nslots appear in the weekly planner; edit any of them and it becomes yours.\n\n[B]Holidays[/B]\nHalloween (October, all-out on the 31st), Thanksgiving Day and Christmas (from the day\nafter Thanksgiving, all-out on the 24th and 25th): each channel mixes in its own holiday\nepisodes and movies (Kodi tags first, then genres such as Horror and Mystery, then titles) - a few at\nfirst, more as the day gets closer, all day on the day itself.  Optional holiday\ncommercial and bump folders.  The rest of the year Christmas and Thanksgiving episodes\nare saved for their season.  Settings > Seasons.\n\n[B]Off the air[/B]\nOff-air hours show a 1950s 'Please stand by' test card (or color bars), with an\noptional sign-off clip (anthem, farewell) and sign-on clip from your own folders.\n\n[B]Station IDs[/B]\nGive a channel a folder of station ID clips (\"You're watching...\") and one plays\nbetween programs, right before the next show starts.\n\n[B]Commercials & bumps[/B]\nPoint Settings at a folder of commercials and (optionally) bumps.  Breaks are cut\ninto shows to fill each half hour, like real cable.  Movie channels play commercials\nbetween films.  Without commercials the gap is filled with an 'Up next' card.\n'Check my commercials & bumps' shows which clips can't be used.\n\n[B]Files[/B]\nYour lineup lives in userdata/addon_data/script.cablebox42/channels.json if you\nprefer editing it by hand.\n\n[B]About[/B]\nCableBox 42 is designed, tested and maintained by Seadog McGrog.  Much of the code\nwas written with the help of Claude, an AI assistant made by Anthropic.  Anthropic is\nnot affiliated with this project and has not reviewed or endorsed it.\nInspired by FieldStation42 by Shane Mason (no shared code)."
 msgstr ""

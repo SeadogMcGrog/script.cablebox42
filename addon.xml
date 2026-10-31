@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="script.cablebox42" name="CableBox 42" version="1.5.0" provider-name="Seadog McGrog">
+<addon id="script.cablebox42" name="CableBox 42" version="1.0.0" provider-name="Seadog McGrog">
     <requires>
         <import addon="xbmc.python" version="3.0.1"/>
     </requires>
@@ -11,16 +11,14 @@
         <summary lang="en_GB">Retro cable TV from your own library - flip channels, not menus.</summary>
         <description lang="en_GB">CableBox 42 turns your Kodi library into a live cable TV lineup. Shows air on a real-time schedule with commercial breaks and bumps from your own clip folders, a scrolling program guide channel, a retro weather channel, static between channels and a channel banner. Lineups build themselves from your library (genres, decades, studios, tags, smart playlists or folders) and can be fine-tuned show by show - there is no schedule to compile. Playback uses Kodi's own player, so hardware decoding works exactly as it does for the rest of your library.[CR][CR]Inspired by the FieldStation42 project; not affiliated with it.</description>
         <disclaimer lang="en_GB">Plays only media from your own Kodi library and folders. The optional weather channel uses Kodi's weather service or, if you enter a location, fetches forecasts from open-meteo.com.</disclaimer>
-        <news>v1.5.0 beta (2026-10-30)
-- Each TV show has one home channel (best match by your picks, tags, studios, main genre); the same show is never on two channels at once
-- Optional overnight sign-off (12-5 AM) and automatic prime-time lineups (8-11 PM) - offered in setup, or via Quick setup
-- Watch progress protection: surfing no longer fills your In progress list or marks episodes watched
-- Clean up my In progress list tool
-- Setting: Shows on more than one channel
-
-v1.4.1 (2026-10-28)
-- AV1 videos skipped automatically on devices that can't decode them; guide never freezes while listings build
-- Weekly planner, off-air test card, station IDs, CRT effect, CH 03 channel number</news>
+        <news>v1.0.0 (2026-10-31) - first release
+- Builds a cable TV lineup from your Kodi library: genre, decade, studio and movie channels, one home channel per show
+- Shows air on a real clock with commercial breaks, bumps and station IDs from your own folders
+- Program guide channel and weather channel with background music
+- Weekly planner for pinned time slots, automatic prime time, overnight sign-off with a "Please Stand By" card
+- Holiday programming for Halloween, Thanksgiving and Christmas
+- Short programmes packed into one time slot; CH 03 channel number and optional CRT effect
+- Watch progress protection, AV1 and broken-file handling</news>
         <platform>all</platform>
         <license>MPL-2.0</license>
         <source>https://github.com/SeadogMcGrog/script.cablebox42</source>

@@ -2,8 +2,8 @@
 
 **Retro cable TV from your own Kodi library. Flip channels, not menus.**
 
-> **Beta:** CableBox 42 is new and actively developed. It's tested on CoreELEC
-> (ODROID N2); reports from other devices are very welcome in the
+> **New:** CableBox 42 1.0.0 is the first official release. It's tested on
+> CoreELEC (ODROID N2); reports from other devices are very welcome in the
 > [support thread](https://forum.kodi.tv/showthread.php?tid=389521) or on
 > [GitHub issues](https://github.com/SeadogMcGrog/script.cablebox42/issues).
 
@@ -51,15 +51,16 @@ hardware video decoding works exactly as it does for the rest of your library.
 8. [The weekly planner](#the-weekly-planner)
 9. [Commercials, bumps, station IDs and sign-off clips](#commercials-bumps-station-ids-and-sign-off-clips)
 10. [Off the air](#off-the-air)
-11. [The guide channel](#the-guide-channel)
-12. [The weather channel](#the-weather-channel)
-13. [CRT effect](#crt-effect)
-14. [Home screen, Favourites and phone remotes](#home-screen-favourites-and-phone-remotes)
-15. [Settings reference](#settings-reference)
-16. [Video formats and AV1](#video-formats-and-av1)
-17. [Files and hand-editing](#files-and-hand-editing)
-18. [Troubleshooting](#troubleshooting)
-19. [Credits and license](#credits-and-license)
+11. [Holidays](#holidays)
+12. [The guide channel](#the-guide-channel)
+13. [The weather channel](#the-weather-channel)
+14. [CRT effect](#crt-effect)
+15. [Home screen, Favourites and phone remotes](#home-screen-favourites-and-phone-remotes)
+16. [Settings reference](#settings-reference)
+17. [Video formats and AV1](#video-formats-and-av1)
+18. [Files and hand-editing](#files-and-hand-editing)
+19. [Troubleshooting](#troubleshooting)
+20. [Credits and license](#credits-and-license)
 
 ---
 
@@ -129,7 +130,10 @@ settings are kept.
 
 ## Quick start
 
-1. Open **CableBox 42** and choose **Build my lineup automatically**.
+1. Open **CableBox 42**. The first time, a welcome screen asks how to start:
+   **Set it all up for me** (the steps below) or **I'll set it up myself**
+   (you get just the TV Guide on 2 and the Weather Channel on 3, and the
+   Channel manager opens so you can add your own channels).
 2. If you have folders of old commercials and bumps, point it at them. You can
    skip this and add them later in Settings.
 3. Type your city for the weather channel, or skip it if Kodi's own weather
@@ -143,7 +147,7 @@ settings are kept.
 6. Choose **Start watching**.
 
 That's it. To fine-tune, use the **Channel manager**, the **Weekly planner**
-and **Move shows between channels**.
+and *Settings → Tools →* **Move shows between channels**.
 
 ---
 
@@ -176,7 +180,7 @@ resume point, watched status and last-played date before airing it, and puts
 them back afterwards (even after a crash or power cut). Turn this off in
 *Settings → Viewing → Keep my watch progress untouched*. To tidy a list that
 filled up before this protection existed, use **Clean up my 'In progress'
-list** in the main menu: tick what you're really watching and the rest is
+list** (*Settings → Tools*): tick what you're really watching and the rest is
 cleared.
 
 **Sleep timer.** Menu → *Sleep timer* (15 minutes to 2 hours). There's an
@@ -258,15 +262,27 @@ on the same episode twice.
 | Item | What it's for |
 |---|---|
 | **Watch TV** | Turn the TV on |
-| **Build my lineup automatically** | Create a lineup from your library: replace yours, or add to it |
+| **What's on now** | Every channel with the show airing right now. Pick one to tune straight to it |
 | **Channel manager** | Add, edit, delete and renumber channels |
 | **Weekly planner** | Open a channel's 7-day grid |
+| **Settings and tools** | All settings, plus the **Tools** page below |
+| **Help** | |
+
+On first run, before you have channels, the menu offers **Set up my channels** instead.
+
+### Settings → Tools
+
+Less-used jobs live on their own page in Settings, so the menu stays short.
+Each button closes Settings and opens the tool.
+
+| Tool | What it's for |
+|---|---|
+| **Build my lineup automatically** | Create a lineup from your library: replace yours, or add to it |
 | **Quick setup** | For every channel at once: overnight sign-off hours on or off, and prime-time lineups built or removed, with your choice of hours |
 | **Move shows between channels** | Pick a show or movie, then tick the channels it should air on. It airs exactly there |
 | **Check my videos** | Lists commercials, bumps and videos that can't be used, and why |
 | **Clean up my 'In progress' list** | Clears resume points left by channel surfing. You keep the ones you tick |
 | **Rebuild schedules** | Plan every channel again from now (episode progress is kept) |
-| **Settings** / **Help** | |
 
 ### What the lineup builder creates
 
@@ -346,7 +362,7 @@ Renumbering never interrupts what's airing.
 
 ## The weekly planner
 
-*Main menu → Weekly planner* (or *Channel manager → a channel → Weekly planner*).
+*Menu → Weekly planner* (or *Channel manager → a channel → Weekly planner*).
 
 Monday to Sunday run across the screen and half-hours run down it. The line at
 the top describes the slot under the cursor. Pinned shows are coloured, time
@@ -377,7 +393,7 @@ automatically.
 If a new pin overlaps an existing one, CableBox asks before replacing it on
 the overlapping days.
 
-**Automatic prime time.** *Quick setup → Build prime-time lineups* (also
+**Automatic prime time.** *Settings → Tools → Quick setup → Build prime-time lineups* (also
 offered when you first build your lineup) fills 8–11 PM, or hours you choose,
 with pins:
 - **Network channels:** their best shows by your library's ratings, then the
@@ -438,6 +454,58 @@ Optionally a **sign-off clip** plays as the channel goes off the air, and a
 running at sign-off time finishes first, as on real TV.
 
 ---
+
+## Holidays
+
+CableBox follows the holiday calendar the way the networks did
+(*Settings → Seasons*, on by default):
+
+| Season | Run-up | All-out |
+|---|---|---|
+| **Halloween** | October 1–30, growing toward the end of the month | October 31, all day |
+| **Thanksgiving** | – | Thanksgiving Day (fourth Thursday of November) |
+| **Christmas** | Day after Thanksgiving to December 23, growing toward Christmas | December 24 and 25, all day |
+
+- **In the run-up** a share of each channel's programmes are holiday ones,
+  starting small and growing toward the day. Movie channels get more.
+  *How much in the weeks before* sets the share: a little, some (default)
+  or lots.
+- **On the big days** every channel airs its holiday programmes all day, as
+  long as it has any, then goes back to its usual shows. The automatic
+  prime-time lineups step aside on those days. Slots you pinned yourself
+  in the weekly planner still air.
+- **Holiday programmes always come from the channel's own shows and movies**,
+  so a kids' channel gets *It's the Great Pumpkin* rather than a slasher film,
+  and a channel with nothing seasonal just carries on as normal.
+- A holiday special won't repeat on any channel within 18 hours on the big
+  days, or within a week during the run-up.
+- **Holiday commercials and bumps:** each season can have its own folders.
+  They play in every break on the big days and in a growing share of breaks
+  during the run-up. Without them, the usual folders are used.
+- **The rest of the year** (*Save holiday episodes and movies for their
+  season*, on by default), Christmas and Thanksgiving episodes and movies, and
+  anything that's explicitly Halloween, are kept out of the automatic schedule.
+  Plain horror and monster shows still air all year. Slots you pinned yourself
+  are never changed.
+
+**What counts as holiday programming** (*Settings → Seasons*, editable for each
+season):
+
+1. **Kodi tags** on movies and TV shows: the main way. Any tag containing
+   one of the season's words counts, whatever the capitalisation. With the
+   default *halloween*, the tags *Halloween*, *Halloween Classics* and
+   *kids-halloween* all count. Defaults: *halloween, spooky, horror* ·
+   *thanksgiving* · *christmas, xmas, holiday*.
+2. **Kodi genres**: Horror and Mystery for Halloween, and Christmas and
+   Holiday for Christmas, by default. Empty the field to leave genres out.
+3. **Titles, as a safety net.** Kodi can't tag a single episode, so episode
+   and movie titles such as *Treehouse of Horror* or *A Charlie Brown
+   Christmas* count too.
+
+Tagging a whole show (an anthology of Halloween specials, say) or a movie in
+Kodi is the surest way to get it into the holiday lineup. Out of season, items
+tagged with the holiday's own name (*halloween*, *thanksgiving*,
+*christmas*/*xmas*) are held back; horror and mystery air all year.
 
 ## The guide channel
 
@@ -540,6 +608,7 @@ tap to tune. Yatse custom commands can call the `RunScript` actions above.
 | Guide channel music folder | – | Music behind the guide |
 | Guide title | *CableBox 42 Program Guide* | |
 | Shows on more than one channel | TV shows on one channel each | Or everything on one channel each, or allow repeats |
+| Short programmes (under 12 min) | Pack several into one time slot | Back-to-back like a cartoon block (next episodes of the same series, or several short films), a break after each. Or *only where I pinned them* (skipped by the automatic schedule while anything longer is available), or *one per time slot* |
 | AV1 videos | Automatic | Automatic / Always skip / Always play (see below) |
 | Schedule ahead (hours) | 12 | 6, 12 or 24 |
 
@@ -568,6 +637,21 @@ tap to tune. Yatse custom commands can call the `RunScript` actions above.
 | Weather channel music folder | – | |
 
 ---
+
+**Seasons** (see [Holidays](#holidays))
+
+| Setting | Default | |
+|---|---|---|
+| Holiday programming | On | Halloween, Thanksgiving and Christmas |
+| How much in the weeks before | Some | A little / Some / Lots |
+| Halloween / Thanksgiving / Christmas: On | On | Each season separately |
+| Holiday commercials folder | – | Optional, per season |
+| Holiday bumps folder | – | Optional, per season |
+| Tags | *halloween, spooky, horror* · *thanksgiving* · *christmas, xmas, holiday* | Any Kodi tag containing one of these words |
+| Genres | *Horror, Mystery* · – · *Christmas, Holiday* | Empty = don't use genres |
+| Save holiday episodes and movies for their season | On | Keeps Christmas episodes out of July |
+
+**Tools**: see [Settings → Tools](#settings--tools).
 
 ## Video formats and AV1
 
@@ -641,7 +725,7 @@ Everything lives in the add-on's data folder,
   or `sequential`), `playlist`, `studio`, `tag`, `keyword`, `movie`.
 - **Studio, tag and keyword** sources take `"what"`: `both`, `tv` or `movies`.
 
-After editing by hand, use **Rebuild schedules** in the menu. Keep a copy of
+After editing by hand, use *Settings → Tools →* **Rebuild schedules**. Keep a copy of
 the original first.
 
 ---
@@ -656,6 +740,14 @@ your media is scanned into the Kodi library, then check the channel's
 missing, or on a network share that's offline. CableBox moves on when the next
 item starts.
 
+**"Technical difficulties", then a different show.** Kodi couldn't open the
+scheduled video (a damaged file, or one it can't read). CableBox shows the
+card for a few seconds, then fills the time with another show from the same
+channel, picking up after each commercial break. The file is kept off the
+schedule for 3 days, then tried again. *Settings → Tools → Check my videos*
+lists these files and can put them back on right away once they're fixed. If a
+whole drive or share is offline, its files are not taken off the schedule.
+
 **Breaks show "Up next" cards instead of commercials.** No commercials folder
 is set, or none of its clips could be read. Run **Check my videos**.
 
@@ -664,8 +756,8 @@ videos.** It's very likely AV1 on a device without AV1 hardware decoding. See
 [Video formats and AV1](#video-formats-and-av1).
 
 **The CableBox menu opens by itself at startup or after a movie.** Update to
-1.3.2 or later. Older versions didn't understand the content requests that some
-skins make for add-ons placed on their home menu.
+the latest version. Early test builds didn't understand the content requests
+that some skins make for add-ons placed on their home menu.
 
 **The guide says "Updating listings…"** That's normal right after installing or
 updating. Listings appear within a minute or two as each channel is prepared.

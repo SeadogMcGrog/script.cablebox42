@@ -118,7 +118,6 @@
                 <font>font37</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor>
                 <wrapmultiline>true</wrapmultiline>
                 <label>$INFO[Window.Property(guide_promo)]</label>
-                <animation effect="fade" start="0" end="100" time="600">Conditional</animation>
             </control>
             <!-- time header -->
             <control type="image">
@@ -146,7 +145,6 @@
                 <left>40</left><top>440</top><width>1840</width><height>620</height>
                 <orientation>vertical</orientation>
                 <scrolltime>900</scrolltime>
-                <autoscroll time="2500">true</autoscroll>
                 <itemlayout height="88">
                     <control type="image">
                         <left>0</left><top>2</top><width>1840</width><height>84</height>
