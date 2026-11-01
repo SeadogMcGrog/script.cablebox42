@@ -2,8 +2,8 @@
 
 **Retro cable TV from your own Kodi library. Flip channels, not menus.**
 
-> **New:** CableBox 42 1.0.0 is the first official release. It's tested on
-> CoreELEC (ODROID N2); reports from other devices are very welcome in the
+> **Now in the official Kodi add-on repository** (Kodi 21 Omega). It's tested
+> on CoreELEC (ODROID N2); reports from other devices are very welcome in the
 > [support thread](https://forum.kodi.tv/showthread.php?tid=389521) or on
 > [GitHub issues](https://github.com/SeadogMcGrog/script.cablebox42/issues).
 
@@ -112,10 +112,10 @@ hardware video decoding works exactly as it does for the rest of your library.
 
 ## Installing
 
-**From the official Kodi repository** (pending approval):
+**From the official Kodi repository** (recommended; updates arrive automatically):
 *Add-ons → Install from repository → Kodi Add-on repository → Program add-ons → CableBox 42*.
 
-**From a zip file:**
+**From a zip file** (for test builds, or Kodi without the official repository):
 
 1. Download the latest `script.cablebox42-x.y.z.zip` from this repository's
    releases, or build one by zipping the `script.cablebox42` folder.
