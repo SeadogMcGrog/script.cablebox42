@@ -7,6 +7,8 @@
 > [support thread](https://forum.kodi.tv/showthread.php?tid=389521) or on
 > [GitHub issues](https://github.com/SeadogMcGrog/script.cablebox42/issues).
 
+Preview of 1.0.1 (coming soon): turning on, flipping channels, turning off. [https://youtu.be/9Z8imCcMTeg?si=5S2iWe0lL7yenDOk](https://youtu.be/9Z8imCcMTeg)
+
 CableBox 42 turns the movies and TV shows you already have in Kodi into a live
 cable lineup. Shows air on a real clock with commercial breaks, bumpers and
 station IDs. There's a scrolling program guide channel, a retro weather
