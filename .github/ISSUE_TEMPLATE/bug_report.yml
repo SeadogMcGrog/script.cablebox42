@@ -1,0 +1,36 @@
+name: Confirmed bug
+description: For a bug that's already been narrowed down (most reports start as a Discussion).
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: CableBox 42 version
+      placeholder: "1.1.1"
+    validations:
+      required: true
+  - type: input
+    id: kodi
+    attributes:
+      label: Kodi version and device
+      placeholder: "Kodi 21.3, CoreELEC on ODROID N2"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens, and how to make it happen
+    validations:
+      required: true
+  - type: input
+    id: log
+    attributes:
+      label: Log link (debug logging on)
+      placeholder: "https://paste.kodi.tv/..."
+    validations:
+      required: true
+  - type: input
+    id: discussion
+    attributes:
+      label: Discussion link (if there was one)

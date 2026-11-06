@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a problem (with a Kodi log)
+    url: https://github.com/SeadogMcGrog/script.cablebox42/discussions/new?category=bug-reports
+    about: Start here — post what happened and a log link; confirmed bugs become issues.
+  - name: Suggest an idea
+    url: https://github.com/SeadogMcGrog/script.cablebox42/discussions/new?category=ideas
+    about: Features and ideas for CableBox 42.
+  - name: Kodi forum support thread
+    url: https://forum.kodi.tv/showthread.php?tid=389521
+    about: Questions and chat with other CableBox 42 users.
