@@ -1,0 +1,65 @@
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! A **Kodi log** is what lets us find the cause, so please include one.
+
+        **How to get a log link**
+        1. Kodi *Settings → System → Logging* → switch on **Enable debug logging**.
+        2. Make the problem happen again.
+        3. Upload the log:
+           - **CoreELEC / LibreELEC:** connect with SSH and run `pastekodi` — it prints a paste.kodi.tv link.
+           - **Everything else:** install **Kodi Logfile Uploader** (*Add-ons → Install from repository → Kodi Add-on repository → Program add-ons*), run it, and copy the link it shows. Or open `kodi.log` and paste it at <https://paste.kodi.tv>.
+        4. If Kodi had to be restarted, the log from *before* the restart is `kodi.old.log` — upload that one.
+  - type: input
+    id: version
+    attributes:
+      label: CableBox 42 version
+      description: Add-ons → My add-ons → Program add-ons → CableBox 42 (the version is on its info page)
+      placeholder: "1.1.1"
+    validations:
+      required: true
+  - type: input
+    id: kodi
+    attributes:
+      label: Kodi version and device
+      placeholder: "Kodi 21.3, CoreELEC on ODROID N2"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you expected, what you saw instead, and roughly when (the time helps us find it in the log).
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to make it happen
+      description: The steps that lead to it, e.g. which channel, how many channel changes, which programme was on.
+      placeholder: |
+        1. Watch TV on channel 7
+        2. Change channel 5–10 times
+        3. Sound stops
+  - type: input
+    id: log
+    attributes:
+      label: Log link
+      description: The paste.kodi.tv link from the steps above (debug logging on).
+      placeholder: "https://paste.kodi.tv/..."
+    validations:
+      required: true
+  - type: textarea
+    id: settings
+    attributes:
+      label: Settings that may matter (optional)
+      description: Anything you know of — static mode, captions on/off, audio passthrough, Adjust display refresh rate, an AV receiver or soundbar.
+  - type: checkboxes
+    id: checked
+    attributes:
+      label: Before posting
+      options:
+        - label: I'm on the latest CableBox 42 version, or I've said which one I use above
+        - label: The log was recorded with debug logging switched on

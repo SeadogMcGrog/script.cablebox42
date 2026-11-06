@@ -968,17 +968,20 @@ today's schedule*, or use *Rebuild schedules*.
 
 1. Turn on *Settings → System → Logging → Enable debug logging*.
 2. Reproduce the problem.
-3. Send the `kodi.log` (and `kodi.old.log` if Kodi restarted). On
-   LibreELEC/CoreELEC they're in the *Logfiles* network share or
-   `/storage/.kodi/temp/`.
+3. Upload the log and copy the link:
+   - **CoreELEC / LibreELEC:** over SSH, run `pastekodi`.
+   - **Anything else:** the **Kodi Logfile Uploader** add-on (*Program
+     add-ons* in the Kodi repository), or paste `kodi.log` at
+     <https://paste.kodi.tv/>.
+   - If Kodi restarted, upload `kodi.old.log` (the log from before the restart).
 
 CableBox's lines are tagged `script.cablebox42`.
 
-Please report issues in the
-[Kodi forum support thread](https://forum.kodi.tv/showthread.php?tid=389521) or at
-<https://github.com/SeadogMcGrog/script.cablebox42/issues>, with your Kodi
-version, device, what you were doing, and a link to your log on
-<https://paste.kodi.tv/>.
+**[Report a problem on GitHub Discussions](https://github.com/SeadogMcGrog/script.cablebox42/discussions/new?category=bug-reports)**
+— a short form asks for your CableBox and Kodi versions, your device, what
+happened, and the log link. Questions and chat are welcome in the
+[Kodi forum support thread](https://forum.kodi.tv/showthread.php?tid=389521),
+and ideas in [Discussions → Ideas](https://github.com/SeadogMcGrog/script.cablebox42/discussions/new?category=ideas).
 
 ---
 

@@ -1,0 +1,17 @@
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideas are very welcome. The [roadmap and changelog](https://github.com/SeadogMcGrog/script.cablebox42/blob/main/changelog.txt) show what's already done.
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like CableBox 42 to do?
+      description: Describe it the way you'd use it on the couch with a remote.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why would it help?
+      description: The real-TV memory it brings back, or the problem it solves.

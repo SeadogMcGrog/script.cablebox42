@@ -812,11 +812,16 @@ make a copy first, and close CableBox while you edit.
 
 1. *Kodi Settings → System → Logging → Enable debug logging*.
 2. Reproduce the problem.
-3. Upload `kodi.log` (and `kodi.old.log` if Kodi restarted) to
-   <https://paste.kodi.tv/>. On LibreELEC/CoreELEC they're in the *Logfiles*
-   network share or `/storage/.kodi/temp/`.
-4. Post the link with your Kodi version, device and what you were doing in the
-   [Kodi forum support thread](https://forum.kodi.tv/showthread.php?tid=389521) or at
-   [GitHub issues](https://github.com/SeadogMcGrog/script.cablebox42/issues).
+3. Upload the log and copy its link:
+   - **CoreELEC / LibreELEC:** connect over SSH (e.g. PuTTY) and run `pastekodi`.
+   - **Anything else:** install **Kodi Logfile Uploader** (*Add-ons → Install
+     from repository → Kodi Add-on repository → Program add-ons*) and run it,
+     or paste `kodi.log` at <https://paste.kodi.tv/>.
+   - If Kodi restarted, use `kodi.old.log` — the log from before the restart.
+4. Fill in the **[problem report form](https://github.com/SeadogMcGrog/script.cablebox42/discussions/new?category=bug-reports)**
+   on GitHub Discussions (versions, device, what happened, the log link).
+   For questions and chat, the
+   [Kodi forum support thread](https://forum.kodi.tv/showthread.php?tid=389521)
+   is the place.
 
 CableBox's log lines are tagged `script.cablebox42`.
