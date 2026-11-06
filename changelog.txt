@@ -1,3 +1,12 @@
+v1.1.1 (2026-11-05)
+- Fixed: after several channel changes the sound could sputter, freeze or stop
+  until Kodi was restarted (seen on CoreELEC; HDMI audio could not reopen).
+  CableBox switched Kodi's 'Play GUI sounds' setting twice on every channel
+  change, and in Kodi 21 each change rebuilds the whole audio output. It is now
+  set once when the TV comes on and put back when it goes off, so Kodi's own
+  button clicks are heard while the TV is on.
+- The turn-off sound now plays straight away instead of a second or two late
+
 v1.1.0 (2026-11-04) - everything since 1.0.0
 
 Broadcast networks and stations

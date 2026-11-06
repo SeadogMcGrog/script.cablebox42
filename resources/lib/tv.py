@@ -187,7 +187,7 @@ class TVWindow(xbmcgui.WindowXML):
                 K.log_err("overlay: %s" % exc)
                 self.overlay = None
         xbmc.executebuiltin("InhibitScreensaver(true)")
-        if not self.careful_static:          # our sounds are interface sounds: keep Kodi's clicks quiet
+        if not self.careful_static:          # our sounds are interface sounds: on for the whole session
             self.gui_sounds.start()
         if not self.lineup.channels:
             self.set_mode("card")
@@ -355,7 +355,6 @@ class TVWindow(xbmcgui.WindowXML):
                 self.setProperty("static", "1")
                 self.static_until = time.time() + 0.45
                 if self.static_sound:
-                    self.gui_sounds.loud(0.8)
                     xbmc.playSFX(K.media("static.wav"), False)
             self.lineup.schedule(ch)
             self.tick()
@@ -987,7 +986,6 @@ class TVWindow(xbmcgui.WindowXML):
             self.setProperty("poweroff", "1")    # the flash hides the picture going away
             stopped = self.release_audio()
             try:
-                self.gui_sounds.loud(1.8)        # (again: the stop may have taken a while)
                 xbmc.playSFX(K.media("power_off.wav"), False)
             except Exception:
                 pass
@@ -1479,18 +1477,21 @@ class GuiSounds(object):
     """Kodi's interface sounds while CableBox is on.
 
     The static and the turn-off sound are Kodi interface sounds, which Kodi only
-    plays during a video with 'Play GUI sounds' set to Always - but then every
-    button press clicks too.  So while CableBox runs: 'only when not playing'
-    (buttons silent during shows), Always just for the moment our own sound
-    plays, and the viewer's own setting back when the TV goes off (or next time,
-    if Kodi was closed before that)."""
+    plays during a video with 'Play GUI sounds' set to Always.  CableBox sets
+    Always once when the TV comes on and puts the viewer's own setting back when
+    it goes off (or next time, if Kodi was closed before that).
+
+    Never switched per channel change: in Kodi 21 every change of that setting
+    rebuilds the whole audio output, and doing it twice on each channel change,
+    while one programme closes and the next opens, made the sound sputter and
+    could leave HDMI audio unable to reopen at all (CoreELEC) until Kodi was
+    restarted.  The price is that Kodi's own button clicks are heard while the
+    TV is on - like a cable box that beeps."""
     SETTING = "audiooutput.guisoundmode"
 
     def __init__(self):
         self.active = False
         self.orig = None
-        self.base = None
-        self.loud_until = 0
 
     def _get(self):
         try:
@@ -1506,6 +1507,7 @@ class GuiSounds(object):
             K.log_err("gui sounds: %s" % exc)
 
     def start(self):
+        """Once, before anything plays: Always, for the whole time the TV is on."""
         cur = self._get()
         if cur is None:
             return
@@ -1516,31 +1518,25 @@ class GuiSounds(object):
             st["gui_sounds_orig"] = orig
             K.save_json(K.STATE_FILE, st)
         self.orig = int(orig)
-        self.base = min(self.orig, GUI_SOUNDS_IDLE)
-        if cur != self.base:
-            self._set(self.base)
+        if cur != GUI_SOUNDS_ALWAYS:
+            self._set(GUI_SOUNDS_ALWAYS)
+            xbmc.sleep(150)                         # Kodi's audio output reopens once, before any programme
         self.active = True
 
     def loud(self, secs):
-        """Let our own sound through for a moment."""
-        if not self.active:
-            return
-        if not self.loud_until:
-            self._set(GUI_SOUNDS_ALWAYS)
-            xbmc.sleep(30)                          # let Kodi's audio engine take the change first
-        self.loud_until = time.time() + secs
+        """Kept for the callers: interface sounds are already on for the session."""
+        return
 
     def tick(self, now):
-        if self.loud_until and now > self.loud_until:
-            self.loud_until = 0
-            self._set(self.base)
+        return
 
     def stop(self):
+        """Once, after the last programme has stopped: the viewer's own setting back."""
         if not self.active:
             return
         self.active = False
-        self.loud_until = 0
-        self._set(self.orig)
+        if self.orig is not None and self.orig != GUI_SOUNDS_ALWAYS:
+            self._set(self.orig)
         st = K.load_json(K.STATE_FILE, {})
         st.pop("gui_sounds_orig", None)
         K.save_json(K.STATE_FILE, st)

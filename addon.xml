@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="script.cablebox42" name="CableBox 42" version="1.1.0" provider-name="Seadog McGrog">
+<addon id="script.cablebox42" name="CableBox 42" version="1.1.1" provider-name="Seadog McGrog">
     <requires>
         <import addon="xbmc.python" version="3.0.1"/>
     </requires>
@@ -11,7 +11,11 @@
         <summary lang="en_GB">Retro cable TV from your own library - flip channels, not menus.</summary>
         <description lang="en_GB">CableBox 42 turns your Kodi library into a live cable TV lineup. Shows air on a real-time schedule with commercial breaks and bumps from your own clip folders, a scrolling program guide channel, a retro weather channel, static between channels and a channel banner. Lineups build themselves from your library (genres, decades, studios, tags, smart playlists or folders) and can be fine-tuned show by show - there is no schedule to compile. Playback uses Kodi's own player, so hardware decoding works exactly as it does for the rest of your library.[CR][CR]Inspired by the FieldStation42 project; not affiliated with it.</description>
         <disclaimer lang="en_GB">Plays only media from your own Kodi library and folders. The optional weather channel uses Kodi's weather service or, if you enter a location, fetches forecasts from open-meteo.com.</disclaimer>
-        <news>v1.1.0 - everything since 1.0.0
+        <news>v1.1.1
+- Fixed: after several channel changes the sound could sputter or stop until Kodi was restarted (CoreELEC and other HDMI boxes). Kodi's interface sounds are now switched on once for the whole time the TV is on, so Kodi's own button clicks are heard while watching
+- The turn-off sound now plays right away
+
+v1.1.0 - everything since 1.0.0
 - Broadcast networks on 3-5 with a network-style day; shows go to the station for the network they aired on
 - Built-in stations with logos and call letters, branding by time of day (CAM Jr. mornings), corner logo bug
 - Station folders: your own logos, bumps, IDs and commercials per channel and time block; Branding &amp; clips shows what each channel really uses; exact folder matching; renaming a channel renames its folder

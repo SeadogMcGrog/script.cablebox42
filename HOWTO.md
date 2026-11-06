@@ -754,6 +754,18 @@ or none of its clips can be read. *Branding & clips* and *Check my videos*.
 **No static sound when changing channel (or only the first time).**
 *Settings → Viewing → Static between channels → Video clip* (common on Windows).
 
+**The sound sputters, freezes or stops after a few channel changes.**
+Update to 1.1.1 or later, then restart Kodi (on CoreELEC: `systemctl restart kodi`).
+Older versions switched Kodi's audio setup on every channel change, which some
+HDMI boxes couldn't keep up with.
+
+**I hear a click when I press a button while watching.**
+That's Kodi's own button sound. While the TV is on, CableBox lets Kodi play
+interface sounds (it needs them for the static and turn-off sounds), so Kodi's
+clicks are heard too. To silence them: *Kodi Settings → Interface → Skin →
+Navigation sounds → None* — but that also silences CableBox's static and
+turn-off sounds; *Static mode → Video clip* keeps the static sound in that case.
+
 **No sound when turning the TV off.**
 Update to 1.1.0 or later. If it's still silent on a box that switches refresh
 rate, try *Static between channels → Video clip*, which also makes the turn-off
