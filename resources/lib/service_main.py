@@ -23,6 +23,11 @@ def run():
         lineup.ensure_all(abort=lambda: monitor.abortRequested() or tv_running())
         library.durations().save()
 
+    def extras():
+        # movie Extras folders: listed and measured only here, while the TV is off
+        from . import library
+        library.extras_refresh(abort=lambda: monitor.abortRequested() or tv_running())
+
     K.ensure_dirs()
     try:
         from . import progress
@@ -72,6 +77,10 @@ def run():
                 topup()
             except Exception as exc:
                 K.log_err("schedule top-up failed: %s" % exc)
+            try:
+                extras()
+            except Exception as exc:
+                K.log_err("extras scan failed: %s" % exc)
             idle = 20 * 60
         if monitor.waitForAbort(15):
             break

@@ -3410,3 +3410,217 @@ msgstr ""
 msgctxt "#33158"
 msgid "Modern"
 msgstr ""
+
+# Movie extras (Behind the Scenes channel, stage 1)
+msgctxt "#33300"
+msgid "Movie extras"
+msgstr ""
+
+msgctxt "#33301"
+msgid "Also air extras with unrecognised names"
+msgstr ""
+
+msgctxt "#33302"
+msgid "Check extras..."
+msgstr ""
+
+msgctxt "#33303"
+msgid "deleted, extended or alternate"
+msgstr ""
+
+msgctxt "#33304"
+msgid "bloopers"
+msgstr ""
+
+msgctxt "#33305"
+msgid "trailer or promo"
+msgstr ""
+
+msgctxt "#33306"
+msgid "gallery or storyboards"
+msgstr ""
+
+msgctxt "#33307"
+msgid "demo reel"
+msgstr ""
+
+msgctxt "#33308"
+msgid "newsreel"
+msgstr ""
+
+msgctxt "#33309"
+msgid "music"
+msgstr ""
+
+msgctxt "#33310"
+msgid "short film"
+msgstr ""
+
+msgctxt "#33311"
+msgid "commentary"
+msgstr ""
+
+msgctxt "#33312"
+msgid "disc extra"
+msgstr ""
+
+msgctxt "#33313"
+msgid "under 60 s"
+msgstr ""
+
+msgctxt "#33314"
+msgid "name not recognised"
+msgstr ""
+
+msgctxt "#33315"
+msgid "[B]Summary[/B]"
+msgstr ""
+
+msgctxt "#33316"
+msgid "To change what airs, rename files or put them in a subfolder of Extras named Behind the Scenes, Making Of, Interviews, Featurettes or Documentaries (those always air).  CableBox never changes your files."
+msgstr ""
+
+msgctxt "#33317"
+msgid "Check extras"
+msgstr ""
+
+msgctxt "#33319"
+msgid "  %d films with extras, %d videos"
+msgstr ""
+
+msgctxt "#33320"
+msgid "  Air: %d videos, %d h %02d min, from %d films"
+msgstr ""
+
+msgctxt "#33321"
+msgid "  Skipped: %d videos"
+msgstr ""
+
+msgctxt "#33322"
+msgid "  Enough for a Behind the Scenes channel (2 hours from 5 films): %s"
+msgstr ""
+
+msgctxt "#33323"
+msgid "[B]%s[/B]  [COLOR grey]%d to air, %d min[/COLOR]"
+msgstr ""
+
+msgctxt "#33324"
+msgid "yes"
+msgstr ""
+
+msgctxt "#33325"
+msgid "not yet"
+msgstr ""
+
+msgctxt "#33327"
+msgid "  %d Extras folders are shared by several movies and aren't used."
+msgstr ""
+
+msgctxt "#33328"
+msgid "[B]%s[/B]  [COLOR orange]this Extras folder is shared by several movies, so it isn't used - give each movie its own folder[/COLOR]"
+msgstr ""
+
+msgctxt "#33329"
+msgid "  Air  %s  %s  [COLOR grey]%s[/COLOR]"
+msgstr ""
+
+msgctxt "#33330"
+msgid "  [COLOR grey]Skipped: %s  %s  %s[/COLOR]"
+msgstr ""
+
+msgctxt "#33331"
+msgid "Behind the scenes (movie extras)"
+msgstr ""
+
+msgctxt "#33332"
+msgid "making-of pieces and interviews from your movies' Extras folders"
+msgstr ""
+
+msgctxt "#33333"
+msgid "CableBox hasn't found any movie extras to air yet.  It looks through your movies' Extras folders in the background while the TV is off; until then this channel shows 'No programming'.[CR][CR]Settings > Tools > Check extras shows what it found."
+msgstr ""
+
+msgctxt "#33334"
+msgid "Inside %s"
+msgstr ""
+
+msgctxt "#33335"
+msgid "No movie extras to air yet"
+msgstr ""
+
+
+msgctxt "#33337"
+msgid "Measure now"
+msgstr ""
+
+msgctxt "#33338"
+msgid "Looking through your movies' Extras folders..."
+msgstr ""
+
+msgctxt "#33339"
+msgid "CableBox is already measuring your extras in the background.  Try again in a minute."
+msgstr ""
+
+msgctxt "#33340"
+msgid "Stopped - what was measured is kept"
+msgstr ""
+
+msgctxt "#33341"
+msgid "  Lengths measured: %d of %d"
+msgstr ""
+
+msgctxt "#33342"
+msgid "      the rest are measured in the background while the TV is off, or with Measure now"
+msgstr ""
+
+msgctxt "#33343"
+msgid "Looking through Extras folders: %d of %d movies"
+msgstr ""
+
+msgctxt "#33344"
+msgid "Measuring extras: %d of %d"
+msgstr ""
+
+msgctxt "#33345"
+msgid "CableBox hasn't looked through your movies' Extras folders yet.  It does that in the background while the TV is off, or it can do it now.[CR][CR]Kodi looks for extras in a folder named Extras next to the movie's file (or inside VIDEO_TS or BDMV)."
+msgstr ""
+
+msgctxt "#33346"
+msgid "None of your movies has an Extras folder.[CR][CR]Kodi looks for extras in a folder named Extras next to the movie's file (or inside VIDEO_TS or BDMV)."
+msgstr ""
+
+msgctxt "#33347"
+msgid "CableBox hasn't looked through your movies' Extras folders yet."
+msgstr ""
+
+msgctxt "#33349"
+msgid "Later"
+msgstr ""
+
+msgctxt "#33350"
+msgid "CableBox measures the rest in the background while the TV is off, or it can measure them now."
+msgstr ""
+
+msgctxt "#33351"
+msgid "Show the list"
+msgstr ""
+
+msgctxt "#33352"
+msgid "Lengths measured: %d of %d"
+msgstr ""
+
+msgctxt "#33353"
+msgid "Press OK to look for them now"
+msgstr ""
+
+msgctxt "#33354"
+msgid "Look for movie extras now"
+msgstr ""
+
+msgctxt "#33355"
+msgid "length can't be read"
+msgstr ""
+
+msgctxt "#33356"
+msgid "  [COLOR grey]Not measured yet  %s  %s[/COLOR]"
+msgstr ""

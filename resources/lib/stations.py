@@ -95,6 +95,9 @@ STATIONS = [
     {"id": "boombox_tv", "name": "Boombox TV", "call": "BOOM", "logo": "boombox_tv.png",
      "match": {"name_words": ["music"]},
      "networks": ["MTV", "MTV2", "CMT"]},
+    # the Behind the scenes channel (movie Extras); its corner bug is a simpler picture
+    {"id": "backlot", "name": "BACKLOT", "call": "LOT", "logo": "backlot.png", "bug": "backlot_bug.png",
+     "match": {"type": "extras"}},
 ]
 BY_ID = {s["id"]: s for s in STATIONS}
 
@@ -383,6 +386,7 @@ def brand(ch, ts=None):
     call = (ch or {}).get("callsign", "")
     logo_own = (ch or {}).get("logo") or ""
     logo, src = "", ""
+    kit = None              # the built-in kit entry the logo came from (it may have its own corner bug)
     bfolder = ""
     if b:
         name = b.get("name") or name
@@ -392,6 +396,7 @@ def brand(ch, ts=None):
                             (builtin_logo(b.get("logo")) if base and b.get("logo") else "", "builtin")):
             if path:
                 logo, src = path, where
+                kit = b if where == "builtin" else None
                 break
     if not logo:
         if logo_own and logo_own != "none":
@@ -400,10 +405,12 @@ def brand(ch, ts=None):
             logo = _image_in(folder)
             src = "folder" if logo else ""
             if not logo and base:
-                logo, src = builtin_logo(base["logo"]), "builtin"
+                logo, src, kit = builtin_logo(base["logo"]), "builtin", base
         else:
             src = "none"
-    return {"name": name, "call": call, "logo": logo, "logo_from": src, "folder": folder,
+    # corner bug: a kit's simpler 'bug' image when it has one, else the logo itself
+    bug = builtin_logo(kit["bug"]) if kit and kit.get("bug") else logo
+    return {"name": name, "call": call, "logo": logo, "bug": bug, "logo_from": src, "folder": folder,
             "block_folder": bfolder, "block": b.get("name") if b else ""}
 
 
