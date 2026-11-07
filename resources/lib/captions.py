@@ -735,14 +735,16 @@ def keymap_tool():
     d = xbmcgui.Dialog()
     title = _("Remote CC button")
     if xbmcvfs.exists(KEYMAP):
-        if d.yesno(title, _("The remote's subtitle button is set up for CableBox.[CR]Remove it?")):
+        if d.yesno(title, _("The remote's subtitle button is set up for CableBox.[CR]Remove it?"),
+                   nolabel=_("Cancel"), yeslabel=_("Remove")):
             xbmcvfs.delete(KEYMAP)
             xbmc.executebuiltin("Action(reloadkeymaps)")
             d.notification(title, _("Removed"), time=2500)
         return
     if not d.yesno(title, _("Kodi only sends the remote's subtitle button to its own full-screen player. "
                             "Add a small keymap so it switches captions on and off in CableBox too?[CR]"
-                            "Elsewhere in Kodi it toggles subtitles of a playing video.")):
+                            "Elsewhere in Kodi it toggles subtitles of a playing video."),
+                   nolabel=_("Cancel"), yeslabel=_("Set it up")):
         return
     folder = "special://profile/keymaps/"
     try:

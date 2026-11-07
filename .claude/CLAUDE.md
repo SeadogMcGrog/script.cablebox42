@@ -54,6 +54,22 @@ A task often starts as "implement `briefs\<name>.md`".
   are fine). Remove entries nothing uses any more.
 - Never delete or overwrite the user's own files (station folders, clips, logos).
   Folder renames refuse when the target exists.
+- Every screen is one of five kinds, and each kind always works the same way
+  (helpers in `manager.py`: `done_select`, `ask`, `confirm`, `confirm_remove`):
+  - **Menu** (you come back to it after each change): changes save as you go;
+    bottom row **Done** (= Back).
+  - **Step-by-step** (several screens that create one thing: Build my lineup,
+    Add a channel, Pin a show, Add a time block, Add off-air hours): Back on any
+    step cancels the whole thing, nothing saved. Ends with an OK / Cancel screen
+    when it replaces something or has more than ~4 steps; otherwise a short
+    notification says what was added.
+  - **Question**: buttons say what they do ("Rename folder" / "Leave it"), never
+    plain Yes/No. Back = Cancel, never an answer that does something; three-way
+    questions use `yesnocustom` (Back returns -1) via `ask(..., cancel=...)`.
+  - **Remove / replace**: always asks first, buttons *Cancel* / *Remove* (or
+    Delete, Replace, Clear) via `confirm_remove`. Lists of choices get a Cancel row.
+  - **Info** (textviewer): never a dead end in the middle of a flow; if something
+    can be done next, offer it after the viewer closes it.
 - Docs: user-facing wording is plain and short; `README.md` = reference,
   `HOWTO.md` = task walkthroughs. Update both when menus or behaviour change.
 
@@ -77,6 +93,12 @@ A task often starts as "implement `briefs\<name>.md`".
   ends-with rule made "Disney Showcase 13" pass for channel 3.
 - **Breaks are planned hours ahead**, so new clips appear in breaks planned later;
   *Tools → Rebuild schedules* uses them at once. Don't promise "from the next break".
+- **Kodi caches an add-on's strings until Kodi restarts.** After editing `strings.po`,
+  restart Kodi before testing: `_()` finds the id in the new file but Kodi returns the
+  old text for it (a changed `%s` count then raises "not enough arguments").
+- **Kodi's yes/no dialog text box shows 4 lines** (Estuary, 720p and 1080p); more
+  scrolls the top lines out of sight. Put a long question in the dialog's heading.
+  `yesnocustom` buttons read yes / no / custom from left to right, focus on *no*.
 - `kodi-addon-checker` rejects `<news>` over 1500 characters. Keep the newest release
   notes there and the full history in `changelog.txt`.
 

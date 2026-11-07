@@ -114,7 +114,9 @@ Open **CableBox 42**. The first time, a welcome screen asks how to start.
 ### Option A — "Set it all up for me" (recommended)
 
 The lineup builder asks a few questions. Every answer can be changed later in
-Settings, so don't overthink it.
+Settings, so don't overthink it. Nothing is saved until the last screen's
+**OK**: press **Back** (or **Cancel**) on any screen and everything stays as it
+was.
 
 1. **"Do you have a folder of old commercials?"** — *Choose folder* and pick it,
    or *Skip*.
@@ -129,17 +131,20 @@ Settings, so don't overthink it.
    one each, or skip.
 4. **Your city** for the weather channel (e.g. `Springfield, IL`). Skip it if
    Kodi's own weather is already set up.
-5. CableBox reads your library (about a minute) and proposes channels.
-   **Untick any you don't want** and confirm.
-6. **"Sign channels off overnight?"** — *Yes* gives you a *Please Stand By* card
-   from 12 AM to 5 AM, like real TV. The guide and weather stay on.
-7. **"Give channels a prime-time lineup?"** — *Yes* fills 8–11 PM with fixed
-   weekly slots of each channel's best shows (movie channels: a movie at 8).
-8. CableBox programmes every channel, then shows **What I set up** — every
-   channel, where its shows come from, and its folders. Read it once; it's the
-   map of your new lineup. (You can see it again any time: *Channel manager →
-   Lineup summary*.)
-9. **Start watching.**
+5. CableBox reads your library (about a minute; *Cancel* stops it) and
+   proposes channels. **Untick any you don't want** and confirm.
+6. **Extras** — both ticked; untick what you don't want:
+   - **Sign off overnight** — a *Please Stand By* card from 12 AM to 5 AM, like
+     real TV. The guide and weather stay on.
+   - **Prime-time lineup** — fills 8–11 PM with fixed weekly slots of each
+     channel's best shows (movie channels: a movie at 8).
+7. **The last check** — e.g. *Replace your 12 channels with these 9 (2-25)?*,
+   with the extras and folders you chose. **OK** saves it all; **Cancel** leaves
+   your old lineup and settings untouched.
+8. CableBox programmes every channel, then asks **Start watching**, **Not now**
+   or **What I set up** — every channel, where its shows come from, and its
+   folders. Read it once; it's the map of your new lineup. (You can see it again
+   any time: *Channel manager → Lineup summary*.)
 
 ### Option B — "I'll set it up myself"
 
@@ -240,9 +245,12 @@ Main menu → **Channel manager**.
    - *Movie channel* — films, commercials between them
    - *Loop* — back to back, no clock (good for music videos or shorts)
    - *Guide channel* / *Weather channel*
-3. **Name** and **number**.
-4. **Add programming** — pick a source, then *Add more programming?* as many
-   times as you like:
+3. **Name** and **number**. If the number is taken you can move that channel
+   to the next free number, slide the channels from there up by one, or pick
+   another number.
+4. **Add programming** — pick a source, then **Add more** as many times as you
+   like, and **Done** when finished. **Back** (or **Cancel**) on any step adds
+   nothing.
 
 | Source | Example |
 |---|---|
@@ -268,7 +276,7 @@ Main menu → **Channel manager**.
 | Branding by time of day | Another name and logo for part of the day ([section 8](#8-time-of-day-branding-cam-jr-in-the-morning)) |
 | Station logo | Choose an image, use the logo folder, or no logo |
 | **Branding & clips** | What the channel *really* uses for its logo, bumps, IDs and commercials ([section 7](#7-give-each-channel-its-own-logo-bumps-ids-and-commercials)) |
-| Programming | Add or remove sources |
+| Programming | Add or remove sources (removing asks first) |
 | Weekly planner | Pin shows to times ([section 10](#10-pin-shows-to-fixed-times-with-the-weekly-planner)) |
 | Time blocks | Saturday mornings, movie nights ([section 11](#11-time-blocks-saturday-morning-cartoons-movie-nights)) |
 | Off-air hours | When this channel signs off |
@@ -279,7 +287,8 @@ Main menu → **Channel manager**.
 | Programs start on | :00 and :30, the hour, every 15 minutes, or no clock |
 | Channel commercials / bumps folder, Station ID clips | Folders for this channel only (station folders are usually easier) |
 | Preview today's schedule | The next 12 hours |
-| Delete channel | Asks first |
+| Type | Asks whether to use the new type's usual settings (commercials, breaks, bumps, lineup style, start times) or keep the channel's own |
+| Delete channel | Asks first: *Cancel* / *Delete* |
 
 Changes take effect immediately: the edited channel's schedule rebuilds from
 now on, and episode progress is kept.
@@ -539,7 +548,7 @@ light blue, off-air hours grey; everything else is filled automatically.
 | Page Up / Down, CH+ / CH− | Jump 7 hours |
 | **OK** on a pin | Change show, time, length, days or order; rename; start the series over; remove |
 | **Menu** | Copy a day to other days, clear a day, off-air screen and clips, preview |
-| Back | Done (saved as you go) |
+| Back | Done (saved as you go). Back in the middle of pinning a show pins nothing |
 
 Pinned slots always start on time — the automatic programming works around
 them. A pinned show can still turn up at other times; to keep it to its slot,

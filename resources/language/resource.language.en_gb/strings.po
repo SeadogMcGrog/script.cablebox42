@@ -926,10 +926,6 @@ msgctxt "#32238"
 msgid "Move %s to channel"
 msgstr ""
 
-msgctxt "#32239"
-msgid "Channel %d is already taken."
-msgstr ""
-
 msgctxt "#32240"
 msgid "On"
 msgstr ""
@@ -1162,10 +1158,6 @@ msgctxt "#32301"
 msgid "%d shows, %d movies"
 msgstr ""
 
-msgctxt "#32302"
-msgid "Add more programming to %s?"
-msgstr ""
-
 msgctxt "#32303"
 msgid "Same show same time every day"
 msgstr ""
@@ -1232,10 +1224,6 @@ msgstr ""
 
 msgctxt "#32319"
 msgid "Choose folder..."
-msgstr ""
-
-msgctxt "#32320"
-msgid "Delete %d %s?"
 msgstr ""
 
 msgctxt "#32321"
@@ -1938,26 +1926,6 @@ msgctxt "#32498"
 msgid "%d more shows from this channel's sources air on their own home channels"
 msgstr ""
 
-msgctxt "#32501"
-msgid "Sign channels off overnight, like real TV?[CR][CR]From 12 AM to 5 AM a 'Please stand by' card shows; the guide and weather stay on."
-msgstr ""
-
-msgctxt "#32502"
-msgid "Give channels a prime-time lineup?[CR][CR]From 8 to 11 PM each channel airs its best shows in fixed weekly slots (movie channels: a movie at 8). You can change any of it in the weekly planner."
-msgstr ""
-
-msgctxt "#32503"
-msgid "No, run all night"
-msgstr ""
-
-msgctxt "#32504"
-msgid "Yes (recommended)"
-msgstr ""
-
-msgctxt "#32505"
-msgid "No thanks"
-msgstr ""
-
 msgctxt "#32506"
 msgid "Building prime-time lineups..."
 msgstr ""
@@ -2184,10 +2152,6 @@ msgstr ""
 
 msgctxt "#32574"
 msgid "Do you have a folder of background music?[CR][CR]It plays behind the TV Guide and Weather channels - smooth jazz and elevator music are the classic choice. You can add this later in Settings."
-msgstr ""
-
-msgctxt "#32575"
-msgid "Choose another folder"
 msgstr ""
 
 msgctxt "#32576"
@@ -3048,4 +3012,222 @@ msgstr ""
 
 msgctxt "#33078"
 msgid "Choose where your station folders should go.[CR][CR]CableBox makes one folder per channel, with bumps, ids and commercials inside - drop clips (and a logo.png) in and CableBox picks them up."
+msgstr ""
+
+# Build my lineup: every screen ends in OK or Cancel
+msgctxt "#33200"
+msgid "Cancel setup"
+msgstr ""
+
+msgctxt "#33201"
+msgid "Leave without changing anything."
+msgstr ""
+
+msgctxt "#33202"
+msgid "Choose another"
+msgstr ""
+
+msgctxt "#33203"
+msgid "Sign off overnight"
+msgstr ""
+
+msgctxt "#33204"
+msgid "12 AM - 5 AM a 'Please stand by' card shows; the guide and weather stay on."
+msgstr ""
+
+msgctxt "#33205"
+msgid "Prime-time lineup"
+msgstr ""
+
+msgctxt "#33206"
+msgid "8 - 11 PM: each channel's best shows in weekly slots (movie channels: a movie at 8). Change them in the weekly planner."
+msgstr ""
+
+msgctxt "#33207"
+msgid "Extras (untick what you don't want)"
+msgstr ""
+
+msgctxt "#33208"
+msgid "Add %d channels (%s) after your current ones?"
+msgstr ""
+
+msgctxt "#33209"
+msgid "Replace your %d channels with these %d (%s)?"
+msgstr ""
+
+msgctxt "#33210"
+msgid "Set up these %d channels (%s)?"
+msgstr ""
+
+msgctxt "#33211"
+msgid "Overnight sign-off: %s  ·  Prime time: %s"
+msgstr ""
+
+msgctxt "#33212"
+msgid "Channel folders: %s"
+msgstr ""
+
+msgctxt "#33213"
+msgid "Music: %s"
+msgstr ""
+
+msgctxt "#33214"
+msgid "Weather city: %s"
+msgstr ""
+
+msgctxt "#33215"
+msgid "OK"
+msgstr ""
+
+msgctxt "#33216"
+msgid "Your lineup already has all of these channels - nothing to add."
+msgstr ""
+
+msgctxt "#33217"
+msgid "Start watching"
+msgstr ""
+
+msgctxt "#33218"
+msgid "Setup cancelled - nothing changed"
+msgstr ""
+
+# Consistent menus and questions
+msgctxt "#33219"
+msgid "Move %s to %d"
+msgstr ""
+
+msgctxt "#33220"
+msgid "Slide channels %d and up over by one"
+msgstr ""
+
+msgctxt "#33221"
+msgid "Pick another number"
+msgstr ""
+
+msgctxt "#33222"
+msgid "%s has %d source(s) of programming.[CR]Add more?"
+msgstr ""
+
+msgctxt "#33223"
+msgid "Add more"
+msgstr ""
+
+msgctxt "#33224"
+msgid "Channel %d %s added"
+msgstr ""
+
+msgctxt "#33225"
+msgid "Keep"
+msgstr ""
+
+msgctxt "#33226"
+msgid "Discard"
+msgstr ""
+
+msgctxt "#33227"
+msgid "Back to the list"
+msgstr ""
+
+msgctxt "#33228"
+msgid "Pick years"
+msgstr ""
+
+msgctxt "#33229"
+msgid "Any year"
+msgstr ""
+
+msgctxt "#33230"
+msgid "Pick a set"
+msgstr ""
+
+msgctxt "#33231"
+msgid "Any movies"
+msgstr ""
+
+msgctxt "#33232"
+msgid "Its usual settings: %s[CR]Use these, or keep this channel's own?"
+msgstr ""
+
+msgctxt "#33233"
+msgid "Use defaults"
+msgstr ""
+
+msgctxt "#33234"
+msgid "Keep my settings"
+msgstr ""
+
+msgctxt "#33235"
+msgid "Delete %d %s?[CR][CR]Its schedule and pinned shows go with it. Your videos and its station folder are not touched."
+msgstr ""
+
+msgctxt "#33236"
+msgid "Delete"
+msgstr ""
+
+msgctxt "#33237"
+msgid "Use this station"
+msgstr ""
+
+msgctxt "#33238"
+msgid "Switch on"
+msgstr ""
+
+msgctxt "#33239"
+msgid "Replace"
+msgstr ""
+
+msgctxt "#33240"
+msgid "Clear"
+msgstr ""
+
+msgctxt "#33241"
+msgid "Rebuild"
+msgstr ""
+
+msgctxt "#33242"
+msgid "Clear them"
+msgstr ""
+
+msgctxt "#33243"
+msgid "Keep it off"
+msgstr ""
+
+msgctxt "#33244"
+msgid "Set it up"
+msgstr ""
+
+msgctxt "#33245"
+msgid "Remove the time block %s?"
+msgstr ""
+
+msgctxt "#33246"
+msgid "Remove the off-air hours %s?"
+msgstr ""
+
+msgctxt "#33247"
+msgid "Remove the off-air hours %s - %s?"
+msgstr ""
+
+msgctxt "#33248"
+msgid "%s added (%s - %s)"
+msgstr ""
+
+msgctxt "#33249"
+msgid "%s not added - it had no programming"
+msgstr ""
+
+msgctxt "#33250"
+msgid "Off the air %s - %s, %s"
+msgstr ""
+
+msgctxt "#33251"
+msgid "Pinned: %s"
+msgstr ""
+
+msgctxt "#33252"
+msgid "Change to %s?"
+msgstr ""
+
+msgctxt "#33253"
+msgid "%s at %s"
 msgstr ""
