@@ -28,6 +28,8 @@ The repository root **is** the add-on folder.
 | `resources/lib/stations.py` | Built-in stations, branding by time of day, station folders |
 | `resources/lib/captions.py` | Closed captions |
 | `resources/lib/library.py` | Kodi library queries (JSON-RPC) |
+| `.claude/make-promo-art.py` | Rebuilds the 90s promo art (`media/promo90s/`: Bebas Neue letter pictures, bands, shapes). Not shipped |
+| `resources/lib/promos.py` | Schedule promos: artwork/plot/theme/Extras lookup (read-only); slots are placed in `scheduler._fill`, shown by `tv.start_promo` |
 | Others | `planner.py`, `weather.py`, `progress.py`, `presets.py`, `seasons.py`, `probe.py`, `logos.py`, `widget.py`, `kodiutil.py` |
 | `resources/language/resource.language.en_gb/strings.po` | All UI strings |
 | `resources/settings.xml` | Add-on settings |
@@ -83,6 +85,31 @@ A task often starts as "implement `briefs\<name>.md`".
   `GuiSounds` sets *Always* once at TV start and restores the user's value at TV
   stop (crash recovery: `gui_sounds_orig` in state.json). Kodi's own button clicks are
   therefore audible while the TV is on — documented, accepted.
+- **Never change Kodi's volume from the add-on** (it shows the volume bar, changes the
+  viewer's own volume, and stays wrong if anything fails). No `Application.SetVolume` /
+  `SetMute` and no volume-step fades: promo themes play at the file's own level and are
+  cut with the card; the built-in tune has its level and fade baked into the file.
+  Kodi already handles the remote's Volume/Mute keys while CableBox's windows are open
+  (verified in Kodi 21.3: the window receives the action *and* Kodi changes the volume),
+  so passing them on as well made each press count twice and made Mute cancel itself.
+- **Kodi 21 script add-ons can't ship fonts.** A `Font.xml` in the add-on's skin folder is
+  ignored (labels fall back to the default font); only the active skin's fonts work. The 90s
+  promo lettering is therefore pictures of letters (`media/promo90s/glyphs`) placed by
+  `promos.apply_card` into fixed image slots in the skin XML (ids 1300-1527).
+- **Image controls added from Python are unreliable**: `addControls` + a visible condition +
+  entrance animations drew nothing until something else was added later. Use controls
+  declared in the skin XML and fill them from Python (`setImage`, `setPosition`).
+  Python's `colorDiffuse` is `0xAARRGGBB` (the XML's `AARRGGBB`).
+- **`background="true"` textures load after the control is visible.** The promo card's
+  title used to show only while `promo_logo` was empty, so it showed through while a logo
+  loaded. Now `promos.card` sets *either* `promo_logo` *or* `promo_title` (logo only when
+  `logo_ready`: the file exists and is in Kodi's texture cache), each control keys off its
+  own property, and `tv.prefetch_promo` preloads the next logo via the skin's
+  `promo_preload` image during the item before the card.
+- **`Addons.ExecuteAddon` / `RunScript` split parameters at commas**; pass lists with `|`.
+- **Still windows screenshot stale**: Kodi only redraws what changes, so `TakeScreenshot` of
+  a window that has stopped moving can return an old frame. The contact sheet turns dirty
+  regions off (`<algorithmdirtyregions>0`) in its portable profile.
 - **Interface sounds need a playing stream or no stream.** `xbmc.playSFX` stalls while
   a programme is merely paused. The turn-off path pauses (instant silence), stops the
   programme (`release_audio()`), waits ~250 ms, then plays the sound.
@@ -111,6 +138,12 @@ A task often starts as "implement `briefs\<name>.md`".
   add-on, start the TV, flip channels and count audio errors. Linux with root only
   (a cloud session, or WSL). Audio timing in the VM is not hardware-accurate; the N2
   has the final word.
+- Promo cards: `python .claude/promo-contact-sheet.py --kodi G:/Kodi` renders every
+  library show's promo at 1080p and 720p in a portable *copy* of Kodi (own profile; the
+  user's library DB and CableBox data are copied in, never written) and writes
+  `G:/CableBox42/promo-contact-sheet/index.html`. Windows only; Kodi must be closed
+  (one copy at a time). Cards come from `promo_preview.card_for_show`, the same code as
+  *Settings → Advanced → Preview promo*.
 - Hardware: the maintainer tests on the N2. On CoreELEC, `pastekodi` uploads the log;
   BusyBox tools (`ps`, `sed`) have fewer options than GNU.
 
@@ -134,6 +167,13 @@ A task often starts as "implement `briefs\<name>.md`".
 
 ## Open items (as of 2026-11-06)
 
+- **Schedule promos** (branch `feature/schedule-promos`, off by default): the N2 Step 1
+  test (video, then theme.mp3, then video, with AC3 passthrough and refresh rate
+  'On start/stop') is still to be done. Record the result under *Hard-won lessons*.
+  If the audio-only item blacks out or drops audio, set the *Promo music* default
+  to silent. Themes play at their own level (see *Never change Kodi's volume*); if
+  they are much louder than episodes on the N2, that is a content issue, not a volume
+  setting to touch.
 - Kodi pull request in `xbmc/repo-scripts` still holds **1.1.0**; replace with 1.1.1
   (force-push the fork branch — ask the maintainer first).
 - GitHub release v1.1.1 not yet published (maintainer).

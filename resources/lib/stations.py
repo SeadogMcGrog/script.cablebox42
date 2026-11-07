@@ -409,7 +409,7 @@ def brand(ch, ts=None):
 
 # a channel's clip folders, and other names the viewer might give them
 KIND_NAMES = {"bumps": ("bumps", "bumpers"), "ids": ("ids", "station ids", "idents"),
-              "commercials": ("commercials", "ads")}
+              "commercials": ("commercials", "ads"), "promos": ("promos", "promo")}
 VIDEO_EXT = (".mp4", ".mkv", ".avi", ".mov", ".m4v", ".mpg", ".mpeg", ".ts", ".wmv", ".webm", ".flv", ".divx")
 
 

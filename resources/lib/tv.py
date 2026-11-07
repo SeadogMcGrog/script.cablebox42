@@ -21,6 +21,7 @@ from . import progress
 from . import logos
 from . import stations
 from . import captions
+from . import promos
 from .kodiutil import _
 
 
@@ -81,6 +82,7 @@ class Player(xbmc.Player):
 
 
 FULLSCREEN = 12005               # Kodi's own full-screen video window
+VISUALISATION = 12006            # Kodi's own full-screen music window
 
 
 class Overlay(xbmcgui.WindowXMLDialog):
@@ -230,6 +232,7 @@ class TVWindow(xbmcgui.WindowXML):
         if self.closing:
             return
         self.closing = True
+        self.promo_stop(stop_music=False)    # forget the theme; the player is stopped below
         if self.ch:
             st = K.load_json(K.STATE_FILE, {})
             st["last_channel"] = self.ch["number"]
@@ -290,12 +293,8 @@ class TVWindow(xbmcgui.WindowXML):
             self.menu()
         elif aid in EXIT:
             self.shutdown(power_off=True)     # straight off, no "are you sure?"
-        elif aid in VOL_UP:
-            K.rpc("Application.SetVolume", {"volume": "increment"})
-        elif aid in VOL_DOWN:
-            K.rpc("Application.SetVolume", {"volume": "decrement"})
-        elif aid in MUTE:
-            K.rpc("Application.SetMute", {"mute": "toggle"})
+        elif aid in VOL_UP or aid in VOL_DOWN or aid in MUTE:
+            pass    # Kodi changes the volume itself; CableBox never does (it made each press count twice)
         elif aid in CC_MENU:
             self.cc_menu()
         elif aid in CC_TOGGLE or aid in CC_NEXT:
@@ -334,6 +333,7 @@ class TVWindow(xbmcgui.WindowXML):
                 self.hold_until = 0
             if self.ch and ch["id"] != self.ch["id"]:
                 self.prev_ch = self.ch
+            self.promo_stop()                # mid-promo: the theme off
             self.cc.leave()                  # before the static clip replaces the programme
             self.ch = ch
             self.cur_key = None
@@ -410,6 +410,16 @@ class TVWindow(xbmcgui.WindowXML):
         if not self.win_id:
             return False
         cur = xbmcgui.getCurrentWindowId()
+        if cur == VISUALISATION and self.playing_ours():
+            # Kodi opened its music screen for a promo's theme or the guide's music:
+            # never on a TV - straight back to the TV window
+            self.away_since = 0
+            if now - self.vis_pulled > 1:
+                self.vis_pulled = now
+                K.log("Kodi opened its music visualisation - back to the TV window", xbmc.LOGINFO)
+                xbmc.executebuiltin("Dialog.Close(musicosd,true)")
+                xbmc.executebuiltin("Action(FullScreen)")
+            return False
         here = cur == self.win_id or (cur == 12005 and self.playing_ours())
         if here:
             self.away_since = 0
@@ -420,6 +430,7 @@ class TVWindow(xbmcgui.WindowXML):
 
     fs_since = 0
     fs_pulled = 0
+    vis_pulled = 0
 
     def hide_busy_wheel(self, now):
         """A TV never shows a loading spinner: while a channel is coming in,
@@ -594,6 +605,7 @@ class TVWindow(xbmcgui.WindowXML):
             return
         self.pull_back_from_fullscreen(now)
         self.gui_sounds.tick(now)
+        self.promo_tick(now)
         if self.cc.nudge_at and self.fs_state != "off":
             self.fs_leave()                  # the 1 s rewind in the TV window: no seek bar
         self.cc.tick(now)
@@ -693,6 +705,7 @@ class TVWindow(xbmcgui.WindowXML):
         self.setProperty("bug", "1" if on and getattr(self, "bug_on", False) else "")
 
     def start_entry(self, e, key, now):
+        self.promo_stop()                    # a promo's theme cut with its card, before anything else plays
         self.cc.leave()
         if e.get("k") not in VIDEO_KINDS:
             self.fs_leave()                  # guide, weather and cards live in the TV window
@@ -727,6 +740,8 @@ class TVWindow(xbmcgui.WindowXML):
                 self.set_mode("weather")
                 self.weather.tick(now, force=True)
                 self.background_audio(K.setting("weather_music_path"))
+            elif kind == "promo":
+                self.start_promo(e, now)
             else:
                 self.stop_player()
                 if kind == "offair":
@@ -739,6 +754,91 @@ class TVWindow(xbmcgui.WindowXML):
                     self.card_for(e, now)
         if kind == "show":
             self.update_banner()
+        self.prefetch_promo(e)
+
+    # ----------------------------------------------------------- promos
+    # "Channel 7 - Seinfeld: The Contest - Up next": a card from the
+    # show's own artwork with its theme music, between the spots of a break
+    # (the card and the music themselves: promos.card / promos.ThemeAudio).
+    _theme = None
+
+    @property
+    def theme(self):
+        if self._theme is None:
+            self._theme = promos.ThemeAudio(self.player)
+        return self._theme
+
+    @staticmethod
+    def promo_subject(sched, e):
+        """(time, path, title, later) of the programme a promo slot advertises."""
+        pt, path, title, later = e.get("pt"), e.get("pp"), e.get("t"), e.get("pw") == "later"
+        if pt is None:                       # planned before the next show was known
+            try:
+                tgt = sched.promo_target(e)
+            except Exception:
+                tgt = None
+            if tgt and tgt[0]:
+                b = tgt[0]
+                pt, path, title = b["s"], tgt[1], b["t"]
+                later = b is not sched.next_block(e["s"])
+        return pt, path, title, later
+
+    def prefetch_promo(self, e):
+        """While the item before a promo plays: look its artwork up and load its
+        logo into Kodi's texture cache (the skin's promo_preload image), so the
+        card can show the logo the moment it opens.  Called after the current
+        entry has started, so a promo card on screen already holds its own logo."""
+        nxt = None
+        try:
+            sched = self.lineup.schedule(self.ch, ensure=False)
+            nxt = sched.entry_at(e["e"] + 0.01)
+        except Exception:
+            pass
+        if not (nxt and nxt.get("k") == "promo" and K.setting_bool("promos_on", False)):
+            self.setProperty("promo_preload", "")
+            return
+        _pt, path, title, _later = self.promo_subject(sched, nxt)
+        if not path and not title:
+            self.setProperty("promo_preload", "")
+            return
+        ch = self.ch
+
+        def work():
+            try:
+                logo = promos.info(path, title or "").get("logo") or ""
+            except Exception:
+                logo = ""
+            if self.ch == ch and not self.closing:
+                self.setProperty("promo_preload", logo)
+        threading.Thread(target=work, name="cablebox42-promo").start()
+
+    def start_promo(self, e, now):
+        sched = self.lineup.schedule(self.ch, ensure=False)
+        pt, path, title, later = self.promo_subject(sched, e)
+        if not K.setting_bool("promos_on", False) or not pt or pt < now:
+            self.card_for({"k": "card", "sub": "id"}, now)     # promos switched off since: a station ID
+            return
+        try:
+            inf = promos.info(path, title or "")
+        except Exception as exc:
+            K.log_err("promo: %s" % exc)
+            inf = {}
+        promos.apply_card(self, promos.card(inf, title, pt, now, self.ch, stations.brand(self.ch, pt)["name"], later))
+        self.set_mode("promo")
+        music = promos.music(inf)
+        if music:
+            self.our_files.add(music)
+            self.play_token += 1
+            self.play_started_at = time.time()
+            self.theme.start(music, e["e"])
+        else:
+            self.stop_player()
+
+    def promo_tick(self, now):
+        self.theme.tick(now)
+
+    def promo_stop(self, stop_music=True):
+        self.theme.stop(stop_music)
 
     def play(self, e, now):
         self.clear_music()

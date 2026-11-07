@@ -11,6 +11,14 @@
             <visible>String.IsEqual(Window.Property(mode),video)</visible>
         </control>
 
+        <!-- The next promo's logo, loading while the spot before it plays (tv.prefetch_promo), so
+             it's in Kodi's texture cache when the card opens.  1x1 and all but transparent. -->
+        <control type="image">
+            <left>0</left><top>0</top><width>1</width><height>1</height>
+            <texture background="true" colordiffuse="01FFFFFF">$INFO[Window.Property(promo_preload)]</texture>
+            <visible>!String.IsEmpty(Window.Property(promo_preload))</visible>
+        </control>
+
         <!-- ============ Cards: station ID / up next / technical difficulties ============ -->
         <control type="group" id="100">
             <visible>String.IsEqual(Window.Property(mode),card)</visible>
@@ -45,6 +53,393 @@
                 <left>0</left><top>900</top><width>1920</width><height>60</height>
                 <align>center</align><font>font27</font><textcolor>AAFFFFFF</textcolor>
                 <label>$INFO[Window.Property(ch_number)]  $INFO[Window.Property(ch_name)]   •   $INFO[System.Time]</label>
+            </control>
+        </control>
+
+        <!-- ============ Promo: channel, show, episode, "Up next" (resources/lib/tv.py start_promo) ============ -->
+        <control type="group" id="140">
+            <visible>String.IsEqual(Window.Property(mode),promo) + !String.IsEqual(Window.Property(promo_style),90s)</visible>
+            <animation effect="fade" start="0" end="100" time="350">Visible</animation>
+            <!-- no artwork at all: the station's own background -->
+            <control type="image">
+                <left>0</left><top>0</top><width>1920</width><height>1080</height>
+                <texture>card_bg.jpg</texture>
+                <visible>String.IsEmpty(Window.Property(promo_bg))</visible>
+            </control>
+            <!-- episode still / fanart / landscape (a poster fills the back, dimmed) -->
+            <control type="image">
+                <left>0</left><top>0</top><width>1920</width><height>1080</height>
+                <aspectratio>scale</aspectratio>
+                <texture background="true">$INFO[Window.Property(promo_bg)]</texture>
+                <visible>!String.IsEmpty(Window.Property(promo_bg))</visible>
+                <animation effect="zoom" start="100" end="106" center="960,540" time="16000" tween="linear">Visible</animation>
+            </control>
+            <control type="image">
+                <left>0</left><top>0</top><width>1920</width><height>1080</height>
+                <texture colordiffuse="C8000000">white.png</texture>
+                <visible>String.IsEqual(Window.Property(promo_letterbox),1)</visible>
+            </control>
+            <control type="image">
+                <left>1290</left><top>60</top><width>520</width><height>740</height>
+                <aspectratio align="right">keep</aspectratio>
+                <texture background="true">$INFO[Window.Property(promo_bg)]</texture>
+                <visible>String.IsEqual(Window.Property(promo_letterbox),1)</visible>
+            </control>
+            <!-- shade so the words read over any picture -->
+            <control type="image">
+                <left>0</left><top>0</top><width>1920</width><height>1080</height>
+                <texture colordiffuse="40000000">white.png</texture>
+                <visible>!String.IsEmpty(Window.Property(promo_bg))</visible>
+            </control>
+            <control type="image">
+                <left>0</left><top>500</top><width>1920</width><height>580</height>
+                <texture colordiffuse="A0000000">white.png</texture>
+            </control>
+            <!-- no artwork: a solid panel, so the station background's own lines stay out of the words -->
+            <control type="image">
+                <left>0</left><top>500</top><width>1920</width><height>580</height>
+                <texture colordiffuse="E6050A1E">white.png</texture>
+                <visible>String.IsEmpty(Window.Property(promo_bg))</visible>
+            </control>
+            <control type="group">
+                <animation effect="slide" start="-90,0" end="0,0" time="550" tween="cubic" easing="out">Visible</animation>
+                <control type="label">
+                    <left>120</left><top>530</top><width>1500</width><height>50</height>
+                    <font>font27</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor>
+                    <label>[UPPERCASE]$INFO[Window.Property(promo_kicker)][/UPPERCASE]</label>
+                </control>
+                <!-- the show's clear logo ... -->
+                <control type="image">
+                    <left>120</left><top>585</top><width>760</width><height>190</height>
+                    <aspectratio align="left" aligny="center">keep</aspectratio>
+                    <texture background="true">$INFO[Window.Property(promo_logo)]</texture>
+                    <visible>!String.IsEmpty(Window.Property(promo_logo))</visible>
+                </control>
+                <!-- ... or its title in our own type, underlined like a station graphic -->
+                <control type="group">
+                    <visible>!String.IsEmpty(Window.Property(promo_title))</visible>
+                    <control type="label">
+                        <left>120</left><top>605</top><width>1560</width><height>120</height>
+                        <aligny>center</aligny><font>font60</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor>
+                        <label>$INFO[Window.Property(promo_title)]</label>
+                    </control>
+                    <control type="image">
+                        <left>124</left><top>737</top><width>300</width><height>8</height>
+                        <texture colordiffuse="FFFFD24A">white.png</texture>
+                    </control>
+                </control>
+                <control type="label">
+                    <left>120</left><top>790</top><width>1080</width><height>60</height>
+                    <font>font37</font><textcolor>FFE0E8FF</textcolor><shadowcolor>FF000000</shadowcolor>
+                    <label>$INFO[Window.Property(promo_ep)]</label>
+                </control>
+                <control type="label">
+                    <!-- the synopsis: whole, in up to two lines (promos.synopsis checks it fits; never cut off) -->
+                    <left>120</left><top>855</top><width>1080</width><height>80</height>
+                    <font>font27</font><textcolor>DDFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor>
+                    <wrapmultiline>true</wrapmultiline>
+                    <label>$INFO[Window.Property(promo_plot)]</label>
+                    <visible>!String.IsEmpty(Window.Property(promo_plot)) + !String.IsEmpty(Window.Property(promo_ep))</visible>
+                </control>
+                <!-- no episode title: the plot moves up into its place -->
+                <control type="label">
+                    <left>120</left><top>800</top><width>1080</width><height>80</height>
+                    <font>font27</font><textcolor>DDFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor>
+                    <wrapmultiline>true</wrapmultiline>
+                    <label>$INFO[Window.Property(promo_plot)]</label>
+                    <visible>!String.IsEmpty(Window.Property(promo_plot)) + String.IsEmpty(Window.Property(promo_ep))</visible>
+                </control>
+            </control>
+            <control type="label">
+                <left>1220</left><top>820</top><width>590</width><height>70</height>
+                <align>right</align><font>font45</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor>
+                <label>$INFO[Window.Property(promo_when)]</label>
+                <animation effect="fade" start="0" end="100" time="500" delay="600">Visible</animation>
+            </control>
+            <control type="image">
+                <left>1590</left><top>910</top><width>220</width><height>110</height>
+                <aspectratio align="right" aligny="bottom">keep</aspectratio>
+                <texture>$INFO[Window.Property(banner_logo)]</texture>
+            </control>
+        </control>
+
+        <!-- ============ Promo, early-90s cable style (default; Settings > Programming > Promo style) ============
+             Everything stays inside the centred 4:3 area (x 240-1680).  All motion ends within ~3 s.
+             The title and the time tab's words are laid out letter by letter by promos.apply_card
+             (pictures of Bebas Neue letters: Kodi can't load a font from a script add-on). -->
+        <control type="group" id="141">
+            <visible>String.IsEqual(Window.Property(mode),promo) + String.IsEqual(Window.Property(promo_style),90s)</visible>
+            <!-- the picture: episode still / fanart (or the station background), zooming in for 3 s, then still -->
+            <control type="image">
+                <left>0</left><top>0</top><width>1920</width><height>1080</height>
+                <texture>card_bg.jpg</texture>
+                <visible>String.IsEmpty(Window.Property(promo_bg))</visible>
+            </control>
+            <control type="image">
+                <left>0</left><top>0</top><width>1920</width><height>1080</height>
+                <aspectratio>scale</aspectratio>
+                <texture background="true">$INFO[Window.Property(promo_bg)]</texture>
+                <visible>!String.IsEmpty(Window.Property(promo_bg))</visible>
+                <animation effect="zoom" start="100" end="112" center="960,540" time="3000" tween="sine" easing="out">Visible</animation>
+            </control>
+            <control type="image">
+                <left>0</left><top>0</top><width>1920</width><height>1080</height>
+                <texture colordiffuse="50000000">white.png</texture>
+            </control>
+            <control type="image">
+                <left>0</left><top>0</top><width>1920</width><height>1080</height>
+                <texture colordiffuse="A0000000">white.png</texture>
+                <visible>String.IsEqual(Window.Property(promo_letterbox),1) | String.IsEmpty(Window.Property(promo_bg))</visible>
+            </control>
+
+            <!-- corner shapes -->
+            <control type="image">
+                <left>262</left><top>78</top><width>320</width><height>110</height>
+                <texture>promo90s/squiggle.png</texture>
+                <animation effect="slide" start="-420,0" end="0,0" time="500" delay="450" tween="cubic" easing="out">Visible</animation>
+                <animation effect="fade" start="0" end="100" time="200" delay="450">Visible</animation>
+            </control>
+            <control type="image">
+                <left>1380</left><top>64</top><width>280</width><height>200</height>
+                <texture>promo90s/confetti.png</texture>
+                <animation effect="zoom" start="0" end="100" center="auto" time="500" delay="550" tween="back" easing="out">Visible</animation>
+                <animation effect="fade" start="0" end="100" time="200" delay="550">Visible</animation>
+            </control>
+
+            <!-- the band: teal shadow, then the magenta band sliding in from the left -->
+            <control type="image">
+                <left>286</left><top>556</top><width>1360</width><height>200</height>
+                <texture>promo90s/band_shadow.png</texture>
+                <animation effect="slide" start="-1700,0" end="0,0" time="520" delay="80" tween="cubic" easing="out">Visible</animation>
+            </control>
+            <control type="image">
+                <left>262</left><top>536</top><width>1360</width><height>200</height>
+                <texture>promo90s/band.png</texture>
+                <animation effect="slide" start="-1700,0" end="0,0" time="450" tween="cubic" easing="out">Visible</animation>
+            </control>
+            <control type="image">
+                <left>1430</left><top>440</top><width>240</width><height>200</height>
+                <texture>promo90s/triangles.png</texture>
+                <animation effect="zoom" start="0" end="100" center="auto" time="450" delay="700" tween="back" easing="out">Visible</animation>
+                <animation effect="rotate" start="-90" end="0" center="auto" time="450" delay="700" tween="cubic" easing="out">Visible</animation>
+            </control>
+            <!-- the channel, on its own black strip over the band's right end -->
+            <control type="group">
+                <animation effect="fade" start="0" end="100" time="300" delay="500">Visible</animation>
+                <visible>!String.IsEmpty(Window.Property(promo_kicker))</visible>
+                <control type="image">
+                    <left>1080</left><top>494</top><width>420</width><height>44</height>
+                    <texture colordiffuse="FF000000">white.png</texture>
+                </control>
+                <control type="label">
+                    <left>1096</left><top>494</top><width>388</width><height>44</height>
+                    <align>right</align><aligny>center</aligny><font>font27</font><textcolor>FFFFFFFF</textcolor>
+                    <label>[UPPERCASE]$INFO[Window.Property(promo_kicker)][/UPPERCASE]</label>
+                </control>
+            </control>
+
+            <!-- the show: its logo on the band ... -->
+            <control type="image">
+                <left>320</left><top>548</top><width>900</width><height>176</height>
+                <aspectratio align="left" aligny="center">keep</aspectratio>
+                <texture background="true">$INFO[Window.Property(promo_logo)]</texture>
+                <visible>!String.IsEmpty(Window.Property(promo_logo))</visible>
+                <animation effect="zoom" start="170" end="100" center="auto" time="400" delay="650" tween="back" easing="out">Visible</animation>
+                <animation effect="fade" start="0" end="100" time="150" delay="650">Visible</animation>
+            </control>
+            <!-- ... or, when its name can't be lettered, the skin's font with a hard shadow -->
+            <control type="group">
+                <visible>!String.IsEmpty(Window.Property(promo_title)) + String.IsEmpty(Window.Property(promo_title_glyphs))</visible>
+                <animation effect="zoom" start="150" end="100" center="auto" time="400" delay="650" tween="back" easing="out">Visible</animation>
+                <animation effect="fade" start="0" end="100" time="150" delay="650">Visible</animation>
+                <control type="label">
+                    <left>328</left><top>576</top><width>1250</width><height>130</height>
+                    <aligny>center</aligny><font>font60</font><textcolor>FF24145F</textcolor>
+                    <label>[UPPERCASE]$INFO[Window.Property(promo_title)][/UPPERCASE]</label>
+                </control>
+                <control type="label">
+                    <left>320</left><top>568</top><width>1250</width><height>130</height>
+                    <aligny>center</aligny><font>font60</font><textcolor>FFFFFFFF</textcolor>
+                    <label>[UPPERCASE]$INFO[Window.Property(promo_title)][/UPPERCASE]</label>
+                </control>
+            </control>
+
+            <!-- the time tab drops in with a bounce, a starburst behind its left end -->
+            <control type="image">
+                <left>246</left><top>404</top><width>150</width><height>150</height>
+                <texture>promo90s/starburst.png</texture>
+                <animation effect="zoom" start="0" end="100" center="auto" time="450" delay="900" tween="back" easing="out">Visible</animation>
+                <animation effect="rotate" start="-120" end="0" center="auto" time="600" delay="900" tween="cubic" easing="out">Visible</animation>
+            </control>
+            <control type="image" id="1201">
+                <left>290</left><top>436</top><width>420</width><height>96</height>
+                <texture border="24,0,56,0">promo90s/tab.png</texture>
+                <animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation>
+                <animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation>
+            </control>
+            <control type="label">
+                <left>314</left><top>436</top><width>1000</width><height>96</height>
+                <aligny>center</aligny><font>font45</font><textcolor>FF000000</textcolor>
+                <label>$INFO[Window.Property(promo_when)]</label>
+                <visible>String.IsEmpty(Window.Property(promo_tab_glyphs))</visible>
+                <animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation>
+                <animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation>
+            </control>
+
+            <!-- letter slots, filled by promos.apply_card: the time tab's words, then the show's name
+                 (shadow copies first), each letter landing a moment after the one before -->
+            <control type="group">
+                <control type="image" id="1500"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+                <control type="image" id="1501"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+                <control type="image" id="1502"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+                <control type="image" id="1503"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+                <control type="image" id="1504"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+                <control type="image" id="1505"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+                <control type="image" id="1506"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+                <control type="image" id="1507"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+                <control type="image" id="1508"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+                <control type="image" id="1509"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+                <control type="image" id="1510"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+                <control type="image" id="1511"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+                <control type="image" id="1512"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+                <control type="image" id="1513"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+                <control type="image" id="1514"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+                <control type="image" id="1515"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+                <control type="image" id="1516"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+                <control type="image" id="1517"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+                <control type="image" id="1518"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+                <control type="image" id="1519"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+                <control type="image" id="1520"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+                <control type="image" id="1521"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+                <control type="image" id="1522"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+                <control type="image" id="1523"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+                <control type="image" id="1524"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+                <control type="image" id="1525"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+                <control type="image" id="1526"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+                <control type="image" id="1527"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF000000"></texture><animation effect="slide" start="0,-170" end="0,0" time="650" delay="1000" tween="bounce" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="150" delay="1000">Visible</animation></control>
+            </control>
+            <control type="group">
+                <visible>!String.IsEmpty(Window.Property(promo_title))</visible>
+                <control type="image" id="1400"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="650" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="650">Visible</animation></control>
+                <control type="image" id="1401"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="685" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="685">Visible</animation></control>
+                <control type="image" id="1402"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="720" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="720">Visible</animation></control>
+                <control type="image" id="1403"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="755" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="755">Visible</animation></control>
+                <control type="image" id="1404"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="790" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="790">Visible</animation></control>
+                <control type="image" id="1405"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="825" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="825">Visible</animation></control>
+                <control type="image" id="1406"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="860" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="860">Visible</animation></control>
+                <control type="image" id="1407"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="895" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="895">Visible</animation></control>
+                <control type="image" id="1408"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="930" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="930">Visible</animation></control>
+                <control type="image" id="1409"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="965" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="965">Visible</animation></control>
+                <control type="image" id="1410"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1000" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1000">Visible</animation></control>
+                <control type="image" id="1411"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1035" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1035">Visible</animation></control>
+                <control type="image" id="1412"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1070" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1070">Visible</animation></control>
+                <control type="image" id="1413"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1105" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1105">Visible</animation></control>
+                <control type="image" id="1414"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1140" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1140">Visible</animation></control>
+                <control type="image" id="1415"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1175" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1175">Visible</animation></control>
+                <control type="image" id="1416"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1210" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1210">Visible</animation></control>
+                <control type="image" id="1417"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1245" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1245">Visible</animation></control>
+                <control type="image" id="1418"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1280" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1280">Visible</animation></control>
+                <control type="image" id="1419"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1315" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1315">Visible</animation></control>
+                <control type="image" id="1420"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1350" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1350">Visible</animation></control>
+                <control type="image" id="1421"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1385" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1385">Visible</animation></control>
+                <control type="image" id="1422"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1420" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1420">Visible</animation></control>
+                <control type="image" id="1423"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1455" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1455">Visible</animation></control>
+                <control type="image" id="1424"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1490" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1490">Visible</animation></control>
+                <control type="image" id="1425"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1525" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1525">Visible</animation></control>
+                <control type="image" id="1426"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1560" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1560">Visible</animation></control>
+                <control type="image" id="1427"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1595" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1595">Visible</animation></control>
+                <control type="image" id="1428"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1630" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1630">Visible</animation></control>
+                <control type="image" id="1429"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1665" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1665">Visible</animation></control>
+                <control type="image" id="1430"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1700" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1700">Visible</animation></control>
+                <control type="image" id="1431"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1735" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1735">Visible</animation></control>
+                <control type="image" id="1432"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1770" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1770">Visible</animation></control>
+                <control type="image" id="1433"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1805" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1805">Visible</animation></control>
+                <control type="image" id="1434"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1840" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1840">Visible</animation></control>
+                <control type="image" id="1435"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1875" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1875">Visible</animation></control>
+                <control type="image" id="1436"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1910" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1910">Visible</animation></control>
+                <control type="image" id="1437"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1945" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1945">Visible</animation></control>
+                <control type="image" id="1438"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1980" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1980">Visible</animation></control>
+                <control type="image" id="1439"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FF24145F"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="2015" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="2015">Visible</animation></control>
+                <control type="image" id="1300"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="650" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="650">Visible</animation></control>
+                <control type="image" id="1301"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="685" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="685">Visible</animation></control>
+                <control type="image" id="1302"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="720" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="720">Visible</animation></control>
+                <control type="image" id="1303"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="755" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="755">Visible</animation></control>
+                <control type="image" id="1304"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="790" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="790">Visible</animation></control>
+                <control type="image" id="1305"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="825" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="825">Visible</animation></control>
+                <control type="image" id="1306"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="860" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="860">Visible</animation></control>
+                <control type="image" id="1307"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="895" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="895">Visible</animation></control>
+                <control type="image" id="1308"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="930" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="930">Visible</animation></control>
+                <control type="image" id="1309"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="965" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="965">Visible</animation></control>
+                <control type="image" id="1310"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1000" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1000">Visible</animation></control>
+                <control type="image" id="1311"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1035" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1035">Visible</animation></control>
+                <control type="image" id="1312"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1070" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1070">Visible</animation></control>
+                <control type="image" id="1313"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1105" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1105">Visible</animation></control>
+                <control type="image" id="1314"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1140" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1140">Visible</animation></control>
+                <control type="image" id="1315"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1175" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1175">Visible</animation></control>
+                <control type="image" id="1316"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1210" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1210">Visible</animation></control>
+                <control type="image" id="1317"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1245" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1245">Visible</animation></control>
+                <control type="image" id="1318"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1280" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1280">Visible</animation></control>
+                <control type="image" id="1319"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1315" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1315">Visible</animation></control>
+                <control type="image" id="1320"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1350" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1350">Visible</animation></control>
+                <control type="image" id="1321"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1385" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1385">Visible</animation></control>
+                <control type="image" id="1322"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1420" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1420">Visible</animation></control>
+                <control type="image" id="1323"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1455" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1455">Visible</animation></control>
+                <control type="image" id="1324"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1490" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1490">Visible</animation></control>
+                <control type="image" id="1325"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1525" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1525">Visible</animation></control>
+                <control type="image" id="1326"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1560" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1560">Visible</animation></control>
+                <control type="image" id="1327"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1595" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1595">Visible</animation></control>
+                <control type="image" id="1328"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1630" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1630">Visible</animation></control>
+                <control type="image" id="1329"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1665" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1665">Visible</animation></control>
+                <control type="image" id="1330"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1700" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1700">Visible</animation></control>
+                <control type="image" id="1331"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1735" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1735">Visible</animation></control>
+                <control type="image" id="1332"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1770" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1770">Visible</animation></control>
+                <control type="image" id="1333"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1805" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1805">Visible</animation></control>
+                <control type="image" id="1334"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1840" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1840">Visible</animation></control>
+                <control type="image" id="1335"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1875" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1875">Visible</animation></control>
+                <control type="image" id="1336"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1910" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1910">Visible</animation></control>
+                <control type="image" id="1337"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1945" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1945">Visible</animation></control>
+                <control type="image" id="1338"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="1980" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="1980">Visible</animation></control>
+                <control type="image" id="1339"><left>0</left><top>0</top><width>1</width><height>1</height><texture colordiffuse="FFFFFFFF"></texture><animation effect="zoom" start="180" end="100" center="auto" time="320" delay="2015" tween="back" easing="out">Visible</animation><animation effect="fade" start="0" end="100" time="120" delay="2015">Visible</animation></control>
+            </control>
+
+            <!-- episode and synopsis, last, on a solid panel (synopsis: font27, 1080 wide, as promos.fits measures) -->
+            <control type="group">
+                <visible>!String.IsEmpty(Window.Property(promo_ep)) | !String.IsEmpty(Window.Property(promo_plot))</visible>
+                <animation effect="slide" start="0,60" end="0,0" time="400" delay="1500" tween="cubic" easing="out">Visible</animation>
+                <animation effect="fade" start="0" end="100" time="300" delay="1500">Visible</animation>
+                <control type="image">
+                    <left>290</left><top>784</top><width>1120</width><height>200</height>
+                    <texture colordiffuse="F024145F">white.png</texture>
+                </control>
+                <control type="image">
+                    <left>290</left><top>784</top><width>1120</width><height>8</height>
+                    <texture colordiffuse="FF00C8C8">white.png</texture>
+                </control>
+                <control type="label">
+                    <left>310</left><top>804</top><width>1080</width><height>56</height>
+                    <font>font37</font><textcolor>FFFFD23C</textcolor>
+                    <label>$INFO[Window.Property(promo_ep)]</label>
+                </control>
+                <control type="label">
+                    <left>310</left><top>866</top><width>1080</width><height>80</height>
+                    <font>font27</font><textcolor>FFFFFFFF</textcolor><wrapmultiline>true</wrapmultiline>
+                    <label>$INFO[Window.Property(promo_plot)]</label>
+                    <visible>!String.IsEmpty(Window.Property(promo_ep))</visible>
+                </control>
+                <control type="label">
+                    <left>310</left><top>808</top><width>1080</width><height>80</height>
+                    <font>font27</font><textcolor>FFFFFFFF</textcolor><wrapmultiline>true</wrapmultiline>
+                    <label>$INFO[Window.Property(promo_plot)]</label>
+                    <visible>String.IsEmpty(Window.Property(promo_ep))</visible>
+                </control>
+            </control>
+
+            <!-- the station's logo (the channel bug) -->
+            <control type="image">
+                <left>1440</left><top>800</top><width>220</width><height>180</height>
+                <aspectratio align="right" aligny="bottom">keep</aspectratio>
+                <texture>$INFO[Window.Property(banner_logo)]</texture>
+                <animation effect="fade" start="0" end="100" time="400" delay="1500">Visible</animation>
             </control>
         </control>
 

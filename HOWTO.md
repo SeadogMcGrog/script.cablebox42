@@ -340,6 +340,7 @@ Stations/
     bumps/              short clips before the show comes back
     ids/                station IDs, played between programmes
     commercials/        this channel's own commercials
+    promos/             your own promos for its shows (optional)
   Chameleon/
     logo.png
     bumps/  ids/  commercials/
@@ -655,6 +656,40 @@ next* card. Station IDs play between programmes, right before the next show.
 
 **Clips that won't read** can usually be fixed by remuxing to `.mp4` or `.mkv`
 (no re-encode needed).
+
+### Promos for what's coming up
+
+No commercials, or want more variety? Promos are made from your own library.
+
+1. *Settings → Programming → **Promos for what's coming up, in breaks*** → On.
+2. *How often*: every break, about half of them, or now and then.
+3. *Promote*: what's on next (like a real station), or something later today.
+   *Promo style*: early-90s cable (bright bands, chunky italic letters, a bouncing
+   time tab) or Modern (the sleek card).
+4. Watch a channel. During a break you'll see the channel's name, the show's
+   picture and logo, the episode, *Up next* (or when it's on, e.g. *Tonight at
+   8:00*), and hear its theme.
+
+For the best-looking promos, keep the usual artwork in each show's folder:
+`fanart.jpg`, `clearlogo.png`, `theme.mp3`, and an episode `-thumb.jpg` and
+`.nfo` next to each episode (most media managers save these). A show without
+them still gets a clean promo: its title in CableBox's type over the station
+background, with a short built-in tune.
+
+**Real promos from the era:** turn on *Also use short promo clips from a show's
+Extras folder* and put them in the show's `Extras` folder with *Promo* or
+*Trailer* in the name (2 minutes at most). Or put your own promo clips in a
+channel's station folder under `promos/`; those always come first.
+
+Promos already planned stay in the breaks they're in; *Settings → Tools →
+Rebuild schedules* applies a change straight away. With promos off, breaks are
+exactly as they were before.
+
+**Check a show's promo without waiting for a break:** *Settings → Advanced →
+Preview promo*, pick the show, and its card plays at once with its music —
+handy after adding a `clearlogo.png` or `theme.mp3`. Back ends it. The first
+preview after adding a logo may show the title while Kodi loads the logo;
+preview it again to see the logo.
 
 ---
 

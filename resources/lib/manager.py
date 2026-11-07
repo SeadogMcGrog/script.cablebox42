@@ -1799,6 +1799,14 @@ into shows to fill each half hour, like real cable.  Movie channels play commerc
 between films.  Without commercials the gap is filled with an 'Up next' card.
 'Check my commercials & bumps' shows which clips can't be used.
 
+[B]Promos[/B]
+Settings > Programming > Promos: breaks now and then include a short promo for
+what this channel airs next - the episode's still, the show's logo, the episode
+title, a short synopsis when one fits, 'Up next' or the day and time, and the show's
+theme.mp3, all from your own library (nothing in it is changed).  Your own promo
+clips in a station folder's promos/ come first.  Settings > Advanced > Preview promo
+shows any show's promo straight away.
+
 [B]Files[/B]
 Your lineup lives in userdata/addon_data/script.cablebox42/channels.json if you
 prefer editing it by hand.
@@ -1996,6 +2004,7 @@ STATION_FOLDER_GUIDE = _("[B]What goes where[/B]  (in each channel's folder)[CR]
                          "  bumps/ .............. short clips before the show comes back[CR]"
                          "  ids/ .................. station IDs, between programmes[CR]"
                          "  commercials/ ...... this channel's own commercials[CR]"
+                         "  promos/ ............ your own promos for its shows (Settings > Programming > Promos)[CR]"
                          "  <time block>/ ...... the same again, used only in that block (e.g. CAM Jr.)[CR]"
                          "A folder is matched by the channel's name, call letters or number ('Channel 7'). "
                          "A new logo shows within a couple of minutes; new clips go into the breaks CableBox "
