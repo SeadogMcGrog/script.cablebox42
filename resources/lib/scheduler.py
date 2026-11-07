@@ -19,10 +19,13 @@ from . import channels as chmod
 from . import assign
 from . import seasons
 from . import stations
+from . import promos
 from .kodiutil import _
 
 DAY = 86400
 SHORTS_PACK, SHORTS_PINNED_ONLY, SHORTS_ONE_PER_SLOT = 0, 1, 2
+PROMO_RATES = (1.0, 0.5, 0.25)      # every break, about half, now and then
+PROMO_LOOKAHEAD = 6 * 3600          # 'later today' looks this far ahead
 
 
 # ----------------------------------------------------------------- time utils
@@ -203,6 +206,10 @@ class ChannelSchedule(object):
             d["entries"] = [e for e in d["entries"] if e["e"] > cut]
             d["blocks"] = [b for b in d["blocks"] if b["e"] > cut]
             self._index()
+            try:
+                self._resolve_promos(now)
+            except Exception as exc:     # a promo never costs the channel its schedule
+                log("promos %s: %s" % (self.ch.get("name"), exc))
             self.save()
         return changed
 
@@ -661,6 +668,9 @@ class ChannelSchedule(object):
                 bump = rng.choice(fit)
                 break
         avail = length - (bump["dur"] if bump else 0)
+        promo = self._promo_for_break(pos, avail)
+        if promo:
+            avail -= promo["dur"]
 
         # Pack commercials: try several random fills and keep the tightest.
         chosen, remaining = [], avail
@@ -685,9 +695,11 @@ class ChannelSchedule(object):
         if chosen:
             # Spread small leftovers as the short black gaps real breaks have.
             gap = remaining / len(chosen) if remaining <= 2.0 * len(chosen) else 0
-            for a in chosen:
+            for i, a in enumerate(chosen):
                 self._add(pos, pos + a["dur"] + gap, "ad", p=a["path"], o=0, t=a.get("title"))
                 pos += a["dur"] + gap
+                if promo and i == 0:         # a promo after the first spot, like a real station
+                    pos = self._add_promo(pos, promo)
             remaining -= gap * len(chosen)
             if remaining >= 0.5:
                 # Fill the rest with the start of one more spot, cut off by the
@@ -696,15 +708,158 @@ class ChannelSchedule(object):
                 a = rng.choice(longer)
                 self._add(pos, pos + remaining, "ad", p=a["path"], o=0, t=a.get("title"))
                 pos += remaining
-        elif remaining >= 0.5:
-            self._add(pos, pos + remaining, "card", sub="next" if final else "id")
-            pos += remaining
+        else:
+            if promo:
+                pos = self._add_promo(pos, promo)
+            if remaining >= 0.5:
+                self._add(pos, pos + remaining, "card", sub="next" if final else "id")
+                pos += remaining
         if bump:
             self._add(pos, pos + bump["dur"], "bump", p=bump["path"], o=0)
             pos += bump["dur"]
         if self.data["entries"] and pos < end:
             self.data["entries"][-1]["e"] = round(end, 3)
         return end
+
+    # ------------------------------------------------------------- promos
+    def _promo_for_break(self, t, room):
+        """At most one promo per break (Settings > Programming > Promos).  The
+        viewer's own clips in the station folder's promos/ win; otherwise a
+        promo card for what this channel airs next, decided once the
+        schedule after this break is known (_resolve_promos).  Uses its own
+        random numbers, so with promos off breaks come out exactly as before."""
+        cfg = self.cfg
+        if not cfg.get("promos") or self.ch.get("type") not in assign.PROGRAM_TYPES:
+            return None
+        if room < promos.PROMO_LEN + 10:
+            return None
+        prng = random.Random("%s|%.0f|promo" % (self.ch["id"], t))
+        if prng.random() >= PROMO_RATES[min(max(int(cfg.get("promo_every", 1)), 0), len(PROMO_RATES) - 1)]:
+            return None
+        own = []
+        try:
+            f = stations.clip_folder(self.ch, t, "promos")
+            own = [c for c in library.filler_pool(f) if c["dur"] <= room - 5] if f else []
+        except Exception as exc:
+            log("station promos %s: %s" % (self.ch.get("name"), exc))
+        if own:
+            c = prng.choice(own)
+            return {"dur": float(c["dur"]), "path": c["path"], "title": c.get("title")}
+        return {"dur": promos.PROMO_LEN}
+
+    def _add_promo(self, pos, promo):
+        if promo.get("path"):    # the viewer's own promo clip: a video like any spot
+            self._add(pos, pos + promo["dur"], "ad", p=promo["path"], o=0, t=promo.get("title"), pr="own")
+        else:
+            self._add(pos, pos + promo["dur"], "promo")
+        return pos + promo["dur"]
+
+    def promo_target(self, e):
+        """(block, programme path) a promo airing at e should name; (None, None)
+        when there is nothing to promote; None while the schedule after it isn't
+        planned yet.  Only ever this channel's own programmes."""
+        d = self.data
+        span = PROMO_LOOKAHEAD
+        planned = d["until"] >= e["s"] + span
+        cur = self.block_at(e["s"])
+        shows = [b for b in self.blocks_between(e["s"], e["s"] + span)
+                 if b["s"] > e["s"] and b.get("k") == "show"]
+        nb = self.next_block(e["s"])
+        pick = None
+        if self.cfg.get("promo_target", 0) == 1:
+            if d["until"] < e["s"] + 3 * 3600:      # pick from at least the next three hours
+                return None
+            # something later today: not the show we're in the middle of
+            pool = [b for b in shows if not (cur and b["t"] == cur["t"])] or shows
+            if pool:
+                pick = random.Random("%s|%.0f|ptgt" % (self.ch["id"], e["s"])).choice(pool)
+        else:
+            if nb is None and not planned:
+                return None
+            if nb is not None and nb.get("k") == "show":
+                pick = nb
+            elif shows:
+                pick = shows[0]          # off the air / a card next: the next real programme
+            elif not planned:
+                return None
+        if pick is None:
+            return None, None
+        path = None
+        ents = d["entries"]
+        j = bisect.bisect_left(self._starts, pick["s"] - 0.001)
+        while j < len(ents) and ents[j]["s"] < pick["e"]:
+            if ents[j].get("k") == "show" and ents[j].get("p"):
+                path = ents[j]["p"]
+                break
+            j += 1
+        return pick, path
+
+    def _resolve_promos(self, now):
+        """Name the programme each planned promo is for, once that's known."""
+        ents = self.data["entries"]
+        touched = False
+        for i in range(len(ents) - 1, -1, -1):        # from the end: swaps don't move earlier entries
+            e = ents[i]
+            if e.get("k") != "promo" or "pt" in e:
+                continue
+            tgt = self.promo_target(e)
+            if tgt is None:
+                continue
+            b, path = tgt
+            touched = True
+            if b is None:
+                e["pt"] = 0              # nothing to promote: the station ID card
+                continue
+            e.update(pt=b["s"], t=b["t"])
+            if path:
+                e["pp"] = path
+            if b.get("sub"):
+                e["sub"] = b["sub"]
+            if b is not self.next_block(e["s"]):
+                e["pw"] = "later"
+            if self.cfg.get("promo_extras") and path and e["s"] > now + 30:
+                if self._extras_promo(i, path, b):
+                    self._index()
+        if touched:
+            self._index()
+        return touched
+
+    def _extras_promo(self, i, path, b):
+        """Opt-in: a short 'Promo' / 'Trailer' video from the show's Extras
+        folder airs instead of the card, now and then.  It takes the card's
+        place and as much of the spots after it as it needs; a spot it runs
+        into starts from the top and is cut off, like a late switch-over."""
+        e = self.data["entries"][i]
+        prng = random.Random("%s|%.0f|pextra" % (self.ch["id"], e["s"]))
+        try:
+            clips = [c for c in promos.extras_promos(path, b["t"]) if c["dur"] >= promos.PROMO_LEN - 3]
+        except Exception as exc:
+            log("extras promos: %s" % exc)
+            return False
+        if not clips or prng.random() >= 0.5:
+            return False
+        ents = self.data["entries"]
+        clip = prng.choice(clips)
+        s0 = e["s"]
+        x = s0 + clip["dur"]
+        j, room_end = i + 1, e["e"]
+        while j < len(ents) and ents[j].get("k") == "ad" and abs(ents[j]["s"] - room_end) < 0.05 \
+                and room_end < x:
+            room_end = ents[j]["e"]
+            j += 1
+        if room_end < x:
+            return False                 # not enough of the break left for it
+        k, new_end = i + 1, max(x, e["e"])
+        while k < j and ents[k]["e"] <= x + 3:
+            new_end = max(new_end, ents[k]["e"])
+            k += 1
+        repl = [{"s": s0, "e": round(new_end, 3), "k": "ad", "p": clip["path"], "o": 0,
+                 "t": clip["title"], "pr": "extras"}]
+        if k < j and ents[k]["s"] < new_end - 0.05:
+            repl.append(dict(ents[k], s=round(new_end, 3), o=0))
+            k += 1
+        ents[i:k] = repl
+        return True
 
     def _next_episode(self, ser, ptr_key):
         eps = ser["episodes"]
