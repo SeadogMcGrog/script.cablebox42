@@ -112,9 +112,11 @@ Movies\2001 A Space Odyssey (1968)\
   names* counts them all.)
 - Give each movie its own folder. An `Extras` folder shared by several movies
   isn't used.
-- Leave Kodi's *Settings → Media → Library → Video library → Ignore video extras
-  on scan* switched on (it is by default). With it off, Kodi scans each extra in
-  as a movie of its own and they turn up on movie channels.
+- Turn off Kodi's *Settings → Media → Library → Video library → Ignore video
+  extras on scan* (it is on by default). While it's on, Kodi scans the files in
+  `Extras` like any other video, so extras can be added as movies of their own
+  and turn up on movie channels. With it off, Kodi files them as extras of
+  their movie instead.
 - CableBox looks through the folders and measures the videos in the background
   while the TV is off, so the first look at a big library can take a while.
   *Settings → Tools → **Check extras*** shows every movie's extras with their
