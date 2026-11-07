@@ -993,6 +993,10 @@ The fictional station logos in `resources/stations` were made with an AI image
 generator and are released under [CC0](https://creativecommons.org/publicdomain/zero/1.0/)
 (public domain): use them however you like. See `resources/stations/LICENSE.txt`.
 
+The BACKLOT logo and corner bug (`resources/stations/backlot.png`,
+`backlot_bug.png`) are original artwork made with Gemini, Google's AI image
+generator, for CableBox 42, and are also released under CC0.
+
 CableBox 42 is designed, tested and maintained by **Seadog McGrog**. Much of
 the code was written with the help of [Claude](https://www.anthropic.com/claude),
 an AI assistant made by Anthropic. Anthropic is not affiliated with this project

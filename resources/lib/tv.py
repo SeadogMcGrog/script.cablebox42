@@ -678,11 +678,12 @@ class TVWindow(xbmcgui.WindowXML):
         self.setProperty("ch_name", br["name"])
         self.setProperty("ch_call", br["call"] or "")
         path = br["logo"] or logos.logo_for(ch)
+        bug = (br.get("bug") if br["logo"] else "") or path      # a station kit may have a simpler corner bug
         on, corner, opacity = logos.bug_settings()
         was_on = self.getProperty("bug") == "1"
-        self.bug_on = bool(path) and on
+        self.bug_on = bool(bug) and on
         self.setProperty("bug", "1" if (keep_bug and was_on and self.bug_on) else "")
-        self.setProperty("bug_logo", path if self.bug_on else "")
+        self.setProperty("bug_logo", bug if self.bug_on else "")
         self.setProperty("bug_corner", corner)
         self.setProperty("bug_alpha", str(opacity))
         self.setProperty("banner_logo", path if K.setting_bool("logo_banner", True) else "")
