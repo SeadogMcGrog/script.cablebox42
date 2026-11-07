@@ -1,3 +1,21 @@
+Unreleased
+- New: schedule promos. With Settings > Programming > Promos on, breaks include
+  a short promo for what the channel airs next ('Up next', 'Tonight at 8:00'),
+  made from your own library: the episode's still (or fanart, landscape,
+  poster), the show's clearlogo (or its title), the episode title, a short
+  synopsis (its outline, or the plot's first sentence, when it fits) and the
+  show's theme.mp3 (or a built-in tune), cut with the card. Your files are only
+  read, never changed, and CableBox never changes your volume.
+- Your own promo clips in a station folder's promos/ come first; optionally,
+  short Promo/Trailer videos in a show's Extras folder air as its promo
+- Off by default; with promos off breaks are exactly as before
+- Fixed: while the TV was on, each Volume press moved the volume two steps and
+  Mute did nothing (CableBox passed the keys on although Kodi already handles them)
+- Promo style: early-90s cable (default) - a sliding magenta band, the show's name
+  in chunky italic letters, a bouncing time tab, squiggles and confetti - or Modern
+- Settings > Advanced > Preview promo: any show's promo card straight away, with
+  its music, as it appears in a break
+
 v1.1.1 (2026-11-05)
 - Fixed: after several channel changes the sound could sputter, freeze or stop
   until Kodi was restarted (seen on CoreELEC; HDMI audio could not reopen).

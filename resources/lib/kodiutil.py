@@ -110,6 +110,10 @@ def schedule_cfg():
         "low_water": 3 * 3600,
         "shorts_mode": setting_int("shorts_mode", 0),
         "seasons": seasons_cfg(),
+        "promos": setting_bool("promos_on", False),
+        "promo_every": setting_int("promo_every", 1),
+        "promo_target": setting_int("promo_target", 0),
+        "promo_extras": setting_bool("promo_extras", False),
     }
 
 

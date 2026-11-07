@@ -90,6 +90,9 @@ hardware video decoding works exactly as it does for the rest of your library.
 - **Off the air.** Sign-off hours with a 1950s stand-by card or colour bars,
   plus optional sign-off and sign-on clips.
 - **Commercials, bumps and station IDs** from your own folders.
+- **Promos.** "Channel 7 — Seinfeld: \"The Contest\" — Up next", with the
+  episode's still, the show's logo and its theme music, made from your own
+  library (opt-in).
 - **Guide channel.** A scrolling grid of what's on now and next, with promos.
 - **Weather channel.** Current conditions, a text forecast, a 4-day outlook and
   the next few hours, with a ticker and optional background music.
@@ -501,6 +504,7 @@ USB disks or network shares.
 | **Sign-off clips** | Per channel → Off-air hours | When the channel signs off (anthem, farewell) |
 | **Sign-on clips** | Per channel → Off-air hours | When the channel comes back on the air |
 | **Guide / weather music** | Settings | Behind the guide and weather channels |
+| **Promos** | Station folder `promos/` (optional) | In breaks, with *Promos* on (see below) |
 
 Tips:
 
@@ -511,6 +515,45 @@ Tips:
   and FLV.
 - **Check my videos** lists clips whose length can't be read (remux them to
   .mp4 or .mkv) and AV1 clips your device can't decode.
+
+### Promos
+
+With *Settings → Programming → Promos* on, a break can include a 15-second promo
+for what this channel airs next: *Channel 7 — Seinfeld: "The Contest" — Up next*.
+Everything comes from your own
+library, so promos always fit what's really on, and nothing is needed besides
+your shows. CableBox only reads your files; it never changes them.
+
+| Part | Where it comes from (first one found) |
+|---|---|
+| Picture | the episode's still (`-thumb.jpg`) → `fanart.jpg` → `landscape.jpg` → `poster.jpg` → the station background |
+| Logo | `clearlogo.png` → the show's title in CableBox's own type (one or the other, never both). The logo loads while the spot before the promo plays; if it isn't ready when the card opens (say, the first time a show's promo airs), that card shows the title |
+| Episode title | Kodi's library → the episode's `.nfo` (always shown) |
+| Synopsis | the episode's outline (Kodi's library → its `.nfo` `<outline>`) if it fits in two lines → the first sentence of the episode's plot if the whole sentence fits → no synopsis line. Never shortened |
+| When | One phrase: *Up next* for the channel's very next programme; otherwise *Today at 2:30*, *Tonight at 8:00* (from 5 PM), *Tomorrow at 7:00* or the weekday (*Saturday at 9:00*). A pinned slot with no episode details says *Weeknights at 8:00* (or *Weekends*, *Saturdays*…). The clock follows Kodi's region setting (12 or 24 hour) |
+| Music | `theme.mp3` in the show's folder → a short built-in tune |
+
+Kodi's own artwork and plot are used first; the files are the fallback. The
+theme plays at its own level and stops when the card cuts to black; CableBox
+never changes your volume. (The built-in tune is mixed a little below typical TV
+loudness and fades out by itself.)
+
+| Setting | Choices |
+|---|---|
+| Promos for what's coming up, in breaks | Off (default) / On. At most one per break |
+| How often | Every break / About half the breaks / Now and then |
+| Promote | What's on next / Something later today |
+| Promo style | Early-90s cable (default): a chunky magenta band slides in, the show's name lands in heavy italic letters (or its logo), the time drops into a yellow tab, squiggles and confetti pop in; all motion ends within 3 seconds and stays inside a 4:3 area. Modern: the sleek card |
+| Promo music | The show's theme music / None (silent) |
+| Also use short promo clips from a show's Extras folder | Off (default). Videos in the show's `Extras` folder with *Promo* or *Trailer* in the name, up to 2 minutes, sometimes air instead (e.g. `Extras/1988 On-Air Season Two Promo.mkv`) |
+
+**See one now:** *Settings → Advanced → Preview promo* plays any show's promo
+straight away, with its music, using its next airing on your channels.
+
+**Your own promos win:** video clips in a channel's station folder under
+`promos/` are played instead of the automatic ones. Like other clips, new
+promos and new settings go into breaks planned from then on (*Tools → Rebuild
+schedules* uses them straight away).
 
 ---
 
@@ -793,6 +836,12 @@ tap to tune. Yatse custom commands can call the `RunScript` actions above.
 | Commercials folder | – | Global commercials |
 | Bumps / station ID folder | – | Global bumps |
 | Commercial breaks per half hour | 2 | 0–4 |
+| Promos for what's coming up, in breaks | Off | At most one per break ([Promos](#promos)) |
+| How often | About half the breaks | Every break / About half the breaks / Now and then |
+| Promote | What's on next | Or something later today |
+| Promo style | Early-90s cable | Or Modern |
+| Promo music | The show's theme music | Or none (silent) |
+| Also use short promo clips from a show's Extras folder | Off | *Promo* / *Trailer* videos up to 2 minutes |
 | Guide channel music folder | – | Music behind the guide |
 | Guide title | *CableBox 42 Program Guide* | |
 | Shows on more than one channel | TV shows on one channel each | Or everything on one channel each, or allow repeats |
@@ -846,6 +895,12 @@ tap to tune. Yatse custom commands can call the `RunScript` actions above.
 | Save holiday episodes and movies for their season | On | Keeps Christmas episodes out of July |
 
 **Tools**: see [Settings → Tools](#settings--tools).
+
+**Advanced**
+
+| Setting | |
+|---|---|
+| Preview promo | Pick a show and its promo card plays straight away, with its music, exactly as in a break (Back ends it). Also `RunScript(script.cablebox42,preview_promo,<tvshowid>)` for a skin button or a favourite. Not while the TV is on |
 
 ## Video formats and AV1
 
@@ -1006,6 +1061,10 @@ media. CableBox 42 is a separate implementation for Kodi and contains no
 FieldStation42 code. It is not affiliated with that project.
 
 All artwork in this add-on (test card, channel digits, backgrounds, CRT
-overlays) is original. CableBox 42 plays only media you provide.
+overlays, the 90s promo bands and shapes) is original. CableBox 42 plays only media you provide.
+
+The 90s promo lettering is pictures of letters from **Bebas Neue** by Dharma Type,
+licensed under the [SIL Open Font License 1.1](https://openfontlicense.org); the promo
+shapes are CC0. See `resources/skins/Default/media/promo90s/LICENSE.txt`.
 
 Licensed under the **Mozilla Public License 2.0**; see [LICENSE.txt](LICENSE.txt).

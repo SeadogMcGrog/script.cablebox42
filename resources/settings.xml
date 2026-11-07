@@ -4,6 +4,12 @@
         <setting id="commercials_path" type="folder" label="32001" source="video" default=""/>
         <setting id="bumps_path" type="folder" label="32002" source="video" default=""/>
         <setting id="breaks_per_slot" type="labelenum" label="32005" values="0|1|2|3|4" default="2"/>
+        <setting id="promos_on" type="bool" label="33111" default="false"/>
+        <setting id="promo_every" type="enum" label="33112" lvalues="33113|33114|33115" default="1" enable="eq(-1,true)"/>
+        <setting id="promo_target" type="enum" label="33116" lvalues="33117|33118" default="0" enable="eq(-2,true)"/>
+        <setting id="promo_style" type="enum" label="33156" lvalues="33157|33158" default="0" enable="eq(-3,true)"/>
+        <setting id="promo_music" type="enum" label="33119" lvalues="33120|33121" default="0" enable="eq(-4,true)"/>
+        <setting id="promo_extras" type="bool" label="33122" default="false" enable="eq(-5,true)"/>
         <setting id="guide_music_path" type="folder" label="32003" source="music" default=""/>
         <setting id="guide_title" type="text" label="32004" default="CableBox 42 Program Guide"/>
         <setting id="share_mode" type="enum" label="32039" lvalues="32040|32041|32042" default="0"/>
@@ -76,5 +82,8 @@
         <setting id="tool_progress" type="action" label="32055" action="RunScript(script.cablebox42,tool,progress)" option="close"/>
         <setting id="tool_rebuild" type="action" label="32056" action="RunScript(script.cablebox42,tool,rebuild)" option="close"/>
         <setting id="tool_reset" type="action" label="32092" action="RunScript(script.cablebox42,tool,reset)" option="close"/>
+    </category>
+    <category label="33134">
+        <setting id="tool_preview_promo" type="action" label="33135" action="RunScript(script.cablebox42,preview_promo)" option="close"/>
     </category>
 </settings>

@@ -18,6 +18,10 @@ def run(args):
         # a button on the Settings > Tools page
         from . import manager
         manager.run_tool(args[1] if len(args) > 1 else "")
+    elif args and args[0] == "preview_promo":
+        # Settings > Advanced > Preview promo, or RunScript(script.cablebox42,preview_promo,<tvshowid>)
+        from . import promo_preview
+        promo_preview.run(int(args[1]) if len(args) > 1 and args[1].isdigit() else None)
     elif "watch" in args:
         nums = [a for a in args if a.isdigit()]
         from . import tv
