@@ -288,8 +288,10 @@ class Planner(xbmcgui.WindowXMLDialog):
         elif j == 1:
             self.add_offair(m)
         elif j == 2:
-            del self.ch["offair"][idx]
-            self.save()
+            w = self.ch["offair"][idx]
+            if M.confirm_remove(_("Remove the off-air hours %s - %s?") % (clock(mins(w["start"])), clock(mins(w["end"])))):
+                del self.ch["offair"][idx]
+                self.save()
 
     def ask_length(self, sources, current=None):
         natural = typical_minutes(sources, int(self.ch.get("slot", 30)) or 30)
@@ -338,7 +340,7 @@ class Planner(xbmcgui.WindowXMLDialog):
         if not clashes:
             return True
         names = ", ".join(self.ch["slots"][i].get("label", "?") for i, _b in clashes)
-        if not M.D.yesno(K.ADDON_NAME, _("This overlaps %s.[CR]Replace it on the overlapping days?") % names):
+        if not M.confirm_remove(_("This overlaps %s.[CR]Replace it on the overlapping days?") % names, _("Replace")):
             return False
         for i, bad in clashes:
             r = self.ch["slots"][i]
@@ -366,6 +368,8 @@ class Planner(xbmcgui.WindowXMLDialog):
             return
         self.ch.setdefault("slots", []).append(rule)
         self.save()
+        M.D.notification(_("Pinned: %s") % rule["label"], _("%s at %s") % (days_text(days), clock(m)),
+                         time=3000)
 
     def edit_rule(self, idx):
         r = self.ch["slots"][idx]
@@ -413,15 +417,16 @@ class Planner(xbmcgui.WindowXMLDialog):
             start_day = self.start_day(r)
             if len(days) > 1:
                 k = M.D.select(_("Remove %s") % r.get("label", ""),
-                               [_("Only on %ss") % day_names(False)[start_day], _("Every day it airs (%s)") % days_text(days)])
-                if k < 0:
+                               [_("Only on %ss") % day_names(False)[start_day], _("Every day it airs (%s)") % days_text(days),
+                                _("Cancel")])
+                if k not in (0, 1):
                     return
                 if k == 0:
                     left = [d for d in days if d != start_day]
                     r["days"] = compact_days(left)
                     self.save()
                     return
-            elif not M.D.yesno(K.ADDON_NAME, _("Remove %s?") % r.get("label", "")):
+            elif not M.confirm_remove(_("Remove %s?") % r.get("label", "")):
                 return
             del self.ch["slots"][idx]
             self.save()
@@ -464,6 +469,8 @@ class Planner(xbmcgui.WindowXMLDialog):
             return
         self.ch.setdefault("offair", []).append({"start": hhmm(m), "end": hhmm(mins(end)), "days": days})
         self.save()
+        M.D.notification(K.ADDON_NAME, _("Off the air %s - %s, %s") % (clock(m), clock(mins(end)), days_text(days)),
+                         time=3000)
 
     def edit_offair(self, idx):
         w = self.ch["offair"][idx]
@@ -491,7 +498,7 @@ class Planner(xbmcgui.WindowXMLDialog):
                         self.ch["slots"].append(copy)
                 self.save()
         elif j == 1:
-            if M.D.yesno(K.ADDON_NAME, _("Clear every pinned show on %ss?") % day):
+            if M.confirm_remove(_("Clear every pinned show on %ss?") % day, _("Clear")):
                 for r in self.ch["slots"]:
                     left = [d for d in norm_days(r.get("days")) if d != self.col]
                     r["days"] = compact_days(left) if left else []

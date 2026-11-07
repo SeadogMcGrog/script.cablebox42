@@ -242,7 +242,8 @@ def _act(e, a, chans, progs, meta, studios):
         targets = [c for c in chans if c["id"] in a["why"].get(tl, {}) or c.get("broadcast")]
         if not D.yesno(TITLE, _("Keep %s off every channel's automatic programming?[CR][CR]It's hidden on %d "
                                 "channels. Pinned slots in the weekly planner still air it. 'What's on this "
-                                "channel' brings it back.") % (e["title"], len(targets))):
+                                "channel' brings it back.") % (e["title"], len(targets)),
+                       nolabel=_("Cancel"), yeslabel=_("Keep it off")):
             return False
         for c in targets:
             if tl not in set(x.lower() for x in c.get("exclude", [])):
