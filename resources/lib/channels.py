@@ -23,7 +23,7 @@ def fixed_number(c):
         return NEWS_NUMBER
     return None
 
-TYPES = ("network", "movies", "loop", "guide", "weather")
+TYPES = ("network", "movies", "loop", "guide", "weather", "extras")
 
 DEFAULTS = {
     "network": {"commercials": True, "midroll": True, "bumps": True, "lineup": "strip", "slot": 30},
@@ -31,6 +31,8 @@ DEFAULTS = {
     "loop": {"commercials": False, "midroll": False, "bumps": False, "lineup": "shuffle", "slot": 0},
     "guide": {"commercials": False, "midroll": False, "bumps": False, "lineup": "shuffle", "slot": 30},
     "weather": {"commercials": False, "midroll": False, "bumps": False, "lineup": "shuffle", "slot": 30},
+    # Behind the scenes: movie Extras in per-film blocks; breaks only between segments
+    "extras": {"commercials": True, "midroll": True, "bumps": True, "lineup": "shuffle", "slot": 30},
 }
 
 

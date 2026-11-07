@@ -19,7 +19,7 @@ from .kodiutil import _
 PRIME_START, PRIME_END = "20:00", "23:00"
 OFF_START, OFF_END = "00:00", "05:00"
 TV_TYPES = ("network",)
-ALL_PROGRAM = ("network", "movies", "loop")
+ALL_PROGRAM = ("network", "movies", "loop", "extras")     # overnight sign-off
 
 
 def _m(hhmm):

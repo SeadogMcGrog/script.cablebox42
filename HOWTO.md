@@ -80,6 +80,50 @@ in Kodi → *Information*. To fix one: *Information → Refresh*, or edit its
 - A folder of **background music** for the guide and weather channels
   (smooth jazz and elevator music are the classics)
 - **Logos** for your channels — transparent PNGs look best
+- **Movie extras** (making-of pieces, documentaries, interviews) in an `Extras`
+  folder next to each movie — see below
+
+**Movie extras**
+
+CableBox reads disc extras the way Kodi does: from a folder named `Extras` in
+the movie's own folder (for disc rips, `VIDEO_TS\Extras` or `BDMV\Extras` works
+too). Subfolders are fine. CableBox only reads these folders; it never renames
+or moves anything.
+
+```
+Movies\2001 A Space Odyssey (1968)\
+    2001 A Space Odyssey (1968).mkv
+    Extras\
+        The Making Of A Myth.mp4
+        Standing On The Shoulders Of Kubrick.mp4
+        Theatrical Trailer.mp4          ← skipped (trailer)
+        Interviews\
+            title_t03.mkv               ← airs: it's in Interviews
+```
+
+- Making-of pieces, documentaries, featurettes, interviews and anything else
+  with a readable name count. Deleted, extended and alternate scenes, bloopers,
+  trailers and promos, galleries, music videos, short films and commentaries
+  don't, and neither does anything under a minute.
+- Names like `title_t03.mkv` or "Bonus 2" are skipped. To keep one, rename it,
+  or put it in a subfolder of `Extras` named **Behind the Scenes**, **Making Of**,
+  **Interviews**, **Featurettes** or **Documentaries**: everything in those
+  always counts. (*Settings → Programming → Also air extras with unrecognised
+  names* counts them all.)
+- Give each movie its own folder. An `Extras` folder shared by several movies
+  isn't used.
+- Turn off Kodi's *Settings → Media → Library → Video library → Ignore video
+  extras on scan* (it is on by default). While it's on, Kodi scans the files in
+  `Extras` like any other video, so extras can be added as movies of their own
+  and turn up on movie channels. With it off, Kodi files them as extras of
+  their movie instead.
+- CableBox looks through the folders and measures the videos in the background
+  while the TV is off, so the first look at a big library can take a while.
+  *Settings → Tools → **Check extras*** shows every movie's extras with their
+  length and whether they air, and why not. Its summary says how many lengths
+  are measured so far ("Lengths measured: 2,840 of 3,092"); while some are
+  still to do it offers **Measure now**, which does the rest straight away
+  with a progress bar. *Cancel* stops it and keeps what was measured.
 
 > **Tip:** Keep clips on the same drive as your shows. A sleeping USB drive or
 > an offline network share is the most common cause of a missed break.
@@ -245,10 +289,20 @@ Main menu → **Channel manager**.
    - *Movie channel* — films, commercials between them
    - *Loop* — back to back, no clock (good for music videos or shorts)
    - *Guide channel* / *Weather channel*
+   - *Behind the scenes (movie extras)* — making-of pieces and interviews
+     from your movies' `Extras` folders ([section 1](#1-before-you-start-get-your-library-ready)).
+     Keep the suggested name **BACKLOT** for its logo and call letters. It needs
+     no programming: it airs every movie whose extras *Check extras* marks
+     *Air*, one movie (or a few short ones) per block, with breaks only
+     between segments. It shows *No programming* until CableBox has looked
+     through the folders (in the background, while the TV is off); press
+     **OK** on that screen, or choose *Measure now* when you add the
+     channel, to do it straight away. A movie gets up to an hour per turn;
+     the rest of its extras continue on its next turn.
 3. **Name** and **number**. If the number is taken you can move that channel
    to the next free number, slide the channels from there up by one, or pick
    another number.
-4. **Add programming** — pick a source, then **Add more** as many times as you
+4. **Add programming** (not for Guide, Weather or Behind the scenes) — pick a source, then **Add more** as many times as you
    like, and **Done** when finished. **Back** (or **Cancel**) on any step adds
    nothing.
 
