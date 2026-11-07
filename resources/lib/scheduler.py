@@ -13,7 +13,7 @@ import random
 import threading
 import time
 
-from .kodiutil import SCHEDULE_DIR, load_json, save_json, log, ensure_dirs
+from .kodiutil import SCHEDULE_DIR, load_json, save_json, log, ensure_dirs, setting_bool
 from . import library
 from . import channels as chmod
 from . import assign
@@ -167,6 +167,9 @@ class ChannelSchedule(object):
 
     def full_hash(self):
         """Channel settings + which shows this channel may air automatically."""
+        if self.ch.get("type") == "extras":
+            # rebuild once when the first extras turn up (not each time the cache changes)
+            return chmod.config_hash(self.ch) + ("x1" if self._extras_films() else "x0")
         a = self.assignment() or {}
         return chmod.config_hash(self.ch) + (a.get("digest", {}).get(self.ch["id"], "") if a else "")
 
@@ -432,6 +435,8 @@ class ChannelSchedule(object):
         if offair:
             end = until if hard is None else min(until, hard)
             return self._offair(t, end, until)
+        if ch["type"] == "extras":
+            return self._extras_block(t, hard)
 
         part, fallback, own, not_genres = self._daypart_extra(key)
         full = library.without(library.share(sources, part, own, not_genres), ch.get("exclude"))
@@ -569,6 +574,144 @@ class ChannelSchedule(object):
             pos = self._fill(pos, blen, ads, bumps, rng, final=(i == k), ids=ids if i == k else None)
         self._add_block(t, end, prog["title"], "show", prog.get("sub", ""), prog.get("label", ""))
         return end
+
+    # ------------------------------------------------- Behind the scenes (movie Extras)
+    X_TURN = 3600          # at most an hour of one film's extras per turn; the rest airs on its next turn
+    X_FILL = 22.0 / 30     # at least ~22 minutes of programme per half hour
+    X_FILMS = 6            # films sharing one block, at most
+
+    def _extras_films(self):
+        """Films and their qualifying segments, from the Extras cache only."""
+        try:
+            return library.extras_programme(setting_bool("extras_unrecognised", False))
+        except Exception as exc:
+            log("extras programme: %s" % exc)
+            return []
+
+    def _x_next(self, films, st, skip, t):
+        """The next film in the rotation: every film once per round, a new
+        shuffled order each round; films new since the round began join its end."""
+        by = dict((f["key"], f) for f in films)
+        done = set(st["done"])
+        q = [k for k in st["queue"] if k in by]
+        if q or done:           # a round in progress: films new since it began join its end
+            q += sorted((k for k in by if k not in done and k not in q),
+                        key=lambda k: library.natural_key(by[k]["title"]))
+        if not q:
+            st["round"] += 1
+            q = sorted(by)
+            random.Random("%s|xround|%d" % (self.ch["id"], st["round"])).shuffle(q)
+            last = st["done"][-1] if st["done"] else None
+            if len(q) > 1 and q[0] in (last,) + tuple(skip):
+                q.append(q.pop(0))          # don't start the new round with what just aired
+            st["done"] = []
+        for k in q:
+            if k not in skip:
+                q.remove(k)
+                st["queue"] = q
+                st["done"].append(k)
+                return by[k]
+        st["queue"] = q
+        return None
+
+    def _x_take(self, f, st):
+        """This turn's segments for a film: from its bookmark, up to X_TURN (one
+        longer segment airs whole); the rest waits for the film's next turn."""
+        segs = f["segs"]
+        pos = st["pos"]
+        i = pos.get(f["key"], 0)
+        if i >= len(segs):
+            i = 0
+        out, total, j = [], 0.0, i
+        while j < len(segs):
+            s = segs[j]
+            if out and total + s["dur"] > self.X_TURN:
+                break
+            j += 1
+            if library.is_bad(s["path"]):
+                continue
+            out.append(s)
+            total += s["dur"]
+        if j >= len(segs):
+            pos.pop(f["key"], None)
+        else:
+            pos[f["key"]] = j
+        return out
+
+    def _extras_block(self, t, hard):
+        films = self._extras_films()
+        if not films:
+            return self._no_programme(t, hard, {"series": [], "singles": []})
+        st = self.data["state"].setdefault("x", {})
+        for k, v in (("round", 0), ("queue", []), ("done", []), ("pos", {})):
+            st.setdefault(k, v)
+        slot = self.slot or 1800
+        picks, total, skip = [], 0.0, set()
+        for _guard in range(self.X_FILMS * 3):
+            if len(picks) >= self.X_FILMS:
+                break
+            f = self._x_next(films, st, skip, t)
+            if f is None:
+                break
+            skip.add(f["key"])
+            segs = self._x_take(f, st)
+            if not segs:
+                continue
+            picks.append((f, segs))
+            total += sum(s["dur"] for s in segs)
+            if total >= self.X_FILL * (ceil_slot(t + total + 2, slot) - t):
+                break
+        if not picks:
+            return self._no_programme(t, hard, {"series": [], "singles": []})
+        return self._extras_layout(t, picks, hard)
+
+    def _extras_layout(self, t, picks, hard):
+        """Segments back to back; breaks only between segments (the ones nearest
+        evenly spaced points), the station ID in the last break."""
+        ch = self.ch
+        slot = self.slot or 1800
+        rng = random.Random("%s|%.0f" % (ch["id"], t))
+        segs = [s for _f, ss in picks for s in ss]
+        dur = sum(s["dur"] for s in segs)
+        end = ceil_slot(t + dur + 2, slot)
+        if hard is not None and end > hard:
+            end = max(hard, t + dur)
+        nslots = max(1, int(round((end - t) / slot)))
+        gap = max(0.0, end - t - dur)
+        ads, bumps, ids = self._fillers(t)
+        k = 0
+        if ads and gap >= 90 and ch.get("midroll", True):
+            per = self.cfg.get("breaks_per_slot", 2)
+            k = max(0, min(per * nslots * slot // 1800, int(gap // 75) - 1, len(segs) - 1))
+        cum, acc = [], 0.0
+        for s in segs[:-1]:
+            acc += s["dur"]
+            cum.append(acc)
+        after = set()
+        for i in range(1, k + 1):
+            free = [j for j in range(len(cum)) if j not in after]
+            if not free:
+                break
+            target = dur * i / (k + 1)
+            after.add(min(free, key=lambda j: abs(cum[j] - target)))
+        brk = gap / (len(after) + 1)
+        title = self._x_title([f for f, _ss in picks])
+        pos = t
+        for j, s in enumerate(segs):
+            self._add(pos, pos + s["dur"], "show", p=s["path"], o=0, t=title, sub=s["title"])
+            pos += s["dur"]
+            if j in after:
+                pos = self._fill(pos, brk, ads, bumps, rng, final=False)
+        self._fill(pos, end - pos, ads, bumps, rng, final=True, ids=ids)
+        self._add_block(t, end, title, "show", " · ".join(s["title"] for s in segs))
+        return end
+
+    @staticmethod
+    def _x_title(films):
+        if len(films) == 1:
+            f = films[0]
+            return _("Inside %s") % ("%s (%s)" % (f["title"], f["year"]) if f.get("year") else f["title"])
+        return " · ".join(_("Inside %s") % f["title"] for f in films)
 
     # ------------------------------------------------------------- shorts
     def short_limit(self):

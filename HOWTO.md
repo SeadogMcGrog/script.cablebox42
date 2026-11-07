@@ -120,7 +120,10 @@ Movies\2001 A Space Odyssey (1968)\
 - CableBox looks through the folders and measures the videos in the background
   while the TV is off, so the first look at a big library can take a while.
   *Settings → Tools → **Check extras*** shows every movie's extras with their
-  length and whether they air, and why not.
+  length and whether they air, and why not. Its summary says how many lengths
+  are measured so far ("Lengths measured: 2,840 of 3,092"); while some are
+  still to do it offers **Measure now**, which does the rest straight away
+  with a progress bar. *Cancel* stops it and keeps what was measured.
 
 > **Tip:** Keep clips on the same drive as your shows. A sleeping USB drive or
 > an offline network share is the most common cause of a missed break.
@@ -281,8 +284,18 @@ Main menu → **Channel manager**.
    - *Movie channel* — films, commercials between them
    - *Loop* — back to back, no clock (good for music videos or shorts)
    - *Guide channel* / *Weather channel*
+   - *Behind the scenes (movie extras)* — making-of pieces and interviews
+     from your movies' `Extras` folders ([section 1](#1-before-you-start-get-your-library-ready)).
+     Keep the suggested name **BACKLOT** for its logo and call letters. It needs
+     no programming: it airs every movie whose extras *Check extras* marks
+     *Air*, one movie (or a few short ones) per block, with breaks only
+     between segments. It shows *No programming* until CableBox has looked
+     through the folders (in the background, while the TV is off); press
+     **OK** on that screen, or choose *Measure now* when you add the
+     channel, to do it straight away. A movie gets up to an hour per turn;
+     the rest of its extras continue on its next turn.
 3. **Name** and **number**.
-4. **Add programming** — pick a source, then *Add more programming?* as many
+4. **Add programming** (not for Guide, Weather or Behind the scenes) — pick a source, then *Add more programming?* as many
    times as you like:
 
 | Source | Example |

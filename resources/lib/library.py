@@ -654,6 +654,7 @@ def forget_bad():
 
 def clear_cache():
     _POOL_CACHE.clear()
+    _AIR_CACHE.clear()
     from . import seasons          # holiday matches follow library changes too
     seasons.clear_cache()
 
@@ -757,10 +758,10 @@ def _extras_movies():
     return out
 
 
-def _extras_fresh(entry, folder, now):
+def _extras_fresh(entry, folder, now, recheck=False):
     if not entry:
         return False
-    if now - entry.get("checked", 0) < EXTRAS_RECHECK:
+    if not recheck and now - entry.get("checked", 0) < EXTRAS_RECHECK:
         return True
     base = dict(entry.get("base") or {})
     cur = {p: _mtime(p) for p in base}
@@ -777,21 +778,69 @@ def _extras_fresh(entry, folder, now):
     return False
 
 
-def extras_refresh(abort=lambda: False):
-    """Background only: find and list movie Extras folders that changed, then
-    measure the files not measured yet.  Saves as it goes, so an aborted run
-    carries on next time.  Returns True when it finished."""
+EXTRAS_UNREADABLE_RETRY = 3 * 86400  # a file whose length couldn't be read is tried again after this
+
+
+def extras_refresh(abort=lambda: False, progress=None, retry=False):
+    """Find and list movie Extras folders that changed, then measure the files
+    not measured yet.  Runs in the background while the TV is off, or from
+    'Measure now' (progress(fraction, line) drives its dialog; retry=True also
+    tries again the files whose length couldn't be read).  Saves as it goes, so
+    a cancelled or interrupted run carries on next time.  Returns True when it
+    finished."""
+    home = _home()
+    busy = home.getProperty(_X_BUSY)
+    if busy and time.time() - float(busy or 0) < 900:
+        log("extras: a scan is already running")
+        return False
+    home.setProperty(_X_BUSY, str(time.time()))
+    stop = abort
+    abort = lambda: stop() or home.getProperty(_X_STOP) == "1"
+    try:
+        return _extras_refresh(abort, progress, retry)
+    finally:
+        home.clearProperty(_X_BUSY)
+
+
+_X_BUSY = "cablebox42.extras_busy"      # one scan at a time (the service and Measure now are separate)
+_X_STOP = "cablebox42.extras_stop"
+
+
+def _home():
+    import xbmcgui
+    return xbmcgui.Window(10000)
+
+
+def extras_take_over(wait=15.0):
+    """Measure now: ask a background scan that's running to stop, and wait for it."""
+    home = _home()
+    if not home.getProperty(_X_BUSY):
+        return True
+    home.setProperty(_X_STOP, "1")
+    mon = xbmc.Monitor()
+    end = time.time() + wait
+    while home.getProperty(_X_BUSY) and time.time() < end:
+        if mon.waitForAbort(0.2):
+            break
+    home.clearProperty(_X_STOP)
+    return not home.getProperty(_X_BUSY)
+
+
+def _extras_refresh(abort, progress, retry):
     t0 = time.time()
     cache = load_json(EXTRAS_FILE, {})
     folders = cache.get("folders") or {}
+    unreadable = cache.get("unreadable") or {}
     movies = _extras_movies()
     listed = 0
-    for folder, ms in movies.items():
+    for n, (folder, ms) in enumerate(movies.items()):
         if abort():
             break
+        if progress and n % 10 == 0:
+            progress(0.3 * n / max(1, len(movies)), "list", n, len(movies))
         now = time.time()
         entry = folders.get(folder)
-        if _extras_fresh(entry, folder, now):
+        if _extras_fresh(entry, folder, now, recheck=retry):        # Measure now looks at every folder's dates
             continue
         disc = ms[0].get("disc", "")
         base = {folder: _mtime(folder)}
@@ -809,7 +858,7 @@ def extras_refresh(abort=lambda: False):
     save_json(EXTRAS_FILE, cache)
     t1 = time.time()
     durs = durations()
-    probed, todo = 0, 0
+    todo = []
     for folder, entry in folders.items():
         top = entry.get("extras")
         if not top or len(movies.get(folder) or []) != 1:
@@ -818,19 +867,58 @@ def extras_refresh(abort=lambda: False):
             p = top + rel.replace("/", _psep(top))
             if durs.data.get(p):
                 continue
-            todo += 1
-            if abort():
+            if not retry and t1 - unreadable.get(p, 0) < EXTRAS_UNREADABLE_RETRY:
                 continue
-            durs.get(p)
-            probed += 1
-            if probed % 50 == 0:
-                durs.save()
+            todo.append(p)
+    probed = 0
+    for p in todo:
+        if abort():
+            break
+        if progress:
+            progress(0.3 + 0.7 * probed / max(1, len(todo)), "measure", probed, len(todo))
+        if durs.get(p) > 0:
+            unreadable.pop(p, None)
+        else:
+            unreadable[p] = time.time()
+        probed += 1
+        if probed % 20 == 0:
+            durs.save()
     durs.save()
-    done = probed == todo
+    present = set(top + r.replace("/", _psep(top)) for e in folders.values() if e.get("extras")
+                  for top in (e["extras"],) for r in e.get("files") or [])
+    cache["unreadable"] = dict((p, t) for p, t in unreadable.items() if p in present)
+    save_json(EXTRAS_FILE, cache)
+    done = probed == len(todo) and not abort()
+    _AIR_CACHE.clear()
     log("extras: %d movie folders, %d listed in %.1f s, %d of %d new files measured in %.1f s%s" % (
-        len(movies), listed, t1 - t0, probed, todo, time.time() - t1, "" if done else " (stopped early)"),
+        len(movies), listed, t1 - t0, probed, len(todo), time.time() - t1, "" if done else " (stopped early)"),
         level=xbmc.LOGINFO)
-    return done and not abort()
+    return done
+
+
+def extras_unreadable():
+    """Paths of Extras whose length couldn't be read (from the cache)."""
+    return set(load_json(EXTRAS_FILE, {}).get("unreadable") or {})
+
+
+def extras_status():
+    """(scanned, measured, total, unreadable) over the files of every movie's own
+    Extras folder, from the cache only: scanned is False until the folders have
+    been looked through once."""
+    cache = load_json(EXTRAS_FILE, {})
+    folders = cache.get("folders") or {}
+    unreadable = cache.get("unreadable") or {}
+    measured = total = bad = 0
+    for f in extras_films():
+        if f["shared"]:
+            continue
+        for _rel, p, d in f["files"]:
+            total += 1
+            if d:
+                measured += 1
+            elif p in unreadable:
+                bad += 1
+    return bool(folders), measured, total, bad
 
 
 def extras_films():
@@ -855,4 +943,34 @@ def extras_films():
                                durs.get(top + r.replace("/", _psep(top)), probe_if_missing=False))
                               for r in entry.get("files") or []]})
     out.sort(key=lambda f: natural_key(f["title"]))
+    return out
+
+
+_AIR_CACHE = {}
+_AIR_TTL = 600
+
+
+def extras_programme(loose=False):
+    """What the Behind the scenes channel can air, from the cache only (never lists
+    or probes, so it's safe on a channel change): [{key, title, year, segs:
+    [{path, title, dur, group}]}] - each film's qualifying, measured segments in
+    block order.  Films whose Extras folder is shared by several movies are left out."""
+    hit = _AIR_CACHE.get(bool(loose))
+    if hit and time.time() - hit[0] < _AIR_TTL:
+        return hit[1]
+    from . import extras
+    out = []
+    for f in extras_films():
+        if f["shared"]:
+            continue
+        segs = []
+        for rel, path, dur in f["files"]:
+            info = extras.classify(rel, f["title"], f["year"], dur, loose)
+            if info["air"] and dur > 0:
+                segs.append((info["group"], natural_key(rel), {"path": path, "title": info["title"],
+                                                              "dur": float(dur), "group": info["group"]}))
+        segs.sort(key=lambda s: (s[0], s[1]))
+        if segs:
+            out.append({"key": f["folder"], "title": f["title"], "year": f["year"], "segs": [s[2] for s in segs]})
+    _AIR_CACHE[bool(loose)] = (time.time(), out)
     return out

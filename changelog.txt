@@ -1,7 +1,18 @@
 Unreleased (feature/extras-channel)
+- New channel type: Behind the scenes (movie extras). Making-of pieces,
+  documentaries and interviews from your movies' Extras folders, in per-film
+  blocks ('Inside 2001: A Space Odyssey (1968)', the segments in the guide
+  description). Every film gets a turn before any repeats; short ones share a
+  block; breaks only between segments. Add it from Add a channel; named
+  BACKLOT with its own logo and corner bug by default. A film gets up to an
+  hour per turn; the rest of its extras continue on its next turn
+- Measure now (Check extras, Add a channel, or OK on BACKLOT's 'No programming'
+  screen): looks through the Extras folders and measures the extras right away,
+  with a progress bar; Cancel keeps what was measured. Check extras shows
+  'Lengths measured: X of Y'
 - Settings > Tools > Check extras: every movie's Extras folder (next to the
   movie, or in VIDEO_TS / BDMV) with each video's title, length and whether it
-  will air on the coming Behind the Scenes channel, and why not. The folders
+  will air on the Behind the scenes channel, and why not. The folders
   are listed and measured in the background while the TV is off, read-only.
 - Settings > Programming > Also air extras with unrecognised names (off)
 

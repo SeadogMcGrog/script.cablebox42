@@ -308,7 +308,7 @@ Each button closes Settings and opens the tool.
 | **Shows without a good channel** | Same as in the Channel manager: see below |
 | **Move shows between channels** | Pick a show or movie, then tick the channels it should air on. It airs exactly there |
 | **Check my videos** | Lists commercials, bumps and videos that can't be used, and why |
-| **Check extras** | Every movie's `Extras` folder (next to the movie's file, or in `VIDEO_TS` / `BDMV`): each video's cleaned-up title, length and *Air* or *Skipped* with the reason, plus totals at the top. Making-of pieces, documentaries, featurettes, interviews and other readably named videos air; deleted/extended/alternate scenes, bloopers, trailers and promos, galleries, music videos, short films, commentaries, anything under a minute and names like `title_t03` are skipped. Everything in an `Extras` subfolder named *Behind the Scenes*, *Making Of*, *Interviews*, *Featurettes* or *Documentaries* airs. CableBox lists and measures these folders in the background while the TV is off and never changes them |
+| **Check extras** | Every movie's `Extras` folder (next to the movie's file, or in `VIDEO_TS` / `BDMV`): each video's cleaned-up title, length and *Air* or *Skipped* with the reason, plus totals at the top. Making-of pieces, documentaries, featurettes, interviews and other readably named videos air; deleted/extended/alternate scenes, bloopers, trailers and promos, galleries, music videos, short films, commentaries, anything under a minute and names like `title_t03` are skipped. Everything in an `Extras` subfolder named *Behind the Scenes*, *Making Of*, *Interviews*, *Featurettes* or *Documentaries* airs. CableBox lists and measures these folders in the background while the TV is off and never changes them. The summary shows *Lengths measured: X of Y*; while some are still to do, **Measure now** does the rest straight away (progress bar, *Cancel* keeps what's done). Videos whose length can't be read don't air |
 | **Clean up my 'In progress' list** | Clears resume points left by channel surfing. You keep the ones you tick |
 | **Rebuild schedules** | Plan every channel again from now (episode progress is kept) |
 | **Start over (factory reset)** | Back to a fresh install: deletes channels, planner pins and schedules (optionally all settings too), then shows the welcome screen. Your videos, bumps, commercials and station folders are never touched. Handy for setting up the new stations cleanly |
@@ -379,6 +379,7 @@ block, so you can change or remove it in the channel editor.
 | **Loop** | Back to back, no clock, no breaks (good for music videos or cartoons) |
 | **Guide channel** | The program guide |
 | **Weather channel** | The local forecast |
+| **Behind the scenes** | Making-of pieces, documentaries and interviews from your movies' `Extras` folders, in per-film blocks ("Inside 2001: A Space Odyssey (1968)"). Every film with extras gets a turn before any comes round again, in a new order each time; a film gets up to an hour per turn (one longer documentary airs whole) and the rest of its extras continue on its next turn. Films with only a few minutes share a block, so a half hour is never mostly commercials. Breaks come only between segments, never in the middle of one. Named *BACKLOT* with its own logo by default. See *Check extras* for what airs |
 
 ### Programming sources
 
@@ -609,6 +610,7 @@ automatic setup gives them to matching channels:
 | **News 42** | the News channel, on **42** | |
 | **Orbit TV** | the Science Fiction channel | |
 | **Boombox TV** | a channel with "music" in its name | |
+| **BACKLOT** | the Behind the scenes channel (movie extras) | |
 
 **Shows go where they first aired.** Kodi keeps a TV show's network in its
 *Studio* field, and each station stands in for real networks, so a show's

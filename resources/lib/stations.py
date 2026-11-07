@@ -95,6 +95,9 @@ STATIONS = [
     {"id": "boombox_tv", "name": "Boombox TV", "call": "BOOM", "logo": "boombox_tv.png",
      "match": {"name_words": ["music"]},
      "networks": ["MTV", "MTV2", "CMT"]},
+    # the Behind the scenes channel (movie Extras); its corner bug is a simpler picture
+    {"id": "backlot", "name": "BACKLOT", "call": "LOT", "logo": "backlot.png", "bug": "backlot_bug.png",
+     "match": {"type": "extras"}},
 ]
 BY_ID = {s["id"]: s for s in STATIONS}
 

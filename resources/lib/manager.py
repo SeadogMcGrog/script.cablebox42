@@ -21,9 +21,12 @@ D = xbmcgui.Dialog()
 TITLE = "CableBox 42"
 TYPE_LABELS = {"network": _("Network (series + commercials)"), "movies": _("Movie channel"),
                "loop": _("Loop (back-to-back, no clock)"), "guide": _("Guide channel"),
-               "weather": _("Weather channel")}
+               "weather": _("Weather channel"), "extras": _("Behind the scenes (movie extras)")}
 PROGRAM_TYPES = ("network", "movies", "loop")
-ALL_TYPES = ["network", "movies", "loop", "guide", "weather"]
+CLIP_TYPES = PROGRAM_TYPES + ("extras",)        # channels with breaks: station folders, clips
+ALL_TYPES = ["network", "movies", "loop", "guide", "weather", "extras"]
+# channel editor rows that mean nothing on a Behind the scenes channel
+EXTRAS_HIDDEN = ("sources", "planner", "dayparts", "shows", "lineup", "slot")
 
 
 # ------------------------------------------------------------------ helpers
@@ -431,6 +434,8 @@ def setup_summary(chans):
             lines.append(_("        Local forecast (Settings > Weather)"))
             continue
         srcs = [describe_source(s) for s in c.get("sources", []) if not s.get("orphans")]
+        if c["type"] == "extras":
+            srcs = [_("making-of pieces and interviews from your movies' Extras folders")]
         if any(s.get("orphans") for s in c.get("sources", [])):
             srcs.append(_("shows whose genres are too small for a channel of their own"))
         if c.get("broadcast"):
@@ -450,7 +455,7 @@ def setup_summary(chans):
     if root:
         lines.append(_("[B]Station folders[/B]  [COLOR grey]%s[/COLOR]") % root)
         for c in chans:
-            if c["type"] in PROGRAM_TYPES:
+            if c["type"] in CLIP_TYPES:
                 lines += folder_lines(c)
     else:
         lines.append(_("[B]Station folders[/B]  not set up - Settings > Tools > 'Station folders' gives "
@@ -582,7 +587,8 @@ def add_channel(chans):
     t = D.select(_("Channel type"), [TYPE_LABELS[x] for x in types])
     if t < 0:
         return
-    name = D.input(_("Channel name"), {"guide": _("TV Guide"), "weather": _("Weather Channel")}.get(types[t], ""))
+    name = D.input(_("Channel name"), {"guide": _("TV Guide"), "weather": _("Weather Channel"),
+                                       "extras": "BACKLOT"}.get(types[t], ""))
     if not name:
         return
     num = D.numeric(0, _("Channel number"), str(C.next_free_number(chans)))
@@ -600,6 +606,15 @@ def add_channel(chans):
                 ch["sources"].append(src)
             if not D.yesno(TITLE, _("Add more programming to %s?") % name):
                 break
+    if types[t] == "extras":
+        from . import stations
+        if name.strip().upper() == "BACKLOT":         # the built-in station: logo, corner bug, call letters
+            stations.apply(ch, stations.BY_ID["backlot"])
+        if not library.extras_programme(K.setting_bool("extras_unrecognised", False)) and                 D.yesno(TITLE, _("CableBox hasn't found any movie extras to air yet.  It looks through your "
+                                 "movies' Extras folders in the background while the TV is off; until then this "
+                                 "channel shows 'No programming'.[CR][CR]Settings > Tools > Check extras shows "
+                                 "what it found."), nolabel=_("Later"), yeslabel=_("Measure now")):
+            measure_extras_now()
     chans.append(ch)
     C.save(chans)
     edit_channel(ch["id"])
@@ -650,6 +665,8 @@ def edit_channel(cid):
             ("preview", _("[B]Preview today's schedule[/B]")),
             ("delete", _("[COLOR red]Delete channel[/COLOR]")),
         ]
+        if ch["type"] == "extras":
+            items = [x for x in items if x[0] not in EXTRAS_HIDDEN]
         i = done_select("%d  %s" % (ch["number"], ch["name"]), [x[1] for x in items])
         if i < 0:
             if changed:
@@ -1373,7 +1390,34 @@ def _extras_reasons():
             "trailer": _("trailer or promo"), "gallery": _("gallery or storyboards"),
             "reel": _("demo reel"), "newsreel": _("newsreel"), "music": _("music"),
             "short": _("short film"), "commentary": _("commentary"), "other": _("disc extra"),
-            "short_length": _("under 60 s"), "unrecognised": _("name not recognised")}
+            "short_length": _("under 60 s"), "unrecognised": _("name not recognised"),
+            "unreadable": _("length can't be read")}
+
+
+def measure_extras_now():
+    """Measure now: look through the Extras folders and measure every extra
+    that hasn't been measured, with a progress dialog whose Cancel works.
+    Progress is saved as it goes.  Returns True when it finished."""
+    if not library.extras_take_over():
+        D.ok(TITLE, _("CableBox is already measuring your extras in the background.  Try again in a minute."))
+        return False
+    pd = xbmcgui.DialogProgress()
+    pd.create(_("Measure now"), _("Looking through your movies' Extras folders..."))
+
+    def progress(frac, phase, n, total):
+        if phase == "list":
+            line = _("Looking through Extras folders: %d of %d movies") % (n, total)
+        else:
+            line = _("Measuring extras: %d of %d") % (n, total)
+        pd.update(int(100 * frac), line)
+
+    try:
+        done = library.extras_refresh(abort=pd.iscanceled, progress=progress, retry=True)
+    finally:
+        pd.close()
+    if not done:
+        D.notification(TITLE, _("Stopped - what was measured is kept"), time=3000)
+    return done
 
 
 def check_extras():
@@ -1381,12 +1425,27 @@ def check_extras():
     Scenes channel will treat it.  Reads the cache only (the service lists and
     measures the folders in the background)."""
     from . import extras
+    scanned, measured, total, unreadable = library.extras_status()
+    if not scanned:
+        if not D.yesno(_("Check extras"), _("CableBox hasn't looked through your movies' Extras folders yet.  It "
+                                            "does that in the background while the TV is off, or it can do it "
+                                            "now.[CR][CR]Kodi looks for extras in a folder named Extras next to "
+                                            "the movie's file (or inside VIDEO_TS or BDMV)."),
+                       nolabel=_("Later"), yeslabel=_("Measure now")):
+            return
+        measure_extras_now()
+        scanned, measured, total, unreadable = library.extras_status()
+    elif total - measured - unreadable > 0:
+        if D.yesno(_("Check extras"), (_("Lengths measured: %d of %d") % (measured, total)) + "[CR][CR]" +
+                   _("CableBox measures the rest in the background while the TV is off, or it can measure "
+                     "them now."), nolabel=_("Show the list"), yeslabel=_("Measure now")):
+            measure_extras_now()
+            scanned, measured, total, unreadable = library.extras_status()
     films = library.extras_films()
     if not films:
-        D.ok(_("Check extras"), _("CableBox hasn't looked at your movies' Extras folders yet.  It does that in "
-                                  "the background while the TV is off - try again in a few minutes.[CR][CR]"
-                                  "Kodi looks for extras in a folder named Extras next to the movie's file "
-                                  "(or inside VIDEO_TS or BDMV)."))
+        D.ok(_("Check extras"), _("None of your movies has an Extras folder.[CR][CR]Kodi looks for extras in a "
+                                  "folder named Extras next to the movie's file (or inside VIDEO_TS or BDMV).")
+             if scanned else _("CableBox hasn't looked through your movies' Extras folders yet."))
         return
     loose = K.setting_bool("extras_unrecognised", False)
     labels = _extras_reasons()
@@ -1395,9 +1454,19 @@ def check_extras():
         return "%2d:%02d" % (s // 60, s % 60) if s else "--:--"
 
     body, reasons = [], {}
-    n_films = n_files = air_files = air_secs = air_films = unmeasured = shared = 0
+    n_films = n_files = air_files = air_secs = air_films = shared = pending = 0
+    unreadable_paths = library.extras_unreadable()
     for f in films:
-        rows = [(rel, extras.classify(rel, f["title"], f["year"], dur, loose), dur) for rel, _p, dur in f["files"]]
+        rows = []
+        for rel, path, dur in f["files"]:
+            info = extras.classify(rel, f["title"], f["year"], dur, loose)
+            if info["air"] and not dur:
+                # only measured extras air (BACKLOT plans by length)
+                if path in unreadable_paths:
+                    info = dict(info, air=False, reason="unreadable")
+                else:
+                    info = dict(info, air=False, reason="", pending=True)
+            rows.append((rel, info, dur))
         if not rows:
             continue
         name = "%s (%s)" % (f["title"], f["year"]) if f["year"] else f["title"]
@@ -1409,7 +1478,6 @@ def check_extras():
             continue
         n_films += 1
         n_files += len(rows)
-        unmeasured += sum(1 for _r, _i, d in rows if not d)
         durs = dict((r, d) for r, _i, d in rows)
         air = extras.segment_order([(r, i) for r, i, _d in rows if i["air"]])
         secs = int(sum(durs[r] for r, _i in air))
@@ -1421,11 +1489,14 @@ def check_extras():
         for r, i in air:
             body.append(_("  Air  %s  %s  [COLOR grey]%s[/COLOR]") % (mmss(durs[r]), i["title"], r))
         for r, i, d in rows:
-            if not i["air"]:
+            if i.get("pending"):
+                pending += 1
+                body.append(_("  [COLOR grey]Not measured yet  %s  %s[/COLOR]") % (i["title"], r))
+            elif not i["air"]:
                 reasons[i["reason"]] = reasons.get(i["reason"], 0) + 1
                 body.append(_("  [COLOR grey]Skipped: %s  %s  %s[/COLOR]") % (labels.get(i["reason"], ""), mmss(d), r))
         body.append("")
-    skipped = n_files - air_files
+    skipped = n_files - air_files - pending
     enough = air_secs >= 2 * 3600 and air_films >= 5
     head = [_("[B]Summary[/B]"),
             _("  %d films with extras, %d videos") % (n_films, n_files),
@@ -1436,9 +1507,9 @@ def check_extras():
         head.append("      %s: %d" % (labels.get(k, k), n))
     head.append(_("  Enough for a Behind the Scenes channel (2 hours from 5 films): %s") %
                 (_("yes") if enough else _("not yet")))
-    if unmeasured:
-        head.append(_("  %d videos not measured yet - CableBox measures them in the background while the TV is off.")
-                    % unmeasured)
+    head.append(_("  Lengths measured: %d of %d") % (measured, total))
+    if total - measured - unreadable > 0:
+        head.append(_("      the rest are measured in the background while the TV is off, or with Measure now"))
     if shared:
         head.append(_("  %d Extras folders are shared by several movies and aren't used.") % shared)
     head += ["", _("To change what airs, rename files or put them in a subfolder of Extras named Behind the Scenes, "
@@ -1793,7 +1864,7 @@ def make_station_folders(ask=True, report=True):
     chans = C.load()
     made = 0
     for c in chans:
-        if c["type"] in PROGRAM_TYPES:
+        if c["type"] in CLIP_TYPES:
             made += ensure_channel_folders(c)
     stations.clear_cache()
     if not report:
@@ -1801,7 +1872,7 @@ def make_station_folders(ask=True, report=True):
     lines = [_("[B]Station folders[/B]  [COLOR grey]%s[/COLOR]") % root,
              _("%d new folders made - nothing that was already there was changed.") % made, ""]
     for c in chans:
-        if c["type"] in PROGRAM_TYPES:
+        if c["type"] in CLIP_TYPES:
             lines += folder_lines(c)
     orphans = stations.orphan_folders(chans)
     if orphans:

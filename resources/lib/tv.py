@@ -284,6 +284,8 @@ class TVWindow(xbmcgui.WindowXML):
         elif aid in INFO:
             if self.cur_entry and self.cur_entry.get("k") == "guide":
                 self.channel_list()
+            elif self.extras_waiting():
+                self.measure_extras()
             else:
                 self.toggle_banner()
         elif aid in MENU:
@@ -848,7 +850,12 @@ class TVWindow(xbmcgui.WindowXML):
 
     def _substitute_pick(self, avoid, room):
         try:
-            pool = library.resolve(self.ch.get("sources") or [])
+            if self.ch.get("type") == "extras":       # another extra that qualifies (cache only)
+                films = library.extras_programme(K.setting_bool("extras_unrecognised", False))
+                pool = {"series": [], "singles": [dict(s, title=self.ch["name"], sub=s["title"])
+                                                  for f in films for s in f["segs"]]}
+            else:
+                pool = library.resolve(self.ch.get("sources") or [])
         except Exception:
             return None
         items = [ep for ser in pool["series"] for ep in ser["episodes"]] + pool["singles"]
@@ -1139,11 +1146,32 @@ class TVWindow(xbmcgui.WindowXML):
         self.setProperty("card_sub", sub)
         self.setProperty("card_line", line)
 
+    def extras_waiting(self):
+        """BACKLOT is on its 'No programming' card: no extras found yet."""
+        e = self.cur_entry
+        return bool(self.ch and self.ch.get("type") == "extras" and e and e.get("k") == "card"
+                    and e.get("sub") == "nosignal")
+
+    def measure_extras(self):
+        """Measure now, from BACKLOT's 'No programming' card (the viewer asked for
+        it: nothing is listed or measured on a channel change)."""
+        from . import manager
+        manager.measure_extras_now()
+        try:
+            self.lineup.schedule(self.ch)       # extras found: the schedule rebuilds once
+        except Exception as exc:
+            K.log_err("extras schedule: %s" % exc)
+        self.cur_key = None                     # tune in again where the schedule is now
+        self.guide_pending = True
+
     def card_for(self, e, now):
         sched = self.lineup.schedule(self.ch, ensure=False)
         nb = sched.next_block(now)
         sub = e.get("sub")
-        if sub == "nosignal":
+        if sub == "nosignal" and self.ch.get("type") == "extras":
+            self.card(self.ch["name"], _("No programming"), _("No movie extras to air yet"),
+                      _("Press OK to look for them now"))
+        elif sub == "nosignal":
             self.card(self.ch["name"], _("No programming"), _("Add sources to this channel in the Channel Manager"), "")
         elif sub == "next" and nb:
             t = nb["t"] + (("  -  " + nb["sub"]) if nb.get("sub") else "")
@@ -1395,16 +1423,20 @@ class TVWindow(xbmcgui.WindowXML):
             opts.append(("ccopts", _("Caption options...")))
         else:
             self.log_no_cc()
+        if self.extras_waiting():
+            opts.append(("measure", _("Look for movie extras now")))
         opts += [("sleep", _("Sleep timer")), ("off", _("Turn off TV"))]
         b = self.lineup.schedule(self.ch, ensure=False).block_at(time.time()) if self.ch else None
-        hide = b["t"] if b and b.get("k") == "show" else None
+        hide = b["t"] if b and b.get("k") == "show" and self.ch.get("type") != "extras" else None
         if hide:
             opts.append(("hide", _("Don't air '%s' on %s") % (hide, self.ch["name"])))
         i = xbmcgui.Dialog().contextmenu([o[1] for o in opts])
         if i < 0:
             return
         key = opts[i][0]
-        if key == "hide":
+        if key == "measure":
+            self.measure_extras()
+        elif key == "hide":
             self.hide_show(hide)
         elif key == "now":
             self.channel_list()

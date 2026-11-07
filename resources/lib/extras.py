@@ -36,6 +36,7 @@ REASONS = {
     "other": "disc extra",
     "short_length": "under 60 s",
     "unrecognised": "name not recognised",
+    "unreadable": "length can't be read",      # set by Check extras, not by classify()
 }
 
 _SKIP = [
