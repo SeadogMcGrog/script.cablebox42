@@ -41,6 +41,35 @@ def done_select(heading, rows, done_label=None, **kw):
     return -1 if i == len(rows) else i
 
 
+# Every screen is one of five kinds (see .claude/CLAUDE.md): menu, step-by-step,
+# question, remove/replace, info.  These make the question kinds one call each.
+def ask(text, yes, no, cancel=None, heading=TITLE, focus_yes=False):
+    """A question whose buttons say what they do.  Returns 'yes', 'no' or None.
+
+    With `cancel`, three buttons (Kodi's yesnocustom; Estuary shows yes, no,
+    cancel from left to right): Back and the cancel button both return None, so
+    Back never answers 'no'.  Without it, `no` must be the answer that changes
+    nothing: Back returns None like it.  Kodi focuses `no` unless focus_yes.
+    The text box shows 4 lines; put a long question in `heading`."""
+    kw = {}
+    if focus_yes and hasattr(xbmcgui, "DLG_YESNO_YES_BTN"):
+        kw["defaultbutton"] = xbmcgui.DLG_YESNO_YES_BTN
+    if cancel:
+        r = D.yesnocustom(heading, text, cancel, nolabel=no, yeslabel=yes, **kw)
+        return {1: "yes", 0: "no"}.get(r)
+    return "yes" if D.yesno(heading, text, nolabel=no, yeslabel=yes, **kw) else None
+
+
+def confirm(text, yes, no=None, heading=TITLE):
+    """Cancel / <yes> question.  True only for the yes button (Back = Cancel)."""
+    return ask(text, yes, no or _("Cancel"), heading=heading) == "yes"
+
+
+def confirm_remove(text, button=None):
+    """Every removal asks first: Cancel / Remove (or Delete, Replace...)."""
+    return confirm(text, button or _("Remove"))
+
+
 def describe_source(s):
     t = s.get("type")
     if t == "tvshow":
@@ -266,7 +295,36 @@ def pick_source():
 
 
 # ------------------------------------------------------------------ wizard
-def ask_bumpers():
+# Build my lineup.  Every screen has a way forward and a way out: Back (or a
+# Cancel button/row) leaves with nothing changed.  Answers are kept in memory
+# and written - settings, channels.json, presets, station folders - only after
+# the final OK.
+class _Cancelled(Exception):
+    """Back or Cancel on a setup screen."""
+
+
+def _ask3(message, yes, no, focus_yes=False):
+    """Yes / No / Cancel question.  Back = Cancel (raises _Cancelled)."""
+    r = ask(message, yes, no, cancel=_("Cancel"), focus_yes=focus_yes)
+    if r is None:
+        raise _Cancelled()
+    return r == "yes"
+
+
+def ask_commercials(pending):
+    """Setup: the commercials folder (kept in pending until the final OK)."""
+    if K.setting("commercials_path"):
+        return
+    msg = _("Do you have a folder of old commercials?[CR][CR]They fill the breaks "
+            "like real cable TV. You can add this later in Settings.")
+    while _ask3(msg, _("Choose folder"), _("Skip")):
+        p = D.browse(0, _("Commercials folder"), "video")
+        if p:
+            pending["commercials_path"] = p
+            return
+
+
+def ask_bumpers(pending):
     """Setup: bumpers and station IDs - one shared folder, a folder per channel, or
     later.  Returns True if per-channel folders should be made once the channels exist."""
     if K.setting("bumps_path") or K.setting("stations_folder"):
@@ -277,87 +335,154 @@ def ask_bumpers():
             _menu_row(_("A folder for each channel"),
                       _("Choose where (your media drive is best) - CableBox makes a folder per channel "
                         "with bumps, ids and commercials inside, ready for clips.")),
-            _menu_row(_("Skip for now"), _("Add them later in Settings."))]
-    j = D.select(_("Bumpers and station IDs"), rows, useDetails=True)
-    if j == 0:
-        p = D.browse(0, _("Bumps folder"), "video")
-        if p:
-            K.set_setting("bumps_path", p)
-    elif j == 1:
-        root = D.browse(3, _("Where should the channel folders go?"), "files", "", False, True)
-        if root:
-            K.set_setting("stations_folder", root)
-            return True
-    return False
+            _menu_row(_("Skip for now"), _("Add them later in Settings.")),
+            _menu_row(_("Cancel setup"), _("Leave without changing anything."))]
+    j = 0
+    while True:
+        j = D.select(_("Bumpers and station IDs"), rows, useDetails=True, preselect=max(j, 0))
+        if j in (-1, 3):
+            raise _Cancelled()
+        if j == 2:
+            return False
+        if j == 0:
+            p = D.browse(0, _("Bumps folder"), "video")
+            if p:
+                pending["bumps_path"] = p
+                return False
+        else:
+            root = D.browse(3, _("Where should the channel folders go?"), "files", "", False, True)
+            if root:
+                pending["stations_folder"] = root
+                return True
 
 
-def ask_music():
+def ask_music(pending):
     """Background music for the guide and weather channels (setup wizard)."""
     if K.setting("guide_music_path") and K.setting("weather_music_path"):
         return
-    if not D.yesno(TITLE, _("Do you have a folder of background music?[CR][CR]It plays behind the TV Guide "
-                            "and Weather channels - smooth jazz and elevator music are the classic choice. "
-                            "You can add this later in Settings."),
-                   nolabel=_("Skip"), yeslabel=_("Choose folder")):
-        return
-    guide = D.browse(0, _("Music for the TV Guide channel"), "music")
-    if not guide:
-        return
-    K.set_setting("guide_music_path", guide)
-    if D.yesno(TITLE, _("Use the same music for the Weather Channel?"),
-               nolabel=_("Choose another folder"), yeslabel=_("Yes, the same")):
-        K.set_setting("weather_music_path", guide)
-    else:
-        weather = D.browse(0, _("Music for the Weather Channel"), "music")
-        K.set_setting("weather_music_path", weather or guide)
-
-
-def wizard():
-    chans = C.load()
-    if chans:
-        i = D.select(_("You already have %d channels") % len(chans),
-                     [_("Replace my lineup"), _("Add the auto channels after my current ones"), _("Cancel")])
-        if i in (-1, 2):
+    msg = _("Do you have a folder of background music?[CR][CR]It plays behind the TV Guide "
+            "and Weather channels - smooth jazz and elevator music are the classic choice. "
+            "You can add this later in Settings.")
+    while True:
+        if not _ask3(msg, _("Choose folder"), _("Skip")):
             return
-    else:
-        i = 0
-    if not K.setting("commercials_path") and D.yesno(
-            TITLE, _("Do you have a folder of old commercials?[CR][CR]They fill the breaks "
-                   "like real cable TV. You can add this later in Settings."), nolabel=_("Skip"),
-            yeslabel=_("Choose folder")):
-        p = D.browse(0, _("Commercials folder"), "video")
-        if p:
-            K.set_setting("commercials_path", p)
-    per_channel = ask_bumpers()
+        guide = D.browse(0, _("Music for the TV Guide channel"), "music")
+        if guide:
+            break
+    while True:
+        if _ask3(_("Use the same music for the Weather Channel?"), _("Yes, the same"), _("Choose another"),
+                 focus_yes=True):
+            weather = guide
+            break
+        weather = D.browse(0, _("Music for the Weather Channel"), "music")
+        if weather:
+            break
+    pending["guide_music_path"] = guide
+    pending["weather_music_path"] = weather
 
-    ask_music()
 
-    if not K.setting("weather_location") and not xbmc.getCondVisibility("Weather.IsFetched"):
-        city = D.input(_("Your city for the Weather Channel (optional, e.g. Springfield, IL)"), "")
-        if city:
-            K.set_setting("weather_location", city)
-
+def _scan_library():
+    """Looking through your library...  The progress dialog's Cancel stops it."""
     pd = xbmcgui.DialogProgress()
     pd.create(TITLE, _("Looking through your library..."))
-    new = C.auto_lineup(lambda msg, pct: pd.update(pct, msg))
-    pd.close()
+
+    def report(msg, pct):
+        pd.update(pct, msg)
+        return pd.iscanceled()
+    try:
+        new = None if pd.iscanceled() else C.auto_lineup(report)
+    finally:
+        pd.close()
+    if new is None:
+        raise _Cancelled()
+    return new
+
+
+def _ask_extras():
+    """Overnight sign-off and prime time: one list, both ticked.  Returns (overnight, prime)."""
+    rows = [_menu_row(_("Sign off overnight"),
+                      _("12 AM - 5 AM a 'Please stand by' card shows; the guide and weather stay on.")),
+            _menu_row(_("Prime-time lineup"),
+                      _("8 - 11 PM: each channel's best shows in weekly slots (movie channels: a movie "
+                        "at 8). Change them in the weekly planner."))]
+    sel = D.multiselect(_("Extras (untick what you don't want)"), rows, preselect=[0, 1], useDetails=True)
+    if sel is None:
+        raise _Cancelled()
+    return 0 in sel, 1 in sel
+
+
+def _span(chans):
+    nums = sorted(c["number"] for c in chans)
+    return ("%d" % nums[0]) if nums[0] == nums[-1] else ("%d-%d" % (nums[0], nums[-1]))
+
+
+def _confirm_setup(plan):
+    """The last screen before anything is saved: Cancel / OK (Back = Cancel)."""
+    old, new, chans = plan["old"], plan["added"], plan["chans"]
+    # the question goes in the heading: the text box only shows 4 lines
+    if plan["mode"] == "add":
+        question = _("Add %d channels (%s) after your current ones?") % (len(new), _span(new))
+    elif old:
+        question = _("Replace your %d channels with these %d (%s)?") % (len(old), len(chans), _span(chans))
+    else:
+        question = _("Set up these %d channels (%s)?") % (len(chans), _span(chans))
+    lines = [_("Overnight sign-off: %s  ·  Prime time: %s") % (
+        _("On") if plan["overnight"] else _("Off"), _("On") if plan["prime"] else _("Off"))]
+    p = plan["pending"]
+    also = []
+    for key, label in (("commercials_path", _("Commercials: %s")), ("bumps_path", _("Bumps: %s")),
+                       ("stations_folder", _("Channel folders: %s")), ("guide_music_path", _("Music: %s")),
+                       ("weather_location", _("Weather city: %s"))):
+        if p.get(key):
+            also.append(label % (p[key] if key == "weather_location" else _folder_name(p[key])))
+    if also:
+        lines.append("  ·  ".join(also))
+    return confirm("[CR]".join(lines), _("OK"), heading=question)
+
+
+def _wizard_plan():
+    """Every question of Build my lineup; nothing is written.  Returns the plan,
+    None if there's nothing to set up, or raises _Cancelled."""
+    old = C.load()
+    mode = "replace"
+    if old:
+        i = D.select(_("You already have %d channels") % len(old),
+                     [_("Replace my lineup"), _("Add the auto channels after my current ones"), _("Cancel")])
+        if i in (-1, 2):
+            raise _Cancelled()
+        mode = "add" if i == 1 else "replace"
+    pending = {}
+    ask_commercials(pending)
+    per_channel = ask_bumpers(pending)
+    ask_music(pending)
+    if not K.setting("weather_location") and not xbmc.getCondVisibility("Weather.IsFetched"):
+        city = D.input(_("Your city for the Weather Channel (optional, e.g. Springfield, IL)"), "")
+        if city:                           # Back on the keyboard = skip
+            pending["weather_location"] = city
+
+    new = _scan_library()
+    if not [c for c in new if c["type"] in PROGRAM_TYPES]:
+        D.ok(TITLE, _("I couldn't find any TV shows or movies in your Kodi library.[CR]"
+                    "Scan your media into the library first, or add folder channels "
+                    "in the Channel Manager."))
+        return None
     if len(new) > 2:
         labels = [_("%3d  %s   [COLOR grey]%s[/COLOR]") % (c["number"], c["name"],
                                                        ", ".join(describe_source(x) for x in c["sources"])[:80])
                   for c in new]
         keep = D.multiselect(_("Keep which channels? (you can fine-tune shows afterwards)"), labels,
                              preselect=list(range(len(new))))
-        if keep is None:
-            return
+        if not keep:
+            raise _Cancelled()
         new = [new[j] for j in keep]
+        if not [c for c in new if c["type"] in PROGRAM_TYPES]:
+            raise _Cancelled()
         C.renumber(new)
-    if len([c for c in new if c["type"] in PROGRAM_TYPES]) == 0:
-        D.ok(TITLE, _("I couldn't find any TV shows or movies in your Kodi library.[CR]"
-                    "Scan your media into the library first, or add folder channels "
-                    "in the Channel Manager."))
-        return
-    if i == 1:
+
+    if mode == "add":
         from . import stations
+        chans = list(old)
+        added = []
         have = set(c["type"] for c in chans)
         used_stations = set(c.get("station") for c in chans if c.get("station"))
         used = set(c["number"] for c in chans)
@@ -378,22 +503,33 @@ def wizard():
                 c["number"] = start
             used.add(c["number"])
             chans.append(c)
+            added.append(c)
+        if not added:
+            D.ok(TITLE, _("Your lineup already has all of these channels - nothing to add."))
+            return None
     else:
-        chans = new
+        chans = added = new
     for c in chans:
         c.setdefault("callsign", C.callsign(c["name"]))
-    overnight = D.yesno(TITLE, _("Sign channels off overnight, like real TV?[CR][CR]From 12 AM to 5 AM a "
-                                 "'Please stand by' card shows; the guide and weather stay on."),
-                        nolabel=_("No, run all night"), yeslabel=_("Yes (recommended)"))
-    prime = D.yesno(TITLE, _("Give channels a prime-time lineup?[CR][CR]From 8 to 11 PM each channel airs its best "
-                             "shows in fixed weekly slots (movie channels: a movie at 8). You can change any of "
-                             "it in the weekly planner."),
-                    nolabel=_("No thanks"), yeslabel=_("Yes (recommended)"))
+
+    overnight, prime = _ask_extras()
+    plan = {"mode": mode, "old": old, "chans": chans, "added": added, "pending": pending,
+            "per_channel": per_channel, "overnight": overnight, "prime": prime}
+    if not _confirm_setup(plan):
+        raise _Cancelled()
+    return plan
+
+
+def _apply_setup(plan):
+    """After the final OK: write everything the wizard collected."""
     from . import presets
-    if overnight:
+    for key, value in plan["pending"].items():
+        K.set_setting(key, value)
+    chans = plan["chans"]
+    if plan["overnight"]:
         presets.set_overnight(chans)
     C.save(chans)
-    if prime:
+    if plan["prime"]:
         pd = xbmcgui.DialogProgress()
         pd.create(TITLE, _("Building prime-time lineups..."))
         a, _changed = assign.refresh(chans)
@@ -401,14 +537,37 @@ def wizard():
         pd.close()
         C.save(chans)
     prebuild()
-    if per_channel:
+    if plan["per_channel"]:
         make_station_folders(ask=False, report=False)   # the channels exist now: lay out their folders
-    D.textviewer(_("What I set up"), setup_summary(C.load()))
-    if D.yesno(TITLE, _("Your lineup is ready.[CR][CR]Start watching?")):
-        from . import tv
-        tv.run()
-        return True
-    return False
+
+
+def _lineup_ready():
+    """Start watching / Not now / What I set up (which comes back here)."""
+    while True:
+        r = D.yesnocustom(TITLE, _("Your lineup is ready.[CR][CR]Start watching?"), _("What I set up"),
+                          nolabel=_("Not now"), yeslabel=_("Start watching"))
+        if r == 2:
+            D.textviewer(_("What I set up"), setup_summary(C.load()))
+            continue
+        if r == 1:
+            from . import tv
+            tv.run()
+            return True
+        return False
+
+
+def wizard():
+    """Build my lineup (Welcome, main menu, Settings > Tools).  Returns True if the
+    viewer went on to watch TV."""
+    try:
+        plan = _wizard_plan()
+    except _Cancelled:
+        D.notification(TITLE, _("Setup cancelled - nothing changed"), time=3000)
+        return False
+    if plan is None:
+        return False
+    _apply_setup(plan)
+    return _lineup_ready()
 
 
 def setup_summary(chans):

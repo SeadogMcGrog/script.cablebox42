@@ -168,17 +168,18 @@ STUDIO_BRANDS = ["Disney", "Pixar", "Hanna-Barbera", "Warner Bros. Animation",
 def auto_lineup(progress=None, min_shows=5, min_movies=8, max_tv=14, max_movie=6):
     """Build a sensible lineup from the Kodi library.
 
-    Returns a list of channel dicts (not saved).
+    Returns a list of channel dicts (not saved), or None if progress(msg, pct)
+    returned True (the viewer pressed Cancel).
     """
     chans = [new_channel(2, _("TV Guide"), "guide")]
     weather = new_channel(WEATHER_NUMBER, _("Weather Channel"), "weather")
     num = 3
 
     def step(msg, pct):
-        if progress:
-            progress(msg, pct)
+        return bool(progress and progress(msg, pct))
 
-    step(_("Reading TV shows"), 5)
+    if step(_("Reading TV shows"), 5):
+        return None
     shows = library.all_tvshows()
     gcount = Counter()
     for s in shows:
@@ -220,7 +221,8 @@ def auto_lineup(progress=None, min_shows=5, min_movies=8, max_tv=14, max_movie=6
 
     # no automatic decade channels (they only repeated the genre channels);
     # a decade is still a source you can pick in the channel editor
-    step(_("Reading movies"), 60)
+    if step(_("Reading movies"), 60):
+        return None
     movies = library.all_movies()
     mg = Counter()
     for m in movies:
@@ -236,7 +238,8 @@ def auto_lineup(progress=None, min_shows=5, min_movies=8, max_tv=14, max_movie=6
         chans.append(new_channel(num, _("%s Movies") % g, "movies", [{"type": "movies", "genre": g}]))
         num += 1
         made += 1
-    step(_("Looking for studio channels"), 85)
+    if step(_("Looking for studio channels"), 85):
+        return None
     try:
         studio_items = library.all_tvshows_with("studio") + library.all_movies(["title", "studio"])
     except Exception:
@@ -258,7 +261,8 @@ def auto_lineup(progress=None, min_shows=5, min_movies=8, max_tv=14, max_movie=6
     # broadcast networks on the low numbers, right after the guide
     if make_nets:
         chans[1:1] = broadcast_networks(gcount, len(movies))
-    step(_("Done"), 100)
+    if step(_("Done"), 100):
+        return None
     chans.append(weather)
     stations.assign(chans)
     stations.extra_channels(chans, min_shows)

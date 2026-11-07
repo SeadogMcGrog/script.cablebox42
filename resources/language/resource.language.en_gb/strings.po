@@ -1938,26 +1938,6 @@ msgctxt "#32498"
 msgid "%d more shows from this channel's sources air on their own home channels"
 msgstr ""
 
-msgctxt "#32501"
-msgid "Sign channels off overnight, like real TV?[CR][CR]From 12 AM to 5 AM a 'Please stand by' card shows; the guide and weather stay on."
-msgstr ""
-
-msgctxt "#32502"
-msgid "Give channels a prime-time lineup?[CR][CR]From 8 to 11 PM each channel airs its best shows in fixed weekly slots (movie channels: a movie at 8). You can change any of it in the weekly planner."
-msgstr ""
-
-msgctxt "#32503"
-msgid "No, run all night"
-msgstr ""
-
-msgctxt "#32504"
-msgid "Yes (recommended)"
-msgstr ""
-
-msgctxt "#32505"
-msgid "No thanks"
-msgstr ""
-
 msgctxt "#32506"
 msgid "Building prime-time lineups..."
 msgstr ""
@@ -2184,10 +2164,6 @@ msgstr ""
 
 msgctxt "#32574"
 msgid "Do you have a folder of background music?[CR][CR]It plays behind the TV Guide and Weather channels - smooth jazz and elevator music are the classic choice. You can add this later in Settings."
-msgstr ""
-
-msgctxt "#32575"
-msgid "Choose another folder"
 msgstr ""
 
 msgctxt "#32576"
@@ -3048,4 +3024,81 @@ msgstr ""
 
 msgctxt "#33078"
 msgid "Choose where your station folders should go.[CR][CR]CableBox makes one folder per channel, with bumps, ids and commercials inside - drop clips (and a logo.png) in and CableBox picks them up."
+msgstr ""
+
+# Build my lineup: every screen ends in OK or Cancel
+msgctxt "#33200"
+msgid "Cancel setup"
+msgstr ""
+
+msgctxt "#33201"
+msgid "Leave without changing anything."
+msgstr ""
+
+msgctxt "#33202"
+msgid "Choose another"
+msgstr ""
+
+msgctxt "#33203"
+msgid "Sign off overnight"
+msgstr ""
+
+msgctxt "#33204"
+msgid "12 AM - 5 AM a 'Please stand by' card shows; the guide and weather stay on."
+msgstr ""
+
+msgctxt "#33205"
+msgid "Prime-time lineup"
+msgstr ""
+
+msgctxt "#33206"
+msgid "8 - 11 PM: each channel's best shows in weekly slots (movie channels: a movie at 8). Change them in the weekly planner."
+msgstr ""
+
+msgctxt "#33207"
+msgid "Extras (untick what you don't want)"
+msgstr ""
+
+msgctxt "#33208"
+msgid "Add %d channels (%s) after your current ones?"
+msgstr ""
+
+msgctxt "#33209"
+msgid "Replace your %d channels with these %d (%s)?"
+msgstr ""
+
+msgctxt "#33210"
+msgid "Set up these %d channels (%s)?"
+msgstr ""
+
+msgctxt "#33211"
+msgid "Overnight sign-off: %s  ·  Prime time: %s"
+msgstr ""
+
+msgctxt "#33212"
+msgid "Channel folders: %s"
+msgstr ""
+
+msgctxt "#33213"
+msgid "Music: %s"
+msgstr ""
+
+msgctxt "#33214"
+msgid "Weather city: %s"
+msgstr ""
+
+msgctxt "#33215"
+msgid "OK"
+msgstr ""
+
+msgctxt "#33216"
+msgid "Your lineup already has all of these channels - nothing to add."
+msgstr ""
+
+msgctxt "#33217"
+msgid "Start watching"
+msgstr ""
+
+msgctxt "#33218"
+msgid "Setup cancelled - nothing changed"
 msgstr ""

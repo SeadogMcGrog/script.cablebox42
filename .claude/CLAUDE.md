@@ -77,6 +77,12 @@ A task often starts as "implement `briefs\<name>.md`".
   ends-with rule made "Disney Showcase 13" pass for channel 3.
 - **Breaks are planned hours ahead**, so new clips appear in breaks planned later;
   *Tools → Rebuild schedules* uses them at once. Don't promise "from the next break".
+- **Kodi caches an add-on's strings until Kodi restarts.** After editing `strings.po`,
+  restart Kodi before testing: `_()` finds the id in the new file but Kodi returns the
+  old text for it (a changed `%s` count then raises "not enough arguments").
+- **Kodi's yes/no dialog text box shows 4 lines** (Estuary, 720p and 1080p); more
+  scrolls the top lines out of sight. Put a long question in the dialog's heading.
+  `yesnocustom` buttons read yes / no / custom from left to right, focus on *no*.
 - `kodi-addon-checker` rejects `<news>` over 1500 characters. Keep the newest release
   notes there and the full history in `changelog.txt`.
 
