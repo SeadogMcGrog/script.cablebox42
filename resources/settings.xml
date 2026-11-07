@@ -10,6 +10,8 @@
         <setting id="shorts_mode" type="enum" label="32044" lvalues="32045|32046|32047" default="0"/>
         <setting id="av1_mode" type="enum" label="32035" lvalues="32036|32037|32038" default="0"/>
         <setting id="horizon_hours" type="labelenum" label="32006" values="6|12|24" default="12"/>
+        <setting label="33300" type="lsep"/>
+        <setting id="extras_unrecognised" type="bool" label="33301" default="false"/>
     </category>
     <category label="32010">
         <setting id="start_channel" type="number" label="32011" default="0"/>
@@ -72,6 +74,7 @@
         <setting id="tool_folders" type="action" label="32091" action="RunScript(script.cablebox42,tool,folders)" option="close"/>
         <setting label="32053" type="lsep"/>
         <setting id="tool_fillers" type="action" label="32054" action="RunScript(script.cablebox42,tool,fillers)" option="close"/>
+        <setting id="tool_extras" type="action" label="33302" action="RunScript(script.cablebox42,tool,extras)" option="close"/>
         <setting id="tool_cckeys" type="action" label="32940" action="RunScript(script.cablebox42,tool,cckeys)" option="close"/>
         <setting id="tool_progress" type="action" label="32055" action="RunScript(script.cablebox42,tool,progress)" option="close"/>
         <setting id="tool_rebuild" type="action" label="32056" action="RunScript(script.cablebox42,tool,rebuild)" option="close"/>

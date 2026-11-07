@@ -3049,3 +3049,128 @@ msgstr ""
 msgctxt "#33078"
 msgid "Choose where your station folders should go.[CR][CR]CableBox makes one folder per channel, with bumps, ids and commercials inside - drop clips (and a logo.png) in and CableBox picks them up."
 msgstr ""
+
+# Movie extras (Behind the Scenes channel, stage 1)
+msgctxt "#33300"
+msgid "Movie extras"
+msgstr ""
+
+msgctxt "#33301"
+msgid "Also air extras with unrecognised names"
+msgstr ""
+
+msgctxt "#33302"
+msgid "Check extras..."
+msgstr ""
+
+msgctxt "#33303"
+msgid "deleted, extended or alternate"
+msgstr ""
+
+msgctxt "#33304"
+msgid "bloopers"
+msgstr ""
+
+msgctxt "#33305"
+msgid "trailer or promo"
+msgstr ""
+
+msgctxt "#33306"
+msgid "gallery or storyboards"
+msgstr ""
+
+msgctxt "#33307"
+msgid "demo reel"
+msgstr ""
+
+msgctxt "#33308"
+msgid "newsreel"
+msgstr ""
+
+msgctxt "#33309"
+msgid "music"
+msgstr ""
+
+msgctxt "#33310"
+msgid "short film"
+msgstr ""
+
+msgctxt "#33311"
+msgid "commentary"
+msgstr ""
+
+msgctxt "#33312"
+msgid "disc extra"
+msgstr ""
+
+msgctxt "#33313"
+msgid "under 60 s"
+msgstr ""
+
+msgctxt "#33314"
+msgid "name not recognised"
+msgstr ""
+
+msgctxt "#33315"
+msgid "[B]Summary[/B]"
+msgstr ""
+
+msgctxt "#33316"
+msgid "To change what airs, rename files or put them in a subfolder of Extras named Behind the Scenes, Making Of, Interviews, Featurettes or Documentaries (those always air).  CableBox never changes your files."
+msgstr ""
+
+msgctxt "#33317"
+msgid "Check extras"
+msgstr ""
+
+msgctxt "#33318"
+msgid "CableBox hasn't looked at your movies' Extras folders yet.  It does that in the background while the TV is off - try again in a few minutes.[CR][CR]Kodi looks for extras in a folder named Extras next to the movie's file (or inside VIDEO_TS or BDMV)."
+msgstr ""
+
+msgctxt "#33319"
+msgid "  %d films with extras, %d videos"
+msgstr ""
+
+msgctxt "#33320"
+msgid "  Air: %d videos, %d h %02d min, from %d films"
+msgstr ""
+
+msgctxt "#33321"
+msgid "  Skipped: %d videos"
+msgstr ""
+
+msgctxt "#33322"
+msgid "  Enough for a Behind the Scenes channel (2 hours from 5 films): %s"
+msgstr ""
+
+msgctxt "#33323"
+msgid "[B]%s[/B]  [COLOR grey]%d to air, %d min[/COLOR]"
+msgstr ""
+
+msgctxt "#33324"
+msgid "yes"
+msgstr ""
+
+msgctxt "#33325"
+msgid "not yet"
+msgstr ""
+
+msgctxt "#33326"
+msgid "  %d videos not measured yet - CableBox measures them in the background while the TV is off."
+msgstr ""
+
+msgctxt "#33327"
+msgid "  %d Extras folders are shared by several movies and aren't used."
+msgstr ""
+
+msgctxt "#33328"
+msgid "[B]%s[/B]  [COLOR orange]this Extras folder is shared by several movies, so it isn't used - give each movie its own folder[/COLOR]"
+msgstr ""
+
+msgctxt "#33329"
+msgid "  Air  %s  %s  [COLOR grey]%s[/COLOR]"
+msgstr ""
+
+msgctxt "#33330"
+msgid "  [COLOR grey]Skipped: %s  %s  %s[/COLOR]"
+msgstr ""

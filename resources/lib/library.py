@@ -18,6 +18,7 @@ import re
 import threading
 import time
 
+import xbmc
 import xbmcvfs
 
 import os
@@ -655,3 +656,203 @@ def clear_cache():
     _POOL_CACHE.clear()
     from . import seasons          # holiday matches follow library changes too
     seasons.clear_cache()
+
+
+# ------------------------------------------------------------- movie Extras
+# Kodi's convention: a folder named 'Extras' next to the movie's file, or in
+# VIDEO_TS / BDMV for disc rips.  Movies only.  Read-only: listdir, Stat and the
+# probe's header reads; listing and probing happen only in the background
+# (extras_refresh), Check extras just reads the cache.
+EXTRAS_FILE = os.path.join(PROFILE, "extras.json")
+EXTRAS_RECHECK = 6 * 3600           # look at a folder's dates at most this often
+EXTRAS_RELIST = 7 * 86400           # relist anyway when the dates can't be read
+_NO_FS = ("plugin://", "http://", "https://", "pvr://", "rtmp", "rtsp", "upnp://", "videodb://")
+_DISC_DIRS = ("VIDEO_TS", "BDMV")
+
+
+def _psep(p):
+    return "\\" if "\\" in p and "/" not in p.split("://", 1)[-1] else "/"
+
+
+def _pdir(p):
+    """Parent folder, with its trailing separator ('' at the top)."""
+    s = _psep(p)
+    p = p.rstrip("/\\")
+    i = p.rfind(s)
+    return p[:i + 1] if i >= 0 else ""
+
+
+def _pname(p):
+    return p.rstrip("/\\").split(_psep(p))[-1]
+
+
+def movie_folders(path):
+    """(movie folder, disc folder or '') for a library movie's file."""
+    if path.startswith("stack://"):
+        path = path[8:].split(" , ")[0]
+    d = _pdir(path)
+    if _pname(d).upper() == "STREAM" and _pname(_pdir(d)).upper() == "BDMV":
+        d = _pdir(d)
+    if _pname(d).upper() in _DISC_DIRS:
+        return _pdir(d), d
+    return d, ""
+
+
+def _mtime(p):
+    for q in (p, p.rstrip("/\\")):
+        try:
+            t = int(xbmcvfs.Stat(q).st_mtime())
+            if t:
+                return t
+        except Exception:
+            pass
+    return 0
+
+
+def _find_extras(folder):
+    try:
+        dirs, _files = xbmcvfs.listdir(folder)
+    except Exception:
+        return ""
+    for d in dirs:
+        if d.lower() == "extras":
+            return folder + d + _psep(folder)
+    return ""
+
+
+def _list_extras(top):
+    """(files relative to top with '/', {relative folder: mtime})."""
+    files, dates = [], {}
+
+    def walk(path, rel, depth):
+        dates[rel] = _mtime(path)
+        try:
+            dirs, names = xbmcvfs.listdir(path)
+        except Exception:
+            return
+        files.extend(rel + n for n in sorted(names, key=natural_key) if n.lower().endswith(VIDEO_EXT))
+        if depth >= 4:
+            return
+        for d in sorted(dirs, key=natural_key):
+            if d.startswith(".") or d.upper() in _DISC_DIRS:      # no disc structures inside Extras
+                continue
+            walk(path + d + _psep(path), rel + d + "/", depth + 1)
+
+    walk(top, "", 0)
+    return files, dates
+
+
+def _extras_movies():
+    """{movie folder: [movie, ...]} for every library movie on a file system,
+    leaving out anything that sits inside an Extras folder itself."""
+    out = {}
+    for m in all_movies(["file", "title", "year"]):
+        f = m.get("file") or ""
+        if not f or f.lower().startswith(_NO_FS) or "extras" in [x.lower() for x in re.split(r"[\/]", f)[:-1]]:
+            continue
+        folder, disc = movie_folders(f)
+        if folder:
+            m["disc"] = disc
+            out.setdefault(folder, []).append(m)
+    return out
+
+
+def _extras_fresh(entry, folder, now):
+    if not entry:
+        return False
+    if now - entry.get("checked", 0) < EXTRAS_RECHECK:
+        return True
+    base = dict(entry.get("base") or {})
+    cur = {p: _mtime(p) for p in base}
+    if base and all(cur.values()) and cur == base:
+        top = entry.get("extras")
+        dates = entry.get("dates") or {}
+        now_dates = {r: _mtime(top + r.replace("/", _psep(top))) for r in dates} if top else {}
+        if all(now_dates.values()) and now_dates == dates:
+            entry["checked"] = now
+            return True
+    elif not all(cur.values()) and now - entry.get("listed", 0) < EXTRAS_RELIST:
+        entry["checked"] = now
+        return True
+    return False
+
+
+def extras_refresh(abort=lambda: False):
+    """Background only: find and list movie Extras folders that changed, then
+    measure the files not measured yet.  Saves as it goes, so an aborted run
+    carries on next time.  Returns True when it finished."""
+    t0 = time.time()
+    cache = load_json(EXTRAS_FILE, {})
+    folders = cache.get("folders") or {}
+    movies = _extras_movies()
+    listed = 0
+    for folder, ms in movies.items():
+        if abort():
+            break
+        now = time.time()
+        entry = folders.get(folder)
+        if _extras_fresh(entry, folder, now):
+            continue
+        disc = ms[0].get("disc", "")
+        base = {folder: _mtime(folder)}
+        top = _find_extras(folder)
+        if not top and disc:
+            base[disc] = _mtime(disc)
+            top = _find_extras(disc)
+        files, dates = _list_extras(top) if top else ([], {})
+        folders[folder] = {"extras": top, "files": files, "dates": dates, "base": base,
+                           "listed": now, "checked": now}
+        listed += 1
+    for gone in [f for f in folders if f not in movies]:
+        del folders[gone]
+    cache["folders"] = folders
+    save_json(EXTRAS_FILE, cache)
+    t1 = time.time()
+    durs = durations()
+    probed, todo = 0, 0
+    for folder, entry in folders.items():
+        top = entry.get("extras")
+        if not top or len(movies.get(folder) or []) != 1:
+            continue
+        for rel in entry.get("files") or []:
+            p = top + rel.replace("/", _psep(top))
+            if durs.data.get(p):
+                continue
+            todo += 1
+            if abort():
+                continue
+            durs.get(p)
+            probed += 1
+            if probed % 50 == 0:
+                durs.save()
+    durs.save()
+    done = probed == todo
+    log("extras: %d movie folders, %d listed in %.1f s, %d of %d new files measured in %.1f s%s" % (
+        len(movies), listed, t1 - t0, probed, todo, time.time() - t1, "" if done else " (stopped early)"),
+        level=xbmc.LOGINFO)
+    return done and not abort()
+
+
+def extras_films():
+    """What the cache knows, for Check extras: [{title, year, folder, extras,
+    shared, files: [(relative path, full path, seconds or 0)]}], films with
+    an Extras folder only.  Never lists or probes."""
+    folders = (load_json(EXTRAS_FILE, {}).get("folders") or {})
+    if not folders:
+        return []
+    movies = _extras_movies()
+    durs = durations()
+    out = []
+    for folder, entry in folders.items():
+        top = entry.get("extras")
+        ms = movies.get(folder) or []
+        if not top or not ms:
+            continue
+        m = ms[0]
+        out.append({"title": m.get("title", ""), "year": m.get("year") or "", "folder": folder,
+                    "extras": top, "shared": len(ms) > 1,
+                    "files": [(r, top + r.replace("/", _psep(top)),
+                               durs.get(top + r.replace("/", _psep(top)), probe_if_missing=False))
+                              for r in entry.get("files") or []]})
+    out.sort(key=lambda f: natural_key(f["title"]))
+    return out

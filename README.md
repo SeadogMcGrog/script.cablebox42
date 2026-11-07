@@ -308,6 +308,7 @@ Each button closes Settings and opens the tool.
 | **Shows without a good channel** | Same as in the Channel manager: see below |
 | **Move shows between channels** | Pick a show or movie, then tick the channels it should air on. It airs exactly there |
 | **Check my videos** | Lists commercials, bumps and videos that can't be used, and why |
+| **Check extras** | Every movie's `Extras` folder (next to the movie's file, or in `VIDEO_TS` / `BDMV`): each video's cleaned-up title, length and *Air* or *Skipped* with the reason, plus totals at the top. Making-of pieces, documentaries, featurettes, interviews and other readably named videos air; deleted/extended/alternate scenes, bloopers, trailers and promos, galleries, music videos, short films, commentaries, anything under a minute and names like `title_t03` are skipped. Everything in an `Extras` subfolder named *Behind the Scenes*, *Making Of*, *Interviews*, *Featurettes* or *Documentaries* airs. CableBox lists and measures these folders in the background while the TV is off and never changes them |
 | **Clean up my 'In progress' list** | Clears resume points left by channel surfing. You keep the ones you tick |
 | **Rebuild schedules** | Plan every channel again from now (episode progress is kept) |
 | **Start over (factory reset)** | Back to a fresh install: deletes channels, planner pins and schedules (optionally all settings too), then shows the welcome screen. Your videos, bumps, commercials and station folders are never touched. Handy for setting up the new stations cleanly |
@@ -795,6 +796,7 @@ tap to tune. Yatse custom commands can call the `RunScript` actions above.
 | Short programmes (under 12 min) | Pack several into one time slot | Back-to-back like a cartoon block (next episodes of the same series, or several short films), a break after each. Or *only where I pinned them* (skipped by the automatic schedule while anything longer is available), or *one per time slot* |
 | AV1 videos | Automatic | Automatic / Always skip / Always play (see below) |
 | Schedule ahead (hours) | 12 | 6, 12 or 24 |
+| Also air extras with unrecognised names | Off | Movie extras named like `title_t03.mkv` or "Bonus 2" count too (see *Check extras*) |
 
 **Viewing**
 

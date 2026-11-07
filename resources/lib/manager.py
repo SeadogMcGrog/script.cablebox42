@@ -1367,6 +1367,86 @@ def quick_setup():
         refresh_assignments()
 
 
+def _extras_reasons():
+    # extras.REASONS keys -> translated labels (literal strings for strings.po)
+    return {"deleted": _("deleted, extended or alternate"), "bloopers": _("bloopers"),
+            "trailer": _("trailer or promo"), "gallery": _("gallery or storyboards"),
+            "reel": _("demo reel"), "newsreel": _("newsreel"), "music": _("music"),
+            "short": _("short film"), "commentary": _("commentary"), "other": _("disc extra"),
+            "short_length": _("under 60 s"), "unrecognised": _("name not recognised")}
+
+
+def check_extras():
+    """Settings > Tools > Check extras: every movie Extras file as the Behind the
+    Scenes channel will treat it.  Reads the cache only (the service lists and
+    measures the folders in the background)."""
+    from . import extras
+    films = library.extras_films()
+    if not films:
+        D.ok(_("Check extras"), _("CableBox hasn't looked at your movies' Extras folders yet.  It does that in "
+                                  "the background while the TV is off - try again in a few minutes.[CR][CR]"
+                                  "Kodi looks for extras in a folder named Extras next to the movie's file "
+                                  "(or inside VIDEO_TS or BDMV)."))
+        return
+    loose = K.setting_bool("extras_unrecognised", False)
+    labels = _extras_reasons()
+
+    def mmss(s):
+        return "%2d:%02d" % (s // 60, s % 60) if s else "--:--"
+
+    body, reasons = [], {}
+    n_films = n_files = air_files = air_secs = air_films = unmeasured = shared = 0
+    for f in films:
+        rows = [(rel, extras.classify(rel, f["title"], f["year"], dur, loose), dur) for rel, _p, dur in f["files"]]
+        if not rows:
+            continue
+        name = "%s (%s)" % (f["title"], f["year"]) if f["year"] else f["title"]
+        if f["shared"]:
+            shared += 1
+            body.append(_("[B]%s[/B]  [COLOR orange]this Extras folder is shared by several movies, so it "
+                          "isn't used - give each movie its own folder[/COLOR]") % name)
+            body.append("")
+            continue
+        n_films += 1
+        n_files += len(rows)
+        unmeasured += sum(1 for _r, _i, d in rows if not d)
+        durs = dict((r, d) for r, _i, d in rows)
+        air = extras.segment_order([(r, i) for r, i, _d in rows if i["air"]])
+        secs = int(sum(durs[r] for r, _i in air))
+        if air:
+            air_films += 1
+        air_files += len(air)
+        air_secs += secs
+        body.append(_("[B]%s[/B]  [COLOR grey]%d to air, %d min[/COLOR]") % (name, len(air), secs // 60))
+        for r, i in air:
+            body.append(_("  Air  %s  %s  [COLOR grey]%s[/COLOR]") % (mmss(durs[r]), i["title"], r))
+        for r, i, d in rows:
+            if not i["air"]:
+                reasons[i["reason"]] = reasons.get(i["reason"], 0) + 1
+                body.append(_("  [COLOR grey]Skipped: %s  %s  %s[/COLOR]") % (labels.get(i["reason"], ""), mmss(d), r))
+        body.append("")
+    skipped = n_files - air_files
+    enough = air_secs >= 2 * 3600 and air_films >= 5
+    head = [_("[B]Summary[/B]"),
+            _("  %d films with extras, %d videos") % (n_films, n_files),
+            _("  Air: %d videos, %d h %02d min, from %d films") % (air_files, air_secs // 3600,
+                                                                  air_secs % 3600 // 60, air_films),
+            _("  Skipped: %d videos") % skipped]
+    for k, n in sorted(reasons.items(), key=lambda kv: -kv[1]):
+        head.append("      %s: %d" % (labels.get(k, k), n))
+    head.append(_("  Enough for a Behind the Scenes channel (2 hours from 5 films): %s") %
+                (_("yes") if enough else _("not yet")))
+    if unmeasured:
+        head.append(_("  %d videos not measured yet - CableBox measures them in the background while the TV is off.")
+                    % unmeasured)
+    if shared:
+        head.append(_("  %d Extras folders are shared by several movies and aren't used.") % shared)
+    head += ["", _("To change what airs, rename files or put them in a subfolder of Extras named Behind the Scenes, "
+                   "Making Of, Interviews, Featurettes or Documentaries (those always air).  CableBox never "
+                   "changes your files."), ""]
+    D.textviewer(_("Check extras"), "[CR]".join(head + body))
+
+
 def check_fillers():
     paths = []
     for label, key in ((_("Commercials"), "commercials_path"), (_("Bumps"), "bumps_path")):
@@ -1599,6 +1679,7 @@ TOOLS = {
     "quick": lambda: quick_setup(),
     "shows": lambda: shows_and_channels(),
     "fillers": lambda: check_fillers(),
+    "extras": lambda: check_extras(),
     "progress": lambda: clean_in_progress(),
     "rebuild": lambda: rebuild_all(),
     "folders": lambda: make_station_folders(),

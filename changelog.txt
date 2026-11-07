@@ -1,3 +1,10 @@
+Unreleased (feature/extras-channel)
+- Settings > Tools > Check extras: every movie's Extras folder (next to the
+  movie, or in VIDEO_TS / BDMV) with each video's title, length and whether it
+  will air on the coming Behind the Scenes channel, and why not. The folders
+  are listed and measured in the background while the TV is off, read-only.
+- Settings > Programming > Also air extras with unrecognised names (off)
+
 v1.1.1 (2026-11-05)
 - Fixed: after several channel changes the sound could sputter, freeze or stop
   until Kodi was restarted (seen on CoreELEC; HDMI audio could not reopen).
