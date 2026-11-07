@@ -154,14 +154,17 @@ settings are kept.
 4. Type your city for the weather channel, or skip it if Kodi's own weather
    service is already set up.
 5. Untick any suggested channels you don't want.
-6. Say **Yes** to the two recommended extras:
-   - **Overnight sign-off:** channels go off the air from 12 AM to 5 AM with a
+6. **Extras**: both are ticked; untick one if you don't want it.
+   - **Sign off overnight:** channels go off the air from 12 AM to 5 AM with a
      *Please Stand By* card. The guide and weather channels stay on.
-   - **Prime time:** from 8 to 11 PM, each channel airs its best shows in fixed
-     weekly slots, and movie channels show a movie at 8.
-7. Read **What I set up**: every channel, where its shows come from, and its
-   station folders (*Channel manager → Lineup summary* shows it again later).
-8. Choose **Start watching**.
+   - **Prime-time lineup:** from 8 to 11 PM, each channel airs its best shows in
+     fixed weekly slots, and movie channels show a movie at 8.
+7. Check the last screen (which channels, the extras, the folders you chose)
+   and press **OK**. Nothing is saved before this OK: **Back** or **Cancel** on
+   any screen leaves everything as it was.
+8. Choose **Start watching**, or **What I set up** first: every channel, where
+   its shows come from, and its station folders (*Channel manager → Lineup
+   summary* shows it again later).
 
 That's it. To fine-tune, use the **Channel manager** (start with **Shows
 without a good channel**), the **Weekly planner** and *Settings → Tools →*
