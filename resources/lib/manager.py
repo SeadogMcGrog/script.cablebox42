@@ -4,6 +4,7 @@ Everything is done with Kodi's own dialogs, so it works with the remote on
 any skin.  Channel changes take effect immediately - the schedule for an
 edited channel simply rebuilds itself from 'now'.
 """
+import json
 import os
 import time
 
@@ -161,9 +162,13 @@ def search_pick(heading, items, multi=False, preselected=None, details=None, que
         title = "%s%s" % (heading, (_("  (%d selected)") % len(chosen)) if multi else "")
         i = D.select(title, rows, useDetails=True, preselect=min(pos, len(rows) - 1))
         if i < 0:
-            if multi and chosen != list(preselected or []) and \
-                    D.yesno(TITLE, _("Keep your %d selections?") % len(chosen)):
-                return chosen
+            if multi and chosen != list(preselected or []):
+                r = ask(_("Keep your %d selections?") % len(chosen), _("Keep"), _("Discard"),
+                        cancel=_("Back to the list"))
+                if r is None:
+                    continue
+                if r == "yes":
+                    return chosen
             return None
         pos = i
         if i < head:
@@ -235,15 +240,25 @@ def pick_source():
         src = {"type": "movies"}
         if g != _("Any genre"):
             src["genre"] = g
-        if D.yesno(TITLE, _("Limit to a range of years?")):
+        # Back on any of these questions cancels the whole source
+        r = ask(_("Limit to a range of years?"), _("Pick years"), _("Any year"), cancel=_("Cancel"))
+        if r is None:
+            return None
+        if r == "yes":
             y0 = D.numeric(0, _("From year"), "1980")
-            y1 = D.numeric(0, _("To year"), "1989")
-            if y0 and y1:
-                src["years"] = [int(y0), int(y1)]
+            y1 = D.numeric(0, _("To year"), "1989") if y0 else None
+            if not (y0 and y1):
+                return None
+            src["years"] = [int(y0), int(y1)]
         sets = sorted(set(m.get("set") for m in movies if m.get("set")))
-        if sets and D.yesno(TITLE, _("Limit to one movie set/collection?")):
-            st = search_pick(_("Movie set"), sets)
-            if st:
+        if sets:
+            r = ask(_("Limit to one movie set/collection?"), _("Pick a set"), _("Any movies"), cancel=_("Cancel"))
+            if r is None:
+                return None
+            if r == "yes":
+                st = search_pick(_("Movie set"), sets)
+                if not st:
+                    return None
                 src["set"] = st
         return src
     if i == 4:
@@ -641,7 +656,7 @@ def prebuild(chans=None):
 
 
 def rebuild_all():
-    if not D.yesno(TITLE, _("Rebuild every channel's schedule from now?[CR]Episode progress is kept.")):
+    if not confirm(_("Rebuild every channel's schedule from now?[CR]Episode progress is kept."), _("Rebuild")):
         return
     library.clear_cache()
     for c in C.load():
@@ -736,7 +751,48 @@ def rearrange():
             C.save(chans)
 
 
+def _new_number(chans):
+    """Step of Add a channel: its number.  If that number is taken, move the other
+    channel, slide the channels from there up by one, or pick another number.
+    Changes `chans` in memory only; returns the number, or None for Cancel/Back."""
+    v = str(C.next_free_number(chans))
+    while True:
+        v = D.numeric(0, _("Channel number"), v)
+        if not v or int(v) <= 0:
+            return None
+        num = int(v)
+        other = next((c for c in chans if c["number"] == num), None)
+        if other is None:
+            return num
+        free = C.next_free_number(chans, num + 1)
+        j = D.select(_("Channel %d is %s") % (num, other["name"]), [
+            _("Move %s to %d") % (other["name"], free),
+            _("Slide channels %d and up over by one") % num,
+            _("Pick another number"),
+            _("Cancel")])
+        if j == 0:
+            other["number"] = free
+            return num
+        if j == 1:
+            n = num
+            run = []
+            while True:                     # only up to the first free number
+                c = next((x for x in chans if x["number"] == n), None)
+                if c is None:
+                    break
+                run.append(c)
+                n += 1
+            for c in run:
+                c["number"] += 1
+            return num
+        if j != 2:
+            return None
+
+
 def add_channel(chans):
+    """Step by step: type, name, number, programming.  Back on any step adds nothing."""
+    import copy
+    chans = copy.deepcopy(chans)            # a number swap only counts if the channel is added
     types = ALL_TYPES
     t = D.select(_("Channel type"), [TYPE_LABELS[x] for x in types])
     if t < 0:
@@ -744,12 +800,8 @@ def add_channel(chans):
     name = D.input(_("Channel name"), {"guide": _("TV Guide"), "weather": _("Weather Channel")}.get(types[t], ""))
     if not name:
         return
-    num = D.numeric(0, _("Channel number"), str(C.next_free_number(chans)))
-    if not num:
-        return
-    num = int(num)
-    if any(c["number"] == num for c in chans):
-        D.ok(TITLE, _("Channel %d is already taken.") % num)
+    num = _new_number(chans)
+    if num is None:
         return
     ch = C.new_channel(num, name, types[t], callsign=C.callsign(name))
     if types[t] in PROGRAM_TYPES:
@@ -757,10 +809,17 @@ def add_channel(chans):
             src = pick_source()
             if src:
                 ch["sources"].append(src)
-            if not D.yesno(TITLE, _("Add more programming to %s?") % name):
+            elif not ch["sources"]:
+                return                      # Back before any programming: nothing added
+            r = ask(_("%s has %d source(s) of programming.[CR]Add more?") % (name, len(ch["sources"])),
+                    _("Add more"), _("Done"), cancel=_("Cancel"))
+            if r is None:
+                return
+            if r == "no":
                 break
     chans.append(ch)
     C.save(chans)
+    D.notification(TITLE, _("Channel %d %s added") % (num, name), time=2500)
     edit_channel(ch["id"])
 
 
@@ -778,6 +837,7 @@ def edit_channel(cid):
         chans, ch = _find(cid)
         if not ch:
             return
+        before = json.dumps(chans, sort_keys=True)
         onoff = lambda b: _("On") if b else _("Off")
         items = [
             ("name", _("Name: %s") % ch["name"]),
@@ -814,7 +874,6 @@ def edit_channel(cid):
             if changed:
                 D.notification(TITLE, _("%s saved") % ch["name"], time=2000)
             return
-        changed = True
         key = items[i][0]
         if key == "name":
             v = D.input(_("Name"), ch["name"])
@@ -829,10 +888,11 @@ def edit_channel(cid):
                 move_channel(chans, ch, int(v))
         elif key == "callsign":
             v = D.input(_("Call letters"), ch.get("callsign", ""))
-            from . import stations
-            old_folder = stations.channel_folder(ch)
-            ch["callsign"] = v.upper()[:6]
-            _folder_follows(ch, old_folder)
+            if v and v.upper()[:6] != ch.get("callsign"):     # Back leaves them as they are
+                from . import stations
+                old_folder = stations.channel_folder(ch)
+                ch["callsign"] = v.upper()[:6]
+                _folder_follows(ch, old_folder)
         elif key == "logo":
             pick_logo(ch)
         elif key == "station":
@@ -846,11 +906,7 @@ def edit_channel(cid):
         elif key == "blocks":
             edit_brand_blocks(ch)
         elif key == "type":
-            types = ALL_TYPES
-            j = D.select(_("Type"), [TYPE_LABELS[x] for x in types])
-            if j >= 0:
-                ch["type"] = types[j]
-                ch.update(C.DEFAULTS[types[j]])
+            change_type(ch)
         elif key == "sources":
             edit_sources(ch["sources"], ch["name"])
         elif key == "dayparts":
@@ -898,7 +954,9 @@ def edit_channel(cid):
             preview(ch)
             continue
         elif key == "delete":
-            if D.yesno(TITLE, _("Delete %d %s?") % (ch["number"], ch["name"])):
+            if confirm_remove(_("Delete %d %s?[CR][CR]Its schedule and pinned shows go with it. Your videos "
+                                "and its station folder are not touched.") % (ch["number"], ch["name"]),
+                              _("Delete")):
                 chans = [c for c in chans if c["id"] != cid]
                 C.save(chans)
                 try:
@@ -907,7 +965,39 @@ def edit_channel(cid):
                     pass
                 return
             continue
-        C.save(chans)
+        if json.dumps(chans, sort_keys=True) != before:
+            changed = True
+            C.save(chans)
+
+
+def change_type(ch):
+    """Change a channel's type; ask before its settings go back to that type's defaults."""
+    types = ALL_TYPES
+    j = D.select(_("Type"), [TYPE_LABELS[x] for x in types], preselect=types.index(ch["type"])
+                 if ch["type"] in types else -1)
+    if j < 0 or types[j] == ch["type"]:
+        return
+    new = types[j]
+    defaults = C.DEFAULTS[new]
+    onoff = lambda b: _("On") if b else _("Off")
+    show = {"commercials": lambda v: _("Commercials: %s") % onoff(v),
+            "midroll": lambda v: _("Break into shows for commercials: %s") % onoff(v),
+            "bumps": lambda v: _("Bumps: %s") % onoff(v),
+            "lineup": lambda v: _("Lineup style: %s") % (_("Same show same time every day") if v == "strip"
+                                                         else _("Shuffle")),
+            "slot": lambda v: _("Programs start on: %s") % {0: _("no clock (back to back)"), 15: ":00 :15 :30 :45",
+                                                          30: _(":00 and :30"), 60: _("the hour")}.get(v, str(v))}
+    current = dict(ch, midroll=ch.get("midroll", ch["type"] != "movies"))
+    differ = [show[k](v) for k, v in defaults.items() if k in show and current.get(k) != v]
+    if differ:
+        r = ask(_("Its usual settings: %s[CR]Use these, or keep this channel's own?") % "  ·  ".join(differ),
+                _("Use defaults"), _("Keep my settings"), cancel=_("Cancel"),
+                heading=_("Change to %s?") % TYPE_LABELS[new])
+        if r is None:
+            return
+        if r == "yes":
+            ch.update(defaults)
+    ch["type"] = new
 
 
 def _station_label(ch):
@@ -933,7 +1023,8 @@ def pick_station(ch):
         stations.drop(ch)
     elif j > 0:
         st = stations.STATIONS[j - 1]
-        if D.yesno(TITLE, _("Rename this channel to %s and use its logo and call letters?") % st["name"]):
+        if confirm(_("Rename this channel to %s and use its logo and call letters?") % st["name"],
+                   _("Use this station")):
             stations.apply(ch, st)
 
 
@@ -951,9 +1042,10 @@ def edit_brand_blocks(ch):
             if not name:
                 continue
             a = ask_time(_("Starts at"), "06:00")
-            b = ask_time(_("Ends at"), "12:00")
+            b = ask_time(_("Ends at"), "12:00") if a else None
             if a and b:
                 blocks.append({"name": name, "call": "", "start": a, "end": b})
+                D.notification(TITLE, _("%s added (%s - %s)") % (name, a, b), time=2500)
             continue
         bl = blocks[i - 1]
         j = D.select(bl.get("name", ""), [_("Rename"), _("Change times"), _("Choose logo..."), _("Remove")])
@@ -970,7 +1062,7 @@ def edit_brand_blocks(ch):
             p = D.browse(2, _("Logo for %s") % bl.get("name", ""), "pictures", ".png|.jpg|.jpeg|.gif|.webp")
             if p:
                 bl["logo_path"] = p
-        elif j == 3:
+        elif j == 3 and confirm_remove(_("Remove the time block %s?") % bl.get("name", "")):
             blocks.pop(i - 1)
 
 
@@ -1092,7 +1184,7 @@ def branding(ch, chans):
                     D.ok(TITLE, _("Couldn't rename the folder (a folder with that name may already exist)."))
         elif key.startswith("on:"):
             kind = key[3:]
-            if D.yesno(TITLE, _("Switch %s on for %s?") % (kind, ch["name"])):
+            if confirm(_("Switch %s on for %s?") % (kind, ch["name"]), _("Switch on")):
                 ch[kind] = True
                 C.save(chans)
 
@@ -1177,7 +1269,7 @@ def edit_sources(sources, name):
             s = pick_source()
             if s:
                 sources.append(s)
-        elif D.yesno(TITLE, _("Remove this?[CR]%s") % rows[i]):
+        elif confirm_remove(_("Remove this?[CR]%s") % rows[i]):
             del sources[i - 1]
 
 
@@ -1196,17 +1288,24 @@ def edit_dayparts(ch):
         if i < 0:
             return
         if i == 0:
+            # step by step: Back on any step adds nothing
             label = D.input(_("Name (e.g. Prime Time, Saturday Cartoons)"), _("Prime Time"))
+            if not label:
+                continue
             a = ask_time(_("Starts at"), "20:00")
-            b = ask_time(_("Ends at"), "23:00")
+            b = ask_time(_("Ends at"), "23:00") if a else None
             if not (a and b):
                 continue
             j = D.select(_("On"), [x[1] for x in DAY_OPTS])
-            dp = {"label": label or _("Block"), "start": a, "end": b,
-                  "days": DAY_OPTS[max(j, 0)][0], "sources": []}
+            if j < 0:
+                continue
+            dp = {"label": label, "start": a, "end": b, "days": DAY_OPTS[j][0], "sources": []}
             edit_sources(dp["sources"], dp["label"])
             if dp["sources"]:
                 ch["dayparts"].append(dp)
+                D.notification(TITLE, _("%s added (%s - %s)") % (label, a, b), time=2500)
+            else:
+                D.notification(TITLE, _("%s not added - it had no programming") % label, time=3000)
         else:
             dp = ch["dayparts"][i - 1]
             j = D.select(dp.get("label", _("Block")), [_("Edit programming"), _("Change times"), _("Remove")])
@@ -1217,7 +1316,7 @@ def edit_dayparts(ch):
                 b = ask_time(_("Ends at"), dp["end"])
                 if a and b:
                     dp["start"], dp["end"] = a, b
-            elif j == 2:
+            elif j == 2 and confirm_remove(_("Remove the time block %s?") % dp.get("label", _("Block"))):
                 del ch["dayparts"][i - 1]
 
 
@@ -1256,13 +1355,14 @@ def edit_offair(ch):
             return
         if i == 0:
             a = ask_time(_("Sign off at"), "00:00")
-            b = ask_time(_("Sign on at"), "07:00")
+            b = ask_time(_("Sign on at"), "07:00") if a else None
             if not (a and b):
                 continue
             days = pick_days(_("Which nights?"))
             if days is None:
                 continue
             ch["offair"].append({"start": a, "end": b, "days": days})
+            D.notification(TITLE, _("Off the air %s - %s, %s") % (a, b, _days_label(days)), time=2500)
         elif i < n:
             w = ch["offair"][i - 1]
             j = D.select(rows[i], [_("Change times"), _("Change days"), _("Remove")])
@@ -1275,7 +1375,7 @@ def edit_offair(ch):
                 days = pick_days(_("Which nights?"), w.get("days", "all"))
                 if days is not None:
                     w["days"] = days
-            elif j == 2:
+            elif j == 2 and confirm_remove(_("Remove the off-air hours %s?") % rows[i]):
                 del ch["offair"][i - 1]
         elif i == n:
             j = D.select(_("Off-air screen"), [x[1] for x in styles])
@@ -1477,7 +1577,8 @@ def clean_in_progress():
         return
     keep = set(keep)
     clear = [i for i in items if i[0] not in keep]
-    if not clear or not D.yesno(TITLE, _("Clear the resume point of %d items?[CR](%d kept)") % (len(clear), len(keep))):
+    if not clear or not confirm(_("Clear the resume point of %d items?[CR](%d kept)") % (len(clear), len(keep)),
+                                _("Clear them")):
         return
     for _label, kind, item, _r in clear:
         progress.clear_resume(kind, item)
@@ -1814,8 +1915,8 @@ def factory_reset():
         return False
     j = D.select(_("Also reset all CableBox settings?"),
                  [_("Keep my settings (commercials, bumps, music folders, weather...)"),
-                  _("Reset settings to the defaults too")])
-    if j < 0:
+                  _("Reset settings to the defaults too"), _("Cancel")])
+    if j not in (0, 1):
         return False
     if not D.yesno(TITLE, _("Last chance: this can't be undone.[CR][CR]Start over now?"),
                    nolabel=_("Cancel"), yeslabel=_("Start over")):

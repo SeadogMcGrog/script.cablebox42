@@ -401,7 +401,8 @@ A channel can draw from any mix of these:
 
 Every long list, such as tags, studios, shows and movies, has a **Search…** row
 at the top. Type a few letters to narrow it down. Lists where you can pick
-several items keep your ticks across searches; press **Done** when finished.
+several items keep your ticks across searches; press **Done** when finished
+(Back asks whether to keep or discard your ticks).
 
 ### Channel options
 

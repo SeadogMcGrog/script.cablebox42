@@ -245,9 +245,12 @@ Main menu → **Channel manager**.
    - *Movie channel* — films, commercials between them
    - *Loop* — back to back, no clock (good for music videos or shorts)
    - *Guide channel* / *Weather channel*
-3. **Name** and **number**.
-4. **Add programming** — pick a source, then *Add more programming?* as many
-   times as you like:
+3. **Name** and **number**. If the number is taken you can move that channel
+   to the next free number, slide the channels from there up by one, or pick
+   another number.
+4. **Add programming** — pick a source, then **Add more** as many times as you
+   like, and **Done** when finished. **Back** (or **Cancel**) on any step adds
+   nothing.
 
 | Source | Example |
 |---|---|
@@ -273,7 +276,7 @@ Main menu → **Channel manager**.
 | Branding by time of day | Another name and logo for part of the day ([section 8](#8-time-of-day-branding-cam-jr-in-the-morning)) |
 | Station logo | Choose an image, use the logo folder, or no logo |
 | **Branding & clips** | What the channel *really* uses for its logo, bumps, IDs and commercials ([section 7](#7-give-each-channel-its-own-logo-bumps-ids-and-commercials)) |
-| Programming | Add or remove sources |
+| Programming | Add or remove sources (removing asks first) |
 | Weekly planner | Pin shows to times ([section 10](#10-pin-shows-to-fixed-times-with-the-weekly-planner)) |
 | Time blocks | Saturday mornings, movie nights ([section 11](#11-time-blocks-saturday-morning-cartoons-movie-nights)) |
 | Off-air hours | When this channel signs off |
@@ -284,7 +287,8 @@ Main menu → **Channel manager**.
 | Programs start on | :00 and :30, the hour, every 15 minutes, or no clock |
 | Channel commercials / bumps folder, Station ID clips | Folders for this channel only (station folders are usually easier) |
 | Preview today's schedule | The next 12 hours |
-| Delete channel | Asks first |
+| Type | Asks whether to use the new type's usual settings (commercials, breaks, bumps, lineup style, start times) or keep the channel's own |
+| Delete channel | Asks first: *Cancel* / *Delete* |
 
 Changes take effect immediately: the edited channel's schedule rebuilds from
 now on, and episode progress is kept.
@@ -544,7 +548,7 @@ light blue, off-air hours grey; everything else is filled automatically.
 | Page Up / Down, CH+ / CH− | Jump 7 hours |
 | **OK** on a pin | Change show, time, length, days or order; rename; start the series over; remove |
 | **Menu** | Copy a day to other days, clear a day, off-air screen and clips, preview |
-| Back | Done (saved as you go) |
+| Back | Done (saved as you go). Back in the middle of pinning a show pins nothing |
 
 Pinned slots always start on time — the automatic programming works around
 them. A pinned show can still turn up at other times; to keep it to its slot,
