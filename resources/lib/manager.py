@@ -1940,6 +1940,10 @@ OK / Info ........................................... channel banner
 Menu / Context ............ captions, sleep timer & more
 Back / Stop ...................................... turn off the TV
 
+Back takes you to where you switched the TV on: this menu if you chose Watch TV
+here, otherwise Kodi.  Menu > CableBox menu turns the TV off and opens this menu
+from anywhere; Watch TV turns it back on, on the same channel.
+
 [B]Closed captions[/B]
 Main menu > Closed captions, or the Menu button while watching, switches captions
 on or off for every programme (like a TV's CC setting).  'Caption options' in that
@@ -2299,6 +2303,8 @@ def run_tool(name):
         fn()
     finally:
         home.clearProperty(TOOL_BUSY)
+    if tv_wants_menu() and not home.getProperty(MENU_OPEN):
+        main_menu()        # Build my lineup > Start watching > Menu > CableBox menu
 
 
 def open_settings():
@@ -2346,10 +2352,37 @@ def captions_on():
     return K.load_json(K.STATE_FILE, {}).get("cc_on") is True
 
 
+MENU_OPEN = "cablebox42.main_menu"     # home-window property while the main menu is open
+
+
+def tv_wants_menu():
+    """The last TV session ended with Menu > CableBox menu."""
+    from . import tv
+    return tv.last_exit == "menu"
+
+
+def watch_from_menu(channel=None):
+    """Watch TV / What's on now from the main menu.  True: come back to the main
+    menu (Back, Stop, Turn off TV or CableBox menu); False: go to Kodi (sleep
+    timer, the viewer left the TV, Kodi closing)."""
+    from . import tv
+    return tv.run(channel) in ("back", "menu")
+
+
 def main_menu():
-    if not os.path.exists(K.CHANNELS_FILE) and welcome():
+    home = xbmcgui.Window(10000)
+    home.setProperty(MENU_OPEN, "1")
+    try:
+        _main_menu()
+    finally:
+        home.clearProperty(MENU_OPEN)
+
+
+def _main_menu():
+    if not os.path.exists(K.CHANNELS_FILE) and welcome() and not tv_wants_menu():
         return
-    while True:
+    mon = xbmc.Monitor()
+    while not mon.abortRequested():
         chans = C.load()
         if chans:
             start = K.setting_int("start_channel", 0)
@@ -2372,18 +2405,15 @@ def main_menu():
             return
         k = opts[i][0]
         if k == "watch":
-            from . import tv
-            tv.run()
-            return
-        if k == "now":
+            if not watch_from_menu():
+                return
+        elif k == "now":
             n = whats_on_now()
-            if n is not None:
-                from . import tv
-                tv.run(n)
+            if n is not None and not watch_from_menu(n):
                 return
         elif k == "wizard":
-            if wizard():
-                return  # watched TV straight after the wizard - don't reopen the menu
+            if wizard() and not tv_wants_menu():
+                return  # watched TV straight after the wizard - Back goes to Kodi
         elif k == "cc":
             on = not captions_on()
             st = K.load_json(K.STATE_FILE, {})

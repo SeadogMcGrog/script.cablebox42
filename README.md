@@ -185,9 +185,9 @@ each of these.
 | **Left** | Last channel (jump back and forth) |
 | **Right** | "What's on now": every channel and its current show |
 | **OK / Info** | Show or hide the channel banner (now, next, progress) |
-| **Menu / Context** | **Closed captions** and caption options, what's on now, last channel, **sleep timer**, *Don't air this show here*, turn off |
+| **Menu / Context** | **Closed captions** and caption options, what's on now, last channel, **sleep timer**, *Don't air this show here*, **CableBox menu** (channels and settings), turn off |
 | **Subtitle / CC button** | Captions on or off (once *Settings → Tools → Remote CC button* is set up) |
-| **Back / Stop** | Turn off the TV |
+| **Back / Stop** | Turn off the TV and go back to where you started it: the CableBox menu if you chose *Watch TV* there, otherwise Kodi |
 | **Volume / Mute** | Work as normal |
 | Pause, seek, skip | Ignored. It's live TV |
 
@@ -195,7 +195,12 @@ each of these.
 channel number and call letters, the current show (with season, episode and
 episode title), its time slot and progress, and what's on next.
 
-**Leaving the TV.** Press Back to turn it off. If you press **Home** instead,
+**Leaving the TV.** Press Back to turn it off. If you switched it on from
+CableBox's main menu, you're back in that menu (Back again goes to Kodi); from
+a Kodi shortcut, a widget, or with *Skip the menu* on, you're back in Kodi.
+To reach channels and settings from the TV, press Menu → **CableBox menu**:
+the TV turns off and the main menu opens; *Watch TV* there turns it back on,
+on the same channel, with your changes. If you press **Home** instead,
 CableBox notices within a couple of seconds and switches itself off. It never
 stops, replaces or interferes with videos you play yourself from the library.
 
@@ -211,6 +216,7 @@ cleared.
 
 **Sleep timer.** Menu → *Sleep timer* (15 minutes to 2 hours). There's an
 optional setting to put the TV into standby through HDMI-CEC when it runs out.
+When the sleep timer turns the TV off you're left in Kodi, never in a menu.
 
 ---
 

@@ -232,15 +232,22 @@ Main menu → **Watch TV** (picks up on the channel you last watched).
 | **Left** | Last channel — flip back and forth |
 | **Right** | What's on now: every channel and its current show; pick one to tune there |
 | **OK / Info** | Show or hide the channel banner |
-| **Menu / Context** | **Closed captions**, caption options, what's on now, last channel, **sleep timer**, *Don't air this show here*, turn off |
+| **Menu / Context** | **Closed captions**, caption options, what's on now, last channel, **sleep timer**, *Don't air this show here*, **CableBox menu**, turn off |
 | **Subtitle / CC button** | Captions on or off (after a one-time setup — [section 13](#13-closed-captions)) |
-| **Back / Stop** | Turn the TV off |
+| **Back / Stop** | Turn the TV off and go back where you came from (the CableBox menu, or Kodi) |
 | **Volume / Mute** | Work as normal |
 | Pause, seek, skip | Ignored — it's live TV |
 
 > **The Menu button is where most things live.** The first time you switch the
 > TV on, a tip in the corner reminds you: *"Press Menu for captions, sleep timer
 > and more."*
+
+**From the TV to your channels and settings:** Menu → *CableBox menu*. The TV
+turns off and CableBox's main menu opens; change what you like, then *Watch TV*
+turns it back on, on the channel you were watching, with the changes. This
+works however you switched the TV on, even with *Skip the menu* on. Back from
+the TV returns to the main menu only if you started it there (*Watch TV* or
+*What's on now*); otherwise it goes to Kodi.
 
 **The banner** slides up when you change channel: channel number, logo and call
 letters, the show (season, episode and title), its time slot and progress, and
@@ -255,7 +262,8 @@ progress* list or mark episodes watched — CableBox puts back resume points,
 watched status and last-played dates after it airs something.
 
 **Sleep timer:** Menu → *Sleep timer* (15 minutes to 2 hours). Optionally it
-also puts the TV in standby over HDMI-CEC (*Settings → Viewing*).
+also puts the TV in standby over HDMI-CEC (*Settings → Viewing*). When it runs
+out you're left in Kodi, not in a menu.
 
 **"I don't want this show on this channel":** while it's on, Menu → *Don't air
 '…' on <channel>*. It's gone from that channel's automatic programming

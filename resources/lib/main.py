@@ -23,15 +23,23 @@ def run(args):
         from . import promo_preview
         promo_preview.run(int(args[1]) if len(args) > 1 and args[1].isdigit() else None)
     elif "watch" in args:
+        # a Kodi shortcut, widget or RunScript(script.cablebox42,watch,7): Back goes to Kodi,
+        # Menu > CableBox menu opens the main menu
         nums = [a for a in args if a.isdigit()]
         from . import tv
-        tv.run(int(nums[0]) if nums else None)
+        if tv.run(int(nums[0]) if nums else None) == "menu":
+            from . import manager
+            manager.main_menu()
     elif K.setting_bool("skip_menu", False) and os.path.exists(K.CHANNELS_FILE):
         from . import tv
-        tv.run()
+        if tv.run() == "menu":
+            from . import manager
+            manager.main_menu()
     elif "wizard" in args:
         from . import manager
         manager.wizard()
+        if manager.tv_wants_menu():
+            manager.main_menu()
     else:
         from . import manager
         manager.main_menu()

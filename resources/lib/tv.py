@@ -131,6 +131,9 @@ class TVWindow(xbmcgui.WindowXML):
         self.scroll_next = 0
         self.promos = []
         self.closing = False
+        self.exit_how = "back"       # how the TV was turned off: back / menu / sleep / away
+        self.finished = threading.Event()   # shutdown has tidied up
+        self.threads = []
         self.started = False
         self.power_on = False        # the turn-on clip is playing
         self.lock = threading.RLock()
@@ -202,8 +205,10 @@ class TVWindow(xbmcgui.WindowXML):
         self.tune(start, static=not power)
         if not power:
             self.first_tip()
-        threading.Thread(target=self.loop, name="cablebox42-loop").start()
-        threading.Thread(target=self.builder, name="cablebox42-builder").start()
+        for target, name in ((self.loop, "cablebox42-loop"), (self.builder, "cablebox42-builder")):
+            t = threading.Thread(target=target, name=name)
+            t.start()
+            self.threads.append(t)
 
     def start_channel(self):
         if getattr(self, "wanted_channel", None):
@@ -226,12 +231,21 @@ class TVWindow(xbmcgui.WindowXML):
         except Exception:
             return False
 
-    def shutdown(self, power_off=False):
+    def shutdown(self, power_off=False, how="back"):
         """Switch CableBox off.  power_off: the viewer turned the TV off (not
-        Kodi closing or the window being left), so play the turn-off clip."""
+        Kodi closing or the window being left), so play the turn-off clip.
+        how: where the viewer goes next - "back" (where the TV was started from),
+        "menu" (CableBox's main menu), "sleep" or "away" (Kodi)."""
         if self.closing:
             return
         self.closing = True
+        self.exit_how = how
+        try:
+            self._shutdown(power_off)
+        finally:
+            self.finished.set()
+
+    def _shutdown(self, power_off):
         self.promo_stop(stop_music=False)    # forget the theme; the player is stopped below
         if self.ch:
             st = K.load_json(K.STATE_FILE, {})
@@ -398,7 +412,7 @@ class TVWindow(xbmcgui.WindowXML):
     def loop(self):
         while not self.closing:
             if self.monitor.waitForAbort(0.2):
-                self.shutdown()
+                self.shutdown(how="away")
                 break
             try:
                 with self.lock:
@@ -603,7 +617,7 @@ class TVWindow(xbmcgui.WindowXML):
             return
         if self.left_tv(now):
             K.log("TV window left - switching CableBox off")
-            self.shutdown()
+            self.shutdown(how="away")
             return
         self.pull_back_from_fullscreen(now)
         self.gui_sounds.tick(now)
@@ -645,7 +659,7 @@ class TVWindow(xbmcgui.WindowXML):
             self.sleep_at = 0
             if K.setting_bool("sleep_cec", False):
                 xbmc.executebuiltin("CECStandby")
-            self.shutdown(power_off=True)
+            self.shutdown(power_off=True, how="sleep")   # nobody is watching: no menu afterwards
             return
 
         if self.hold_until:
@@ -1537,7 +1551,7 @@ class TVWindow(xbmcgui.WindowXML):
             self.log_no_cc()
         if self.extras_waiting():
             opts.append(("measure", _("Look for movie extras")))
-        opts += [("sleep", _("Sleep timer")), ("off", _("Turn off TV"))]
+        opts += [("sleep", _("Sleep timer")), ("cablebox", _("CableBox menu")), ("off", _("Turn off TV"))]
         b = self.lineup.schedule(self.ch, ensure=False).block_at(time.time()) if self.ch else None
         hide = b["t"] if b and b.get("k") == "show" and self.ch.get("type") != "extras" else None
         if hide:
@@ -1565,6 +1579,8 @@ class TVWindow(xbmcgui.WindowXML):
             if j >= 0:
                 self.sleep_at = time.time() + mins[j] * 60 if mins[j] else 0
                 self.toast(_("Sleep: %s") % labels[j], 3)
+        elif key == "cablebox":
+            self.shutdown(power_off=True, how="menu")   # a full turn-off; the menu never opens over the TV
         elif key == "off":
             self.shutdown(power_off=True)
 
@@ -1687,10 +1703,29 @@ class GuiSounds(object):
         K.save_json(K.STATE_FILE, st)
 
 
+last_exit = None     # how the last TV session ended (see run())
+
+
 def run(channel=None):
+    """Turn the TV on until the viewer turns it off.  Returns how it ended:
+    "back" (Back / Stop / Turn off TV: return to where it was started from),
+    "menu" (Menu > CableBox menu: open the main menu), "sleep" (the sleep
+    timer) or "away" (the viewer left the window, or Kodi is closing)."""
+    global last_exit
     K.ensure_dirs()
     win = TVWindow("script-cablebox42-tv.xml", K.ADDON_PATH, "Default", "1080i")
     win.wanted_channel = channel
     win.doModal()
     win.shutdown()
+    # a turn-off from the TV's own thread (sleep timer) may still be tidying up:
+    # finish before a menu or the next TV can open, so nothing of this TV stops the next one
+    win.finished.wait(6)
+    for t in win.threads:
+        if t is not threading.current_thread():
+            t.join(3)
+    how = win.exit_how
+    if xbmc.Monitor().abortRequested():
+        how = "away"
     del win
+    last_exit = how
+    return how
