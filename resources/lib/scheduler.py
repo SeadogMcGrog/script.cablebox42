@@ -7,11 +7,14 @@ channel id and the wall-clock slot, so a 'strip' channel airs the same show at
 the same time every weekday, while series always advance episode by episode.
 """
 import bisect
+import json
 import math
 import os
 import random
 import threading
 import time
+
+import xbmc
 
 from .kodiutil import SCHEDULE_DIR, load_json, save_json, log, ensure_dirs, setting_bool
 from . import library
@@ -20,6 +23,7 @@ from . import assign
 from . import seasons
 from . import stations
 from . import promos
+from . import musicvideos
 from .kodiutil import _
 
 DAY = 86400
@@ -173,6 +177,9 @@ class ChannelSchedule(object):
         if self.ch.get("type") == "extras":
             # rebuild once when the first extras turn up (not each time the cache changes)
             return chmod.config_hash(self.ch) + ("x1" if self._extras_films() else "x0")
+        if self.ch.get("type") == "musicvideos":
+            # rebuild once when the first music videos have been measured
+            return chmod.config_hash(self.ch) + ("m1" if library.mv_measured() else "m0")
         a = self.assignment() or {}
         return chmod.config_hash(self.ch) + (a.get("digest", {}).get(self.ch["id"], "") if a else "")
 
@@ -444,6 +451,8 @@ class ChannelSchedule(object):
             return self._offair(t, end, until)
         if ch["type"] == "extras":
             return self._extras_block(t, hard)
+        if ch["type"] == "musicvideos":
+            return self._mv_block(t, hard)
 
         part, fallback, own, not_genres = self._daypart_extra(key)
         full = library.without(library.share(sources, part, own, not_genres), ch.get("exclude"))
@@ -713,6 +722,123 @@ class ChannelSchedule(object):
         self._add_block(t, end, title, "show", " · ".join(s["title"] for s in segs))
         return end
 
+    # ------------------------------------------------- Boombox (music videos)
+    MV_FILL = 0.8          # about 24 minutes of videos per half hour; the rest is breaks
+    MV_ENOUGH = 0.65       # a video that doesn't fit waits for the next block once this much is filled
+    MV_MAX = 40            # videos in one block, at most
+
+    def _mv_videos(self):
+        """{path: item} the channel can air.  Items from other sources than Music
+        videos get their caption from the file's tags and name."""
+        pool = library.resolve(self.ch.get("sources", []))
+        out = {}
+        for it in list(pool["singles"]) + [e for s in pool["series"] for e in s["episodes"]]:
+            p = it["path"]
+            if p in out or library.is_bad(p) or not it.get("dur"):
+                continue
+            if "mv" not in it:
+                c = library.mv_cache_entry(p)
+                if musicvideos.skip_reason(p, it["dur"], c.get("a")):
+                    continue
+                it = dict(it, mv=musicvideos.merge(None, c.get("t"), p), fps=c.get("f") or 0)
+            out[p] = it
+        return out
+
+    def _mv_title(self):
+        """'Boombox Music Videos' (a channel already called '... Videos' keeps its name)."""
+        name = stations.brand(self.ch, None)["name"] if self.ch.get("station") else self.ch.get("name", "")
+        name = (name or "").strip()
+        if "video" in name.lower():
+            return name
+        if name.lower().endswith(" tv"):
+            name = name[:-3].strip()
+        return _("%s Music Videos") % name if name else _("Music Videos")
+
+    def _mv_block(self, t, hard):
+        """One block of music videos of one frame-rate group: the TV switches
+        refresh rate only between blocks, inside a break."""
+        vids = self._mv_videos()
+        if not vids:
+            return self._no_programme(t, hard, {"series": [], "singles": []})
+        st = self.data["state"].setdefault("mv", {})
+        gmap = musicvideos.groups([(p, it.get("fps"), it["dur"]) for p, it in vids.items()])
+        members = {}
+        for p, g in gmap.items():
+            members.setdefault(g, {})[p] = musicvideos.artist_key(vids[p]["mv"], p)
+        group = musicvideos.next_group(st, dict((g, len(m)) for g, m in members.items()))
+        ads = self._fillers(t)[0]
+        slot = self.slot or 1800
+        reserve = 60 if ads else 0          # room for at least a short break
+        end = ceil_slot(t + 2, slot)        # the block ends on the clock; a long video makes it longer
+        picks, total = [], 0.0
+        for _i in range(min(len(members[group]), self.MV_MAX)):
+            before = json.dumps(st)
+            it = vids[musicvideos.next_video(st, group, members[group], self.ch["id"])]
+            put_back = hard is not None and t + total + it["dur"] > hard - 2
+            if not put_back and t + total + it["dur"] + reserve > end:
+                if picks and total >= self.MV_ENOUGH * (end - t):
+                    put_back = True             # full enough: this one opens a later block
+                else:
+                    end = ceil_slot(t + total + it["dur"] + reserve + 2, slot)
+            if put_back:
+                st.clear()
+                st.update(json.loads(before))   # rotation as if it hadn't been picked
+                break
+            picks.append(it)
+            total += it["dur"]
+            # with commercials, about 24 minutes of videos a half hour is a full block;
+            # without, as many as fit (what's left is the station ID card)
+            if (ads and total >= self.MV_FILL * (end - t)) or end - t - total < 90:
+                break
+        if not picks:
+            return self._no_programme(t, hard, {"series": [], "singles": [None]})
+        log("%s %s: block of %d videos at %s fps" % (
+            self.ch.get("name"), time.strftime("%H:%M", time.localtime(t)), len(picks), group),
+            level=xbmc.LOGINFO)
+        return self._mv_layout(t, picks, hard, end)
+
+    def _mv_layout(self, t, picks, hard, end):
+        """Videos back to back; breaks only between videos (the ones nearest
+        evenly spaced points), the station ID in the last break."""
+        ch = self.ch
+        slot = self.slot or 1800
+        rng = random.Random("%s|%.0f" % (ch["id"], t))
+        dur = sum(it["dur"] for it in picks)
+        if hard is not None and end > hard:
+            end = max(hard, t + dur)
+        nslots = max(1, int(round((end - t) / slot)))
+        gap = max(0.0, end - t - dur)
+        ads, bumps, ids = self._fillers(t)
+        k = 0
+        if ads and gap >= 90 and ch.get("midroll", True):
+            per = self.cfg.get("breaks_per_slot", 2)
+            k = max(0, min(per * nslots * slot // 1800, int(gap // 75) - 1, len(picks) - 1))
+        cum, acc = [], 0.0
+        for it in picks[:-1]:
+            acc += it["dur"]
+            cum.append(acc)
+        after = set()
+        for i in range(1, k + 1):
+            free = [j for j in range(len(cum)) if j not in after]
+            if not free:
+                break
+            target = dur * i / (k + 1)
+            after.add(min(free, key=lambda j: abs(cum[j] - target)))
+        brk = gap / (len(after) + 1)
+        title = self._mv_title()
+        pos = t
+        for j, it in enumerate(picks):
+            info = it["mv"]
+            self._add(pos, pos + it["dur"], "show", p=it["path"], o=0, t=title, sub=musicvideos.label(info),
+                      cap=[list(x) for x in musicvideos.caption(info)], d=round(it["dur"], 2))
+            pos += it["dur"]
+            if j in after:
+                pos = self._fill(pos, brk, ads, bumps, rng, final=False)
+        self._fill(pos, end - pos, ads, bumps, rng, final=True, ids=ids)
+        self._add_block(t, end, title, "show",
+                        u" · ".join(it["mv"].get("artist") or it["mv"].get("title", "") for it in picks))
+        return end
+
     @staticmethod
     def _x_title(films):
         if len(films) == 1:
@@ -872,7 +998,7 @@ class ChannelSchedule(object):
         schedule after this break is known (_resolve_promos).  Uses its own
         random numbers, so with promos off breaks come out exactly as before."""
         cfg = self.cfg
-        if not cfg.get("promos") or self.ch.get("type") not in assign.PROGRAM_TYPES:
+        if not cfg.get("promos") or self.ch.get("type") not in assign.PROGRAM_TYPES + ("musicvideos",):
             return None
         if room < promos.PROMO_LEN + 10:
             return None

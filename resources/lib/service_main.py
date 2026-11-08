@@ -28,6 +28,11 @@ def run():
         from . import library
         library.extras_refresh(abort=lambda: monitor.abortRequested() or tv_running())
 
+    def music_videos():
+        # Boombox: length, frame rate, audio and tags of music videos not read yet
+        from . import library
+        library.musicvideos_refresh(abort=lambda: monitor.abortRequested() or tv_running(), recheck=True)
+
     K.ensure_dirs()
     try:
         from . import progress
@@ -77,6 +82,10 @@ def run():
                 topup()
             except Exception as exc:
                 K.log_err("schedule top-up failed: %s" % exc)
+            try:
+                music_videos()
+            except Exception as exc:
+                K.log_err("music video scan failed: %s" % exc)
             try:
                 extras()
             except Exception as exc:

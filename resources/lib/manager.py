@@ -22,12 +22,16 @@ D = xbmcgui.Dialog()
 TITLE = "CableBox 42"
 TYPE_LABELS = {"network": _("Network (series + commercials)"), "movies": _("Movie channel"),
                "loop": _("Loop (back-to-back, no clock)"), "guide": _("Guide channel"),
-               "weather": _("Weather channel"), "extras": _("Behind the scenes (movie extras)")}
+               "weather": _("Weather channel"), "extras": _("Behind the scenes (movie extras)"),
+               "musicvideos": _("Music videos (real clock, breaks between videos)")}
 PROGRAM_TYPES = ("network", "movies", "loop")
-CLIP_TYPES = PROGRAM_TYPES + ("extras",)        # channels with breaks: station folders, clips
-ALL_TYPES = ["network", "movies", "loop", "guide", "weather", "extras"]
+AIR_TYPES = PROGRAM_TYPES + ("musicvideos",)    # channels whose programming comes from sources
+CLIP_TYPES = AIR_TYPES + ("extras",)            # channels with breaks: station folders, clips
+ALL_TYPES = ["network", "movies", "loop", "musicvideos", "guide", "weather", "extras"]
 # channel editor rows that mean nothing on a Behind the scenes channel
 EXTRAS_HIDDEN = ("sources", "planner", "dayparts", "shows", "lineup", "slot")
+# ... or on a music video channel (Boombox)
+MV_HIDDEN = ("planner", "dayparts", "shows", "lineup")
 
 
 # ------------------------------------------------------------------ helpers
@@ -97,6 +101,10 @@ def describe_source(s):
         return _("Folder (%s): %s") % (s.get("mode", "shows"), s.get("path"))
     if t == "playlist":
         return _("Smart playlist: %s") % os.path.basename(s.get("path", ""))
+    if t == "musicvideos":
+        if s.get("paths"):
+            return _("Music videos: %s") % ", ".join(s["paths"])
+        return _("Music videos: Kodi's library and the folders they're in")
     what = {"both": _("movies + shows"), "tv": "shows", "movies": "movies"}.get(s.get("what", "both"), "")
     v = s.get("value")
     v = ", ".join(v[:4]) + (_(" +%d more") % (len(v) - 4) if len(v) > 4 else "") if isinstance(v, list) else v
@@ -213,7 +221,8 @@ def pick_source():
     kinds = [_("TV shows from my library"), _("A TV genre"), _("TV shows from a decade"),
              _("Movies (by genre / years / set)"), _("A folder of videos"), _("A Kodi smart playlist"),
              _("A studio / network (e.g. Disney) - movies and shows"), _("A Kodi tag - movies and shows"),
-             _("Anything whose title contains..."), _("Specific movies")]
+             _("Anything whose title contains..."), _("Specific movies"),
+             _("Music videos (Kodi's library and/or a folder)")]
     i = D.select(_("Add programming"), kinds)
     if i < 0:
         return None
@@ -309,6 +318,26 @@ def pick_source():
         names = ["%s (%s)" % (m["title"], m.get("year")) if m.get("year") else m["title"] for m in movies]
         sel = search_pick(_("Pick movies"), names, multi=True) if names else None
         return {"type": "movie", "value": sel} if sel else None
+    if i == 10:
+        return pick_musicvideos()
+    return None
+
+
+def pick_musicvideos():
+    """A Music videos source: Kodi's music videos and every other video in their
+    folders, or a folder the viewer picks (which replaces the automatic one)."""
+    rows = [_menu_row(_("Kodi's music videos"),
+                      _("Your library's music videos, plus every other video in the folders they're in")),
+            _menu_row(_("Choose a folder"),
+                      _('Every video in it and its subfolders. Name them "Artist - Title", '
+                        'e.g. "a-ha - Take On Me (1985).mkv"')),
+            _menu_row(_("Cancel"), "")]
+    j = D.select(_("Music videos"), rows, useDetails=True)
+    if j == 0:
+        return {"type": "musicvideos"}
+    if j == 1:
+        p = D.browse(0, _("Music videos folder"), "video")
+        return {"type": "musicvideos", "paths": [p]} if p else None
     return None
 
 
@@ -399,7 +428,49 @@ def ask_music(pending):
     pending["weather_music_path"] = weather
 
 
-def _scan_library():
+def ask_musicvideos(old, mode):
+    """Setup: a folder of music videos - asked only when Kodi's library has none
+    (and the lineup kept has no music video channel).  Returns [folder] or None
+    (Skip); Back = Cancel.  Kept in memory until the final OK."""
+    if mode == "add" and any(c.get("type") == "musicvideos" for c in old):
+        return None
+    try:
+        if library.all_musicvideos():
+            return None
+    except Exception:
+        return None
+    msg = _('Name them "Artist - Title", e.g. "a-ha - Take On Me (1985).mkv".')
+    while True:
+        r = ask(msg, _("Choose folder"), _("Skip"), cancel=_("Cancel"),
+                heading=_("Do you have a folder of music videos?"))
+        if r is None:
+            raise _Cancelled()
+        if r == "no":
+            return None
+        p = D.browse(0, _("Music videos folder"), "video")
+        if p:
+            return [p]
+
+
+def _folders_label(folders):
+    return ", ".join(f.rstrip("/\\") for f in folders or [])
+
+
+def _mv_line(c):
+    """Keep which channels?: 'Boombox TV - 210 music videos (136 from your library, 74 more in ...)'."""
+    sv = c.get("_survey") or {}
+    where = _folders_label(sv.get("folders"))
+    if sv.get("lib") and sv.get("extra"):
+        what = _("%d music videos (%d from your library, %d more in %s)") % (sv["total"], sv["lib"],
+                                                                           sv["extra"], where)
+    elif sv.get("lib"):
+        what = _("%d music videos from your library") % sv["total"]
+    else:
+        what = _("%d music videos in %s") % (sv.get("total", 0), where)
+    return u"%3d  %s \u2014 %s" % (c["number"], c["name"], what)
+
+
+def _scan_library(mv_paths=None):
     """Looking through your library...  The progress dialog's Cancel stops it."""
     pd = xbmcgui.DialogProgress()
     pd.create(TITLE, _("Looking through your library..."))
@@ -408,7 +479,7 @@ def _scan_library():
         pd.update(pct, msg)
         return pd.iscanceled()
     try:
-        new = None if pd.iscanceled() else C.auto_lineup(report)
+        new = None if pd.iscanceled() else C.auto_lineup(report, mv_paths=mv_paths)
     finally:
         pd.close()
     if new is None:
@@ -455,6 +526,10 @@ def _confirm_setup(plan):
             also.append(label % (p[key] if key == "weather_location" else _folder_name(p[key])))
     if also:
         lines.append("  ·  ".join(also))
+    for c in new:
+        sv = c.get("_survey")
+        if c.get("type") == "musicvideos" and sv:
+            lines.append(_("Music videos: %s (%d)") % (_folders_label(sv.get("folders")), sv["total"]))
     return confirm("[CR]".join(lines), _("OK"), heading=question)
 
 
@@ -473,27 +548,33 @@ def _wizard_plan():
     ask_commercials(pending)
     per_channel = ask_bumpers(pending)
     ask_music(pending)
+    mv_paths = ask_musicvideos(old, mode)
     if not K.setting("weather_location") and not xbmc.getCondVisibility("Weather.IsFetched"):
         city = D.input(_("Your city for the Weather Channel (optional, e.g. Springfield, IL)"), "")
         if city:                           # Back on the keyboard = skip
             pending["weather_location"] = city
 
-    new = _scan_library()
-    if not [c for c in new if c["type"] in PROGRAM_TYPES]:
+    new = _scan_library(mv_paths)
+    if mv_paths and not any(c["type"] == "musicvideos" for c in new):
+        from . import musicvideos
+        D.notification(TITLE, _("Boombox needs at least %d music videos - that folder has fewer")
+                       % musicvideos.MIN_VIDEOS, time=4000)
+    if not [c for c in new if c["type"] in AIR_TYPES]:
         D.ok(TITLE, _("I couldn't find any TV shows or movies in your Kodi library.[CR]"
                     "Scan your media into the library first, or add folder channels "
                     "in the Channel Manager."))
         return None
     if len(new) > 2:
-        labels = [_("%3d  %s   [COLOR grey]%s[/COLOR]") % (c["number"], c["name"],
-                                                       ", ".join(describe_source(x) for x in c["sources"])[:80])
+        labels = [_mv_line(c) if c["type"] == "musicvideos" and c.get("_survey") else
+                  _("%3d  %s   [COLOR grey]%s[/COLOR]") % (c["number"], c["name"],
+                                                         ", ".join(describe_source(x) for x in c["sources"])[:80])
                   for c in new]
         keep = D.multiselect(_("Keep which channels? (you can fine-tune shows afterwards)"), labels,
                              preselect=list(range(len(new))))
         if not keep:
             raise _Cancelled()
         new = [new[j] for j in keep]
-        if not [c for c in new if c["type"] in PROGRAM_TYPES]:
+        if not [c for c in new if c["type"] in AIR_TYPES]:
             raise _Cancelled()
         C.renumber(new)
 
@@ -506,7 +587,7 @@ def _wizard_plan():
         used = set(c["number"] for c in chans)
         start = max(used) + 1
         for c in new:
-            if c["type"] in ("guide", "weather") and c["type"] in have:
+            if c["type"] in ("guide", "weather", "musicvideos") and c["type"] in have:
                 continue
             if c.get("broadcast") and any(x.get("broadcast") == c["broadcast"] for x in chans):
                 continue                   # you already have that network
@@ -610,6 +691,8 @@ def setup_summary(chans):
         srcs = [describe_source(s) for s in c.get("sources", []) if not s.get("orphans")]
         if c["type"] == "extras":
             srcs = [_("making-of pieces and interviews from your movies' Extras folders")]
+        if c["type"] == "musicvideos":
+            srcs.insert(0, _("music videos on the real clock, breaks between videos"))
         if any(s.get("orphans") for s in c.get("sources", [])):
             srcs.append(_("shows whose genres are too small for a channel of their own"))
         if c.get("broadcast"):
@@ -835,7 +918,12 @@ def add_channel(chans, kind=None):
     if num is None:
         return
     ch = C.new_channel(num, name, types[t], callsign=C.callsign(name))
-    if types[t] in PROGRAM_TYPES:
+    if types[t] == "musicvideos":
+        src = pick_musicvideos()
+        if not src:
+            return
+        ch["sources"].append(src)
+    elif types[t] in PROGRAM_TYPES:
         while True:
             src = pick_source()
             if src:
@@ -916,6 +1004,11 @@ def edit_channel(cid):
             row = (_("Movie extras: %d h %02d min to air from %d films") % (secs // 3600, secs % 3600 // 60, n)
                    if secs else _("Movie extras: none to air yet"))
             items.insert([x[0] for x in items].index("type") + 1, ("extras", row))
+        if ch["type"] == "musicvideos":
+            items = [x for x in items if x[0] not in MV_HIDDEN]
+            at = [x[0] for x in items].index("type") + 1
+            items[at:at] = [("mvcheck", _("[B]Check music videos[/B] (what airs, what's skipped)")),
+                            ("mvcaps", _("Video captions: %s") % onoff(ch.get("mv_captions", True)))]
         i = done_select("%d  %s" % (ch["number"], ch["name"]), [x[1] for x in items])
         if i < 0:
             if changed:
@@ -958,6 +1051,12 @@ def edit_channel(cid):
             C.save(chans)
             check_extras()
             continue
+        elif key == "mvcheck":
+            C.save(chans)
+            check_musicvideos(ch)
+            continue
+        elif key == "mvcaps":
+            ch["mv_captions"] = not ch.get("mv_captions", True)
         elif key == "sources":
             edit_sources(ch["sources"], ch["name"])
         elif key == "dayparts":
@@ -1033,7 +1132,7 @@ def change_type(ch, chans=()):
         return
     # Behind the scenes, Guide and Weather don't use programming sources: say so (they're kept)
     unused = (_("Its programming sources aren't used by this type - they're kept, not deleted.")
-              if ch.get("sources") and new not in PROGRAM_TYPES else "")
+              if ch.get("sources") and new not in AIR_TYPES else "")
     defaults = C.DEFAULTS[new]
     onoff = lambda b: _("On") if b else _("Off")
     show = {"commercials": lambda v: _("Commercials: %s") % onoff(v),
@@ -1057,6 +1156,65 @@ def change_type(ch, chans=()):
     elif unused and not confirm(unused, _("Change type"), heading=_("Change to %s?") % TYPE_LABELS[new]):
         return
     ch["type"] = new
+    if new == "musicvideos" and not ch.get("sources"):
+        ch["sources"] = [{"type": "musicvideos"}]
+
+
+MV_REASONS = {"trailer or sample": _("trailer or sample"), "no audio track": _("no audio track"),
+              "shorter than 30 s": _("shorter than 30 s")}
+
+
+def check_musicvideos(ch):
+    """Check music videos (info): what a music video channel airs, by frame-rate
+    group, what's skipped and why, and what isn't measured yet - from the cache.
+    Measuring can be started from here (it otherwise happens in the background)."""
+    from . import musicvideos as MV
+    while True:
+        srcs = [s for s in ch.get("sources", []) if s.get("type") == "musicvideos"] or [{"type": "musicvideos"}]
+        airs, skipped, unreadable, waiting, found, lib, folders = [], [], [], 0, 0, 0, []
+        for s in srcs:
+            r = library.musicvideos_report(s)
+            airs += r["airs"]
+            skipped += r["skipped"]
+            unreadable += r["unreadable"]
+            waiting += r["waiting"]
+            found += r["total"]
+            lib += r["lib"]
+            folders += r["folders"]
+        groups = MV.groups([(it["path"], it.get("fps"), it["dur"]) for it in airs])
+        count = {}
+        for g in groups.values():
+            count[g] = count.get(g, 0) + 1
+        secs = int(sum(it["dur"] for it in airs))
+        lines = [_("[B]%d music videos found[/B] (%d from your library, %d more in %s)") % (
+                     found, lib, found - lib, _folders_label(folders) or "-"),
+                 _("Airing: %d (%d h %02d min)") % (len(airs), secs // 3600, secs % 3600 // 60)]
+        if count:
+            lines.append(_("Frame rates (one per block): %s") % u"  \u00b7  ".join(
+                _("%s fps: %d") % (g, n) for g, n in sorted(count.items(), key=lambda x: -x[1])))
+        if waiting:
+            lines.append(_("Not measured yet: %d. CableBox reads them while the TV is off.") % waiting)
+        if skipped:
+            lines += ["", _("[B]Skipped[/B]")] + ["  %s  [COLOR grey](%s)[/COLOR]" % (n, MV_REASONS.get(w, w))
+                                                  for n, w in skipped]
+        if unreadable:
+            lines += ["", _("[B]Couldn't be read[/B]")] + ["  " + n for n in unreadable]
+        D.textviewer(_("Check music videos"), "[CR]".join(lines))
+        if not waiting or not confirm(_("CableBox reads each file's length, frame rate and tags. Your files "
+                                        "are not changed."), _("Read them now"), _("Not now"),
+                                      heading=_("Read the %d music videos not measured yet?") % waiting):
+            return
+        pd = xbmcgui.DialogProgress()
+        pd.create(TITLE, _("Reading music videos..."))
+        done = [0]
+
+        def pause():
+            done[0] += 1
+            pd.update(int(100.0 * done[0] / max(1, waiting)), _("%d of %d") % (done[0], waiting))
+        try:
+            library.musicvideos_refresh(abort=pd.iscanceled, pause=pause, sources=srcs)
+        finally:
+            pd.close()
 
 
 def _station_label(ch):

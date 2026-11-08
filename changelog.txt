@@ -1,4 +1,22 @@
 Unreleased
+- Boombox TV, the music video channel: Build my lineup offers it with 30 or more
+  music videos - Kodi's own plus every other video in their folders (TheAudioDB
+  only adds what it can match), or a folder it asks for when the library has none
+- Music videos play on the real clock: half-hour blocks, breaks only between
+  videos, the station ID in the last break, promos as on every channel
+- One frame rate per block (23.976 with 24, 29.97 with 30, 25...), so the TV only
+  switches refresh rate between blocks; never the same artist twice in a row; no
+  video repeats before all of its frame rate have played
+- The music-channel caption: artist, "title", album, label, year in the lower
+  left after a video starts and before it ends - from Kodi's library, the file's
+  own tags or its name (Artist - Title (Year)); lines CableBox doesn't know are
+  left out. Channel setting: Video captions On/Off
+- Check music videos (in the channel's settings): what airs, by frame rate, and
+  what's skipped (trailers, samples, under 30 s, no audio track)
+- New channel type 'Music videos' and programming source 'Music videos'; Loop
+  stays for music videos back to back with no clock
+- Boombox TV is now the music video channel (it used to brand a channel with
+  'music' in its name or MTV/CMT shows); existing channels keep their branding
 - New: schedule promos. With Settings > Programming > Promos on, breaks include
   a short promo for what the channel airs next ('Up next', 'Tonight at 8:00'),
   made from your own library: the episode's still (or fanart, landscape,

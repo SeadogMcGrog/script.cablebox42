@@ -355,6 +355,7 @@ from, the station folders and what's in them, and where to go next.
 | Movie channels | Movie Channel, one per big movie genre, and Classic Movies (before 1990) |
 | 25 – Weather Channel | Your local forecast |
 | 42 – News 42 | When you have 5 or more news shows |
+| Boombox TV | Music videos, when you have 30 or more ([Music videos](#music-videos)) |
 
 ### Broadcast networks
 
@@ -388,7 +389,8 @@ block, so you can change or remove it in the channel editor.
 |---|---|
 | **Network** | Series and movies on a clock, with commercial breaks inside shows |
 | **Movie channel** | Films on a clock, with commercials between them |
-| **Loop** | Back to back, no clock, no breaks (good for music videos or cartoons) |
+| **Loop** | Back to back, no clock, no breaks (good for cartoons, or music videos without the clock) |
+| **Music videos** | Boombox: music videos on the real clock, like MTV in its day. Each half hour is a block of videos with commercial breaks between them, never in the middle of one, and the station ID in the last break. Each block plays videos of one frame rate only (23.976 with 24, 29.97 with 30, 25…), so the TV switches refresh rate only between blocks, inside a break; the frame rates take turns as often as you have videos of them. Never the same artist twice in a row, and no video comes round again until every video of its frame rate has played. The guide shows *Boombox Music Videos* with the block's artists. A caption in the lower left names the video shortly after it starts and again shortly before it ends: artist, "title", album, label, year, each line only when CableBox knows it (*Video captions* in the channel's settings turns it off). The channel's settings also have *Check music videos*: how many air, by frame rate, and what's skipped and why |
 | **Guide channel** | The program guide |
 | **Weather channel** | The local forecast |
 | **Behind the scenes** | Making-of pieces, documentaries and interviews from your movies' `Extras` folders, in per-film blocks ("Inside 2001: A Space Odyssey (1968)"). Every film with extras gets a turn before any comes round again, in a new order each time; a film gets up to an hour per turn (one longer documentary airs whole) and the rest of its extras continue on its next turn. Films with only a few minutes share a block, so a half hour is never mostly commercials. Breaks come only between segments, never in the middle of one. Named *BACKLOT* with its own logo by default; under another name CableBox asks whether to use the BACKLOT logo and corner bug. Adding a second one asks first. Its settings show *Movie extras: X h to air from N films* (opens *Check extras*). Until extras are found it shows *No programming*: **OK** there asks *Look for movie extras now?*; once CableBox has looked and found nothing to air, it points to *Check extras* instead. See *Check extras* for what airs |
@@ -409,6 +411,7 @@ A channel can draw from any mix of these:
 | A Kodi tag: movies and shows | Tag things in Kodi (*Manage → Manage tags*), then build a channel from the tag |
 | Anything whose title contains… | *Christmas* |
 | Specific movies | Pick them from a list |
+| Music videos | Kodi's music videos plus every other video in their folders, or a folder you choose ([Music videos](#music-videos)) |
 
 Every long list, such as tags, studios, shows and movies, has a **Search…** row
 at the top. Type a few letters to narrow it down. Lists where you can pick
@@ -447,6 +450,20 @@ For example, moving Weather from 24 to 3 pushes the old 3–23 up to 4–24.
 Renumbering never interrupts what's airing.
 
 ---
+
+## Music videos
+
+*Build my lineup* offers **Boombox TV** when it finds 30 or more music videos:
+
+> Boombox TV — 210 music videos (136 from your library, 74 more in E:\Kodi\Music Videos)
+
+Kodi's music video scraper only adds the songs it can match online, so CableBox also airs every other video in the folders your music videos are in. With no music videos in Kodi's library, the lineup builder asks for a folder instead (*Skip* leaves Boombox out). In the channel's settings, *Programming* can point it at a folder of your own (that replaces the automatic one) or add other sources.
+
+**What the caption shows.** Each line comes from the first place that has it: Kodi's library, then the file's own tags (MKV and MP4 tags that many downloaders write: artist, title, album, label, date), then the file name read as **Artist - Title (Year)** (with a space on each side of the hyphen; the year is optional). A file named `a-ha - Take On Me (1985).mkv` shows artist, title and year; a name that doesn't follow the pattern still airs, with the file name as its title. CableBox looks nothing up online, writes no NFO files and never renames, moves or changes your videos.
+
+**Skipped:** trailers and samples, anything under 30 seconds and videos with no audio track (*Check music videos* lists them, and so does Kodi's log). AV1 videos follow the AV1 setting.
+
+**The first time:** CableBox reads each new video's length, frame rate and tags in the background (while the TV is off, or bit by bit while it's on), never on a channel change. Videos Kodi has scanned air straight away; the rest join once read, and the schedule rebuilds itself once when the first ones are in. *Check music videos* → *Read them now* does it at once.
 
 ## The weekly planner
 
@@ -662,7 +679,7 @@ automatic setup gives them to matching channels:
 | **Picture Show** | the Classic Movies channel (before 1990) | |
 | **News 42** | the News channel, on **42** | |
 | **Orbit TV** | the Science Fiction channel | |
-| **Boombox TV** | a channel with "music" in its name | |
+| **Boombox TV** | the music video channel | |
 | **BACKLOT** | the Behind the scenes channel (movie extras) | |
 
 **Shows go where they first aired.** Kodi keeps a TV show's network in its
@@ -677,7 +694,7 @@ network outranks its genre when CableBox picks its home channel:
 | The Dexter Channel | Disney Channel, Disney Junior, Disney XD, Toon Disney, ABC Family |
 | Comedy Corner | Comedy Central |
 | Keystone / Beacon / Horizon | NBC and the WB / CBS, UPN and the CW / ABC and FOX - their own shows lead their prime time, and stay on that network only |
-| Others | Syfy (Orbit TV), MTV, VH1 and CMT (Boombox TV), Bravo, E! and TLC (Unscripted), GSN (Jackpot TV), CNN and MSNBC (News 42), Court TV and truTV (Siren TV), Lifetime and SOAPnet (Heartstrings TV), INSP (Tumbleweed TV) |
+| Others | Syfy (Orbit TV), Bravo, E! and TLC (Unscripted), GSN (Jackpot TV), CNN and MSNBC (News 42), Court TV and truTV (Siren TV), Lifetime and SOAPnet (Heartstrings TV), INSP (Tumbleweed TV) |
 
 So *Rugrats* lands on Chameleon and *Mister Rogers' Neighborhood* on PES, even
 though both are filed under Children. With 5 or more shows from a station's
@@ -950,6 +967,7 @@ Everything lives in the add-on's data folder,
 | `channels.json` | Your lineup: channels, sources, pinned shows, time blocks, off-air hours |
 | `schedules/<id>.json` | Each channel's rolling schedule and episode bookmarks (rebuilt automatically) |
 | `durations.json`, `codecs.json` | Cached running times and video codecs of files |
+| `musicvideos.json` | What CableBox read from each music video: length, frame rate, audio track, tags |
 | `state.json` | Last channel watched, weather location lookup |
 
 **Example channel in `channels.json`:**

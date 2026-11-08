@@ -365,3 +365,282 @@ def video_codec(path):
             close()
         except Exception:
             pass
+
+
+# ---------------------------------------------------------------- music video details
+# Frame rate, whether there's an audio track and the file's own tags, read in
+# one read-only pass with the duration (Boombox: frame-rate groups, captions).
+_TAG_KEYS = {"artist": "artist", "performer": "artist", "title": "title",
+             "album": "album", "label": "label", "publisher": "label", "date_recorded": "date",
+             "date_released": "date", "date": "date", "year": "date"}
+
+
+def media_info(path):
+    """{"dur", "fps", "audio", "codec", "tags"} or None when unreadable.
+    fps is 0 when unknown, audio None when unknown; tags hold artist, title,
+    album, label and date as written in the file (missing ones left out)."""
+    try:
+        r, close = open_reader(path)
+    except Exception:
+        return None
+    info = None
+    try:
+        if r.size < 32:
+            return None
+        head = r.read_at(0, 16)
+        if head[4:8] in (b"ftyp", b"moov", b"mdat", b"free", b"wide", b"skip", b"pnot"):
+            info = _mp4_info(r)
+        elif head[:4] == b"\x1a\x45\xdf\xa3":
+            info = _mkv_media(r)
+    except Exception:
+        info = None
+    finally:
+        try:
+            close()
+        except Exception:
+            pass
+    if info is None or not info.get("dur"):
+        d = duration(path)          # other containers: the length is all we can read
+        if d <= 0:
+            return None
+        info = info or {"fps": 0, "audio": None, "codec": "", "tags": {}}
+        info["dur"] = d
+        info["codec"] = info.get("codec") or video_codec(path)
+    return info
+
+
+def _tag(tags, name, value):
+    key = _TAG_KEYS.get((name or "").strip().lower())
+    value = (value or "").strip().strip("\x00").strip()
+    if key and value and key not in tags:
+        tags[key] = value
+
+
+# -- Matroska: Info, Tracks and Tags (found directly or through the SeekHead;
+#    ffmpeg writes the file's tags after the video, reached with one more read)
+_MKV_INFO, _MKV_TRACKS, _MKV_TAGS, _MKV_SEEKHEAD, _MKV_CLUSTER = (
+    0x1549A966, 0x1654AE6B, 0x1254C367, 0x114D9B74, 0x1F43B675)
+
+
+def _ebml_children(buf):
+    i = 0
+    while i < len(buf):
+        try:
+            eid, l1, _ = _vint(buf, i, True)
+            sz, l2, unknown = _vint(buf, i + l1)
+        except (IndexError, ValueError):
+            return
+        start = i + l1 + l2
+        if unknown:
+            sz = len(buf) - start
+        yield eid, buf[start:start + sz]
+        i = start + sz
+
+
+def _uint(b):
+    return int.from_bytes(b, "big") if b else 0
+
+
+def _mkv_seeks(r, data, size, seg_start, out):
+    for eid, body in _ebml_children(r.read_at(data, min(size, 16384))):
+        if eid != 0x4DBB:
+            continue
+        sid = spos = None
+        for e2, val in _ebml_children(body):
+            if e2 == 0x53AB:
+                sid = _uint(val)
+            elif e2 == 0x53AC:
+                spos = _uint(val)
+        if sid is not None and spos is not None:
+            out.setdefault(sid, []).append(seg_start + spos)
+
+
+def _mkv_element(r, pos, want, limit):
+    """(data position, size) of the element at pos if it is a `want` element."""
+    buf = r.read_at(pos, 16)
+    if len(buf) < 2:
+        return None
+    eid, l1, _ = _vint(buf, 0, True)
+    sz, l2, _ = _vint(buf, l1)
+    if eid != want:
+        return None
+    return pos + l1 + l2, min(sz, limit)
+
+
+def _mkv_tracks(buf):
+    """(fps, audio, codec) from a Tracks element."""
+    fps, audio, codec = 0.0, False, ""
+    for eid, entry in _ebml_children(buf):
+        if eid != 0xAE:                       # TrackEntry
+            continue
+        ttype, ddur, rate, cid = 0, 0, 0.0, b""
+        for e3, val in _ebml_children(entry):
+            if e3 == 0x83:
+                ttype = _uint(val)
+            elif e3 == 0x23E383:              # DefaultDuration (ns per frame)
+                ddur = _uint(val)
+            elif e3 == 0x86:
+                cid = val
+            elif e3 == 0xE0:                  # Video > FrameRate (old files)
+                for e4, v4 in _ebml_children(val):
+                    if e4 == 0x2383E3 and len(v4) in (4, 8):
+                        rate = struct.unpack(">f" if len(v4) == 4 else ">d", v4)[0]
+        if ttype == 1 and not fps:
+            fps = 1e9 / ddur if ddur else rate
+            for tag, name in _MKV_CODECS:
+                if cid.startswith(tag):
+                    codec = name
+                    break
+        elif ttype == 2:
+            audio = True
+    return fps, audio, codec
+
+
+def _mkv_tags(buf, tags):
+    """The file's own tags (not one track's, chapter's or attachment's)."""
+    for eid, tag in _ebml_children(buf):
+        if eid != 0x7373:
+            continue
+        kids = list(_ebml_children(tag))
+        bound = any(e3 == 0x63C0 and any(e4 in (0x63C5, 0x63C9, 0x63C4, 0x63C6) and _uint(v4)
+                                         for e4, v4 in _ebml_children(val))
+                    for e3, val in kids)
+        if bound:
+            continue
+        for e3, val in kids:
+            if e3 != 0x67C8:                  # SimpleTag
+                continue
+            name = value = ""
+            for e4, v4 in _ebml_children(val):
+                if e4 == 0x45A3:
+                    name = v4.decode("utf-8", "replace")
+                elif e4 == 0x4487:
+                    value = v4.decode("utf-8", "replace")
+            _tag(tags, name, value)
+
+
+def _mkv_media(r):
+    for eid, data, size in _ebml_elements(r, 0, r.size):
+        if eid != 0x18538067:          # Segment
+            continue
+        seg_start, seg_end = data, min(r.size, data + size)
+        found, seeks = {}, {}
+        for cid, cdata, csize in _ebml_elements(r, seg_start, seg_end):
+            if cid == _MKV_CLUSTER:
+                break
+            if cid == _MKV_SEEKHEAD:
+                _mkv_seeks(r, cdata, csize, seg_start, seeks)
+            elif cid in (_MKV_INFO, _MKV_TRACKS, _MKV_TAGS):
+                found.setdefault(cid, []).append((cdata, csize))
+        for pos in seeks.get(_MKV_SEEKHEAD, []):      # a second SeekHead (often at the end)
+            el = _mkv_element(r, pos, _MKV_SEEKHEAD, 16384)
+            if el:
+                _mkv_seeks(r, el[0], el[1], seg_start, seeks)
+        for want in (_MKV_INFO, _MKV_TRACKS, _MKV_TAGS):
+            have = set(p for p, _s in found.get(want, []))
+            for pos in seeks.get(want, []):
+                el = _mkv_element(r, pos, want, 1 << 20)
+                if el and el[0] not in have:
+                    have.add(el[0])
+                    found.setdefault(want, []).append(el)
+        if _MKV_INFO not in found:
+            return None
+        cdata, csize = found[_MKV_INFO][0]
+        dur = _mkv_info(r, cdata, csize)
+        title = ""
+        for e2, val in _ebml_children(r.read_at(cdata, min(csize, 8192))):
+            if e2 == 0x7BA9:                  # the segment's title
+                title = val.decode("utf-8", "replace")
+        fps, audio, codec = 0.0, None, ""
+        if found.get(_MKV_TRACKS):
+            cdata, csize = found[_MKV_TRACKS][0]
+            fps, audio, codec = _mkv_tracks(r.read_at(cdata, min(csize, 65536)))
+        tags = {}
+        for cdata, csize in found.get(_MKV_TAGS, []):
+            _mkv_tags(r.read_at(cdata, min(csize, 1 << 20)), tags)
+        if title:
+            _tag(tags, "title", title)
+        return {"dur": dur, "fps": round(fps, 3), "audio": audio, "codec": codec, "tags": tags}
+    return None
+
+
+# -- MP4: each trak's handler, timescale and sample durations; udta/meta/ilst tags
+_ILST = {b"\xa9ART": "artist", b"\xa9nam": "title", b"\xa9alb": "album",
+         b"\xa9day": "date", b"\xa9pub": "label", b"\xa9lab": "label"}
+
+
+def _mp4_child(r, s, e, path):
+    for typ, s2, e2 in _mp4_boxes(r, s, e):
+        if typ == path[0]:
+            return (s2, e2) if len(path) == 1 else _mp4_child(r, s2, e2, path[1:])
+    return None
+
+
+def _mp4_video_track(r, mdia):
+    """(fps, codec) of a video track: its most common sample duration (variable
+    frame rate files vary around their nominal rate)."""
+    fps, codec = 0.0, ""
+    mdhd = _mp4_child(r, mdia[0], mdia[1], [b"mdhd"])
+    scale = 0
+    if mdhd:
+        h = r.read_at(mdhd[0], 32)
+        scale = struct.unpack(">I", h[20:24] if h[0] == 1 else h[12:16])[0]
+    stbl = _mp4_child(r, mdia[0], mdia[1], [b"minf", b"stbl"])
+    if not stbl:
+        return fps, codec
+    stts = _mp4_child(r, stbl[0], stbl[1], [b"stts"])
+    if stts and scale:
+        h = r.read_at(stts[0], min(stts[1] - stts[0], 8 + 8 * 4096))
+        n = struct.unpack(">I", h[4:8])[0]
+        counts = {}
+        for k in range(min(n, (len(h) - 8) // 8)):
+            c, d = struct.unpack(">II", h[8 + 8 * k:16 + 8 * k])
+            if d:
+                counts[d] = counts.get(d, 0) + c
+        if counts:
+            fps = float(scale) / max(counts, key=lambda d: counts[d])
+    stsd = _mp4_child(r, stbl[0], stbl[1], [b"stsd"])
+    if stsd:
+        fmt = r.read_at(stsd[0] + 12, 4)
+        codec = next((name for tag, name in _MP4_CODECS if fmt == tag), "")
+    return fps, codec
+
+
+def _mp4_tags(r, moov):
+    tags = {}
+    meta = _mp4_child(r, moov[0], moov[1], [b"udta", b"meta"])
+    # 'meta' is a full box: 4 bytes of version and flags before its children
+    ilst = _mp4_child(r, meta[0] + 4, meta[1], [b"ilst"]) if meta else None
+    if not ilst:
+        return tags
+    for typ, s, e in _mp4_boxes(r, ilst[0], ilst[1]):
+        name, value, free = _ILST.get(typ), "", None
+        for t2, s2, e2 in _mp4_boxes(r, s, e):
+            body = r.read_at(s2, min(e2 - s2, 4096))
+            if t2 == b"name":                 # '----' freeform, e.g. com.apple.iTunes:LABEL
+                free = body[4:].decode("utf-8", "replace")
+            elif t2 == b"data":
+                value = body[8:].decode("utf-8", "replace")
+        if typ == b"----" and free:
+            name = _TAG_KEYS.get(free.lower())
+        if name:
+            _tag(tags, name, value)
+    return tags
+
+
+def _mp4_info(r):
+    moov = _mp4_child(r, 0, r.size, [b"moov"])
+    if not moov:
+        return None
+    fps, audio, codec = 0.0, False, ""
+    for typ, s, e in _mp4_boxes(r, moov[0], moov[1]):
+        if typ != b"trak":
+            continue
+        mdia = _mp4_child(r, s, e, [b"mdia"])
+        hdlr = _mp4_child(r, mdia[0], mdia[1], [b"hdlr"]) if mdia else None
+        kind = r.read_at(hdlr[0] + 8, 4) if hdlr else b""
+        if kind == b"soun":
+            audio = True
+        elif kind == b"vide" and not fps:
+            fps, codec = _mp4_video_track(r, mdia)
+    return {"dur": _mp4(r), "fps": round(fps, 3), "audio": audio, "codec": codec, "tags": _mp4_tags(r, moov)}

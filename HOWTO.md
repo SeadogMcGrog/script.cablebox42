@@ -33,6 +33,7 @@ guide is the "how do I…?" companion.
 13. [Closed captions](#13-closed-captions)
 14. [Commercials and bumps that fill the breaks properly](#14-commercials-and-bumps-that-fill-the-breaks-properly)
 15. [The guide channel and the weather channel](#15-the-guide-channel-and-the-weather-channel)
+    - [Boombox TV: a music video channel](#boombox-tv-a-music-video-channel)
 16. [Holidays](#16-holidays)
 17. [The look: static, CRT effect, turn-on and turn-off](#17-the-look-static-crt-effect-turn-on-and-turn-off)
 18. [Start CableBox from the home screen, a favourite or Kodi's start-up](#18-start-cablebox-from-the-home-screen-a-favourite-or-kodis-start-up)
@@ -80,6 +81,8 @@ in Kodi → *Information*. To fix one: *Information → Refresh*, or edit its
 - A folder of **background music** for the guide and weather channels
   (smooth jazz and elevator music are the classics)
 - **Logos** for your channels — transparent PNGs look best
+- **Music videos** for Boombox TV — Kodi's music video library, a folder, or both;
+  name them `Artist - Title (Year).mkv` (see [Boombox TV](#boombox-tv-a-music-video-channel))
 - **Movie extras** (making-of pieces, documentaries, interviews) in an `Extras`
   folder next to each movie — see below
 
@@ -176,10 +179,14 @@ was.
    - **Skip for now.**
 3. **Music** for the guide and weather channels — the same folder for both, or
    one each, or skip.
+   - Only when Kodi's library has no music videos: **"Do you have a folder of
+     music videos?"** — *Choose folder* for a Boombox TV channel, or *Skip*.
 4. **Your city** for the weather channel (e.g. `Springfield, IL`). Skip it if
    Kodi's own weather is already set up.
 5. CableBox reads your library (about a minute; *Cancel* stops it) and
-   proposes channels. **Untick any you don't want** and confirm.
+   proposes channels. **Untick any you don't want** and confirm. With 30 or more
+   music videos, **Boombox TV** is on the list, e.g. *Boombox TV — 210 music
+   videos (136 from your library, 74 more in E:\Kodi\Music Videos)*.
 6. **Extras** — both ticked; untick what you don't want:
    - **Sign off overnight** — a *Please Stand By* card from 12 AM to 5 AM, like
      real TV. The guide and weather stay on.
@@ -298,7 +305,9 @@ Main menu → **Channel manager**.
 2. **Type**:
    - *Network* — series with commercial breaks (most channels)
    - *Movie channel* — films, commercials between them
-   - *Loop* — back to back, no clock (good for music videos or shorts)
+   - *Loop* — back to back, no clock (good for shorts)
+   - *Music videos* — Boombox: music videos on the clock with breaks between them
+     ([Boombox TV](#boombox-tv-a-music-video-channel))
    - *Guide channel* / *Weather channel*
    - *Behind the scenes (movie extras)* — making-of pieces and interviews
      from your movies' `Extras` folders ([section 1](#1-before-you-start-get-your-library-ready)).
@@ -777,6 +786,43 @@ Guide title*; music: *Guide channel music folder*.
    `39.8,-89.6`). Leave it empty to use Kodi's weather location.
 2. *Weather data from*: Automatic, Kodi's weather service only, or Open-Meteo only.
 3. *Units*, *title* (*Your Local Forecast*) and *music* (smooth jazz!).
+
+### Boombox TV: a music video channel
+
+Music videos around the clock, the way music channels did it: half-hour blocks,
+commercials between the videos (never in the middle of one), and a caption in
+the lower left shortly after each video starts and again before it ends:
+
+> **a-ha**  
+> "Take On Me"  
+> *Hunting High and Low*  
+> Warner Bros.  
+> 1985
+
+1. **Name your videos `Artist - Title`**, with a space on each side of the
+   hyphen and the year if you like: `a-ha - Take On Me (1985).mkv`. Scraping them
+   into Kodi is optional: CableBox airs the ones Kodi matched *and* every other
+   video in the same folders.
+2. Run **Build my lineup**. With 30 or more videos it offers **Boombox TV**
+   (with none in Kodi's library it asks for the folder). Or add a channel of
+   type *Music videos* yourself.
+3. The first time, CableBox reads each video's length, frame rate and tags in
+   the background. Channel → *Check music videos* shows how many air, what's
+   skipped and why, and *Read them now* does it at once.
+
+**What the caption shows:** artist, "title", album, record label, year — from
+Kodi's library first, then the file's own tags (many downloaders write album
+and label into the file), then the file name. Lines CableBox doesn't know are
+simply left out: a well-named file without tags shows artist, title and year; a
+file with an odd name shows just its name. Don't want it? Channel → *Video
+captions: Off*.
+
+**Smooth pictures:** each block plays videos of one frame rate (23.976, 29.97,
+25…), so a TV that switches refresh rate does it between blocks, inside a
+break, not between every video.
+
+**Skipped:** trailers, samples, clips under 30 seconds and videos with no sound.
+CableBox never renames, moves or tags your files and writes no NFOs.
 
 ---
 

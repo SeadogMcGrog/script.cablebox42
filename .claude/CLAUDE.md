@@ -27,7 +27,8 @@ The repository root **is** the add-on folder.
 | `resources/lib/finder.py` | "Shows without a good channel" |
 | `resources/lib/stations.py` | Built-in stations, branding by time of day, station folders |
 | `resources/lib/captions.py` | Closed captions |
-| `resources/lib/library.py` | Kodi library queries (JSON-RPC) |
+| `resources/lib/library.py` | Kodi library queries (JSON-RPC); music videos for Boombox (library + folder files, background measuring into `musicvideos.json`) |
+| `resources/lib/musicvideos.py` | Boombox, no Kodi imports: "Artist - Title (Year)" names, caption lines (library > file tags > name), frame-rate groups, rotation |
 | `.claude/make-promo-art.py` | Rebuilds the 90s promo art (`media/promo90s/`: Bebas Neue letter pictures, bands, shapes). Not shipped |
 | `resources/lib/promos.py` | Schedule promos: artwork/plot/theme/Extras lookup (read-only); slots are placed in `scheduler._fill`, shown by `tv.start_promo` |
 | Others | `planner.py`, `weather.py`, `progress.py`, `presets.py`, `seasons.py`, `probe.py`, `logos.py`, `widget.py`, `kodiutil.py` |
@@ -126,6 +127,11 @@ A task often starts as "implement `briefs\<name>.md`".
 - **Kodi's yes/no dialog text box shows 4 lines** (Estuary, 720p and 1080p); more
   scrolls the top lines out of sight. Put a long question in the dialog's heading.
   `yesnocustom` buttons read yes / no / custom from left to right, focus on *no*.
+- **A library path whose case differs from the file on disk doesn't open through `xbmcvfs.File`** (Windows,
+  Kodi 21: size 0, no bytes) although Python's `open()` and ffprobe read it. Happens when a file is renamed
+  ('9 to 5' -> '9 To 5') after the library scan. Music videos use the name found on disk (`musicvideo_files`).
+- **Vertical `grouplist` + `<align>right</align>` sits its items on the bottom edge** (Boombox caption):
+  hidden lines close up and the block keeps one baseline.
 - `kodi-addon-checker` rejects `<news>` over 1500 characters. Keep the newest release
   notes there and the full history in `changelog.txt`.
 
@@ -165,8 +171,13 @@ A task often starts as "implement `briefs\<name>.md`".
    based on `xbmc/repo-scripts` **omega**; the maintainer opens the PR to `omega`.
    Kodi asks for at most one or two updates a month.
 
-## Open items (as of 2026-11-06)
+## Open items (as of 2026-11-08)
 
+- **Boombox (music videos)** (`briefs/boombox-wizard.md`, on `dev`): the N2 Step 1 switch test (23.976 ->
+  29.97 -> 25 video -> episode in a plain Kodi playlist: blackout length, receiver dropouts on stereo <-> 5.1
+  and PCM <-> AC-3; two same-rate videos back to back: no blackout) is still to do - record it under
+  *Hard-won lessons*. Then on the N2: wizard scan time with 200+ videos, first background measuring without
+  stutter, an hour of Boombox (switches only at block boundaries, caption smooth at 1080p).
 - **Schedule promos** (branch `feature/schedule-promos`, off by default): the N2 Step 1
   test (video, then theme.mp3, then video, with AC3 passthrough and refresh rate
   'On start/stop') is still to be done. Record the result under *Hard-won lessons*.

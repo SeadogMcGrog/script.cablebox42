@@ -63,6 +63,49 @@
             <visible>String.IsEqual(Window.Property(static),1)</visible>
         </control>
 
+        <!-- ============ Boombox video caption: the classic music-channel lower third ============
+             Artist, "title", album, label, year - lines without information are hidden and
+             the rest close up (grouplist).  Plain white with a soft shadow, inside the 4:3
+             safe area (x 312-1608).  Set by tv.caption_tick. -->
+        <control type="grouplist" id="460">
+            <left>330</left><top>726</top><width>1180</width><height>240</height>
+            <orientation>vertical</orientation><itemgap>0</itemgap><usecontrolcoords>false</usecontrolcoords>
+            <align>right</align>  <!-- on a vertical grouplist: the lines sit on the bottom edge -->
+            <visible>String.IsEqual(Window.Property(mvcap),1) + !String.IsEqual(Window.Property(banner),1) + !String.IsEqual(Window.Property(static),1)</visible>
+            <animation effect="fade" start="0" end="100" time="400">Visible</animation>
+            <animation effect="fade" start="100" end="0" time="400">Hidden</animation>
+            <control type="label">
+                <width>1180</width><height>52</height>
+                <font>font37</font><textcolor>FFFFFFFF</textcolor><shadowcolor>B0000000</shadowcolor>
+                <label>[B]$INFO[Window.Property(mvc_artist)][/B]</label>
+                <visible>!String.IsEmpty(Window.Property(mvc_artist))</visible>
+            </control>
+            <control type="label">
+                <width>1180</width><height>50</height>
+                <font>font37</font><textcolor>FFFFFFFF</textcolor><shadowcolor>B0000000</shadowcolor>
+                <label>$INFO[Window.Property(mvc_title)]</label>
+                <visible>!String.IsEmpty(Window.Property(mvc_title))</visible>
+            </control>
+            <control type="label">
+                <width>1180</width><height>44</height>
+                <font>font30_title</font><textcolor>FFFFFFFF</textcolor><shadowcolor>B0000000</shadowcolor>
+                <label>[I]$INFO[Window.Property(mvc_album)][/I]</label>
+                <visible>!String.IsEmpty(Window.Property(mvc_album))</visible>
+            </control>
+            <control type="label">
+                <width>1180</width><height>40</height>
+                <font>font27</font><textcolor>FFFFFFFF</textcolor><shadowcolor>B0000000</shadowcolor>
+                <label>$INFO[Window.Property(mvc_label)]</label>
+                <visible>!String.IsEmpty(Window.Property(mvc_label))</visible>
+            </control>
+            <control type="label">
+                <width>1180</width><height>40</height>
+                <font>font27</font><textcolor>FFFFFFFF</textcolor><shadowcolor>B0000000</shadowcolor>
+                <label>$INFO[Window.Property(mvc_year)]</label>
+                <visible>!String.IsEmpty(Window.Property(mvc_year))</visible>
+            </control>
+        </control>
+
         <!-- ============ Channel banner (now / next) ============ -->
         <control type="group" id="200">
             <visible>String.IsEqual(Window.Property(banner),1)</visible>

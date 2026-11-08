@@ -23,7 +23,7 @@ def fixed_number(c):
         return NEWS_NUMBER
     return None
 
-TYPES = ("network", "movies", "loop", "guide", "weather", "extras")
+TYPES = ("network", "movies", "loop", "guide", "weather", "extras", "musicvideos")
 
 DEFAULTS = {
     "network": {"commercials": True, "midroll": True, "bumps": True, "lineup": "strip", "slot": 30},
@@ -33,6 +33,9 @@ DEFAULTS = {
     "weather": {"commercials": False, "midroll": False, "bumps": False, "lineup": "shuffle", "slot": 30},
     # Behind the scenes: movie Extras in per-film blocks; breaks only between segments
     "extras": {"commercials": True, "midroll": True, "bumps": True, "lineup": "shuffle", "slot": 30},
+    # Boombox: music videos on the real clock, breaks only between videos, video captions on
+    "musicvideos": {"commercials": True, "midroll": True, "bumps": True, "lineup": "shuffle", "slot": 30,
+                    "mv_captions": True},
 }
 
 
@@ -63,7 +66,8 @@ def load():
 
 
 def save(chans):
-    save_json(CHANNELS_FILE, {"version": 2, "channels": sorted(chans, key=lambda c: c["number"])})
+    keep = [dict((k, v) for k, v in c.items() if not k.startswith("_")) for c in chans]   # wizard-only notes
+    save_json(CHANNELS_FILE, {"version": 2, "channels": sorted(keep, key=lambda c: c["number"])})
 
 
 def config_hash(ch):
@@ -71,7 +75,8 @@ def config_hash(ch):
     # Empty/unset fields are ignored, so adding new options in an update does
     # not throw away every channel's schedule.
     keep = {k: v for k, v in ch.items()
-            if k not in ("name", "number", "callsign", "logo", "station", "brand_blocks") and v not in ([], {}, None, "")}
+            if k not in ("name", "number", "callsign", "logo", "station", "brand_blocks", "mv_captions")
+            and not k.startswith("_") and v not in ([], {}, None, "")}
     return hashlib.md5(json.dumps(keep, sort_keys=True).encode("utf-8")).hexdigest()[:12]
 
 
@@ -167,11 +172,12 @@ STUDIO_BRANDS = ["Disney", "Pixar", "Hanna-Barbera", "Warner Bros. Animation",
                  "Studio Ghibli", "Jim Henson", "Rankin/Bass"]
 
 
-def auto_lineup(progress=None, min_shows=5, min_movies=8, max_tv=14, max_movie=6):
+def auto_lineup(progress=None, min_shows=5, min_movies=8, max_tv=14, max_movie=6, mv_paths=None):
     """Build a sensible lineup from the Kodi library.
 
-    Returns a list of channel dicts (not saved), or None if progress(msg, pct)
-    returned True (the viewer pressed Cancel).
+    mv_paths: the music video folder the viewer chose in Build my lineup (when
+    the library has no music videos).  Returns a list of channel dicts (not
+    saved), or None if progress(msg, pct) returned True (the viewer pressed Cancel).
     """
     chans = [new_channel(2, _("TV Guide"), "guide")]
     weather = new_channel(WEATHER_NUMBER, _("Weather Channel"), "weather")
@@ -260,6 +266,12 @@ def auto_lineup(progress=None, min_shows=5, min_movies=8, max_tv=14, max_movie=6
         chans.append(new_channel(num, _("Classic Movies"), "movies",
                                  [{"type": "movies", "years": [1900, 1989]}]))
         num += 1
+    if step(_("Looking for music videos"), 92):
+        return None
+    mv = music_channel(num, mv_paths)
+    if mv:
+        chans.append(mv)
+        num += 1
     # broadcast networks on the low numbers, right after the guide
     if make_nets:
         chans[1:1] = broadcast_networks(gcount, len(movies))
@@ -270,6 +282,32 @@ def auto_lineup(progress=None, min_shows=5, min_movies=8, max_tv=14, max_movie=6
     stations.extra_channels(chans, min_shows)
     renumber(chans)
     return chans
+
+
+def music_channel(number, paths=None):
+    """Boombox: a music video channel when there are at least MIN_VIDEOS of them
+    (a file count, so nothing is measured).  The survey rides along in
+    "_survey" for Build my lineup's screens; save() leaves it out."""
+    import time
+    import xbmc
+    from . import musicvideos
+    from .kodiutil import log
+    t0 = time.time()
+    try:
+        sv = library.musicvideo_survey(paths)
+    except Exception as exc:
+        log("music video survey failed: %s" % exc)
+        return None
+    log("music videos for Build my lineup: %d (%d in the library) in %.1f s" % (
+        sv["total"], sv["lib"], time.time() - t0), level=xbmc.LOGINFO)
+    if sv["total"] < musicvideos.MIN_VIDEOS:
+        return None
+    src = {"type": "musicvideos"}
+    if paths:
+        src["paths"] = list(paths)
+    ch = new_channel(number, _("Music Videos"), "musicvideos", [src])
+    ch["_survey"] = sv
+    return ch
 
 
 def renumber(chans):

@@ -3717,3 +3717,159 @@ msgstr ""
 msgctxt "#33379"
 msgid "CableBox menu"
 msgstr ""
+
+msgctxt "#33381"
+msgid "%d music videos (%d from your library, %d more in %s)"
+msgstr ""
+
+msgctxt "#33382"
+msgid "%d music videos from your library"
+msgstr ""
+
+msgctxt "#33383"
+msgid "%d music videos in %s"
+msgstr ""
+
+msgctxt "#33384"
+msgid "%d of %d"
+msgstr ""
+
+msgctxt "#33385"
+msgid "%s Music Videos"
+msgstr ""
+
+msgctxt "#33386"
+msgid "%s fps: %d"
+msgstr ""
+
+msgctxt "#33387"
+msgid "Airing: %d (%d h %02d min)"
+msgstr ""
+
+msgctxt "#33388"
+msgid "Boombox needs at least %d music videos - that folder has fewer"
+msgstr ""
+
+msgctxt "#33389"
+msgid "CableBox reads each file's length, frame rate and tags. Your files are not changed."
+msgstr ""
+
+msgctxt "#33390"
+msgid "Check music videos"
+msgstr ""
+
+msgctxt "#33391"
+msgid "Choose a folder"
+msgstr ""
+
+msgctxt "#33392"
+msgid "Do you have a folder of music videos?"
+msgstr ""
+
+msgctxt "#33393"
+msgid "Every video in it and its subfolders. Name them \"Artist - Title\", e.g. \"a-ha - Take On Me (1985).mkv\""
+msgstr ""
+
+msgctxt "#33394"
+msgid "Frame rates (one per block): %s"
+msgstr ""
+
+msgctxt "#33395"
+msgid "Kodi's music videos"
+msgstr ""
+
+msgctxt "#33396"
+msgid "Looking for music videos"
+msgstr ""
+
+msgctxt "#33397"
+msgid "Music Videos"
+msgstr ""
+
+msgctxt "#33398"
+msgid "Music videos"
+msgstr ""
+
+msgctxt "#33399"
+msgid "Music videos (Kodi's library and/or a folder)"
+msgstr ""
+
+msgctxt "#33400"
+msgid "Music videos (real clock, breaks between videos)"
+msgstr ""
+
+msgctxt "#33401"
+msgid "Music videos folder"
+msgstr ""
+
+msgctxt "#33402"
+msgid "Music videos: %s"
+msgstr ""
+
+msgctxt "#33403"
+msgid "Music videos: %s (%d)"
+msgstr ""
+
+msgctxt "#33404"
+msgid "Music videos: Kodi's library and the folders they're in"
+msgstr ""
+
+msgctxt "#33405"
+msgid "Name them \"Artist - Title\", e.g. \"a-ha - Take On Me (1985).mkv\"."
+msgstr ""
+
+msgctxt "#33406"
+msgid "Not measured yet: %d. CableBox reads them while the TV is off."
+msgstr ""
+
+msgctxt "#33407"
+msgid "Read the %d music videos not measured yet?"
+msgstr ""
+
+msgctxt "#33408"
+msgid "Read them now"
+msgstr ""
+
+msgctxt "#33409"
+msgid "Reading music videos..."
+msgstr ""
+
+msgctxt "#33410"
+msgid "Video captions: %s"
+msgstr ""
+
+msgctxt "#33411"
+msgid "Your library's music videos, plus every other video in the folders they're in"
+msgstr ""
+
+msgctxt "#33412"
+msgid "[B]%d music videos found[/B] (%d from your library, %d more in %s)"
+msgstr ""
+
+msgctxt "#33413"
+msgid "[B]Check music videos[/B] (what airs, what's skipped)"
+msgstr ""
+
+msgctxt "#33414"
+msgid "[B]Couldn't be read[/B]"
+msgstr ""
+
+msgctxt "#33415"
+msgid "[B]Skipped[/B]"
+msgstr ""
+
+msgctxt "#33416"
+msgid "music videos on the real clock, breaks between videos"
+msgstr ""
+
+msgctxt "#33417"
+msgid "no audio track"
+msgstr ""
+
+msgctxt "#33418"
+msgid "shorter than 30 s"
+msgstr ""
+
+msgctxt "#33419"
+msgid "trailer or sample"
+msgstr ""

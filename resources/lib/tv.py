@@ -22,6 +22,7 @@ from . import logos
 from . import stations
 from . import captions
 from . import promos
+from . import musicvideos
 from .kodiutil import _
 
 
@@ -401,12 +402,28 @@ class TVWindow(xbmcgui.WindowXML):
                 except Exception as exc:
                     K.log_err("background build %s: %s" % (c.get("name"), exc))
             library.durations().save()
+            self.measure_music_videos()
             if self.guide_pending:
                 self.guide_pending = False
                 self.guide_next = 0          # redraw the guide with the new listings
             for _w in range(300):
                 if self.closing or self.monitor.waitForAbort(1):
                     return
+
+    def measure_music_videos(self):
+        """Boombox: music videos not measured yet are read here, a few at a time
+        and gently (never on a channel change); the first ones rebuild the schedule."""
+        if not any(c.get("type") == "musicvideos" or any(s.get("type") == "musicvideos" for s in c.get("sources", []))
+                   for c in self.lineup.channels):
+            return
+        try:
+            first = not library.mv_measured()
+            n = library.musicvideos_refresh(abort=lambda: self.closing or self.monitor.abortRequested(),
+                                            pause=lambda: self.monitor.waitForAbort(0.15))
+            if n and first:
+                self.guide_pending = True
+        except Exception as exc:
+            K.log_err("music videos: %s" % exc)
 
     # ----------------------------------------------------------- main loop
     def loop(self):
@@ -684,6 +701,7 @@ class TVWindow(xbmcgui.WindowXML):
             self.cover_failure(e, now)
         elif self.is_video(e):
             self.watchdog(e, key, now)
+        self.caption_tick(now)
         if e["k"] == "guide":
             self.guide_tick(now)
         elif e["k"] == "weather":
@@ -772,6 +790,28 @@ class TVWindow(xbmcgui.WindowXML):
         if kind == "show":
             self.update_banner()
         self.prefetch_promo(e)
+
+    # ----------------------------------------------------------- video captions
+    # Boombox's lower third, the classic music-channel way: artist, "title",
+    # album, label, year - shortly after a video starts and again shortly
+    # before it ends.  Lines without information are simply left out.
+    cap_for = None
+
+    def caption_tick(self, now):
+        e = self.cur_entry
+        on = False
+        if e and e.get("cap") and e.get("k") == "show" and self.ch.get("mv_captions", True)                 and self.av_started_token == self.play_token and not self.sub and self.failed_key != self.cur_key:
+            into = now - e["s"] + float(e.get("o", 0))
+            dur = float(e.get("d") or (e["e"] - e["s"]))
+            on = any(a <= into < b for a, b in musicvideos.caption_times(dur))
+        if on and self.cap_for != (e["s"], e.get("p")):
+            self.cap_for = (e["s"], e.get("p"))
+            lines = dict(e["cap"])
+            for role in ("artist", "title", "album", "label", "year"):
+                self.setProperty("mvc_" + role, lines.get(role, ""))
+        want = "1" if on else ""
+        if self.getProperty("mvcap") != want:
+            self.setProperty("mvcap", want)
 
     # ----------------------------------------------------------- promos
     # "Channel 7 - Seinfeld: The Contest - Up next": a card from the
@@ -1326,7 +1366,7 @@ class TVWindow(xbmcgui.WindowXML):
         """Nothing over the picture: banner, corner logo, static, toast and the
         CH number (show_digits would switch the CH display back on)."""
         self.osd_until = self.banner_until = self.toast_until = self.static_until = 0
-        for prop in ("banner", "bug", "static", "toast", "osd", "d1", "d2", "d3"):
+        for prop in ("banner", "bug", "static", "toast", "osd", "d1", "d2", "d3", "mvcap"):
             self.setProperty(prop, "")
 
     def toast(self, text, secs=3.0):
@@ -1553,7 +1593,7 @@ class TVWindow(xbmcgui.WindowXML):
             opts.append(("measure", _("Look for movie extras")))
         opts += [("sleep", _("Sleep timer")), ("cablebox", _("CableBox menu")), ("off", _("Turn off TV"))]
         b = self.lineup.schedule(self.ch, ensure=False).block_at(time.time()) if self.ch else None
-        hide = b["t"] if b and b.get("k") == "show" and self.ch.get("type") != "extras" else None
+        hide = b["t"] if b and b.get("k") == "show" and self.ch.get("type") not in ("extras", "musicvideos")             else None
         if hide:
             opts.append(("hide", _("Don't air '%s' on %s") % (hide, self.ch["name"])))
         i = xbmcgui.Dialog().contextmenu([o[1] for o in opts])

@@ -979,3 +979,269 @@ def extras_programme(loose=False):
             out.append({"key": f["folder"], "title": f["title"], "year": f["year"], "segs": [s[2] for s in segs]})
     _AIR_CACHE[bool(loose)] = (time.time(), out)
     return out
+
+
+# ------------------------------------------------------------- music videos (Boombox)
+# Kodi's music videos plus every other video file in their folders (TheAudioDB
+# only adds songs it can match online).  Read-only: listdir, Stat and the probe's
+# header reads.  Files are measured (length, frame rate, audio, tags) only in
+# the background (musicvideos_refresh); resolving reads the cache.
+MV_PROPS = ["file", "title", "artist", "album", "year", "studio", "runtime", "streamdetails"]
+MVINFO_FILE = os.path.join(PROFILE, "musicvideos.json")
+MV_UNREADABLE_RETRY = 86400        # a file that couldn't be read is tried again a day later
+MV_SKIPPED = {}            # source key -> [(file name, reason)] for the log and Check music videos
+_MV_CACHE = [None, 0]
+
+
+def _mv_cache():
+    """The measurements (re-read when the service has written new ones)."""
+    try:
+        mt = os.path.getmtime(MVINFO_FILE)
+    except OSError:
+        mt = 0
+    if _MV_CACHE[0] is None or mt != _MV_CACHE[1]:
+        c = load_json(MVINFO_FILE, {})
+        c.setdefault("files", {})
+        c.setdefault("unreadable", {})
+        _MV_CACHE[0], _MV_CACHE[1] = c, mt
+    return _MV_CACHE[0]
+
+
+def _mv_save(cache):
+    save_json(MVINFO_FILE, cache)
+    try:
+        _MV_CACHE[1] = os.path.getmtime(MVINFO_FILE)
+    except OSError:
+        pass
+
+
+def _mv_key(p):
+    return p.replace("\\", "/").lower()
+
+
+def all_musicvideos():
+    res = rpc("VideoLibrary.GetMusicVideos", {"properties": MV_PROPS})
+    return [m for m in res.get("musicvideos", []) if m.get("file") and not m["file"].startswith("stack://")]
+
+
+def musicvideo_folders(items):
+    """The folders Kodi's music videos live in (a folder inside another one
+    listed is covered by it)."""
+    dirs = sorted(set(_pdir(m["file"]) for m in items if not m["file"].lower().startswith(_NO_FS)) - {""},
+                  key=len)
+    out = []
+    for d in dirs:
+        if not any(_mv_key(d).startswith(_mv_key(o)) for o in out):
+            out.append(d)
+    return out
+
+
+def _mv_walk(top, depth=0):
+    """Video files under a folder and its subfolders (no hidden folders, no disc structures)."""
+    if depth > 6:
+        return []
+    sep = _psep(top)
+    if not top.endswith(("/", "\\")):
+        top += sep
+    try:
+        dirs, files = xbmcvfs.listdir(top)
+    except Exception:
+        return []
+    out = [top + f for f in sorted(files, key=natural_key) if f.lower().endswith(VIDEO_EXT)]
+    for d in sorted(dirs, key=natural_key):
+        if d.startswith(".") or d.upper() in _DISC_DIRS:
+            continue
+        out.extend(_mv_walk(top + d + sep, depth + 1))
+    return out
+
+
+def _under(path, folders):
+    k = _mv_key(path)
+    return any(k.startswith(_mv_key(f if f.endswith(("/", "\\")) else f + _psep(f))) for f in folders)
+
+
+def musicvideo_files(src):
+    """(library items {key: entry}, folders, [paths]) for a Music videos source:
+    the library's music videos (only those in the chosen folders when the viewer
+    picked folders) and every other video file in those folders."""
+    lib = all_musicvideos()
+    folders = list(src.get("paths") or [])
+    if folders:
+        lib = [m for m in lib if _under(m["file"], folders)]
+    else:
+        folders = musicvideo_folders(lib)
+    by_key = dict((_mv_key(m["file"]), m) for m in lib)
+    on_disk = {}
+    for f in folders:
+        for p in _mv_walk(f):
+            on_disk.setdefault(_mv_key(p), p)
+    # the name on disk wins: a file renamed after the library scan ('9 to 5' -> '9 To 5')
+    # still opens on Windows, but not through every part of Kodi
+    paths = [on_disk.get(_mv_key(m["file"]), m["file"]) for m in lib]
+    paths += [p for k, p in on_disk.items() if k not in by_key]
+    return by_key, folders, paths
+
+
+def musicvideo_survey(paths=None):
+    """For Build my lineup: how many music videos there are, without measuring
+    anything.  {"total", "lib", "extra", "folders"}."""
+    from . import musicvideos as MV
+    src = {"type": "musicvideos"}
+    if paths:
+        src["paths"] = list(paths)
+    lib, folders, files = musicvideo_files(src)
+    cache = _mv_cache()["files"]
+    n_lib = n_extra = 0
+    for p in files:
+        c = cache.get(p) or {}
+        if MV.skip_reason(p, c.get("d"), c.get("a")):
+            continue
+        if _mv_key(p) in lib:
+            n_lib += 1
+        else:
+            n_extra += 1
+    return {"total": n_lib + n_extra, "lib": n_lib, "extra": n_extra, "folders": folders}
+
+
+def _lib_has_audio(entry):
+    sd = (entry or {}).get("streamdetails") or {}
+    if not sd.get("video"):
+        return None                  # Kodi hasn't read the file's streams yet
+    return bool(sd.get("audio"))
+
+
+def _resolve_musicvideos(src, pool):
+    from . import musicvideos as MV
+    lib, _folders, files = musicvideo_files(src)
+    cache = _mv_cache()["files"]
+    durs = durations()
+    skipped = []
+    for p in files:
+        entry = lib.get(_mv_key(p))
+        c = cache.get(p) or {}
+        dur = (_lib_duration(entry) if entry else 0) or c.get("d") or durs.get(p, probe_if_missing=False)
+        audio = c.get("a") if c.get("a") is not None else _lib_has_audio(entry)
+        why = MV.skip_reason(p, dur, audio)
+        if why:
+            skipped.append((_pname(p), why))
+            continue
+        if not dur:
+            continue                 # not measured yet: airs once the background has read it
+        info = MV.merge(entry, c.get("t"), p)
+        pool["singles"].append({"path": p, "title": MV.label(info), "sub": "", "label": "", "dur": float(dur),
+                                "codec": (_stream_codec(entry) if entry else None) or c.get("c") or "",
+                                "fps": c.get("f") or 0, "mv": info})
+    key = json.dumps(src, sort_keys=True)
+    if skipped and MV_SKIPPED.get(key) != skipped:
+        log("Music videos skipped: %s" % "; ".join("%s (%s)" % s for s in skipped[:40]), level=xbmc.LOGINFO)
+    MV_SKIPPED[key] = skipped
+
+
+RESOLVERS["musicvideos"] = _resolve_musicvideos
+
+
+def mv_cache_entry(path):
+    """The measurements of one file: {"d", "f", "a", "c", "t"}, or {}."""
+    return _mv_cache()["files"].get(path) or {}
+
+
+def mv_measured():
+    """True once any music video has been measured (the Boombox schedule rebuilds
+    once when the first ones arrive)."""
+    return bool(_mv_cache()["files"])
+
+
+def _mv_sources():
+    from . import channels as C
+    out = []
+    for c in C.load():
+        for s in c.get("sources", []):
+            if s.get("type") == "musicvideos" and s not in out:
+                out.append(s)
+    return out
+
+
+def _size(p):
+    try:
+        return int(xbmcvfs.Stat(p).st_size())
+    except Exception:
+        return 0
+
+
+def musicvideos_refresh(abort=lambda: False, pause=None, sources=None, recheck=False):
+    """Measure the music videos not measured yet: length, frame rate, audio
+    track and tags in one read-only pass per file (recheck: also files whose
+    size changed).  Runs in the background; saves as it goes.  Returns the
+    number measured."""
+    srcs = sources if sources is not None else _mv_sources()
+    if not srcs:
+        return 0
+    t0 = time.time()
+    cache = _mv_cache()
+    files, bad = cache["files"], cache["unreadable"]
+    todo, present = [], set()
+    for src in srcs:
+        _lib, _f, paths = musicvideo_files(src)
+        for p in paths:
+            if p in present:
+                continue
+            present.add(p)
+            c = files.get(p)
+            if c and (not recheck or c.get("s") == _size(p)):
+                continue
+            if not c and t0 - bad.get(p, 0) < MV_UNREADABLE_RETRY:
+                continue
+            todo.append(p)
+    done = 0
+    durs = durations()
+    for p in todo:
+        if abort():
+            break
+        info = probe.media_info(p)
+        if not (info and info.get("dur")) and not abort():
+            xbmc.sleep(500)              # a file that was busy a moment ago (copying, scanning): once more
+            info = probe.media_info(p)
+        if info and info.get("dur"):
+            files[p] = {"s": _size(p), "d": round(info["dur"], 2), "f": info.get("fps") or 0,
+                        "a": info.get("audio"), "c": info.get("codec") or "", "t": info.get("tags") or {}}
+            durs.learn(p, info["dur"])
+            bad.pop(p, None)
+        else:
+            files.pop(p, None)
+            bad[p] = time.time()
+        done += 1
+        if done % 25 == 0:
+            _mv_save(cache)
+            durs.save()
+        if pause:
+            pause()
+    gone = [p for p in list(files) + list(bad) if p not in present]
+    if todo or gone:
+        if done == len(todo):        # a complete pass: forget files that are gone or renamed
+            for p in gone:
+                files.pop(p, None)
+                bad.pop(p, None)
+        _mv_save(cache)
+        durs.save()
+        _POOL_CACHE.clear()
+        log("music videos: %d of %d new files measured in %.1f s%s" % (
+            done - len([p for p in todo if p in bad]), len(todo), time.time() - t0,
+            "; couldn't read: " + ", ".join(_pname(p) for p in todo if p in bad) if any(p in bad for p in todo) else ""),
+            level=xbmc.LOGINFO)
+    return done
+
+
+def musicvideos_report(src):
+    """For Check music videos (cache only): {"airs": [items], "skipped":
+    [(file name, why)], "waiting": not measured yet, "unreadable": [file names],
+    "lib": from the library, "total": files found, "folders": [...]}."""
+    pool = _resolve_one(src)
+    lib, folders, paths = musicvideo_files(src)
+    cache = _mv_cache()
+    airs = set(it["path"] for it in pool["singles"])
+    skipped = list(MV_SKIPPED.get(json.dumps(src, sort_keys=True), []))
+    names = set(n for n, _w in skipped)
+    waiting = [p for p in paths if p not in airs and _pname(p) not in names and p not in cache["unreadable"]]
+    return {"airs": pool["singles"], "skipped": skipped, "waiting": len(waiting),
+            "unreadable": [_pname(p) for p in paths if p in cache["unreadable"]],
+            "lib": len(lib), "total": len(paths), "folders": folders}

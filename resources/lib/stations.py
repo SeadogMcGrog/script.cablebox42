@@ -92,9 +92,9 @@ STATIONS = [
     {"id": "orbit_tv", "name": "Orbit TV", "call": "ORB", "logo": "orbit_tv.png",
      "match": {"genres": ["Science Fiction"]},
      "networks": ["Syfy", "SyFy", "Sci Fi Channel", "SCI FI", "Sci-Fi Channel", "Sci Fi"]},
+    # the music video channel (Build my lineup offers it from 30 music videos)
     {"id": "boombox_tv", "name": "Boombox TV", "call": "BOOM", "logo": "boombox_tv.png",
-     "match": {"name_words": ["music"]},
-     "networks": ["MTV", "MTV2", "CMT"]},
+     "match": {"type": "musicvideos"}},
     # the Behind the scenes channel (movie Extras); its corner bug is a simpler picture
     {"id": "backlot", "name": "BACKLOT", "call": "LOT", "logo": "backlot.png", "bug": "backlot_bug.png",
      "match": {"type": "extras"}},
