@@ -100,9 +100,10 @@ STATIONS = [
      "match": {"all_movies": True}},
     {"id": "picture_show", "name": "Picture Show", "call": "PIX", "logo": "picture_show.png",
      "match": {"classic_movies": True}},
-    # science fiction only ("Sci-Fi & Fantasy" alone doesn't qualify)
+    # science fiction and fantasy: TMDB gives TV shows one genre for both
+    # ("Sci-Fi & Fantasy"; "Science Fiction" is for movies), so fantasy airs here too
     {"id": "orbit_tv", "name": "Orbit TV", "call": "ORB", "logo": "orbit_tv.png",
-     "match": {"genres": ["Science Fiction"]},
+     "match": {"genres": ["Science Fiction", "Sci-Fi & Fantasy"]},
      "networks": ["Syfy", "SyFy", "Sci Fi Channel", "SCI FI", "Sci-Fi Channel", "Sci Fi"]},
     # the music video channel (Build my lineup offers it from 30 music videos)
     {"id": "boombox_tv", "name": "Boombox TV", "call": "BOOM", "logo": "boombox_tv.png",
