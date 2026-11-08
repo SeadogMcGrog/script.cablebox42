@@ -75,7 +75,8 @@ def config_hash(ch):
     # Empty/unset fields are ignored, so adding new options in an update does
     # not throw away every channel's schedule.
     keep = {k: v for k, v in ch.items()
-            if k not in ("name", "number", "callsign", "logo", "station", "brand_blocks", "mv_captions")
+            if k not in ("name", "number", "callsign", "logo", "station", "brand_blocks", "mv_captions",
+                         "home_guard")
             and not k.startswith("_") and v not in ([], {}, None, "")}
     return hashlib.md5(json.dumps(keep, sort_keys=True).encode("utf-8")).hexdigest()[:12]
 
@@ -208,7 +209,8 @@ def auto_lineup(progress=None, min_shows=5, min_movies=8, max_tv=14, max_movie=6
     for n, name, gs in sized:
         if n < min_shows or len(by_name) >= max_tv:
             continue
-        by_name[name] = new_channel(num, name, "network", [{"type": "tvgenre", "value": g} for g in gs])
+        by_name[name] = new_channel(num, name, "network", [{"type": "tvgenre", "value": g} for g in gs],
+                                    _genre=True)
         chans.append(by_name[name])
         num += 1
 
@@ -280,8 +282,42 @@ def auto_lineup(progress=None, min_shows=5, min_movies=8, max_tv=14, max_movie=6
     chans.append(weather)
     stations.assign(chans)
     stations.extra_channels(chans, min_shows)
+    for c in chans:
+        if c.get("type") in ("network", "movies", "loop"):
+            c["home_guard"] = True      # topping up leaves a show's first-genre / network home alone
+    drop_hollow(chans, min_shows)
     renumber(chans)
     return chans
+
+
+def drop_hollow(chans, min_shows=5):
+    """Leave out genre channels that fewer than min_shows shows would call home
+    (their best match once the stations' networks are in): Action & Adventure is
+    listed by many shows but first for almost none.  Their shows go to their
+    next-best channel.  One at a time, emptiest first, since a dropped channel's
+    shows may fill another.  Returns the dropped channels."""
+    import xbmc
+    from . import assign
+    from .kodiutil import log
+    dropped = []
+    while True:
+        genre = [c for c in chans if c.get("_genre")]
+        if len(genre) < 2:          # keep at least one genre channel
+            return dropped
+        renumber(chans)             # for now: home ties go to the lower number
+        first = assign.compute(chans, md=assign.MODE_TV_ONLY, explain=True)["first"]
+        homes = Counter(first.values())
+        n, _num, worst = min((homes.get(c["id"], 0), -c["number"], c) for c in genre)
+        if n >= min_shows:
+            return dropped
+        chans.remove(worst)
+        dropped.append(worst)
+        orphans = [s for s in worst["sources"] if s.get("orphans")]
+        if orphans:                 # the leftover shows move to the biggest genre channel left
+            rest = [c for c in genre if c is not worst]
+            max(rest, key=lambda c: homes.get(c["id"], 0))["sources"] += orphans
+        log("%s: dropped, %d shows would live here" % (worst.get("generic_name", worst["name"]), n),
+            level=xbmc.LOGINFO)
 
 
 def music_channel(number, paths=None):
