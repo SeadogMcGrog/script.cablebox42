@@ -477,10 +477,6 @@ msgctxt "#32118"
 msgid "Reading movies"
 msgstr ""
 
-msgctxt "#32119"
-msgid "Looking for studio channels"
-msgstr ""
-
 msgctxt "#32120"
 msgid "Done"
 msgstr ""
@@ -511,10 +507,6 @@ msgstr ""
 
 msgctxt "#32127"
 msgid "%s Movies"
-msgstr ""
-
-msgctxt "#32129"
-msgid "%s Showcase"
 msgstr ""
 
 msgctxt "#32130"

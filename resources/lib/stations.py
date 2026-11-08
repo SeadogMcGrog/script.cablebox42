@@ -44,9 +44,12 @@ STATIONS = [
      "networks": ["Nickelodeon", "Nick Jr.", "Nick Jr", "Nick", "TeenNick", "Noggin", "Nick at Nite", "Nicktoons"],
      "blocks": [{"name": "CAM Jr.", "call": "CAMJ", "start": "06:00", "end": "12:00", "logo": "cam_jr.png"},
                 {"name": "Cam O Nite", "call": "CAMN", "start": "20:00", "end": "06:00", "logo": "cam_o_nite.png"}]},
+    # stands in for the Disney Channel: Disney's (and Pixar's) shows and movies,
+    # by studio ("Walt Disney Pictures", "Disney+"...), and Disney's own networks
     {"id": "dexter", "name": "The Dexter Channel", "call": "DEX", "logo": "dexter.png",
      "match": {"genres": ["Family"]},
-     "networks": ["Disney Channel", "Disney Junior", "Disney XD", "Toon Disney", "Playhouse Disney", "ABC Family", "Freeform", "The Family Channel"]},
+     "networks": ["Disney Channel", "Disney Junior", "Disney XD", "Toon Disney", "Playhouse Disney", "ABC Family", "Freeform", "The Family Channel"],
+     "studios": ["Disney", "Pixar"]},
     {"id": "exploration", "name": "The Exploration Channel", "call": "EXP", "logo": "exploration.png",
      "match": {"movie_genres": ["Documentary"]}},
     # public educational TV: documentary series plus anything tagged educational in
@@ -179,13 +182,16 @@ def apply(ch, station):
 
 def station_sources(station):
     """The sources a station brings to its channel: its networks as the library
-    spells them, and (Red Thread TV) original titles in a script.  A station's
-    not_genres ride along on each, so they never pick up a cartoon or a documentary."""
+    spells them, (The Dexter Channel) shows and movies whose studio contains a
+    name, and (Red Thread TV) original titles in a script.  A station's not_genres
+    ride along, so Red Thread TV never picks up a cartoon or a documentary."""
     out = []
     bad = {"not_genres": list(station["not_genres"])} if station.get("not_genres") else {}
     nets = _library_networks(station.get("networks"))
     if nets:
         out.append(dict({"type": "network", "value": nets, "station_extra": True}, **bad))
+    if station.get("studios"):
+        out.append({"type": "studio", "value": list(station["studios"]), "what": "both", "station_extra": True})
     if station.get("scripts"):
         out.append(dict({"type": "origtitle", "value": list(station["scripts"]), "station_extra": True}, **bad))
     return out
@@ -213,12 +219,15 @@ def _library_networks(names):
 
 
 def network_shows(station):
-    if station.get("scripts") or station.get("not_genres"):
-        # each show once, cartoons etc. left out (one library call)
+    """How many titles a station would get from its networks (and its studios'
+    shows and movies, its original-title scripts)."""
+    if station.get("scripts") or station.get("not_genres") or station.get("studios"):
+        # each title once, cartoons etc. left out (one library call per kind)
         try:
             from . import library
             return len(library.station_titles(_library_networks(station.get("networks")),
-                                              station.get("scripts"), station.get("not_genres")))
+                                              station.get("scripts"), station.get("not_genres"),
+                                              station.get("studios")))
         except Exception:
             return 0
     nets = set(n.lower() for n in _library_networks(station.get("networks")))
@@ -282,7 +291,7 @@ def _separate_networks(chans):
 def extra_channels(chans, min_shows=5):
     """A station whose real networks you have plenty of shows from gets its own
     channel even when no genre channel suited it (6 Nickelodeon shows, no
-    Children channel: Chameleon anyway)."""
+    Children channel: Chameleon anyway; 5 Disney movies: The Dexter Channel)."""
     from . import channels as C
     have = set(c.get("station") for c in chans if c.get("station"))
     made = []

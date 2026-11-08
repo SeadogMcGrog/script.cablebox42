@@ -297,7 +297,8 @@ def in_script(text, scripts):
     text = text or ""
     if "hangul" in scripts and any(_in_ranges(c, HANGUL) for c in text):
         return True
-    if "han" in scripts and any(_in_ranges(c, HAN) for c in text)             and not any(_in_ranges(c, KANA) for c in text):
+    if "han" in scripts and any(_in_ranges(c, HAN) for c in text) and \
+            not any(_in_ranges(c, KANA) for c in text):
         return True
     return False
 
@@ -315,14 +316,25 @@ def _resolve_origtitle(src, pool):
             pool["series"].append(ser)
 
 
-def station_titles(networks, scripts=None, not_genres=None):
-    """Titles of the TV shows a station would get (its networks, original titles
-    in its scripts, minus not_genres), from one library call; episodes aren't checked."""
+def station_titles(networks, scripts=None, not_genres=None, studios=None):
+    """Titles a station would get: TV shows from its networks or with original
+    titles in its scripts, and shows and movies whose studio contains one of
+    its studios, minus not_genres.  One library call per kind; files aren't checked."""
     wanted = set(n.lower() for n in networks or [])
+    stud = [s.lower() for s in studios or []]
+
+    def by_studio(it):
+        return any(b in (x or "").lower() for x in it.get("studio", []) for b in stud)
     out = set()
     for s in all_tvshows_with("studio", "genre", "originaltitle"):
-        if (_on_networks(s, wanted) or (scripts and in_script(s.get("originaltitle"), scripts)))                 and _genres_ok(s, not_genres):
+        hit = _on_networks(s, wanted) or by_studio(s) or \
+            bool(scripts and in_script(s.get("originaltitle"), scripts))
+        if hit and _genres_ok(s, not_genres):
             out.add(s["title"])
+    if stud:
+        for m in all_movies(["title", "studio", "genre", "year"]):
+            if by_studio(m) and _genres_ok(m, not_genres):
+                out.add("%s (%s)" % (m["title"], m["year"]) if m.get("year") else m["title"])
     return out
 
 

@@ -215,14 +215,17 @@ replace your lineup or add its channels after yours).
 | 2 | **TV Guide** — scrolling listings for every channel |
 | 3, 4, 5 | **Keystone, Beacon, Horizon** — three broadcast networks with a network-style day (morning news, game shows, soaps, after-school cartoons, prime time, late night) |
 | 6 and up | **Genre and station channels** — Comedy Corner, Animation Station, Chameleon (kids), Tumbleweed TV (westerns), Orbit TV (sci-fi and fantasy), Red Thread TV (Korean and Chinese dramas)… |
-| | **Movie channels** — Popcorn TV (every movie), Picture Show (classics), genre movie channels |
-| | **Studio showcases** — e.g. a Disney channel, when you own enough |
+| | **Movie channels** — Popcorn TV (every movie), Picture Show (classics), The Exploration Channel (documentaries) |
+| | **Station channels** — The Dexter Channel with your Disney shows and movies, Chameleon with your Nickelodeon shows, Red Thread TV with Korean and Chinese dramas, when you have enough |
 | 25 | **Retrocast Weather** |
 | 42 | **News 42**, if you have news shows |
 
-Which channels you get depends on what's in your library: a genre gets a
-channel of its own only when about five shows would call it home (it's their
-best fit). A genre lots of shows list but few have first, such as Action &
+Which channels you get depends on what's in your library. Every channel the
+builder makes is one of the built-in stations, with its own name and logo; for
+anything else (a BBC channel, a horror movie channel, a talk channel) add a
+channel yourself ([section 6](#6-add-edit-rename-and-renumber-channels)). A
+genre gets a channel of its own only when about five shows would call it home
+(it's their best fit). A genre lots of shows list but few have first, such as Action &
 Adventure, gets no channel; those shows go to their main genre's channel. Shows whose genres are too small for a
 channel are placed on the biggest suitable channel — and the Finder
 ([section 9](#9-put-every-show-on-the-right-channel)) tells you which ones those
@@ -547,7 +550,9 @@ CableBox scores how well it fits, and the best score wins:
 | Your own pick (100) | Folder (90), tag (80), playlist (75) | Network it aired on (74), studio (70) | Its genre: main 50, 2nd 40, 3rd 30 | Decade (25), catch-all channels (5) |
 
 The network counts through the built-in stations: a Nickelodeon show goes to
-Chameleon, a tvN or iQiyi drama to Red Thread TV. Red Thread TV also takes a
+Chameleon, a tvN or iQiyi drama to Red Thread TV, and anything from Disney or
+Pixar (shows and movies) to The Dexter Channel, which stands in for the Disney
+Channel. Red Thread TV also takes a
 show whose original title (in Kodi's show information) is in Korean, or in
 Chinese characters, so a K-drama Netflix made lands there too; cartoons,
 documentaries and variety shows never do.

@@ -81,7 +81,8 @@ hardware video decoding works exactly as it does for the rest of your library.
 - **Real-time channels.** Programs start on the hour and half hour. The time
   left over in each slot is cut into commercial breaks, just like real cable.
 - **Automatic lineup builder.** One step creates a guide channel, a weather
-  channel, genre networks, movie channels and studio showcases.
+  channel, genre networks and movie channels, each one a built-in station with
+  its own logo.
 - **Weekly planner.** A 7-day grid for each channel. Pin shows to fixed times,
   for example *Seinfeld, Fridays 8 PM, in order*. Each pinned slot picks up
   where it left off the week before.
@@ -355,9 +356,9 @@ from, the station folders and what's in them, and where to go next.
 |---|---|
 | 2 – TV Guide | The scrolling program guide |
 | 3, 4, 5 – Keystone, Beacon, Horizon | Three broadcast networks with a real network day (below), when you have 12 or more TV shows |
-| Genre networks | One per TV genre that 5 or more shows would call home (their best fit, after the stations' networks), from channel 3 up (Drama Net, Western Channel, Game Show Channel…; some become built-in stations, below). A genre that many shows list but few have first (Action & Adventure, often) gets no channel; the log says so (*Action Channel: dropped, 2 shows would live here*). A small library with no genre that big gets one channel with every show instead |
-| Studio showcases | When you have enough from one studio (Disney Showcase, Hanna-Barbera Showcase…) |
-| Movie channels | Movie Channel, one per big movie genre, and Classic Movies (before 1990) |
+| Genre networks | One per TV genre that a built-in station stands for (below) and that 5 or more shows would call home (their best fit, after the stations' networks), from channel 3 up. A genre with no station of its own (Talk, War & Politics…) gets no channel: make one yourself in the Channel manager. A genre that many shows list but few have first (Action & Adventure, often) gets no channel either; the log says so (*Action Channel: dropped, 2 shows would live here*). A small library with no genre that big gets one channel with every show instead |
+| Station channels | A station whose networks or studios you have 5 or more titles from, even with no genre channel for it: Chameleon (Nickelodeon), The Dexter Channel (Disney), Red Thread TV… |
+| Movie channels | Popcorn TV (every movie), Picture Show (before 1990) and The Exploration Channel (documentaries). No studio showcases or other movie-genre channels: add them yourself in the Channel manager |
 | 25 – Weather Channel | Your local forecast |
 | 42 – News 42 | When you have 5 or more news shows |
 | Boombox TV | Music videos, when you have 30 or more ([Music videos](#music-videos)) |
@@ -668,7 +669,7 @@ automatic setup gives them to matching channels:
 | **Retrocast Weather** | the weather channel, on **25** | |
 | **Animation Station** | the cartoon (Animation) channel | |
 | **Chameleon** | the kids' channel (Children, Kids or Family) | **CAM Jr.** 6 AM–noon · **Chameleon** · **Cam O Nite** 8 PM–6 AM |
-| **The Dexter Channel** | the Family channel | |
+| **The Dexter Channel** | the Family channel, and Disney's shows and movies | |
 | **PES** | public educational TV: documentary series, plus anything you tag *educational* (or *PBS*, *public TV*) in Kodi | |
 | **The Exploration Channel** | the documentary *movies* channel | |
 | **Comedy Corner** | the Comedy (or Sitcom) channel | |
@@ -697,7 +698,7 @@ network outranks its genre when CableBox picks its home channel:
 | Chameleon | Nickelodeon, Nick Jr., Nicktoons, TeenNick, Noggin |
 | PES | PBS, PBS Kids, Discovery, National Geographic, History, Smithsonian, Science Channel, Animal Planet |
 | Animation Station | Cartoon Network, Adult Swim, Boomerang, Toonami |
-| The Dexter Channel | Disney Channel, Disney Junior, Disney XD, Toon Disney, ABC Family |
+| The Dexter Channel | Disney Channel, Disney Junior, Disney XD, Toon Disney, ABC Family; and every show or movie whose studio has *Disney* or *Pixar* in its name (Walt Disney Pictures, Disney+, Pixar), so Disney movies air here too |
 | Comedy Corner | Comedy Central |
 | Red Thread TV | Korea: KBS, MBC, SBS, tvN, JTBC, OCN, ENA, Channel A, MBN, TV Chosun, Mnet · China: CCTV, Hunan TV, Zhejiang TV, Dragon TV, Jiangsu TV, Beijing TV, Tencent Video, iQiyi, Youku, Mango TV, Bilibili · Taiwan: CTV, CTS, TTV, FTV, SET, GTV. Also any show whose *original title* is in Korean, or in Chinese characters (not Japanese), so dramas a streaming service made count too. Dramas only: never a show with Animation, Kids, Documentary, Reality, News or Talk among its genres |
 | Keystone / Beacon / Horizon | NBC and the WB / CBS, UPN and the CW / ABC and FOX - their own shows lead their prime time, and stay on that network only |

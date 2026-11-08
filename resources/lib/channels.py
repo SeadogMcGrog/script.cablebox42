@@ -163,18 +163,18 @@ GENRE_RENAMES = {
     "Reality": _("Reality TV"), "Action & Adventure": _("Action Channel"), "Crime": _("Crime & Justice"),
     "Mystery": _("Mystery Channel"), "Western": _("Western Channel"), "Game Show": _("Game Show Channel"),
     "Soap": _("Soap Channel"), "Talk": _("Talk TV"), "News": _("News 42"),
+    # other spellings of a station's genres share its channel
+    "Sitcom": _("Comedy Channel"), "Action": _("Action Channel"), "Game-Show": _("Game Show Channel"),
+    "Educational": _("Documentary 42"),
 }
 
 
-# (Nickelodeon, Cartoon Network and PBS shows go to Chameleon, Animation
-# Station and PES instead - see stations.py)
-STUDIO_BRANDS = ["Disney", "Pixar", "Hanna-Barbera", "Warner Bros. Animation",
-                 "HBO", "BBC", "Amblin", "Lucasfilm", "Marvel", "DreamWorks",
-                 "Studio Ghibli", "Jim Henson", "Rankin/Bass"]
-
-
-def auto_lineup(progress=None, min_shows=5, min_movies=8, max_tv=14, max_movie=6, mv_paths=None):
+def auto_lineup(progress=None, min_shows=5, min_movies=8, max_tv=14, mv_paths=None):
     """Build a sensible lineup from the Kodi library.
+
+    Only channels a built-in station brands (its name and logo) are made, plus
+    the TV Guide; anything else (a studio, a movie genre with no station) is the
+    viewer's to add in the Channel manager.
 
     mv_paths: the music video folder the viewer chose in Build my lineup (when
     the library has no music videos).  Returns a list of channel dicts (not
@@ -205,29 +205,22 @@ def auto_lineup(progress=None, min_shows=5, min_movies=8, max_tv=14, max_movie=6
         n = sum(1 for s in shows if set(gs).intersection(s.get("genre", [])))
         sized.append((n, name, gs))
     sized.sort(key=lambda x: -x[0])
+    # only genres a built-in station stands for (Comedy Corner, Orbit TV...)
+    station_genres = set(g for st in stations.STATIONS for g in st["match"].get("genres", []))
     by_name = {}
     for n, name, gs in sized:
-        if n < min_shows or len(by_name) >= max_tv:
+        if n < min_shows or len(by_name) >= max_tv or not station_genres.intersection(gs):
             continue
         by_name[name] = new_channel(num, name, "network", [{"type": "tvgenre", "value": g} for g in gs],
                                     _genre=True)
         chans.append(by_name[name])
         num += 1
 
-    covered = set(s["value"] for c in by_name.values() for s in c["sources"])
     make_nets = len(shows) >= 12
-    if make_nets:              # the networks' time blocks air these genres too
-        covered |= set(GENERAL) | set(g for row in NETWORK_DAY if row[4] != "movies" for g in row[4])
-    orphans = sorted(s["title"] for s in shows if not covered.intersection(s.get("genre", [])))
     if shows and not by_name:
         # a small library: no genre has enough shows, so one channel airs them all
         chans.append(new_channel(num, _("Channel %d") % num, "network", [{"type": "alltv"}]))
         num += 1
-    elif orphans:
-        # shows whose genres are all too thin for a channel: onto the biggest
-        # genre network, by name (the channel manager can move them)
-        biggest = next(iter(by_name.values()))
-        biggest["sources"].append({"type": "tvshow", "value": orphans, "orphans": True})
 
     # no automatic decade channels (they only repeated the genre channels);
     # a decade is still a source you can pick in the channel editor
@@ -241,28 +234,14 @@ def auto_lineup(progress=None, min_shows=5, min_movies=8, max_tv=14, max_movie=6
     if len(movies) >= min_movies:
         chans.append(new_channel(num, _("Movie Channel"), "movies", [{"type": "movies"}]))
         num += 1
-    made = 0
+    # movie genres only where a station stands for them (documentaries: The
+    # Exploration Channel); no studio showcases - Disney is The Dexter Channel's
+    movie_genres = set(g for st in stations.STATIONS for g in st["match"].get("movie_genres", []))
     for g, n in mg.most_common():
-        if made >= max_movie or n < min_movies:
+        if n < min_movies or g not in movie_genres:
             continue
         chans.append(new_channel(num, _("%s Movies") % g, "movies", [{"type": "movies", "genre": g}]))
         num += 1
-        made += 1
-    if step(_("Looking for studio channels"), 85):
-        return None
-    try:
-        studio_items = library.all_tvshows_with("studio") + library.all_movies(["title", "studio"])
-    except Exception:
-        studio_items = []
-    made = 0
-    for brand in STUDIO_BRANDS:
-        n = sum(1 for it in studio_items if any(brand.lower() in s.lower() for s in it.get("studio", [])))
-        if n >= min_movies and made < 4:
-            chans.append(new_channel(num, _("%s Showcase") % brand, "network",
-                                     [{"type": "studio", "value": brand, "what": "both"}],
-                                     lineup="shuffle"))
-            num += 1
-            made += 1
     old = [m for m in movies if 0 < int(m.get("year") or 0) < 1990]
     if len(old) >= min_movies:
         chans.append(new_channel(num, _("Classic Movies"), "movies",
@@ -282,12 +261,42 @@ def auto_lineup(progress=None, min_shows=5, min_movies=8, max_tv=14, max_movie=6
     chans.append(weather)
     stations.assign(chans)
     stations.extra_channels(chans, min_shows)
+    without_station(chans)
     for c in chans:
         if c.get("type") in ("network", "movies", "loop"):
             c["home_guard"] = True      # topping up leaves a show's first-genre / network home alone
     drop_hollow(chans, min_shows)
+    place_orphans(chans, shows, make_nets)
     renumber(chans)
     return chans
+
+
+def without_station(chans):
+    """Leave out channels no built-in station took (two genre channels for one
+    station, say): Build my lineup only makes channels with a station's name
+    and logo.  The TV Guide and a small library's all-shows channel stay."""
+    import xbmc
+    from .kodiutil import log
+    for c in [c for c in chans if c.get("type") in ("network", "movies") and not c.get("station")
+              and not any(s.get("type") == "alltv" for s in c.get("sources", []))]:
+        chans.remove(c)
+        log("%s: dropped, no built-in station for it" % c["name"], level=xbmc.LOGINFO)
+
+
+def place_orphans(chans, shows, make_nets):
+    """Shows whose genres are all too thin for a channel (or whose channel was
+    dropped): onto the biggest genre network, by name (the channel manager can
+    move them).  With broadcast networks, the genres their time blocks air count
+    as covered: those shows air there."""
+    genre = [c for c in chans if c.get("_genre")]
+    if not genre:
+        return
+    covered = set(s["value"] for c in genre for s in c["sources"] if s.get("type") == "tvgenre")
+    if make_nets:
+        covered |= set(GENERAL) | set(g for row in NETWORK_DAY if row[4] != "movies" for g in row[4])
+    orphans = sorted(s["title"] for s in shows if not covered.intersection(s.get("genre", [])))
+    if orphans:
+        genre[0]["sources"].append({"type": "tvshow", "value": orphans, "orphans": True})
 
 
 def drop_hollow(chans, min_shows=5):
@@ -305,17 +314,14 @@ def drop_hollow(chans, min_shows=5):
         if len(genre) < 2:          # keep at least one genre channel
             return dropped
         renumber(chans)             # for now: home ties go to the lower number
-        first = assign.compute(chans, md=assign.MODE_TV_ONLY, explain=True)["first"]
+        # movies count too: The Dexter Channel lives on Disney's movies as well as its shows
+        first = assign.compute(chans, md=assign.MODE_ALL, explain=True)["first"]
         homes = Counter(first.values())
         n, _num, worst = min((homes.get(c["id"], 0), -c["number"], c) for c in genre)
         if n >= min_shows:
             return dropped
         chans.remove(worst)
         dropped.append(worst)
-        orphans = [s for s in worst["sources"] if s.get("orphans")]
-        if orphans:                 # the leftover shows move to the biggest genre channel left
-            rest = [c for c in genre if c is not worst]
-            max(rest, key=lambda c: homes.get(c["id"], 0))["sources"] += orphans
         log("%s: dropped, %d shows would live here" % (worst.get("generic_name", worst["name"]), n),
             level=xbmc.LOGINFO)
 

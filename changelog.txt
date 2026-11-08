@@ -11,6 +11,13 @@ Unreleased
   home, so no near-empty Action channel any more; the log names each one left out
 - Topping up a small channel never takes a show away from the channel of its main
   genre or its network (Star Trek stays on Orbit TV)
+- Build my lineup makes only channels a built-in station brands, with its own
+  name and logo: no studio showcases (Disney, BBC...) and no movie-genre channels
+  besides The Exploration Channel. Make any other channel yourself in the Channel
+  manager
+- The Dexter Channel stands in for the Disney Channel: Disney's and Pixar's shows
+  and movies go there (by studio), and it is made with 5 or more of them even
+  without a Family channel
 - Existing lineups don't change until you run Build my lineup again
 - Boombox TV, the music video channel: Build my lineup offers it with 30 or more
   music videos - Kodi's own plus every other video in their folders (TheAudioDB
