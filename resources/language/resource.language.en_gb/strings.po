@@ -3411,7 +3411,7 @@ msgctxt "#33158"
 msgid "Modern"
 msgstr ""
 
-# Movie extras (Behind the Scenes channel, stage 1)
+# Movie extras (Behind the scenes channel, stage 1)
 msgctxt "#33300"
 msgid "Movie extras"
 msgstr ""
@@ -3477,7 +3477,7 @@ msgid "[B]Summary[/B]"
 msgstr ""
 
 msgctxt "#33316"
-msgid "To change what airs, rename files or put them in a subfolder of Extras named Behind the Scenes, Making Of, Interviews, Featurettes or Documentaries (those always air).  CableBox never changes your files."
+msgid "To change what airs, rename files or put them in a subfolder of Extras named Behind the scenes, Making of, Interviews, Featurettes or Documentaries (those always air).  CableBox never changes your files."
 msgstr ""
 
 msgctxt "#33317"
@@ -3497,7 +3497,7 @@ msgid "  Skipped: %d videos"
 msgstr ""
 
 msgctxt "#33322"
-msgid "  Enough for a Behind the Scenes channel (2 hours from 5 films): %s"
+msgid "  Enough for a Behind the scenes channel (2 hours from 5 films): %s"
 msgstr ""
 
 msgctxt "#33323"
@@ -3537,7 +3537,7 @@ msgid "making-of pieces and interviews from your movies' Extras folders"
 msgstr ""
 
 msgctxt "#33333"
-msgid "CableBox hasn't found any movie extras to air yet.  It looks through your movies' Extras folders in the background while the TV is off; until then this channel shows 'No programming'.[CR][CR]Settings > Tools > Check extras shows what it found."
+msgid "It can take a few minutes the first time. Otherwise CableBox does it while the TV is off."
 msgstr ""
 
 msgctxt "#33334"
@@ -3550,7 +3550,7 @@ msgstr ""
 
 
 msgctxt "#33337"
-msgid "Measure now"
+msgid "Look now"
 msgstr ""
 
 msgctxt "#33338"
@@ -3558,11 +3558,11 @@ msgid "Looking through your movies' Extras folders..."
 msgstr ""
 
 msgctxt "#33339"
-msgid "CableBox is already measuring your extras in the background.  Try again in a minute."
+msgid "CableBox is already looking for extras - try again in a minute."
 msgstr ""
 
 msgctxt "#33340"
-msgid "Stopped - what was measured is kept"
+msgid "Stopped - what was found so far is kept"
 msgstr ""
 
 msgctxt "#33341"
@@ -3570,7 +3570,7 @@ msgid "  Lengths measured: %d of %d"
 msgstr ""
 
 msgctxt "#33342"
-msgid "      the rest are measured in the background while the TV is off, or with Measure now"
+msgid "      the rest are measured in the background while the TV is off, or with Look now"
 msgstr ""
 
 msgctxt "#33343"
@@ -3582,7 +3582,7 @@ msgid "Measuring extras: %d of %d"
 msgstr ""
 
 msgctxt "#33345"
-msgid "CableBox hasn't looked through your movies' Extras folders yet.  It does that in the background while the TV is off, or it can do it now.[CR][CR]Kodi looks for extras in a folder named Extras next to the movie's file (or inside VIDEO_TS or BDMV)."
+msgid "CableBox does it in the background while the TV is off.[CR]Kodi looks for extras in a folder named Extras next to the movie's file (or inside VIDEO_TS or BDMV)."
 msgstr ""
 
 msgctxt "#33346"
@@ -3598,7 +3598,7 @@ msgid "Later"
 msgstr ""
 
 msgctxt "#33350"
-msgid "CableBox measures the rest in the background while the TV is off, or it can measure them now."
+msgid "CableBox measures the rest in the background while the TV is off, or it can look now."
 msgstr ""
 
 msgctxt "#33351"
@@ -3610,11 +3610,11 @@ msgid "Lengths measured: %d of %d"
 msgstr ""
 
 msgctxt "#33353"
-msgid "Press OK to look for them now"
+msgid "Press OK to look for movie extras"
 msgstr ""
 
 msgctxt "#33354"
-msgid "Look for movie extras now"
+msgid "Look for movie extras"
 msgstr ""
 
 msgctxt "#33355"
@@ -3623,4 +3623,93 @@ msgstr ""
 
 msgctxt "#33356"
 msgid "  [COLOR grey]Not measured yet  %s  %s[/COLOR]"
+msgstr ""
+
+# Behind the scenes screens follow the five kinds (extras-dialogs)
+msgctxt "#33357"
+msgid "Look for movie extras now?"
+msgstr ""
+
+msgctxt "#33358"
+msgid "It can take a few minutes the first time."
+msgstr ""
+
+msgctxt "#33359"
+msgid "Look through your movies' Extras folders now?"
+msgstr ""
+
+msgctxt "#33360"
+msgid "Look for the rest now?"
+msgstr ""
+
+msgctxt "#33361"
+msgid "Add a Behind the scenes channel?"
+msgstr ""
+
+msgctxt "#33362"
+msgid "Your movies have %d h %02d min of extras to air from %d films."
+msgstr ""
+
+msgctxt "#33363"
+msgid "Add channel"
+msgstr ""
+
+msgctxt "#33364"
+msgid "No movie extras to air"
+msgstr ""
+
+msgctxt "#33365"
+msgid "See Settings > Tools > Check extras"
+msgstr ""
+
+msgctxt "#33366"
+msgid "%s has %d h %02d min to air from %d films"
+msgstr ""
+
+msgctxt "#33367"
+msgid "%d h %02d min of movie extras to air from %d films"
+msgstr ""
+
+msgctxt "#33368"
+msgid "No extras to air found - see Settings > Tools > Check extras"
+msgstr ""
+
+msgctxt "#33369"
+msgid "You already have %s on %d. Add another?"
+msgstr ""
+
+msgctxt "#33370"
+msgid "Both channels would air the same movie extras."
+msgstr ""
+
+msgctxt "#33371"
+msgid "Add another"
+msgstr ""
+
+msgctxt "#33372"
+msgid "Use the BACKLOT logo and corner bug?"
+msgstr ""
+
+msgctxt "#33373"
+msgid "Otherwise %s has no logo until you give it one."
+msgstr ""
+
+msgctxt "#33374"
+msgid "Use them"
+msgstr ""
+
+msgctxt "#33375"
+msgid "Movie extras: %d h %02d min to air from %d films"
+msgstr ""
+
+msgctxt "#33376"
+msgid "Movie extras: none to air yet"
+msgstr ""
+
+msgctxt "#33377"
+msgid "Change type"
+msgstr ""
+
+msgctxt "#33378"
+msgid "Its programming sources aren't used by this type - they're kept, not deleted."
 msgstr ""

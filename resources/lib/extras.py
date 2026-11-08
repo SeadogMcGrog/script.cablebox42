@@ -1,4 +1,4 @@
-"""Movie Extras: which files the Behind the Scenes channel airs, and their titles.
+"""Movie Extras: which files the Behind the scenes channel airs, and their titles.
 
 Pure Python (no Kodi imports), so the rules can be tested on any machine.
 Classification only looks at names; nothing here touches a file.

@@ -106,7 +106,7 @@ Movies\2001 A Space Odyssey (1968)\
   trailers and promos, galleries, music videos, short films and commentaries
   don't, and neither does anything under a minute.
 - Names like `title_t03.mkv` or "Bonus 2" are skipped. To keep one, rename it,
-  or put it in a subfolder of `Extras` named **Behind the Scenes**, **Making Of**,
+  or put it in a subfolder of `Extras` named **Behind the scenes**, **Making of**,
   **Interviews**, **Featurettes** or **Documentaries**: everything in those
   always counts. (*Settings → Programming → Also air extras with unrecognised
   names* counts them all.)
@@ -121,9 +121,12 @@ Movies\2001 A Space Odyssey (1968)\
   while the TV is off, so the first look at a big library can take a while.
   *Settings → Tools → **Check extras*** shows every movie's extras with their
   length and whether they air, and why not. Its summary says how many lengths
-  are measured so far ("Lengths measured: 2,840 of 3,092"); while some are
-  still to do it offers **Measure now**, which does the rest straight away
-  with a progress bar. *Cancel* stops it and keeps what was measured.
+  are measured so far ("Lengths measured: 2,840 of 3,092"). While some are
+  still to do it offers **Look now** (*Look for movie extras*), which does
+  the rest straight away with a progress bar; *Cancel* stops it and keeps what
+  was found so far. When it finishes it says how much there is to air. After
+  the list it offers what's next: looking for the rest, or adding a Behind
+  the scenes channel when you have enough and don't have one yet.
 
 > **Tip:** Keep clips on the same drive as your shows. A sleeping USB drive or
 > an offline network share is the most common cause of a missed break.
@@ -291,14 +294,20 @@ Main menu → **Channel manager**.
    - *Guide channel* / *Weather channel*
    - *Behind the scenes (movie extras)* — making-of pieces and interviews
      from your movies' `Extras` folders ([section 1](#1-before-you-start-get-your-library-ready)).
-     Keep the suggested name **BACKLOT** for its logo and call letters. It needs
-     no programming: it airs every movie whose extras *Check extras* marks
-     *Air*, one movie (or a few short ones) per block, with breaks only
-     between segments. It shows *No programming* until CableBox has looked
-     through the folders (in the background, while the TV is off); press
-     **OK** on that screen, or choose *Measure now* when you add the
-     channel, to do it straight away. A movie gets up to an hour per turn;
-     the rest of its extras continue on its next turn.
+     The suggested name is **BACKLOT**; give it another name and CableBox
+     asks whether to use the BACKLOT logo and corner bug anyway (*Use them* /
+     *No logo*). If you already have one, it asks before adding another
+     (*Add another* / *Cancel*). It needs no programming: it airs every movie
+     whose extras *Check extras* marks *Air*, one movie (or a few short ones)
+     per block, with breaks only between segments. A movie gets up to an
+     hour per turn; the rest of its extras continue on its next turn.
+     Once the channel is added, if CableBox hasn't found any extras yet, it
+     asks **Look for movie extras now?** (*Look now* / *Later*). With *Later*
+     the channel shows *No programming* until CableBox has looked (in the
+     background, while the TV is off). **OK** on that screen asks again
+     (*Look now* / *Cancel*), and so does *Look for movie extras* in the
+     TV's menu. If it has looked and found nothing to air, the screen says so
+     and points to *Check extras*.
 3. **Name** and **number**. If the number is taken you can move that channel
    to the next free number, slide the channels from there up by one, or pick
    another number.
@@ -341,7 +350,8 @@ Main menu → **Channel manager**.
 | Programs start on | :00 and :30, the hour, every 15 minutes, or no clock |
 | Channel commercials / bumps folder, Station ID clips | Folders for this channel only (station folders are usually easier) |
 | Preview today's schedule | The next 12 hours |
-| Type | Asks whether to use the new type's usual settings (commercials, breaks, bumps, lineup style, start times) or keep the channel's own |
+| Movie extras (Behind the scenes channels only) | How much there is to air; opens *Check extras*. Programming, planner, time blocks, What's on, lineup style and start times aren't shown for this type |
+| Type | Asks whether to use the new type's usual settings (commercials, breaks, bumps, lineup style, start times) or keep the channel's own. For Behind the scenes, Guide and Weather it says the programming sources aren't used (they're kept) |
 | Delete channel | Asks first: *Cancel* / *Delete* |
 
 Changes take effect immediately: the edited channel's schedule rebuilds from

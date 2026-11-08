@@ -287,8 +287,8 @@ class TVWindow(xbmcgui.WindowXML):
         elif aid in INFO:
             if self.cur_entry and self.cur_entry.get("k") == "guide":
                 self.channel_list()
-            elif self.extras_waiting():
-                self.measure_extras()
+            elif self.extras_waiting() and not library.extras_scanned():
+                self.ask_look_for_extras()      # a long job: one stray OK only opens a question
             else:
                 self.toggle_banner()
         elif aid in MENU:
@@ -1252,11 +1252,19 @@ class TVWindow(xbmcgui.WindowXML):
         return bool(self.ch and self.ch.get("type") == "extras" and e and e.get("k") == "card"
                     and e.get("sub") == "nosignal")
 
-    def measure_extras(self):
-        """Measure now, from BACKLOT's 'No programming' card (the viewer asked for
-        it: nothing is listed or measured on a channel change)."""
+    def ask_look_for_extras(self):
+        """OK on BACKLOT's 'No programming' card: ask first (Look now / Cancel);
+        Cancel and Back leave the card as it was."""
         from . import manager
-        manager.measure_extras_now()
+        if manager.confirm(_("It can take a few minutes the first time."), _("Look now"),
+                           heading=_("Look for movie extras now?")):
+            self.look_for_extras()
+
+    def look_for_extras(self):
+        """Look for movie extras (the viewer chose it: nothing is listed or
+        measured on a channel change)."""
+        from . import manager
+        manager.look_for_extras()
         try:
             self.lineup.schedule(self.ch)       # extras found: the schedule rebuilds once
         except Exception as exc:
@@ -1269,8 +1277,12 @@ class TVWindow(xbmcgui.WindowXML):
         nb = sched.next_block(now)
         sub = e.get("sub")
         if sub == "nosignal" and self.ch.get("type") == "extras":
-            self.card(self.ch["name"], _("No programming"), _("No movie extras to air yet"),
-                      _("Press OK to look for them now"))
+            if library.extras_scanned():        # looked already: OK wouldn't help, Check extras says why
+                self.card(self.ch["name"], _("No programming"), _("No movie extras to air"),
+                          _("See Settings > Tools > Check extras"))
+            else:
+                self.card(self.ch["name"], _("No programming"), _("No movie extras to air yet"),
+                          _("Press OK to look for movie extras"))
         elif sub == "nosignal":
             self.card(self.ch["name"], _("No programming"), _("Add sources to this channel in the Channel Manager"), "")
         elif sub == "next" and nb:
@@ -1524,7 +1536,7 @@ class TVWindow(xbmcgui.WindowXML):
         else:
             self.log_no_cc()
         if self.extras_waiting():
-            opts.append(("measure", _("Look for movie extras now")))
+            opts.append(("measure", _("Look for movie extras")))
         opts += [("sleep", _("Sleep timer")), ("off", _("Turn off TV"))]
         b = self.lineup.schedule(self.ch, ensure=False).block_at(time.time()) if self.ch else None
         hide = b["t"] if b and b.get("k") == "show" and self.ch.get("type") != "extras" else None
@@ -1535,7 +1547,7 @@ class TVWindow(xbmcgui.WindowXML):
             return
         key = opts[i][0]
         if key == "measure":
-            self.measure_extras()
+            self.look_for_extras()          # chosen from the menu: an explicit choice, no second question
         elif key == "hide":
             self.hide_show(hide)
         elif key == "now":

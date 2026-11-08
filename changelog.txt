@@ -22,10 +22,18 @@ Unreleased
   block; breaks only between segments. Add it from Add a channel; named
   BACKLOT with its own logo and corner bug by default. A film gets up to an
   hour per turn; the rest of its extras continue on its next turn
-- Measure now (Check extras, Add a channel, or OK on BACKLOT's 'No programming'
-  screen): looks through the Extras folders and measures the extras right away,
-  with a progress bar; Cancel keeps what was measured. Check extras shows
-  'Lengths measured: X of Y'
+- Look for movie extras (Look now in Check extras, after Add a channel, on
+  BACKLOT's 'No programming' screen, or in the TV's menu): looks through the
+  Extras folders and measures the extras right away, with a progress bar;
+  Cancel keeps what was found so far. It only starts when you choose it (OK on
+  the 'No programming' screen asks first) and always ends by saying how much
+  there is to air. Check extras shows 'Lengths measured: X of Y'
+- Behind the scenes screens work like the rest of CableBox: Back never answers
+  a question; adding a second Behind the scenes channel asks first; a renamed
+  one asks whether to use the BACKLOT logo and corner bug; the channel is saved
+  before CableBox offers to look; after Check extras' list it offers what's
+  next (look for the rest, or add the channel). A Behind the scenes channel's
+  settings show 'Movie extras: X h to air from N films'
 - Settings > Tools > Check extras: every movie's Extras folder (next to the
   movie, or in VIDEO_TS / BDMV) with each video's title, length and whether it
   will air on the Behind the scenes channel, and why not. The folders

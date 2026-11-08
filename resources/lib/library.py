@@ -784,7 +784,7 @@ EXTRAS_UNREADABLE_RETRY = 3 * 86400  # a file whose length couldn't be read is t
 def extras_refresh(abort=lambda: False, progress=None, retry=False):
     """Find and list movie Extras folders that changed, then measure the files
     not measured yet.  Runs in the background while the TV is off, or from
-    'Measure now' (progress(fraction, line) drives its dialog; retry=True also
+    'Look for movie extras' (progress(fraction, line) drives its dialog; retry=True also
     tries again the files whose length couldn't be read).  Saves as it goes, so
     a cancelled or interrupted run carries on next time.  Returns True when it
     finished."""
@@ -802,7 +802,7 @@ def extras_refresh(abort=lambda: False, progress=None, retry=False):
         home.clearProperty(_X_BUSY)
 
 
-_X_BUSY = "cablebox42.extras_busy"      # one scan at a time (the service and Measure now are separate)
+_X_BUSY = "cablebox42.extras_busy"      # one scan at a time (the service and Look for movie extras are separate)
 _X_STOP = "cablebox42.extras_stop"
 
 
@@ -812,7 +812,7 @@ def _home():
 
 
 def extras_take_over(wait=15.0):
-    """Measure now: ask a background scan that's running to stop, and wait for it."""
+    """Look for movie extras: ask a background scan that's running to stop, and wait for it."""
     home = _home()
     if not home.getProperty(_X_BUSY):
         return True
@@ -840,7 +840,7 @@ def _extras_refresh(abort, progress, retry):
             progress(0.3 * n / max(1, len(movies)), "list", n, len(movies))
         now = time.time()
         entry = folders.get(folder)
-        if _extras_fresh(entry, folder, now, recheck=retry):        # Measure now looks at every folder's dates
+        if _extras_fresh(entry, folder, now, recheck=retry):        # Look for movie extras looks at every folder's dates
             continue
         disc = ms[0].get("disc", "")
         base = {folder: _mtime(folder)}
@@ -899,6 +899,11 @@ def _extras_refresh(abort, progress, retry):
 def extras_unreadable():
     """Paths of Extras whose length couldn't be read (from the cache)."""
     return set(load_json(EXTRAS_FILE, {}).get("unreadable") or {})
+
+
+def extras_scanned():
+    """True once the Extras folders have been looked through (cache only, cheap)."""
+    return bool(load_json(EXTRAS_FILE, {}).get("folders"))
 
 
 def extras_status():
