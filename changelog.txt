@@ -1,4 +1,17 @@
 Unreleased
+- New station: Red Thread TV (RED), for Korean and Chinese (incl. Taiwanese)
+  dramas. Build my lineup makes it with 5 or more shows from Korean, Chinese or
+  Taiwanese networks (KBS, SBS, tvN, iQiyi, Tencent Video...) or with an original
+  title in Korean, or in Chinese characters (not Japanese). Dramas only: never a
+  show with Animation, Kids, Documentary, Reality, News or Talk as a genre. The
+  dramas no longer land on Curtain Call and Comedy Corner
+- Orbit TV is also the channel for TMDB's 'Sci-Fi & Fantasy', the biggest TV
+  genre on many libraries (it was a plain Sci-Fi Channel); fantasy airs there too
+- Build my lineup makes a genre channel only when 5 or more shows would call it
+  home, so no near-empty Action channel any more; the log names each one left out
+- Topping up a small channel never takes a show away from the channel of its main
+  genre or its network (Star Trek stays on Orbit TV)
+- Existing lineups don't change until you run Build my lineup again
 - Boombox TV, the music video channel: Build my lineup offers it with 30 or more
   music videos - Kodi's own plus every other video in their folders (TheAudioDB
   only adds what it can match), or a folder it asks for when the library has none

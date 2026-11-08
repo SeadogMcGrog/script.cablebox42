@@ -262,9 +262,11 @@ best. In order of priority:
    between channels*.
 2. Specific matches: a folder, a movie collection, a tag, a smart playlist, a
    studio.
-3. The show's **main genre**. Kodi lists genres most important first, so *Good
+3. The show's **network** (the station that stands in for it, below), or, for
+   Korean and Chinese dramas, an original title in Korean or Chinese.
+4. The show's **main genre**. Kodi lists genres most important first, so *Good
    Eats* (Documentary, Comedy) lands on the documentary channel.
-4. Decade channels, if you made any.
+5. Decade channels, if you made any.
 
 A show whose genres are all too small for a channel of their own (a lone
 western, say) goes on the biggest genre network, picked by name, so nothing in
@@ -272,7 +274,10 @@ your library is left off the air. Move it anywhere you like with *Move shows
 between channels*.
 
 A channel left with almost nothing is topped up with a few shows that suit it
-nearly as well, so no channel runs the same two shows all day. Your pinned
+nearly as well, so no channel runs the same two shows all day. Topping up never
+takes a show away from the channel of its main genre or its network (lineups
+built with *Build my lineup* from this version on; an older lineup keeps its
+homes until you build it again). Your pinned
 slots and time blocks always air what you put there.
 
 **Never the same show on two channels at once.** Even when a show is
@@ -350,7 +355,7 @@ from, the station folders and what's in them, and where to go next.
 |---|---|
 | 2 – TV Guide | The scrolling program guide |
 | 3, 4, 5 – Keystone, Beacon, Horizon | Three broadcast networks with a real network day (below), when you have 12 or more TV shows |
-| Genre networks | One per TV genre with 5 or more shows, from channel 3 up (Drama Net, Western Channel, Game Show Channel…; some become built-in stations, below). A small library with no genre that big gets one channel with every show instead |
+| Genre networks | One per TV genre that 5 or more shows would call home (their best fit, after the stations' networks), from channel 3 up (Drama Net, Western Channel, Game Show Channel…; some become built-in stations, below). A genre that many shows list but few have first (Action & Adventure, often) gets no channel; the log says so (*Action Channel: dropped, 2 shows would live here*). A small library with no genre that big gets one channel with every show instead |
 | Studio showcases | When you have enough from one studio (Disney Showcase, Hanna-Barbera Showcase…) |
 | Movie channels | Movie Channel, one per big movie genre, and Classic Movies (before 1990) |
 | 25 – Weather Channel | Your local forecast |
@@ -669,6 +674,7 @@ automatic setup gives them to matching channels:
 | **Comedy Corner** | the Comedy (or Sitcom) channel | |
 | **Curtain Call** | the Drama channel | |
 | **Heartstrings TV** | the Soap channel | |
+| **Red Thread TV** | Korean and Chinese (and Taiwanese) dramas, when you have 5 or more | |
 | **High Octane TV** | the Action channel | |
 | **Unscripted** | the Reality channel | |
 | **Jackpot TV** | the Game Show channel | |
@@ -678,7 +684,7 @@ automatic setup gives them to matching channels:
 | **Popcorn TV** | the main Movie Channel | |
 | **Picture Show** | the Classic Movies channel (before 1990) | |
 | **News 42** | the News channel, on **42** | |
-| **Orbit TV** | the Science Fiction channel | |
+| **Orbit TV** | the Science Fiction channel (*Sci-Fi & Fantasy* too, so fantasy airs here) | |
 | **Boombox TV** | the music video channel | |
 | **BACKLOT** | the Behind the scenes channel (movie extras) | |
 
@@ -693,6 +699,7 @@ network outranks its genre when CableBox picks its home channel:
 | Animation Station | Cartoon Network, Adult Swim, Boomerang, Toonami |
 | The Dexter Channel | Disney Channel, Disney Junior, Disney XD, Toon Disney, ABC Family |
 | Comedy Corner | Comedy Central |
+| Red Thread TV | Korea: KBS, MBC, SBS, tvN, JTBC, OCN, ENA, Channel A, MBN, TV Chosun, Mnet · China: CCTV, Hunan TV, Zhejiang TV, Dragon TV, Jiangsu TV, Beijing TV, Tencent Video, iQiyi, Youku, Mango TV, Bilibili · Taiwan: CTV, CTS, TTV, FTV, SET, GTV. Also any show whose *original title* is in Korean, or in Chinese characters (not Japanese), so dramas a streaming service made count too. Dramas only: never a show with Animation, Kids, Documentary, Reality, News or Talk among its genres |
 | Keystone / Beacon / Horizon | NBC and the WB / CBS, UPN and the CW / ABC and FOX - their own shows lead their prime time, and stay on that network only |
 | Others | Syfy (Orbit TV), Bravo, E! and TLC (Unscripted), GSN (Jackpot TV), CNN and MSNBC (News 42), Court TV and truTV (Siren TV), Lifetime and SOAPnet (Heartstrings TV), INSP (Tumbleweed TV) |
 
