@@ -110,6 +110,8 @@ def describe_source(s):
     v = ", ".join(v[:4]) + (_(" +%d more") % (len(v) - 4) if len(v) > 4 else "") if isinstance(v, list) else v
     if t == "network":
         return _("Shows that aired on %s") % v
+    if t == "origtitle":
+        return _("Korean and Chinese shows (by original title)")
     if t == "studio":
         return _("Studio/network '%s' (%s)") % (v, what)
     if t == "tag":

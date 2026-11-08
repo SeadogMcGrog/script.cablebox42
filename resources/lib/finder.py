@@ -54,6 +54,8 @@ def reason(src, title_l, meta, studios):
     if t == "network":
         hit = [s for s in studios.get(title_l, []) if s.lower() in set(v.lower() for v in _vals(src.get("value")))]
         return _("%s network match") % (hit[0] if hit else ", ".join(_vals(src.get("value"))[:2]))
+    if t == "origtitle":
+        return _("Original title in Korean or Chinese")
     if t == "studio":
         return _("Studio contains '%s'") % ", ".join(_vals(src.get("value")))
     if t == "tag":

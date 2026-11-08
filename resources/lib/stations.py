@@ -72,6 +72,18 @@ STATIONS = [
     {"id": "siren_tv", "name": "Siren TV", "call": "SRN", "logo": "siren_tv.png",
      "match": {"genres": ["Crime"]},
      "networks": ["Court TV", "truTV", "Investigation Discovery", "ID"]},
+    # Korean and Chinese (incl. Taiwanese) dramas: no genre of their own, so by
+    # network, or by an original title in Hangul or Chinese characters (dramas a
+    # streaming service made); dramas only, never cartoons, documentaries or variety
+    {"id": "red_thread_tv", "name": "Red Thread TV", "call": "RED", "logo": "red_thread_tv.png",
+     "bug": "red_thread_tv_bug.png", "match": {},
+     "networks": ["KBS1", "KBS2", "KBS", "MBC", "SBS", "tvN", "JTBC", "OCN", "ENA", "Channel A", "MBN",
+                  "TV Chosun", "Mnet",
+                  "CCTV", "CCTV-8", "Hunan TV", "Zhejiang TV", "Dragon TV", "Jiangsu TV", "Beijing TV",
+                  "Tencent Video", "iQiyi", "iQIYI", "Youku", "Mango TV", "Bilibili",
+                  "CTV", "CTS", "TTV", "FTV", "SET Metro", "SET TV", "GTV"],
+     "scripts": ["hangul", "han"],
+     "not_genres": ["Animation", "Kids", "Documentary", "Reality", "News", "Talk"]},
     {"id": "heartstrings_tv", "name": "Heartstrings TV", "call": "LUV", "logo": "heartstrings_tv.png",
      "match": {"genres": ["Soap"]},
      "networks": ["SOAPnet", "Lifetime", "Hallmark Channel"]},
@@ -150,9 +162,9 @@ def apply(ch, station):
         tags = _library_tags(station["add_tags"])
         if tags:
             ch.setdefault("sources", []).append({"type": "tag", "value": tags, "what": "both", "station_extra": True})
-    nets = _library_networks(station.get("networks"))
-    if nets:
-        src = {"type": "network", "value": nets, "station_extra": True}
+    extra = station_sources(station)
+    if extra:
+        src = extra[0]
         if ch.get("broadcast"):
             # a broadcast network's own shows (Keystone <- NBC): in full in its
             # prime time and its general programming, not dealt out like the rest
@@ -161,7 +173,21 @@ def apply(ch, station):
                 if dp.get("prime"):
                     dp["own"] = [dict(src)]
         else:
-            ch.setdefault("sources", []).append(src)
+            ch.setdefault("sources", []).extend(extra)
+
+
+def station_sources(station):
+    """The sources a station brings to its channel: its networks as the library
+    spells them, and (Red Thread TV) original titles in a script.  A station's
+    not_genres ride along on each, so they never pick up a cartoon or a documentary."""
+    out = []
+    bad = {"not_genres": list(station["not_genres"])} if station.get("not_genres") else {}
+    nets = _library_networks(station.get("networks"))
+    if nets:
+        out.append(dict({"type": "network", "value": nets, "station_extra": True}, **bad))
+    if station.get("scripts"):
+        out.append(dict({"type": "origtitle", "value": list(station["scripts"]), "station_extra": True}, **bad))
+    return out
 
 
 _NETS = [0, {}]
@@ -186,6 +212,14 @@ def _library_networks(names):
 
 
 def network_shows(station):
+    if station.get("scripts") or station.get("not_genres"):
+        # each show once, cartoons etc. left out (one library call)
+        try:
+            from . import library
+            return len(library.station_titles(_library_networks(station.get("networks")),
+                                              station.get("scripts"), station.get("not_genres")))
+        except Exception:
+            return 0
     nets = set(n.lower() for n in _library_networks(station.get("networks")))
     return sum(c for n, c in _network_counts().items() if n.lower() in nets)
 
@@ -235,9 +269,9 @@ def _separate_networks(chans):
     cable = set()
     for st in STATIONS:
         if st.get("networks") and not st["match"].get("broadcast"):
-            nets_lib = _library_networks(st["networks"])
-            if nets_lib:
-                cable |= set(s["title"] for s in library.resolve([{"type": "network", "value": nets_lib}])["series"])
+            srcs = station_sources(st)
+            if srcs:
+                cable |= set(s["title"] for s in library.resolve(srcs)["series"])
     for c in nets:
         others = (set().union(*[t for cid, t in own.items() if cid != c["id"]]) | cable) - own[c["id"]]
         if others:

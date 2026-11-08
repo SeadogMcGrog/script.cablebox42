@@ -254,17 +254,76 @@ def _resolve_by_field(field, operator):
     return fn
 
 
+def _genres_ok(show, not_genres):
+    """False when the show has one of these genres (any capitalisation)."""
+    if not not_genres:
+        return True
+    bad = set(g.lower() for g in not_genres)
+    return not bad.intersection(g.lower() for g in show.get("genre", []))
+
+
+def _on_networks(show, wanted):
+    return any((x or "").lower() in wanted for x in show.get("studio", []))
+
+
 def _resolve_network(src, pool):
     """TV shows that aired on a network (Kodi keeps a show's network in its
-    Studio field).  Exact name, any capitalisation - "NBC" must not catch MSNBC."""
+    Studio field).  Exact name, any capitalisation - "NBC" must not catch MSNBC.
+    not_genres on the source: shows with any of those genres are left out."""
     vals = src.get("value") or []
     wanted = set(v.lower() for v in (vals if isinstance(vals, list) else [vals]) if v)
-    for s in all_tvshows_with("studio"):
-        if not any((x or "").lower() in wanted for x in s.get("studio", [])):
+    bad = src.get("not_genres")
+    for s in all_tvshows_with("studio", "genre") if bad else all_tvshows_with("studio"):
+        if not _on_networks(s, wanted) or not _genres_ok(s, bad):
             continue
         ser = _series_from_show(s)
         if ser:
             pool["series"].append(ser)
+
+
+def _in_ranges(ch, ranges):
+    o = ord(ch)
+    return any(a <= o <= b for a, b in ranges)
+
+
+HANGUL = ((0xAC00, 0xD7A3), (0x1100, 0x11FF), (0x3130, 0x318F), (0xA960, 0xA97F), (0xD7B0, 0xD7FF))
+HAN = ((0x4E00, 0x9FFF), (0x3400, 0x4DBF), (0xF900, 0xFAFF), (0x20000, 0x2FA1F))
+KANA = ((0x3040, 0x30FF), (0x31F0, 0x31FF), (0xFF66, 0xFF9F))
+
+
+def in_script(text, scripts):
+    """Is a title written in one of these scripts?  "hangul": any Korean letter;
+    "han": Chinese characters and no Japanese kana (so not a Japanese title)."""
+    text = text or ""
+    if "hangul" in scripts and any(_in_ranges(c, HANGUL) for c in text):
+        return True
+    if "han" in scripts and any(_in_ranges(c, HAN) for c in text)             and not any(_in_ranges(c, KANA) for c in text):
+        return True
+    return False
+
+
+def _resolve_origtitle(src, pool):
+    """TV shows whose original title (Kodi's originaltitle) is in a script:
+    Korean and Chinese dramas whatever network the library names (Netflix, Viki...)."""
+    scripts = src.get("value") or []
+    scripts = scripts if isinstance(scripts, list) else [scripts]
+    for s in all_tvshows_with("originaltitle", "genre"):
+        if not in_script(s.get("originaltitle"), scripts) or not _genres_ok(s, src.get("not_genres")):
+            continue
+        ser = _series_from_show(s)
+        if ser:
+            pool["series"].append(ser)
+
+
+def station_titles(networks, scripts=None, not_genres=None):
+    """Titles of the TV shows a station would get (its networks, original titles
+    in its scripts, minus not_genres), from one library call; episodes aren't checked."""
+    wanted = set(n.lower() for n in networks or [])
+    out = set()
+    for s in all_tvshows_with("studio", "genre", "originaltitle"):
+        if (_on_networks(s, wanted) or (scripts and in_script(s.get("originaltitle"), scripts)))                 and _genres_ok(s, not_genres):
+            out.add(s["title"])
+    return out
 
 
 def network_counts():
@@ -452,6 +511,7 @@ RESOLVERS = {
     "alltv": _resolve_alltv,
     "tvshow": _resolve_tvshow,
     "network": _resolve_network,
+    "origtitle": _resolve_origtitle,
     "tvgenre": _resolve_tvgenre,
     "tvdecade": _resolve_tvdecade,
     "movies": _resolve_movies,

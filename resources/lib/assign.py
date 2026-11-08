@@ -65,7 +65,7 @@ def score(src, title, is_movie, meta, n_titles):
         return 80
     if t == "playlist":
         return 75
-    if t == "network":
+    if t in ("network", "origtitle"):
         return 74                             # the network it aired on beats its genre
     if t == "studio":
         return 70

@@ -3873,3 +3873,12 @@ msgstr ""
 msgctxt "#33419"
 msgid "trailer or sample"
 msgstr ""
+
+# Red Thread TV (sorter fixes)
+msgctxt "#33420"
+msgid "Original title in Korean or Chinese"
+msgstr ""
+
+msgctxt "#33421"
+msgid "Korean and Chinese shows (by original title)"
+msgstr ""
