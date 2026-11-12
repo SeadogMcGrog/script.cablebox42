@@ -526,3 +526,26 @@ def rename_folder(old_name, new_name):
 
 def clear_cache():
     _DIR_CACHE.clear()
+
+def clips_fingerprint(chans):
+    """What the station folders hold for these channels (clip file names per kind,
+    time-block folders too), read fresh: refresh-on-close compares it before and
+    after (manager.refresh_if_changed)."""
+    import hashlib
+    import json
+    clear_cache()
+    out = []
+    for ch in chans:
+        f = channel_folder(ch)
+        if not f:
+            continue
+        folders = [f] + [_subfolder(f, b.get("name"), b.get("call"), loose=True)
+                         for b in ch.get("brand_blocks") or []]
+        for folder in folders:
+            for kind in sorted(KIND_NAMES):
+                sub = kind_folder(folder, kind)
+                if sub:
+                    out.append([ch.get("id"), sub, sorted(x for x in _listdir(sub)[1]
+                                                          if x.lower().endswith(VIDEO_EXT))])
+    return hashlib.md5(json.dumps(out, sort_keys=True).encode("utf-8")).hexdigest()
+

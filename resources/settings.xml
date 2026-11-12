@@ -83,7 +83,8 @@
         <setting id="tool_extras" type="action" label="33302" action="RunScript(script.cablebox42,tool,extras)" option="close"/>
         <setting id="tool_cckeys" type="action" label="32940" action="RunScript(script.cablebox42,tool,cckeys)" option="close"/>
         <setting id="tool_progress" type="action" label="32055" action="RunScript(script.cablebox42,tool,progress)" option="close"/>
-        <setting id="tool_rebuild" type="action" label="32056" action="RunScript(script.cablebox42,tool,rebuild)" option="close"/>
+        <setting id="tool_refresh" type="action" label="33431" action="RunScript(script.cablebox42,tool,refresh)" option="close"/>
+        <setting id="tool_restart_series" type="action" label="33432" action="RunScript(script.cablebox42,tool,restart_series)" option="close"/>
         <setting id="tool_reset" type="action" label="32092" action="RunScript(script.cablebox42,tool,reset)" option="close"/>
     </category>
     <category label="33134">

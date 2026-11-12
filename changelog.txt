@@ -1,4 +1,12 @@
 Unreleased
+- Changes apply by themselves: closing Settings, the Channel manager, the Weekly
+  planner or a tool refreshes the schedules when something they're planned from
+  changed (channels, pins, station clips, commercials, promo and break settings),
+  from each channel's next programme. Picture, sound and other device settings
+  don't. Settings changed from Kodi's own add-on screen apply once the TV is off
+- Tools: 'Rebuild schedules' is now 'Refresh schedules (keep my place)' (no
+  question asked), and 'Start series over...' (all shows, one channel or one show)
+  is the only thing that sends shows back to their first episode
 - Editing a channel (its shows, pins, breaks) or Tools > Rebuild schedules no
   longer replans from the half hour: what's on air keeps playing, the change
   applies from the next programme, and every show's next episode stays next

@@ -120,7 +120,18 @@ A task often starts as "implement `briefs\<name>.md`".
   case/punctuation ignored). Only time-block folders may match by "ends with". The old
   ends-with rule made "Disney Showcase 13" pass for channel 3.
 - **Breaks are planned hours ahead**, so new clips appear in breaks planned later;
-  *Tools → Rebuild schedules* uses them at once. Don't promise "from the next break".
+  a refresh (on closing Settings / the Channel manager / a tool, or *Tools → Refresh
+  schedules*) uses them from each channel's next programme. Don't promise "from the
+  next break".
+- **Never throw a plan away to apply a change: cut it** (`ChannelSchedule.cut`). A
+  wipe replans from the half hour, replacing what's on air and skipping every episode
+  already planned (bookmarks move when an episode is *planned*). Every bookmark change
+  while planning goes in the schedule's undo log; cut() puts them back. A show's
+  bookmark is shared (series.json) only on its home channel; channels' hashes include
+  their home shows so the old home is cut when a show moves.
+- **Anything that changes what schedules are planned from must end in
+  `manager.refresh_if_changed()`** (settings, lineup, station clips; applied.json
+  remembers what the last refresh used), holding `TOOL_BUSY` like any tool.
 - **Kodi caches an add-on's strings until Kodi restarts.** After editing `strings.po`,
   restart Kodi before testing: `_()` finds the id in the new file but Kodi returns the
   old text for it (a changed `%s` count then raises "not enough arguments").

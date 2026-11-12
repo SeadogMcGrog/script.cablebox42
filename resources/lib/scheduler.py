@@ -1571,6 +1571,50 @@ class Lineup(object):
             level=xbmc.LOGINFO)
         return took
 
+    def reset_progress(self, kind, value=None, progress=None):
+        """Start series over: kind 'all', 'channel' (value: its id - the shows whose
+        home it is, its own runs and its pinned slots) or 'show' (value: the show's
+        title, wherever it airs).  Everything after what's on air is cut first, then
+        those bookmarks go back to the first episode and the plan is made again."""
+        now = time.time()
+        with self.lock:
+            self.reload_channels()
+            self.refresh_assignment()
+            if not bookmarks.exists():
+                self.migrate(now)
+            self.cut_changed(now, every=True)
+            home = (self.assignment or {}).get("home") or {}
+
+            def chosen(key, cid):
+                show = key.split("|", 1)[-1]         # 'rule:<id>|tv:Title' -> 'tv:Title'
+                if kind == "all":
+                    return True
+                if kind == "show":
+                    return show == "tv:%s" % value
+                return cid == value
+            if kind == "all":
+                bookmarks.forget()
+            else:
+                bookmarks.forget([k for k in bookmarks.keys()
+                                  if (kind == "show" and k == "tv:%s" % value) or
+                                  (kind == "channel" and k.startswith("tv:") and home.get(k[3:].lower()) == value)])
+            for c in self.channels:
+                s = self.schedule(c, ensure=False)
+                st = s.data["state"]
+                for k in [k for k in st["last"] if chosen(k, c["id"])]:
+                    del st["last"][k]
+                if kind == "all" or (kind == "channel" and c["id"] == value):
+                    st.pop("rr", None)               # pinned slots rotating shows: from the first
+                s.save()
+            for i, c in enumerate(self.channels):
+                if progress:
+                    progress(i, len(self.channels), c)
+                try:
+                    self.schedule(c, ensure=False).ensure(now)
+                except Exception as exc:
+                    log("Schedule build failed for %s: %s" % (c.get("name"), exc))
+        log("Start series over: %s %s" % (kind, value or ""), level=xbmc.LOGINFO)
+
     def migrate(self, now=None):
         """The first run with shared bookmarks (no series.json yet).  Each channel's
         plan is cut after the programme on air, so its bookmarks go back to what has

@@ -376,8 +376,8 @@ Main menu → **Channel manager**.
 | Type | Asks whether to use the new type's usual settings (commercials, breaks, bumps, lineup style, start times) or keep the channel's own. For Behind the scenes, Guide and Weather it says the programming sources aren't used (they're kept) |
 | Delete channel | Asks first: *Cancel* / *Delete* |
 
-Changes take effect immediately: the edited channel's schedule rebuilds from
-now on, and episode progress is kept.
+Changes apply from the channel's next programme when you close the Channel
+manager: what's on air keeps playing, and every show keeps its next episode.
 
 ### Renumber
 
@@ -437,8 +437,9 @@ Stations/
 **When do new files show up?** A new or changed **logo** appears within a couple
 of minutes. **Clips** go into the breaks CableBox plans from then on — it plans
 each channel several hours ahead (*Settings → Programming → Schedule ahead*),
-so breaks already planned keep their clips. To use new clips straight away:
-*Settings → Tools → Rebuild schedules* (episode progress is kept).
+so the programme on air keeps its breaks. Closing the Channel manager (or
+*Settings → Tools → Refresh schedules*) puts new clips into breaks from each
+channel's next programme.
 
 ### How CableBox matches a folder to a channel
 
@@ -786,9 +787,10 @@ Extras folder* and put them in the show's `Extras` folder with *Promo* or
 *Trailer* in the name (2 minutes at most). Or put your own promo clips in a
 channel's station folder under `promos/`; those always come first.
 
-Promos already planned stay in the breaks they're in; *Settings → Tools →
-Rebuild schedules* applies a change straight away. With promos off, breaks are
-exactly as they were before.
+A change applies from each channel's next programme when you close Settings;
+the programme on air keeps its breaks (a promo in them that would now be wrong is
+changed to what really follows). With promos off, breaks are exactly as they were
+before.
 
 **Check a promo without waiting for a break:** *Settings → Advanced →
 Preview promo*, pick the channel, then **Up next** (its next programme) or
@@ -937,9 +939,9 @@ channel right there.
    different image name works, but `logo.png` is the sure thing.
 4. Clips listed but not playing → *Settings → Tools → Check my videos* (unreadable
    or too-long clips are skipped).
-5. Just added clips? Breaks are planned hours ahead, so already-planned breaks
-   keep their old clips. *Settings → Tools → Rebuild schedules* uses the new ones
-   straight away.
+5. Just added clips? Breaks are planned hours ahead. Close the Channel manager or
+   use *Settings → Tools → Refresh schedules*: the new clips are used from each
+   channel's next programme.
 
 **I renamed a channel and lost its logo and clips.**
 *Branding & clips → Use an existing folder…* → pick the old folder; it's renamed
@@ -989,8 +991,14 @@ Normal right after installing or a big change — listings appear within a minut
 or two.
 
 **My pinned shows don't appear yet.**
-Changes apply from now on. *Preview today's schedule*, or *Settings → Tools →
-Rebuild schedules*.
+Changes apply from each channel's next programme. *Preview today's schedule*, or
+*Settings → Tools → Refresh schedules*.
+
+**I want a show to start again from episode one.**
+*Settings → Tools → Start series over…* → *One show* → pick it → *Start over*.
+*One channel* does every show on a channel, *All shows* the whole lineup. Nothing
+else ever moves a show back: changing settings or channels, moving a show to
+another channel, or taking it off and adding it back later all keep its place.
 
 **My "In progress" list filled up with half-watched episodes.**
 From before the protection existed: *Settings → Tools → Clean up my 'In

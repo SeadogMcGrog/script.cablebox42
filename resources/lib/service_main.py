@@ -8,6 +8,9 @@ import xbmcgui
 from . import kodiutil as K
 
 
+TOOL_BUSY = "script.cablebox42.tool"     # manager.TOOL_BUSY (the menus aren't imported up front)
+
+
 def run():
     monitor = xbmc.Monitor()
     home = xbmcgui.Window(10000)
@@ -76,6 +79,14 @@ def run():
                     return
                 progress.repair_pending()
         was_on = on
+        if not on and not home.getProperty(TOOL_BUSY) and not home.getProperty("cablebox42.main_menu"):
+            # settings changed from Kodi's own add-on settings (the CableBox menu and
+            # its tools refresh on their own): apply them, never while the TV is on
+            try:
+                from . import manager
+                manager.refresh_if_changed(clips=False, quiet=True)
+            except Exception as exc:
+                K.log_err("refresh after a settings change failed: %s" % exc)
         if not on and idle <= 0:
             try:
                 progress.repair_pending()

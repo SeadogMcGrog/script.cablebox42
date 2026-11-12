@@ -1,8 +1,10 @@
 """Add-on menus: lineup wizard and the channel manager.
 
 Everything is done with Kodi's own dialogs, so it works with the remote on
-any skin.  Channel changes take effect immediately - the schedule for an
-edited channel simply rebuilds itself from 'now'.
+any skin.  Changes apply from each channel's next programme: closing Settings,
+the Channel manager, the Weekly planner or a tool refreshes the schedules if
+anything they're planned from changed (refresh_if_changed); what's on air and
+every show's next episode stay.
 """
 import json
 import os
@@ -16,6 +18,7 @@ from . import channels as C
 from . import library
 from . import scheduler
 from . import assign
+from . import stations
 from .kodiutil import _
 
 D = xbmcgui.Dialog()
@@ -745,24 +748,141 @@ def prebuild(chans=None):
     library.durations().save()
 
 
-def refresh_schedules():
-    """Settings, channels and clips as they are now, from the end of each channel's
-    programme on air; every show keeps its next episode (scheduler.Lineup.refresh)."""
-    lineup = scheduler.Lineup(K.schedule_cfg())
-    pd = xbmcgui.DialogProgress()
-    pd.create(TITLE, _("Programming the channels..."))
+# ------------------------------------------------------------------ keep my place
+# Schedules are planned hours ahead.  When what they're planned from changes
+# (scheduling settings, the lineup, station clips), they're refreshed: what's on
+# air stays, the change applies from each channel's next programme, every show
+# keeps its next episode (scheduler.Lineup.refresh).  applied.json remembers what
+# the last refresh used, so whichever place notices a change first refreshes once.
+APPLIED_FILE = os.path.join(K.PROFILE, "applied.json")
+COSMETIC = ("name", "number", "callsign", "logo")      # never change a plan
+
+
+def schedule_inputs(clips=True):
+    """Fingerprints of what schedules are planned from: the settings planning
+    reads, the lineup (without names, numbers and logos) and, with clips=True,
+    the clip files in the station folders."""
+    import hashlib
+
+    def md5(x):
+        return hashlib.md5(json.dumps(x, sort_keys=True).encode("utf-8")).hexdigest()
+    cfg = K.schedule_cfg()
+    cfg.update(stations_folder=K.setting("stations_folder"), share_mode=K.setting_int("share_mode", 0),
+               extras_unrecognised=K.setting_bool("extras_unrecognised", False),
+               av1_mode=K.setting_int("av1_mode", 0))
+    chans = C.load()
+    out = {"settings": md5(cfg),
+           "channels": md5([{k: v for k, v in c.items() if k not in COSMETIC} for c in chans])}
+    if clips:
+        out["clips"] = stations.clips_fingerprint(chans)
+    return out
+
+
+def refresh_now(quiet=False):
+    """Refresh schedules, keep my place.  Holds TOOL_BUSY (open_settings waits for
+    it, so the menu never opens over this); a small progress bar shows only if it
+    takes more than a moment, never with quiet=True (the background service)."""
+    home = xbmcgui.Window(10000)
+    mine = not home.getProperty(TOOL_BUSY)
+    if mine:
+        home.setProperty(TOOL_BUSY, "refresh")
+    bar, t0 = [None], time.time()
+
+    def progress(i, n, _c):
+        if quiet:
+            return
+        if bar[0] is None and time.time() - t0 > 0.7:
+            bar[0] = xbmcgui.DialogProgressBG()
+            bar[0].create(TITLE, _("Updating schedules..."))
+        if bar[0] is not None:
+            bar[0].update(int(100.0 * i / max(1, n)), TITLE, _("Updating schedules..."))
     try:
-        lineup.refresh(progress=lambda i, n, c: pd.update(int(100.0 * i / max(1, n)),
-                                                         "%d  %s" % (c["number"], c["name"])))
+        scheduler.Lineup(K.schedule_cfg()).refresh(progress=progress)
+        library.durations().save()
+        K.save_json(APPLIED_FILE, schedule_inputs())
     finally:
-        pd.close()
-    library.durations().save()
+        if bar[0] is not None:
+            bar[0].close()
+        if mine:
+            home.clearProperty(TOOL_BUSY)
 
 
-def rebuild_all():
-    if not confirm(_("Rebuild every channel's schedule from now?[CR]Episode progress is kept."), _("Rebuild")):
+def refresh_if_changed(clips=True, quiet=False):
+    """Refresh if anything schedules are planned from changed since the last
+    refresh (clips=False: settings and lineup only, cheap enough to poll).  True
+    if it refreshed."""
+    try:
+        cur = schedule_inputs(clips)
+        old = K.load_json(APPLIED_FILE, None)
+        if old is None:                      # first time: this is what the plans use
+            K.save_json(APPLIED_FILE, cur)
+            return False
+        if all(old.get(k) == v for k, v in cur.items()):
+            return False
+        K.log("Schedules: %s changed - refreshing" % ", ".join(k for k, v in cur.items() if old.get(k) != v),
+              xbmc.LOGINFO)
+        refresh_now(quiet)
+        return True
+    except Exception as exc:
+        K.log_err("refresh after a change: %s" % exc)
+        return False
+
+
+def refresh_tool():
+    """Settings > Tools > Refresh schedules (keep my place): no question asked."""
+    refresh_now()
+    D.notification(TITLE, _("Schedules refreshed"), time=2000)
+
+
+def start_series_over():
+    """Settings > Tools > Start series over...: the only thing that resets where
+    shows are in their series."""
+    j = D.select(_("Start series over"), [_("All shows"), _("One channel"), _("One show")])
+    if j < 0:
         return
-    refresh_schedules()
+    if j == 0:
+        scope, q = ("all", None), _("Every show will start again from its first episode.[CR]Continue?")
+    elif j == 1:
+        progs = [c for c in C.load() if c["type"] in PROGRAM_TYPES]
+        if not progs:
+            D.ok(TITLE, _("Add a channel first."))
+            return
+        k = D.select(_("Start which channel's shows over?"), ["%3d  %s" % (c["number"], c["name"]) for c in progs])
+        if k < 0:
+            return
+        scope = ("channel", progs[k]["id"])
+        q = _("Every show on %s will start again from its first episode.[CR]Continue?") % progs[k]["name"]
+    else:
+        shows = sorted(library.resolve([{"type": "alltv"}])["series"], key=lambda s: library.natural_key(s["title"]))
+        if not shows:
+            D.ok(TITLE, _("No TV shows in the library"))
+            return
+        k = D.select(_("Start which show over?"), [s["title"] for s in shows])
+        if k < 0:
+            return
+        first = (shows[k]["episodes"] or [{}])[0].get("label") or _("its first episode")
+        scope = ("show", shows[k]["title"])
+        q = _("%s will start again from %s.[CR]Continue?") % (shows[k]["title"], first)
+    if not confirm(q, _("Start over")):      # Cancel / Start over, focus on Cancel
+        return
+    home = xbmcgui.Window(10000)
+    mine = not home.getProperty(TOOL_BUSY)
+    if mine:
+        home.setProperty(TOOL_BUSY, "restart_series")
+    try:
+        busy = xbmcgui.DialogProgressBG()
+        busy.create(TITLE, _("Updating schedules..."))
+        try:
+            scheduler.Lineup(K.schedule_cfg()).reset_progress(
+                scope[0], scope[1], progress=lambda i, n, _c: busy.update(int(100.0 * i / max(1, n))))
+            library.durations().save()
+            K.save_json(APPLIED_FILE, schedule_inputs())
+        finally:
+            busy.close()
+    finally:
+        if mine:
+            home.clearProperty(TOOL_BUSY)
+    D.notification(TITLE, _("Series started over"), time=2000)
 
 
 # ------------------------------------------------------------------ manager
@@ -2131,7 +2251,7 @@ as time goes by.  'Same show same time every day' channels air a fixed daily
 lineup and series always continue with the next episode.  Time blocks let you put
 cartoons on Saturday mornings or movies in prime time.
 
-Edit a channel and its schedule rebuilds itself from now on - episode progress is kept.
+Edit a channel and the change applies from its next programme - every show keeps its place.
 
 [B]One channel per show[/B]
 Each TV show has one home channel - the one it fits best (your own picks first,
@@ -2143,7 +2263,10 @@ Settings > Programming > 'Shows on more than one channel' changes this.
 The menu keeps to the everyday things: Watch TV, What's on now (tune straight to a
 show), the Channel manager, the Weekly planner, Settings and Help.  Lineup tools
 (build a new lineup, quick setup, move shows) and maintenance (check my videos,
-clean up In progress, rebuild schedules, start over) are on the Tools page in Settings.
+clean up In progress, refresh schedules, start series over, start over) are on the
+Tools page in Settings.  Changes to settings, channels and station clips apply from
+each channel's next programme on their own: what's on stays on, and every show keeps
+its next episode.  Only Tools > Start series over sends shows back to episode one.
 
 [B]Fine-tuning[/B]
 Settings > Tools > 'Move shows between channels': pick a show (say, Good Eats) and tick the channels it
@@ -2267,7 +2390,9 @@ TOOLS = {
     "fillers": lambda: check_fillers(),
     "extras": lambda: check_extras(),
     "progress": lambda: clean_in_progress(),
-    "rebuild": lambda: rebuild_all(),
+    "refresh": lambda: refresh_tool(),
+    "rebuild": lambda: refresh_tool(),      # the old Rebuild schedules (favourites, skins)
+    "restart_series": lambda: start_series_over(),
     "folders": lambda: make_station_folders(),
     "reset": lambda: factory_reset(),
     "cckeys": lambda: cc_button(),
@@ -2406,8 +2531,8 @@ STATION_FOLDER_GUIDE = _("[B]What goes where[/B]  (in each channel's folder)[CR]
                          "  promos/ ............ your own promos for its shows (Settings > Programming > Promos)[CR]"
                          "  <time block>/ ...... the same again, used only in that block (e.g. CAM Jr.)[CR]"
                          "A folder is matched by the channel's name, call letters or number ('Channel 7'). "
-                         "A new logo shows within a couple of minutes; new clips go into the breaks CableBox "
-                         "plans from then on (Tools > Rebuild schedules uses them straight away).")
+                         "A new logo shows within a couple of minutes; new clips are used from each channel's "
+                         "next programme once you close the Channel manager (or Tools > Refresh schedules).")
 
 
 def ensure_channel_folders(c):
@@ -2459,6 +2584,9 @@ def folder_lines(c):
     return out
 
 
+NO_REFRESH = ("refresh", "rebuild", "restart_series", "reset")
+
+
 def run_tool(name):
     fn = TOOLS.get(name)
     if fn is None:
@@ -2467,6 +2595,8 @@ def run_tool(name):
     home.setProperty(TOOL_BUSY, name)
     try:
         fn()
+        if name not in NO_REFRESH:
+            refresh_if_changed()             # e.g. Build my lineup, Move shows, Station folders
     finally:
         home.clearProperty(TOOL_BUSY)
     if tv_wants_menu() and not home.getProperty(MENU_OPEN):
@@ -2474,6 +2604,13 @@ def run_tool(name):
 
 
 def open_settings():
+    """Settings, then (once Settings and whatever was started from it are done) a
+    refresh if anything schedules are planned from changed."""
+    _settings_and_tools()
+    refresh_if_changed()
+
+
+def _settings_and_tools():
     """Settings; if a tool was started from its Tools page, wait for it to
     finish before showing the menu again (so two dialogs never collide).
     Preview promo marks itself busy too (it sets TOOL_BUSY like the tools) and
@@ -2597,8 +2734,10 @@ def _main_menu():
             D.notification(TITLE, _("Closed captions on") if on else _("Closed captions off"), time=2000)
         elif k == "manager":
             manager()
+            refresh_if_changed()             # channels, branding and station clips
         elif k == "planner":
             pick_planner_channel()
+            refresh_if_changed()
         elif k == "settings":
             open_settings()
         elif k == "help":

@@ -251,8 +251,12 @@ What airs when:
   picks never run into them.
 - **No commercials?** The gaps show a short *Up next* or station card instead.
 
-Editing a channel rebuilds its schedule from now. Episode progress is kept, so
-your shows carry on where they were.
+Changes apply from each channel's **next programme**, on their own: close
+Settings, the Channel manager, the Weekly planner or a tool and CableBox
+refreshes the schedules if anything they're planned from changed (channels,
+pins, station clips, commercials, promo and break settings). What's on air keeps
+playing, and every show stays on its next episode — wherever it moves. Picture,
+sound and other device settings don't touch the schedules.
 
 ### One home channel per show
 
@@ -328,7 +332,8 @@ Each button closes Settings and opens the tool.
 | **Check my videos** | Lists commercials, bumps and videos that can't be used, and why |
 | **Check extras** | Every movie's `Extras` folder (next to the movie's file, or in `VIDEO_TS` / `BDMV`): each video's cleaned-up title, length and *Air* or *Skipped* with the reason, plus totals at the top. Making-of pieces, documentaries, featurettes, interviews and other readably named videos air; deleted/extended/alternate scenes, bloopers, trailers and promos, galleries, music videos, short films, commentaries, anything under a minute and names like `title_t03` are skipped. Everything in an `Extras` subfolder named *Behind the scenes*, *Making of*, *Interviews*, *Featurettes* or *Documentaries* airs. CableBox lists and measures these folders in the background while the TV is off and never changes them. The summary shows *Lengths measured: X of Y*; while some are still to do, **Look now** (*Look for movie extras*) does the rest straight away (progress bar, *Cancel* keeps what's found so far) and says how much there is to air when it finishes. After the list it offers to look for the rest, or to add a Behind the scenes channel when there's enough and you have none. Videos whose length can't be read don't air |
 | **Clean up my 'In progress' list** | Clears resume points left by channel surfing. You keep the ones you tick |
-| **Rebuild schedules** | Plan every channel again from now (episode progress is kept) |
+| **Refresh schedules (keep my place)** | The same refresh CableBox does by itself when something changes: from each channel's next programme, what's on air keeps playing, every show keeps its next episode. No question asked |
+| **Start series over…** | The only thing that sends shows back to their first episode: *All shows*, *One channel* (the shows it's home to, its own runs and pinned slots) or *One show*, then *Cancel* / *Start over* (Cancel has the focus) |
 | **Start over (factory reset)** | Back to a fresh install: deletes channels, planner pins and schedules (optionally all settings too), then shows the welcome screen. Your videos, bumps, commercials and station folders are never touched. Handy for setting up the new stations cleanly |
 
 ### Shows without a good channel
@@ -469,7 +474,7 @@ Kodi's music video scraper only adds the songs it can match online, so CableBox 
 
 **Skipped:** trailers and samples, anything under 30 seconds and videos with no audio track (*Check music videos* lists them, and so does Kodi's log). AV1 videos follow the AV1 setting.
 
-**The first time:** CableBox reads each new video's length, frame rate and tags in the background (while the TV is off, or bit by bit while it's on), never on a channel change. Videos Kodi has scanned air straight away; the rest join once read, and the schedule rebuilds itself once when the first ones are in. *Check music videos* → *Read them now* does it at once.
+**The first time:** CableBox reads each new video's length, frame rate and tags in the background (while the TV is off, or bit by bit while it's on), never on a channel change. Videos Kodi has scanned air straight away; the rest join once read: when the first ones are in, the channel takes them in from its next programme. *Check music videos* → *Read them now* does it at once.
 
 ## The weekly planner
 
@@ -585,8 +590,8 @@ exactly as in a break, between 2 s and 1 s of black (clean for a recording).
 
 **Your own promos win:** video clips in a channel's station folder under
 `promos/` are played instead of the automatic ones. Like other clips, new
-promos and new settings go into breaks planned from then on (*Tools → Rebuild
-schedules* uses them straight away).
+promos and new settings apply from each channel's next programme once you close
+Settings or the Channel manager.
 
 ---
 
@@ -755,9 +760,9 @@ is switched off for the channel. It can make or repair the channel's folders,
 browse them, or adopt an unused folder.
 
 What's in the folder beats the built-in station, and a time block's folder
-beats the channel's. A new logo shows within a couple of minutes; new clips go
-into the breaks CableBox plans from then on (channels are planned several hours
-ahead, so *Settings → Tools → Rebuild schedules* uses them straight away).
+beats the channel's. A new logo shows within a couple of minutes; new clips are
+used from each channel's next programme once you close the Channel manager (or
+with *Settings → Tools → Refresh schedules*).
 
 ### The corner logo ("bug")
 
@@ -1012,8 +1017,8 @@ Everything lives in the add-on's data folder,
   or `sequential`), `playlist`, `studio`, `tag`, `keyword`, `movie`.
 - **Studio, tag and keyword** sources take `"what"`: `both`, `tv` or `movies`.
 
-After editing by hand, use *Settings → Tools →* **Rebuild schedules**. Keep a copy of
-the original first.
+After editing by hand, use *Settings → Tools →* **Refresh schedules (keep my place)**.
+Keep a copy of the original first.
 
 ---
 
@@ -1058,8 +1063,8 @@ screen briefly on every change.
 **The guide says "Updating listings…"** That's normal right after installing or
 updating. Listings appear within a minute or two as each channel is prepared.
 
-**Pinned shows don't appear yet.** Changes apply from now. Open *Preview
-today's schedule*, or use *Rebuild schedules*.
+**Pinned shows don't appear yet.** Changes apply from each channel's next
+programme. Open *Preview today's schedule*, or use *Refresh schedules*.
 
 **Getting a log for a bug report:**
 
