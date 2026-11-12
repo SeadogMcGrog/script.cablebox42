@@ -213,7 +213,7 @@ class TVWindow(xbmcgui.WindowXML):
         start = self.start_channel()
         power = K.setting_bool("power_effect", True)
         if power:
-            self.play_power_on()
+            self.play_power_on(start)
         self.tune(start, static=not power)
         if not power:
             self.first_tip()
@@ -1091,6 +1091,22 @@ class TVWindow(xbmcgui.WindowXML):
             self.progress.remember(e["p"])
         self.play_video(e["p"], li)
 
+    def clip_item(self, clip, ch=None):
+        """The turn-on, turn-off and static clips: Kodi's player info shows the
+        station's name (or CableBox 42), never the clip's file name."""
+        try:
+            ch = ch or self.ch
+            name = stations.brand(ch)["name"] if ch else ""
+        except Exception:
+            name = ""
+        name = name or "CableBox 42"
+        li = xbmcgui.ListItem(label=name, path=clip)
+        try:
+            li.getVideoInfoTag().setTitle(name)
+        except Exception:
+            pass
+        return li
+
     def play_video(self, path, li):
         """Every video of ours goes through Kodi's video playlist (one item, in the
         TV window).  That makes the video playlist Kodi's current one, so Kodi
@@ -1483,7 +1499,7 @@ class TVWindow(xbmcgui.WindowXML):
         self.set_mode("video")
         self.hold_until = time.time() + STATIC_CLIP_WAIT   # shortened once the clip is on screen
         try:
-            self.play_video(clip, xbmcgui.ListItem(path=clip))
+            self.play_video(clip, self.clip_item(clip))
         except Exception as exc:
             K.log_err("static clip: %s" % exc)
             self.hold_until = 0
@@ -1491,7 +1507,7 @@ class TVWindow(xbmcgui.WindowXML):
     POWER_ON = K.media("power_on.mp4")
     POWER_OFF = K.media("power_off.mp4")
 
-    def play_power_on(self):
+    def play_power_on(self, ch=None):
         clip = self.POWER_ON
         self.power_on = True
         self.play_token += 1
@@ -1500,7 +1516,7 @@ class TVWindow(xbmcgui.WindowXML):
         self.set_mode("video")
         self.hold_until = time.time() + POWER_ON_LEN + 2.5   # shortened once the clip is on screen
         try:
-            self.play_video(clip, xbmcgui.ListItem(path=clip))
+            self.play_video(clip, self.clip_item(clip, ch))      # the channel coming on
         except Exception as exc:
             K.log_err("power-on clip: %s" % exc)
             self.end_power_on()
@@ -1565,7 +1581,7 @@ class TVWindow(xbmcgui.WindowXML):
         self.set_mode("video")
         t0 = time.time()
         try:
-            self.play_video(clip, xbmcgui.ListItem(path=clip))
+            self.play_video(clip, self.clip_item(clip))
         except Exception as exc:
             K.log_err("power-off clip: %s" % exc)
             return

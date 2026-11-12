@@ -1,4 +1,11 @@
 Unreleased
+- Clips get proper names: commercials, bumps, station clips and folder channels
+  use the clip's own NFO <title> (a show folder's tvshow.nfo), else the file name
+  cleaned up - no dots or underscores, no release tags (720p, x264, WEB-DL...) and
+  no bracketed ids like [zNKVcGFvfTA]. Behind the scenes extras use their NFO title
+  too. Broken NFOs are skipped (one log line). NFOs are only read, never written
+- While the TV warms up (and during the static and turn-off), Kodi's player info
+  shows the channel's name instead of the clip's file name
 - On air, titles leave the year out: the guide, the channel banner, 'Up next',
   promo and house cards, BACKLOT blocks and the home widget say 'The Fugitive',
   not 'The Fugitive (1993)' (a film's year shows as small text under its title

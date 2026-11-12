@@ -506,13 +506,18 @@ def _basename(p):
 
 
 def _file_item(p, show=""):
+    """A file Kodi's library doesn't have (clips, folder channels): its NFO's
+    <title>, else its cleaned name (titles.py).  show: the folder show it belongs
+    to - then the title is the show and sub the episode's own name."""
     name = _basename(p)
-    title = re.sub(r"\.[^.]+$", "", name).replace(".", " ").replace("_", " ")
     label = ""
     m = re.search(r"[Ss](\d{1,2})[Ee](\d{1,3})", name)
     if m:
         label = "S%02dE%02d" % (int(m.group(1)), int(m.group(2)))
-    return {"path": p, "title": show or title, "sub": title if show else "", "label": label,
+    if show:
+        return {"path": p, "title": show, "sub": tnames.episode_title(p, show, log), "label": label,
+                "dur": durations().get(p)}
+    return {"path": p, "title": tnames.file_title(p, log), "sub": "", "label": label,
             "dur": durations().get(p)}
 
 
@@ -554,10 +559,11 @@ def _resolve_folder(src, pool):
         except Exception:
             dirs, files = [], []
         for d in sorted(dirs, key=natural_key):
-            eps = [_file_item(p, d) for p in _walk(path + d, VIDEO_EXT)]
+            show = tnames.folder_title(path + d, log)      # tvshow.nfo, else the cleaned folder name
+            eps = [_file_item(p, show) for p in _walk(path + d, VIDEO_EXT)]
             eps = [e for e in eps if e["dur"] > 0]
             if eps:
-                pool["series"].append({"key": "dir:" + path + d, "title": d, "episodes": eps})
+                pool["series"].append({"key": "dir:" + path + d, "title": show, "episodes": eps})
         for f in sorted(files, key=natural_key):
             if f.lower().endswith(VIDEO_EXT):
                 it = _file_item(path + f)
@@ -567,7 +573,7 @@ def _resolve_folder(src, pool):
         items = [it for it in (_file_item(p) for p in _walk(path, VIDEO_EXT)) if it["dur"] > 0]
         if mode == "sequential":
             if items:
-                pool["series"].append({"key": "seq:" + path, "title": _basename(path),
+                pool["series"].append({"key": "seq:" + path, "title": tnames.folder_title(path, log),
                                        "episodes": items})
         else:
             pool["singles"].extend(items)
@@ -1125,7 +1131,9 @@ def extras_programme(loose=False):
         for rel, path, dur in f["files"]:
             info = extras.classify(rel, f["title"], f["year"], dur, loose)
             if info["air"] and dur > 0:
-                segs.append((info["group"], natural_key(rel), {"path": path, "title": info["title"],
+                # the clip's own NFO title first (read-only, cached), else extras' cleaned name
+                name = tnames.nfo_title(re.sub(r"\.[^./\\]+$", "", path) + ".nfo", log) or info["title"]
+                segs.append((info["group"], natural_key(rel), {"path": path, "title": name,
                                                               "dur": float(dur), "group": info["group"]}))
         segs.sort(key=lambda s: (s[0], s[1]))
         if segs:

@@ -74,7 +74,7 @@ _FORCED = {
 _TECH = re.compile(
     r"\b(?:2160p|1080p|1080i|720p|576[pi]|480[pi]|4k|uhd|hdr10\+?|hdr|sdr|x26[45]|h ?26[45]|hevc|avc|xvid|divx|"
     r"aac(?:2 0)?|e?ac3|dts(?: ?hd)?(?: ?ma)?|truehd|atmos|ddp?(?: ?[257] [01])?|[257] 1|"
-    r"blu ?ray|bdrip|brrip|bdremux|remux|web ?dl|webrip|dvdrip|hdtv)\b", re.I)
+    r"blu ?ray|bdrip|brrip|bdremux|remux|web[ -]?dl|web[ -]?rip|dvdrip|hdtv)\b", re.I)
 _DISC = re.compile(r"\b(?:d\d{1,2} ?t\d{1,3}|t\d{1,3}|(?:disc|disk|cd|dvd) ?\d{1,2}|track ?\d{1,3}|title ?\d{1,3})\b", re.I)
 _LEAD_NUM = re.compile(r"^\d{1,3} ?[-.)] +")
 _GENERIC = {"bonus", "extra", "extras", "feature", "features", "special", "specials", "clip", "clips",
