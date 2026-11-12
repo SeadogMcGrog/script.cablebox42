@@ -129,6 +129,13 @@ A task often starts as "implement `briefs\<name>.md`".
   while planning goes in the schedule's undo log; cut() puts them back. A show's
   bookmark is shared (series.json) only on its home channel; channels' hashes include
   their home shows so the old home is cut when a show moves.
+- **Library caches live in each Kodi process** (TV, service, menus; 30 min). After a
+  library change call `library.new_generation()` (refresh() does) so the others drop
+  theirs too, and re-read `assign.json` before treating a channel as changed, or the
+  TV and the service undo each other's home channels.
+- **Never hand Kodi a planned file without checking it exists** (`tv.file_missing`):
+  for a missing file Kodi shows its own "Playback failed" box, which stays over the TV
+  until someone presses OK, and `onPlayBackError` doesn't come for it (12 s of black).
 - **Anything that changes what schedules are planned from must end in
   `manager.refresh_if_changed()`** (settings, lineup, station clips; applied.json
   remembers what the last refresh used), holding `TOOL_BUSY` like any tool.
