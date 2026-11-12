@@ -16,14 +16,23 @@
 #   sudo .claude/kodi21-test-vm.sh scan              # add /root/library/tv to Kodi's library
 #   sudo .claude/kodi21-test-vm.sh log               # tail CableBox and audio lines of kodi.log
 #
+# On Windows (WSL), from the repo folder:  wsl -u root -e bash .claude/kodi21-test-vm.sh start
+# A Windows checkout may give this file CRLF line endings (.gitattributes asks for LF);
+# it then reruns itself from an LF copy. Xvfb, PulseAudio and Kodi are started with
+# setsid, so they keep running when the WSL command that started them ends.
+#
 # Kodi needs a library for CableBox to build channels: put videos (with .nfo files and
 # genres) under $ROOT/root/library/tv and run `scan`, or copy a channels.json into
 # $ROOT/root/.kodi/userdata/addon_data/script.cablebox42/.
+# CRLF-safe: rerun from an LF copy (the comment mark keeps a CR off the last command)
+if grep -q $'\r' "$0" 2>/dev/null; then f=$(mktemp); tr -d '\r' < "$0" > "$f"; exec bash "$f" "$@"; fi #
 set -euo pipefail
 ROOT=${KODI_CHROOT:-/opt/k21}
 ADDON=script.cablebox42
 
-in_root() { chroot "$ROOT" /bin/bash -c "export HOME=/root DISPLAY=:9 XDG_RUNTIME_DIR=/tmp/xdg; $1"; }
+# WSLg sets PULSE_SERVER (and WAYLAND_DISPLAY) for Windows' own sound server: unset them,
+# or Kodi and pactl talk to that instead of the rig's PulseAudio
+in_root() { chroot "$ROOT" /bin/bash -c "unset PULSE_SERVER WAYLAND_DISPLAY; export HOME=/root DISPLAY=:9 XDG_RUNTIME_DIR=/tmp/xdg; $1"; }
 
 mounts() {
   for m in proc dev sys; do mountpoint -q "$ROOT/$m" || mount --bind "/$m" "$ROOT/$m"; done
@@ -44,29 +53,40 @@ setup() {
   in_root 'export $(cat /root/proxy.env | xargs) DEBIAN_FRONTEND=noninteractive
     apt-get update -qq && apt-get install -y -qq --no-install-recommends kodi kodi-bin \
       kodi-eventclients-kodi-send xvfb xauth pulseaudio pulseaudio-utils ffmpeg sox \
-      python3 python3-numpy sqlite3 x11-apps imagemagick unzip libgl1-mesa-dri dbus-x11 ca-certificates'
-  cat > "$ROOT/root/start.sh" <<'EOF'
-#!/bin/bash
-export HOME=/root DISPLAY=:9 XDG_RUNTIME_DIR=/tmp/xdg
-mkdir -p $XDG_RUNTIME_DIR; chmod 700 $XDG_RUNTIME_DIR
-pkill -9 -x kodi.bin; pkill -9 Xvfb; pkill -9 pulseaudio; sleep 1
-rm -f /tmp/.X9-lock /tmp/.X11-unix/X9
-Xvfb :9 -screen 0 1280x720x24 >/tmp/xvfb.log 2>&1 &
-sleep 2
-# a null sink: everything Kodi plays can be recorded from out.monitor
-pulseaudio --daemonize=yes --exit-idle-time=-1 -n --load="module-null-sink sink_name=out rate=48000" \
-  --load="module-native-protocol-unix" --load="module-always-sink" >/tmp/pa.log 2>&1
-sleep 1; pactl set-default-sink out
-/usr/lib/x86_64-linux-gnu/kodi/kodi.bin --standalone --windowing=x11 >/tmp/kodi.out 2>&1 &
-EOF
-  chmod +x "$ROOT/root/start.sh"
+      python3 python3-numpy sqlite3 x11-apps imagemagick unzip libgl1-mesa-dri dbus-x11 ca-certificates \
+      libasound2-plugins'
   mkdir -p "$ROOT/root/.kodi/userdata" "$ROOT/root/test"
   echo '<advancedsettings version="1.0"><loglevel>1</loglevel></advancedsettings>' \
     > "$ROOT/root/.kodi/userdata/advancedsettings.xml"
   echo "Kodi: $(in_root 'dpkg-query -W -f=\${Version} kodi-bin')"
 }
 
-start() { mounts; in_root '/root/start.sh'; sleep 25; echo "Kodi running: $(in_root 'pgrep -x kodi.bin || echo no')"; }
+# Written on every start, so an older rig picks up fixes without a new setup
+write_start() {
+  # ALSA's default device goes to PulseAudio (needs libasound2-plugins), so anything
+  # that opens ALSA is heard on the null sink too
+  printf 'pcm.!default { type pulse }\nctl.!default { type pulse }\n' > "$ROOT/etc/asound.conf"
+  cat > "$ROOT/root/start.sh" <<'EOF'
+#!/bin/bash
+unset PULSE_SERVER WAYLAND_DISPLAY
+export HOME=/root DISPLAY=:9 XDG_RUNTIME_DIR=/tmp/xdg
+mkdir -p $XDG_RUNTIME_DIR /run/user/0; chmod 700 $XDG_RUNTIME_DIR /run/user/0
+pkill -9 -x kodi.bin; pkill -9 Xvfb; pkill -9 pulseaudio; sleep 1
+rm -f /tmp/.X9-lock /tmp/.X11-unix/X9
+# setsid + nohup + no stdin: nothing dies when the shell (or WSL session) that ran this ends
+setsid nohup Xvfb :9 -screen 0 1280x720x24 >/tmp/xvfb.log 2>&1 < /dev/null &
+sleep 2
+# a null sink: everything Kodi plays can be recorded from out.monitor
+setsid nohup pulseaudio --exit-idle-time=-1 -n --load="module-null-sink sink_name=out rate=48000" \
+  --load="module-native-protocol-unix" --load="module-always-sink" >/tmp/pa.log 2>&1 < /dev/null &
+for i in $(seq 1 20); do pactl info >/dev/null 2>&1 && break; sleep 0.5; done
+pactl set-default-sink out
+setsid nohup /usr/lib/x86_64-linux-gnu/kodi/kodi.bin --standalone --windowing=x11 >/tmp/kodi.out 2>&1 < /dev/null &
+EOF
+  chmod +x "$ROOT/root/start.sh"
+}
+
+start() { mounts; write_start; in_root '/root/start.sh'; sleep 25; echo "Kodi running: $(in_root 'pgrep -x kodi.bin || echo no')"; }
 
 install_zip() {
   local zip=$1
