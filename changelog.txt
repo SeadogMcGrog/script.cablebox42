@@ -1,4 +1,11 @@
 Unreleased
+- Library changes reach the schedules by themselves: about 30 seconds after Kodi
+  finishes scanning or cleaning the video library, new episodes, movies and shows
+  (on channels whose sources cover them) are planned from each channel's next
+  programme, even with the TV on; removed files leave the plan. A burst of scans
+  gives one refresh; a scan that finds nothing changes nothing
+- New shows that no channel airs are mentioned once in the CableBox menu; OK
+  opens Shows without a good channel
 - A planned file that's gone (deleted, renamed, a share offline) no longer means
   half a minute of black under Kodi's 'Playback failed' box: a stand-in plays at
   once (a spot: the next commercial), and every channel with it planned is planned

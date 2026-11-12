@@ -1,6 +1,7 @@
 """Background helper (called from service.py): optional start-on-boot, and
 keeps schedules topped up so tuning and the guide are instant."""
 import os
+import time
 
 import xbmc
 import xbmcgui
@@ -11,8 +12,25 @@ from . import kodiutil as K
 TOOL_BUSY = "script.cablebox42.tool"     # manager.TOOL_BUSY (the menus aren't imported up front)
 
 
+LIBRARY_SETTLE = 30         # s after the last library scan/clean before a refresh
+
+
+class Monitor(xbmc.Monitor):
+    """Notes when Kodi's video library was scanned or cleaned (start-up scans and
+    add-ons scanning on CoreELEC come in bursts: one refresh after the last)."""
+    library_at = 0
+
+    def onScanFinished(self, library):
+        if library == "video":
+            self.library_at = time.time()
+
+    def onCleanFinished(self, library):
+        if library == "video":
+            self.library_at = time.time()
+
+
 def run():
-    monitor = xbmc.Monitor()
+    monitor = Monitor()
     home = xbmcgui.Window(10000)
 
     def tv_running():
@@ -69,7 +87,9 @@ def run():
     from . import progress
     was_on = tv_running()
     idle = 0
+    tick = 0
     while not monitor.abortRequested():
+        tick += 1
         on = tv_running()
         if was_on and not on:
             # TV just switched off: confirm every resume point is back (twice,
@@ -79,7 +99,8 @@ def run():
                     return
                 progress.repair_pending()
         was_on = on
-        if not on and not home.getProperty(TOOL_BUSY) and not home.getProperty("cablebox42.main_menu"):
+        if tick % 3 == 0 and not on and not home.getProperty(TOOL_BUSY) and \
+                not home.getProperty("cablebox42.main_menu"):
             # settings changed from Kodi's own add-on settings (the CableBox menu and
             # its tools refresh on their own): apply them, never while the TV is on
             try:
@@ -87,6 +108,16 @@ def run():
                 manager.refresh_if_changed(clips=False, quiet=True)
             except Exception as exc:
                 K.log_err("refresh after a settings change failed: %s" % exc)
+        if monitor.library_at and time.time() - monitor.library_at >= LIBRARY_SETTLE \
+                and not home.getProperty(TOOL_BUSY):
+            # the library changed: new episodes, shows, movies, files gone.  Works
+            # with the TV on too: a refresh never touches what's on air
+            monitor.library_at = 0
+            try:
+                from . import manager
+                manager.refresh_if_changed(clips=False, quiet=True, lib=True)
+            except Exception as exc:
+                K.log_err("refresh after a library change failed: %s" % exc)
         if not on and idle <= 0:
             try:
                 progress.repair_pending()
@@ -102,6 +133,6 @@ def run():
             except Exception as exc:
                 K.log_err("extras scan failed: %s" % exc)
             idle = 20 * 60
-        if monitor.waitForAbort(15):
+        if monitor.waitForAbort(5):
             break
-        idle -= 15
+        idle -= 5

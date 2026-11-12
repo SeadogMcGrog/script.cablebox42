@@ -57,7 +57,9 @@ is tagged, the better your lineup.
 
 - Your TV shows (and movies, if you want movie channels) **scanned into the
   Kodi library**: *Videos → Files → Add videos…*, choose the folder, set the
-  content type to *TV shows* or *Movies*, and let Kodi scan.
+  content type to *TV shows* or *Movies*, and let Kodi scan. Later scans (and
+  *Clean library*) reach CableBox by themselves, about 30 seconds after Kodi
+  finishes: new episodes and shows air from each channel's next programme.
 - Each show shows up under *TV shows* with its **genres** and episodes.
 
 **Nice to have (makes a big difference)**

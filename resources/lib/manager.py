@@ -758,10 +758,10 @@ APPLIED_FILE = os.path.join(K.PROFILE, "applied.json")
 COSMETIC = ("name", "number", "callsign", "logo")      # never change a plan
 
 
-def schedule_inputs(clips=True):
+def schedule_inputs(clips=True, lib=False):
     """Fingerprints of what schedules are planned from: the settings planning
-    reads, the lineup (without names, numbers and logos) and, with clips=True,
-    the clip files in the station folders."""
+    reads, the lineup (without names, numbers and logos), with clips=True the
+    clip files in the station folders, with lib=True Kodi's video library."""
     import hashlib
 
     def md5(x):
@@ -775,6 +775,8 @@ def schedule_inputs(clips=True):
            "channels": md5([{k: v for k, v in c.items() if k not in COSMETIC} for c in chans])}
     if clips:
         out["clips"] = stations.clips_fingerprint(chans)
+    if lib:
+        out["library"] = library.fingerprint()
     return out
 
 
@@ -799,7 +801,8 @@ def refresh_now(quiet=False):
     try:
         scheduler.Lineup(K.schedule_cfg()).refresh(progress=progress)
         library.durations().save()
-        K.save_json(APPLIED_FILE, schedule_inputs())
+        K.save_json(APPLIED_FILE, schedule_inputs(lib=True))
+        note_unplaced()
     finally:
         if bar[0] is not None:
             bar[0].close()
@@ -807,16 +810,21 @@ def refresh_now(quiet=False):
             home.clearProperty(TOOL_BUSY)
 
 
-def refresh_if_changed(clips=True, quiet=False):
+def refresh_if_changed(clips=True, quiet=False, lib=False):
     """Refresh if anything schedules are planned from changed since the last
-    refresh (clips=False: settings and lineup only, cheap enough to poll).  True
-    if it refreshed."""
+    refresh (clips=False: settings and lineup only, cheap enough to poll;
+    lib=True: Kodi's video library too, after a scan or clean).  True if it
+    refreshed."""
     try:
-        cur = schedule_inputs(clips)
+        cur = schedule_inputs(clips, lib)
         old = K.load_json(APPLIED_FILE, None)
         if old is None:                      # first time: this is what the plans use
             K.save_json(APPLIED_FILE, cur)
             return False
+        new_keys = [k for k in cur if k not in old]
+        if new_keys:                         # e.g. the library, first seen: nothing to compare
+            old.update((k, cur[k]) for k in new_keys)
+            K.save_json(APPLIED_FILE, old)
         if all(old.get(k) == v for k, v in cur.items()):
             return False
         K.log("Schedules: %s changed - refreshing" % ", ".join(k for k, v in cur.items() if old.get(k) != v),
@@ -2690,10 +2698,44 @@ def main_menu():
         home.clearProperty(MENU_OPEN)
 
 
+def note_unplaced():
+    """After a refresh: shows in the library no channel airs (and none hides).
+    Those that weren't there last time are kept for the menu to mention once
+    (menu_notes).  The very first time, they're only taken note of."""
+    try:
+        a = assign.load() or {}
+        placed = set(a.get("home") or {})
+        for group in ("explicit", "shared"):
+            for titles in (a.get(group) or {}).values():
+                placed |= set(titles)
+        hidden = set(x.lower() for c in C.load() for x in c.get("exclude", []))
+        unplaced = sorted(s["title"] for s in library.all_tvshows()
+                          if s["title"].lower() not in placed and s["title"].lower() not in hidden)
+        st = K.load_json(K.STATE_FILE, {})
+        known = st.get("unplaced_known")
+        fresh = [] if known is None else [t for t in unplaced if t not in known]
+        st["unplaced_known"] = unplaced
+        st["unplaced_new"] = [t for t in sorted(set(st.get("unplaced_new", [])) | set(fresh)) if t in unplaced]
+        K.save_json(K.STATE_FILE, st)
+    except Exception as exc:
+        K.log_err("new shows: %s" % exc)
+
+
 def menu_notes():
-    """Things the TV noticed, said once in the menu (never over the TV)."""
+    """Things the TV and the background service noticed, said once in the menu
+    (never over the TV)."""
     home = xbmcgui.Window(10000)
     st = K.load_json(K.STATE_FILE, {})
+    new = st.get("unplaced_new") or []
+    if new:
+        st["unplaced_new"] = []              # once per batch of new shows
+        K.save_json(K.STATE_FILE, st)
+        text = (_("A new show isn't on a channel yet: %s") % new[0]) if len(new) == 1 else \
+            (_("%d new shows aren't on a channel yet.") % len(new))
+        if D.yesno(TITLE, text, nolabel=_("Not now"), yeslabel=_("OK")):
+            run_finder()
+            refresh_if_changed()
+        st = K.load_json(K.STATE_FILE, {})
     at = st.get("missing_at", 0)
     if at > st.get("missing_told", 0) and not home.getProperty("cablebox42.missing_told"):
         home.setProperty("cablebox42.missing_told", "1")         # at most once per Kodi session

@@ -1536,7 +1536,11 @@ class Lineup(object):
                 if s.needs_work(now):
                     with self.lock:
                         if s.data["entries"] and s.data["hash"] != s.full_hash():
-                            self.cut_changed(now)
+                            # the other Kodi process may have worked out new homes
+                            # already (and planned with them): use those first
+                            self.assignment = assign.load() or self.assignment
+                            if s.data["hash"] != s.full_hash():
+                                self.cut_changed(now)
                         s.ensure(now)
             except Exception as exc:
                 log("Schedule build failed for %s: %s" % (ch.get("name"), exc))
@@ -1593,8 +1597,8 @@ class Lineup(object):
         channel.  Returns how long it took (s)."""
         t0 = time.time()
         now = now or t0
-        library.clear_cache()                # the library and station clips as they are now
-        stations.clear_cache()
+        library.new_generation()             # the library and station clips as they are now,
+        stations.clear_cache()               # in every Kodi process
         with self.lock:
             self.reload_channels()
             self.refresh_assignment()

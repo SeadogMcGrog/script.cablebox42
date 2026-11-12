@@ -3966,3 +3966,11 @@ msgstr ""
 msgctxt "#33448"
 msgid "Some planned episodes are missing; schedules updated"
 msgstr ""
+
+msgctxt "#33449"
+msgid "A new show isn't on a channel yet: %s"
+msgstr ""
+
+msgctxt "#33450"
+msgid "%d new shows aren't on a channel yet."
+msgstr ""

@@ -258,6 +258,14 @@ pins, station clips, commercials, promo and break settings). What's on air keeps
 playing, and every show stays on its next episode — wherever it moves. Picture,
 sound and other device settings don't touch the schedules.
 
+**Your library too:** about 30 seconds after Kodi finishes scanning or cleaning
+the video library, new episodes, movies and shows (on channels whose sources
+cover them) are in the schedules from each channel's next programme, even with
+the TV on. A scan that finds nothing changes nothing. A planned file that has
+gone never means dead air: a stand-in plays and the channel is planned again,
+the show going on with its next episode. New shows no channel airs are
+mentioned once in the CableBox menu (*OK* opens *Shows without a good channel*).
+
 ### One home channel per show
 
 Like real cable, each TV show has **one home channel**: the channel it fits

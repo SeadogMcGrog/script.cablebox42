@@ -35,6 +35,56 @@ MOVIE_PROPS = ["file", "title", "runtime", "streamdetails", "year"]
 
 _POOL_CACHE = {}
 _POOL_TTL = 1800
+# A refresh in one Kodi process (the service, after a library scan) clears the
+# library caches of the others too (the TV): it bumps this file, and every cached
+# read first checks it (at most every few seconds).
+GEN_FILE = os.path.join(PROFILE, "library.gen")
+_GEN = [0.0, 0.0]          # [generation seen, last checked]
+
+
+def _check_gen():
+    now = time.time()
+    if now - _GEN[1] < 3:
+        return
+    _GEN[1] = now
+    try:
+        g = os.path.getmtime(GEN_FILE)
+    except OSError:
+        return
+    if g != _GEN[0]:
+        if _GEN[0]:
+            _POOL_CACHE.clear()
+            _AIR_CACHE.clear()
+        _GEN[0] = g
+
+
+def new_generation():
+    """The library changed: every process reads it afresh."""
+    clear_cache()
+    try:
+        with open(GEN_FILE, "w") as f:
+            f.write("%.3f" % time.time())
+        _GEN[0] = os.path.getmtime(GEN_FILE)
+    except (IOError, OSError) as exc:
+        log("library.gen: %s" % exc)
+
+
+def fingerprint():
+    """A cheap summary of the video library (shows and their episode counts, the
+    newest episode and movie added, totals): a scan or clean that changed nothing
+    gives the same value, so it refreshes nothing."""
+    import hashlib
+    shows = sorted((s.get("title", ""), s.get("episode", 0)) for s in
+                   rpc("VideoLibrary.GetTVShows", {"properties": ["title", "episode"]}).get("tvshows", []))
+
+    def newest(method, key):
+        r = rpc(method, {"properties": ["dateadded", "file"], "limits": {"start": 0, "end": 1},
+                         "sort": {"method": "dateadded", "order": "descending"}})
+        items = r.get(key, [])
+        return [r.get("limits", {}).get("total", 0)] + ([items[0].get("dateadded"), items[0].get("file")]
+                                                         if items else [])
+    data = [shows, newest("VideoLibrary.GetEpisodes", "episodes"), newest("VideoLibrary.GetMovies", "movies")]
+    return hashlib.md5(json.dumps(data).encode("utf-8")).hexdigest()
 
 
 def natural_key(s):
@@ -552,6 +602,7 @@ def titles(pool):
 def _resolve_one(src):
     """Pool for a single source (cached).  Channel pools are merged from these,
     so the one-channel-per-show logic can see where each title came from."""
+    _check_gen()
     key = json.dumps(src, sort_keys=True)
     hit = _POOL_CACHE.get(key)
     if hit and time.time() - hit[0] < _POOL_TTL:
@@ -598,6 +649,7 @@ def _resolve_one(src):
 
 def resolve(sources):
     """Resolve a list of sources into one pool (cached for a while)."""
+    _check_gen()
     key = json.dumps(sources, sort_keys=True)
     hit = _POOL_CACHE.get(key)
     if hit and time.time() - hit[0] < _POOL_TTL:
@@ -648,6 +700,7 @@ def filler_pool(path):
     """Commercials / bumps from a folder: list of {path, dur}."""
     if not path:
         return []
+    _check_gen()
     key = "filler:" + path
     hit = _POOL_CACHE.get(key)
     if hit and time.time() - hit[0] < _POOL_TTL:
