@@ -471,9 +471,12 @@ class TVWindow(xbmcgui.WindowXML):
     def hide_busy_wheel(self, now):
         """A TV never shows a loading spinner: while a channel is coming in,
         close Kodi's busy wheel if it pops up (slow drive, screen recording...)."""
-        if now - self.play_started_at > 4:
+        if now - self.play_started_at > 4 and now - self.failed_at > 30:
             return
         promos.close_busy_wheel()
+        if now - self.failed_at < 30 and xbmc.getCondVisibility("Window.IsActive(okdialog)"):
+            # Kodi's own "Playback failed - check the log" box: never over the TV
+            xbmc.executebuiltin("Dialog.Close(okdialog,true)")
 
     def pull_back_from_fullscreen(self, now):
         """Kodi sometimes switches our video to its own full-screen player (a key
@@ -762,6 +765,9 @@ class TVWindow(xbmcgui.WindowXML):
                 self.sub_at = 0
                 self.play_substitute(e, now)
                 return
+            if self.file_missing(e.get("p")):
+                self.missing(e, key, now)
+                return
             self.play(e, now)
             self.set_mode("video")
         else:
@@ -1018,22 +1024,91 @@ class TVWindow(xbmcgui.WindowXML):
             # is normal between spots; anything longer gets commercials.
             if e["e"] - now < 4:
                 return
-            ads = self.channel_ads()
-            if ads:
-                fit = [a for a in ads if a["dur"] <= e["e"] - now] or ads
-                a = random.choice(fit)
-                self.play({"p": a["path"], "o": 0, "s": now, "t": a.get("title")}, now)
-                self.set_mode("video")
-            elif self.prop_mode != "card":
-                self.card_for({"k": "card", "sub": "id"}, now)
+            self.fill_rest(e, now)
             return
         self.retries += 1
-        if self.retries <= 1:
+        if self.retries <= 1 and not self.file_missing(e.get("p")):
             K.log("Retrying %s" % e.get("p"))
             self.play(e, now)
+        elif self.file_missing(e.get("p")):
+            self.missing(e, key, now)
         else:
             self.failed_key = key
+            self.failed_at = time.time()
             self.give_up(e)
+
+    def fill_rest(self, e, now):
+        """The rest of a spot's time: another commercial, or the station ID card."""
+        ads = [a for a in self.channel_ads() if not self.file_missing(a["path"])]
+        if ads:
+            fit = [a for a in ads if a["dur"] <= e["e"] - now] or ads
+            a = random.choice(fit)
+            self.play({"p": a["path"], "o": 0, "s": now, "t": a.get("title")}, now)
+            self.set_mode("video")
+        elif self.prop_mode != "card":
+            self.card_for({"k": "card", "sub": "id"}, now)
+
+    # ----------------------------------------------------------- missing files
+    failed_at = 0
+
+    @staticmethod
+    def file_missing(path):
+        """A planned file that isn't there (deleted, renamed, moved).  Only for
+        files and shares; a whole folder gone (a drive or share offline) counts
+        as missing too - playing it would only fail."""
+        if not path or "://" in path and not path.startswith(("smb://", "nfs://")):
+            return False
+        try:
+            return not xbmcvfs.exists(path)
+        except Exception:
+            return False
+
+    def missing(self, e, key, now):
+        """A planned file isn't there.  No black screen and no Kodi error box: a
+        programme goes straight to a stand-in, a spot to the next commercial.  A
+        programme's file is kept off the schedule (unplayable list, as for files
+        Kodi can't open) and the channel is planned again from its next programme
+        on, so the show goes on with the episode after it.  The menu says so once."""
+        path = e.get("p") or ""
+        K.log_err("Missing file, skipped: %s" % path)
+        self.failed_at = time.time()
+        if e.get("k") != "show":
+            self.fill_rest(e, now)
+            return
+        if self.really_bad(path):            # the folder is there: the file is gone
+            library.mark_bad(path, _("The file is missing"))
+        self.failed_key = key
+        self.sub_at = 0
+        self.play_substitute(e, now)
+        st = K.load_json(K.STATE_FILE, {})
+        st["missing_at"] = time.time()
+        K.save_json(K.STATE_FILE, st)
+        ch = self.ch
+        threading.Thread(target=self._replan_after_missing, args=(ch, e["s"], path),
+                         name="cablebox42-missing").start()
+
+    def _replan_after_missing(self, ch, ts, path):
+        try:
+            with self.lineup.lock:
+                s = self.lineup.schedule(ch, ensure=False)
+                s.reload()
+                s.cut()                      # from the next programme; ensure() plans on
+                s.unair(ts)                  # and this episode didn't air
+                s.save()
+                names = [ch.get("name")]
+                now = time.time()
+                for c in self.lineup.channels:   # other channels with it planned later
+                    if c["id"] == ch["id"]:
+                        continue
+                    o = self.lineup.schedule(c, ensure=False)
+                    o.reload()
+                    if any(e.get("p") == path and e["s"] > now for e in o.data["entries"]):
+                        o.cut(now)
+                        o.save()
+                        names.append(c.get("name"))
+            K.log("Missing file: %s planned again from the next programme" % ", ".join(names), xbmc.LOGINFO)
+        except Exception as exc:
+            K.log_err("replan after a missing file: %s" % exc)
 
     # ----------------------------------------------------------- unplayable files
     @staticmethod
@@ -1086,10 +1161,16 @@ class TVWindow(xbmcgui.WindowXML):
             return None
         items = [ep for ser in pool["series"] for ep in ser["episodes"]] + pool["singles"]
         items = [i for i in items if i["path"] not in avoid and not library.is_bad(i["path"])]
-        if not items:
-            return None
         long_enough = [i for i in items if i["dur"] >= room * 0.8]
-        return random.choice(long_enough or items)
+        for _try in range(5):
+            if not items:
+                return None
+            it = random.choice(long_enough or items)
+            if not self.file_missing(it["path"]):
+                return it
+            items = [i for i in items if i is not it]
+            long_enough = [i for i in long_enough if i is not it]
+        return None
 
     def play_substitute(self, e, now):
         sub = self.sub

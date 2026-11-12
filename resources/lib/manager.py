@@ -2690,9 +2690,22 @@ def main_menu():
         home.clearProperty(MENU_OPEN)
 
 
+def menu_notes():
+    """Things the TV noticed, said once in the menu (never over the TV)."""
+    home = xbmcgui.Window(10000)
+    st = K.load_json(K.STATE_FILE, {})
+    at = st.get("missing_at", 0)
+    if at > st.get("missing_told", 0) and not home.getProperty("cablebox42.missing_told"):
+        home.setProperty("cablebox42.missing_told", "1")         # at most once per Kodi session
+        st["missing_told"] = at
+        K.save_json(K.STATE_FILE, st)
+        D.notification(TITLE, _("Some planned episodes are missing; schedules updated"), time=5000)
+
+
 def _main_menu():
     if not os.path.exists(K.CHANNELS_FILE) and welcome() and not tv_wants_menu():
         return
+    menu_notes()
     mon = xbmc.Monitor()
     while not mon.abortRequested():
         chans = C.load()

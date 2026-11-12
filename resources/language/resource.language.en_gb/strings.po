@@ -3958,3 +3958,11 @@ msgstr ""
 msgctxt "#33446"
 msgid "No TV shows in the library"
 msgstr ""
+
+msgctxt "#33447"
+msgid "The file is missing"
+msgstr ""
+
+msgctxt "#33448"
+msgid "Some planned episodes are missing; schedules updated"
+msgstr ""

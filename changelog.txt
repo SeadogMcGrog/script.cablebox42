@@ -1,4 +1,9 @@
 Unreleased
+- A planned file that's gone (deleted, renamed, a share offline) no longer means
+  half a minute of black under Kodi's 'Playback failed' box: a stand-in plays at
+  once (a spot: the next commercial), and every channel with it planned is planned
+  again from its next programme, the show going on with its next episode. The
+  CableBox menu says so once
 - A show whose next-up episode file is deleted, renamed or replaced by a new copy
   carries on with the episode after it, instead of starting again at S01E01
 - Changes apply by themselves: closing Settings, the Channel manager, the Weekly

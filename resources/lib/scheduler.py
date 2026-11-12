@@ -245,27 +245,10 @@ class ChannelSchedule(object):
             return False
         st = d["state"]
         if "undo" in d:
-            for t, kind, key, prev in reversed(d["undo"]):
-                if t < c:
+            for u in reversed(d["undo"]):
+                if u[0] < c:
                     break
-                if kind == "s":
-                    bookmarks.put(key, prev)
-                elif kind == "l":
-                    if prev is None:
-                        st["last"].pop(key, None)
-                    else:
-                        st["last"][key] = prev
-                elif kind == "rr":
-                    st.setdefault("rr", {})[key] = prev
-                elif kind == "ra":
-                    rec = st["recent"].get(key)
-                    if rec and rec[-1] == prev:
-                        rec.pop()
-                elif kind == "st":
-                    if prev is None:
-                        st.pop(key, None)
-                    else:
-                        st[key] = prev
+                self._restore(u)
             d["undo"] = [u for u in d["undo"] if u[0] < c]
         else:
             self._legacy_rollback(c)         # planned before the update: no undo log
@@ -289,6 +272,44 @@ class ChannelSchedule(object):
         d["until"] = c
         self._index()
         return True
+
+    def _restore(self, u):
+        """Put one undo-log change back."""
+        _t, kind, key, prev = u
+        st = self.data["state"]
+        if kind == "s":
+            bookmarks.put(key, prev)
+        elif kind == "l":
+            if prev is None:
+                st["last"].pop(key, None)
+            else:
+                st["last"][key] = prev
+        elif kind == "rr":
+            st.setdefault("rr", {})[key] = prev
+        elif kind == "ra":
+            rec = st["recent"].get(key)
+            if rec and rec[-1] == prev:
+                rec.pop()
+        elif kind == "st":
+            if prev is None:
+                st.pop(key, None)
+            else:
+                st[key] = prev
+
+    def unair(self, ts):
+        """The programme on at ts didn't air (its file was missing): the bookmarks
+        its block moved go back, so it isn't counted as aired.  Call after cut()
+        (the plan after it is gone).  If the file is on the unplayable list, the
+        next plan goes past it anyway; if its whole folder was offline, it's next."""
+        b = self.block_at(ts)
+        if b is None:
+            return False
+        undo = self.data.get("undo", [])
+        mine = [u for u in undo if abs(u[0] - b["s"]) < 0.01 and u[1] in ("s", "l")]
+        for u in reversed(mine):
+            self._restore(u)
+        self.data["undo"] = [u for u in undo if u not in mine]
+        return bool(mine)
 
     def _legacy_rollback(self, c):
         """cut() for a schedule planned before bookmarks had an undo log: each series
