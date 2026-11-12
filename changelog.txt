@@ -3,7 +3,9 @@ Unreleased
   minute inside shows, like cable: promos for the channel's own shows, promos for
   shows on other channels ('Tonight at 9:00 on Channel 6', only what's really
   planned there), ads for the guide and weather channels and tonight's lineup,
-  and a station ID card. Settings > Programming > House breaks: When there are no
+  and a station ID card. At the end of a show, house breaks run back to back and
+  the 'Up next' card, the last thing before the next show, lasts at most about
+  90 seconds. Settings > Programming > House breaks: When there are no
   commercials (default) / Mix in with commercials (one house ad now and then in
   normal breaks too) / Off. Promo style and Promo music now apply with promos off
   too, since house breaks use them

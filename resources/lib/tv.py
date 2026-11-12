@@ -863,7 +863,7 @@ class TVWindow(xbmcgui.WindowXML):
             return pt, path, title, later
         if pt is None:                       # planned before the next show was known
             try:
-                tgt = sched.promo_target(e)
+                tgt = sched.promo_target(e, house=bool(e.get("h")))
             except Exception:
                 tgt = None
             if tgt and tgt[0]:

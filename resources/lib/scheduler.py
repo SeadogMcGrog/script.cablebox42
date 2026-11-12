@@ -49,6 +49,13 @@ HOUSE_ITEM = 15.0        # a house ad card, at most (stretched down to HOUSE_ITE
 HOUSE_ITEM_MIN = 8.0
 HOUSE_ID = 5.0           # the station ID card that rounds a house break off
 HOUSE_KINDS = ("guide", "weather", "lineup")
+UPNEXT_MAX = 90.0        # at a programme's end the 'Up next' card runs at most about this long
+UPNEXT_MIN = 10.0
+
+
+def _house_key(it):
+    """What makes two house ads the same ad (this channel's promos name different shows)."""
+    return (it.get("k"), it.get("h"), it.get("xc")) if it.get("k") == "house" or it.get("xc") else None
 
 
 def _episode_order(label):
@@ -1236,10 +1243,12 @@ class ChannelSchedule(object):
         if remaining >= 0.5 and not short:
             # cards of at most CARD_MAX s; a channel without commercials keeps its one 'Up next' card
             n = max(1, int(-(-remaining // self.CARD_MAX))) if ads else 1
-            first = "next" if final else "id"
             for j in range(n):
                 ln = remaining / n
-                self._add(pos, pos + ln, "card", sub=first if j % 2 == 0 else ("id" if final else "next"))
+                # at a programme's end the last card says 'Up next', right before the show
+                last = j == n - 1
+                sub = ("next" if last else "id") if final else ("id" if j % 2 == 0 else "next")
+                self._add(pos, pos + ln, "card", sub=sub)
                 pos += ln
             remaining = 0
         if bump:
@@ -1300,45 +1309,59 @@ class ChannelSchedule(object):
     def _house_fill(self, pos, length, ads, bumps, rng, final, ids=None, absorb=False):
         """A house break: about 30-60 s of house ads, a station ID card to round
         it off, the viewer's bump or ID clip at the edge.  At a programme's end
-        the rest of the gap is the 'Up next' card, as without house breaks."""
+        the gap gets as many house breaks as it takes to keep the 'Up next' card,
+        always the last card before the next show, at about UPNEXT_MAX seconds."""
         end = pos + length
         if length < 0.5:
             return end
         if final and length < HOUSE_FINAL_MIN:
             return self._fill(pos, length, [], bumps, rng, final, ids=ids)
-        hb = min(length, HOUSE_MAX) if final else length
+        upnext = min(UPNEXT_MAX, max(UPNEXT_MIN, length - HOUSE_MAX)) if final else 0.0
         bump = None
         for pool in ([ids, bumps] if ids else [bumps]):
-            fit = [x for x in (pool or []) if x["dur"] <= hb - HOUSE_FINAL_MIN]
+            fit = [x for x in (pool or []) if x["dur"] <= length - upnext - HOUSE_FINAL_MIN]
             if fit:
                 bump = rng.choice(fit)
                 break
-        avail = hb - (bump["dur"] if bump else 0)
+        house = length - upnext - (bump["dur"] if bump else 0)
+        n = max(1, int(math.ceil(house / HOUSE_MAX - 0.001)))
+        last = None
+        for _j in range(n):
+            pos, last = self._house_block(pos, house / n, rng, last)
+        if bump:
+            self._add(pos, pos + bump["dur"], "bump", p=bump["path"], o=0)
+            pos += bump["dur"]
+        if upnext:
+            self._add(pos, end, "card", sub="next")
+            pos = end
+        if self.data["entries"] and pos < end:
+            self.data["entries"][-1]["e"] = round(end, 3)
+        return end
+
+    def _house_block(self, pos, avail, rng, last=None):
+        """One house break of `avail` seconds from pos: house ads, then the station
+        ID card.  last: the ad the house break before it ended on (back to back at
+        a programme's end), never repeated next.  Returns (end, last ad)."""
         n = max(0, int(math.ceil((avail - 10.0) / HOUSE_ITEM)))
         items = self._house_items(rng, n)
+        if items and last is not None and len(items) > 1 and _house_key(items[0]) == last:
+            items.append(items.pop(0))
         n = len(items)
         ln = min(HOUSE_ITEM, (avail - HOUSE_ID) / n) if n else 0
         while n and ln < HOUSE_ITEM_MIN:
             n -= 1
             ln = min(HOUSE_ITEM, (avail - HOUSE_ID) / n) if n else 0
         for it in items[:n]:
+            last = _house_key(it)
             kind = it.pop("k")
             self._add(pos, pos + ln, kind, **it)
             pos += ln
         rest = avail - n * ln
         cards = max(1, int(math.ceil(rest / self.CARD_MAX)))
-        for j in range(cards):
+        for _j in range(cards):
             self._add(pos, pos + rest / cards, "card", sub="id")
             pos += rest / cards
-        if final and length > hb:
-            self._add(pos, pos + (length - hb), "card", sub="next")
-            pos += length - hb
-        if bump:
-            self._add(pos, pos + bump["dur"], "bump", p=bump["path"], o=0)
-            pos += bump["dur"]
-        if self.data["entries"] and pos < end:
-            self.data["entries"][-1]["e"] = round(end, 3)
-        return end
+        return pos, last
 
     def _house_mix(self, t, room):
         """Settings > House breaks > Mix in with commercials: now and then one
@@ -1460,7 +1483,7 @@ class ChannelSchedule(object):
             j -= 1
         return None
 
-    def promo_target(self, e, avoid=None):
+    def promo_target(self, e, avoid=None, house=False):
         """(block, programme path) a promo airing at e should name; (None, None)
         when there is nothing to promote; None while the schedule after it isn't
         planned yet.  Only ever this channel's own programmes.
@@ -1476,7 +1499,9 @@ class ChannelSchedule(object):
         nb = self.next_block(e["s"])
         pick = None
         mode = self.cfg.get("promo_target", 2)
-        if mode == 2 and not self._final_break(e, cur):
+        if house:
+            mode = 2                     # house promos: something later today; 'Up next' is the card's job
+        if mode == 2 and (house or not self._final_break(e, cur)):
             if d["until"] < e["s"] + 3 * 3600:      # pick from at least the next three hours
                 return None
             # a mid-programme break: something later today, not the show we're
@@ -1538,11 +1563,11 @@ class ChannelSchedule(object):
                 if e.get("xc"):
                     tgt = self._cross_target(e, avoid | self._own_titles_after(i))
                 elif e.get("h"):
-                    tgt = self.promo_target(e, avoid)
+                    tgt = self.promo_target(e, avoid, house=True)
                     nb = self.next_block(e["s"])
-                    if tgt and tgt[0] is not None and tgt[0] is nb and                             not self._final_break(e, self.block_at(e["s"])):
-                        # nothing else here to promote mid-show, and the break before the
-                        # next programme will say 'Up next' for it: another channel's show
+                    if tgt and tgt[0] is not None and tgt[0] is nb:
+                        # nothing else here to promote, and the 'Up next' card before the
+                        # next programme names it anyway: another channel's show
                         tgt = self._house_cross_for(e, avoid | {nb["t"]}) or tgt
                 else:
                     tgt = self.promo_target(e)
@@ -1574,7 +1599,16 @@ class ChannelSchedule(object):
     def _house_cross_for(self, e, avoid):
         """Turn a house promo into a promo for another channel's show (sets its
         xc); None if no other channel has anything to promote."""
-        others = self._house_others()
+        # not a channel this house break already promotes
+        used, ents = set(), self.data["entries"]
+        i = bisect.bisect_left(self._starts, e["s"] - 0.001)
+        for step in (-1, 1):
+            j = i + step
+            while 0 <= j < len(ents) and ents[j]["k"] != "show" and                     not (ents[j]["k"] == "card" and ents[j].get("sub") == "id"):
+                if ents[j].get("xc"):
+                    used.add(ents[j]["xc"])
+                j += step
+        others = [c for c in self._house_others() if c["id"] not in used]
         random.Random("%s|%.0f|xalt" % (self.ch["id"], e["s"])).shuffle(others)
         for c in others:
             tgt = self._cross_target(dict(e, xc=c["id"]), avoid)
@@ -1593,7 +1627,7 @@ class ChannelSchedule(object):
             if p.get("k") == "promo" and not p.get("xc"):
                 t = p.get("t")
                 if not t and "pt" not in p:
-                    tgt = self.promo_target(p)
+                    tgt = self.promo_target(p, house=bool(p.get("h")))
                     t = tgt[0]["t"] if tgt and tgt[0] else None
                 if t:
                     out.add(t)

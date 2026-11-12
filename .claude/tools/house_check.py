@@ -29,6 +29,12 @@ for cid, d in sched.items():
             return
         house = [e for e in brk if e.get("h")]
         ads = [e for e in brk if e["k"] == "ad"]
+        nxt = [e for e in brk if e["k"] == "card" and e.get("sub") == "next"]
+        if nxt and nxt[-1]["e"] - nxt[-1]["s"] > 95:
+            bad.append("%s %s: 'Up next' card of %.0f s" % (cid, time.strftime("%T", time.localtime(nxt[-1]["s"])),
+                                                           nxt[-1]["e"] - nxt[-1]["s"]))
+        if nxt and any(e["s"] > nxt[-1]["s"] for e in brk if e["k"] in ("house", "promo", "card")):
+            bad.append("%s %s: 'Up next' isn't the last card" % (cid, time.strftime("%T", time.localtime(nxt[-1]["s"]))))
         if not house:
             return
         if ads:
@@ -49,9 +55,24 @@ for cid, d in sched.items():
         if dup:
             bad.append("%s %s: repeated in one break %s" % (cid, time.strftime("%T", time.localtime(brk[0]["s"])), dup))
 
+    def key(e):
+        return (e["k"], e.get("h"), e.get("xc")) if e["k"] == "house" or e.get("xc") else None
+
+    prev_last = None
     for e in ents:
         if e["k"] == "show":
             check(brk)
+            brk, prev_last = [], None
+            continue
+        if e["k"] == "card" and e.get("sub") == "id" and brk and not any(x["k"] == "ad" for x in brk):
+            # a house break ends on its station ID; at a programme's end several run back to back
+            hs = [x for x in brk if x.get("h")]
+            if hs and prev_last is not None and key(hs[0]) == prev_last:
+                bad.append("%s %s: house break starts with the ad the one before ended on" % (
+                    cid, time.strftime("%T", time.localtime(hs[0]["s"]))))
+            if hs:
+                prev_last = key(hs[-1])
+            check(brk + [e])
             brk = []
             continue
         brk.append(e)

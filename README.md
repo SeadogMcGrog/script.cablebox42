@@ -252,8 +252,9 @@ What airs when:
 - **No commercials?** House breaks: short breaks of about a minute inside the
   show, made of the channel's own promos, promos for other channels' shows
   ("Tonight at 9:00 on Channel 6"), ads for the guide and weather channels and
-  tonight's lineup, rounded off by a station ID. The rest of the time at the end
-  of a slot shows the *Up next* card. See *House breaks* below.
+  tonight's lineup, rounded off by a station ID. At the end of a slot, house
+  breaks run back to back, then the *Up next* card (at most about a minute and a
+  half) right before the next show. See *House breaks* below.
 
 Changes apply from each channel's **next programme**, on their own: close
 Settings, the Channel manager, the Weekly planner or a tool and CableBox
