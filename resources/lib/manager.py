@@ -769,7 +769,8 @@ def schedule_inputs(clips=True, lib=False):
     cfg = K.schedule_cfg()
     cfg.update(stations_folder=K.setting("stations_folder"), share_mode=K.setting_int("share_mode", 0),
                extras_unrecognised=K.setting_bool("extras_unrecognised", False),
-               av1_mode=K.setting_int("av1_mode", 0))
+               av1_mode=K.setting_int("av1_mode", 0),
+               weather_location=K.setting("weather_location"))   # house breaks: a weather ad needs a place
     chans = C.load()
     out = {"settings": md5(cfg),
            "channels": md5([{k: v for k, v in c.items() if k not in COSMETIC} for c in chans])}

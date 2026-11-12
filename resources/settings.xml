@@ -4,11 +4,12 @@
         <setting id="commercials_path" type="folder" label="32001" source="video" default=""/>
         <setting id="bumps_path" type="folder" label="32002" source="video" default=""/>
         <setting id="breaks_per_slot" type="labelenum" label="32005" values="0|1|2|3|4" default="2"/>
+        <setting id="house_breaks" type="enum" label="33451" lvalues="33452|33453|33454" default="0"/>
         <setting id="promos_on" type="bool" label="33111" default="false"/>
         <setting id="promo_every" type="enum" label="33112" lvalues="33113|33114|33115" default="1" enable="eq(-1,true)"/>
         <setting id="promo_target" type="enum" label="33116" lvalues="33117|33118|33380" default="2" enable="eq(-2,true)"/>
-        <setting id="promo_style" type="enum" label="33156" lvalues="33157|33158" default="0" enable="eq(-3,true)"/>
-        <setting id="promo_music" type="enum" label="33119" lvalues="33120|33121" default="0" enable="eq(-4,true)"/>
+        <setting id="promo_style" type="enum" label="33156" lvalues="33157|33158" default="0"/>
+        <setting id="promo_music" type="enum" label="33119" lvalues="33120|33121" default="0"/>
         <setting id="promo_extras" type="bool" label="33122" default="false" enable="eq(-5,true)"/>
         <setting id="guide_music_path" type="folder" label="32003" source="music" default=""/>
         <setting id="guide_title" type="text" label="32004" default="CableBox 42 Program Guide"/>

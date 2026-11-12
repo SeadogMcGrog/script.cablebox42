@@ -223,6 +223,12 @@ def quality(d):
     return q
 
 
+def has_place():
+    """The weather channel knows where you are: a city typed in, or Kodi's own
+    weather set to a place."""
+    return bool(K.setting("weather_location", "").strip() or kodi_place())
+
+
 def kodi_place():
     """The location Kodi's weather service is set to, cleaned up for geocoding
     ('Springfield, IL (US)' -> 'Springfield, IL')."""

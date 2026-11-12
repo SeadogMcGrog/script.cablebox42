@@ -625,7 +625,7 @@ def music(inf):
     return inf.get("theme") or (BED if os.path.exists(BED) else "")
 
 
-def air(win, ch, pt, path, title, later, now):
+def air(win, ch, pt, path, title, later, now, kicker=None):
     """Put one promo card on `win` (a window with the TV's layout,
     script-cablebox42-tv.xml) and return its music ('' for a silent card).
     The one way a promo goes on screen: in a break (tv.start_promo), in
@@ -638,9 +638,64 @@ def air(win, ch, pt, path, title, later, now):
         inf = {}
     from . import stations
     name = stations.brand(ch, pt)["name"] if ch else ""      # its branding at that hour
+    if kicker:
+        name = kicker % name                 # another channel's show: 'Name - Channel 6'
     apply_card(win, card(inf, title, pt, now, ch, name, later))
     win.setProperty("mode", "promo")
     return music(inf)
+
+
+# ------------------------------------------------------------------ house ads
+# System ads in house breaks: the cable system advertising its own channels.
+# Original lines only (no real network slogans); three per kind, rotated.
+HOUSE_LINES = {
+    "guide": (("What's on tonight?", "Every channel, now and later, scrolling around the clock."),
+              ("Never miss a show", "What's on now and next on every channel, in one place."),
+              ("Plan your evening", "Two hours of listings, always up to date.")),
+    "weather": (("Your local forecast", "Today's conditions and the days ahead, day and night."),
+                ("Before you head out", "Check the sky first, any time you like."),
+                ("Weather, around the clock", "Current conditions and the extended outlook, whenever you tune in.")),
+}
+
+
+def house_card(kind, line, target, now, rows=None):
+    """Window properties of a system ad: 'guide' or 'weather' (target: that
+    channel) or 'lineup' (rows: [(time, title, channel number)] of what's coming
+    up on the lineup).  Same window and style as a promo card."""
+    from . import logos, stations
+    if kind == "lineup":
+        evening = time.localtime(now).tm_hour >= 17
+        title = _("Tonight's lineup") if evening else _("Coming up")
+        plot = "[CR]".join(_("%s  %s  ·  Channel %d") % (clock(t), name, num) for t, name, num in rows or [])
+        kicker, when, logo = "CableBox 42", _("All channels"), ""
+    else:
+        lines = HOUSE_LINES[kind]
+        t, plot = lines[line % len(lines)]
+        title, plot = _(t), _(plot)
+        kicker = stations.brand(target, now)["name"]
+        when = _("Channel %d") % target["number"]
+        logo = logos.logo_for(target) or ""
+        if logo and not logo_ready(logo):
+            logo = ""
+    return {
+        "promo_style": style(),
+        "promo_kicker": kicker,
+        "promo_title": "" if logo else title,
+        "promo_ep": title if logo else "",
+        "promo_plot": plot,
+        "promo_when": when,
+        "promo_bg": "",
+        "promo_letterbox": "",
+        "promo_logo": logo,
+    }
+
+
+def air_house(win, props):
+    """Put a system ad on `win`; returns its music (the built-in bed, by the
+    Promo music setting)."""
+    apply_card(win, props)
+    win.setProperty("mode", "promo")
+    return music({})
 
 
 def close_busy_wheel():

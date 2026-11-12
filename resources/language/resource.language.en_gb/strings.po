@@ -3974,3 +3974,88 @@ msgstr ""
 msgctxt "#33450"
 msgid "%d new shows aren't on a channel yet."
 msgstr ""
+
+msgctxt "#33451"
+msgid "House breaks"
+msgstr ""
+
+msgctxt "#33452"
+msgid "When there are no commercials"
+msgstr ""
+
+msgctxt "#33453"
+msgid "Mix in with commercials"
+msgstr ""
+
+msgctxt "#33454"
+msgid "Off"
+msgstr ""
+
+msgctxt "#33455"
+msgid "%s · Channel %d"
+msgstr ""
+
+msgctxt "#33456"
+msgid "What's on tonight?"
+msgstr ""
+
+msgctxt "#33457"
+msgid "Every channel, now and later, scrolling around the clock."
+msgstr ""
+
+msgctxt "#33458"
+msgid "Never miss a show"
+msgstr ""
+
+msgctxt "#33459"
+msgid "What's on now and next on every channel, in one place."
+msgstr ""
+
+msgctxt "#33460"
+msgid "Plan your evening"
+msgstr ""
+
+msgctxt "#33461"
+msgid "Two hours of listings, always up to date."
+msgstr ""
+
+msgctxt "#33462"
+msgid "Your local forecast"
+msgstr ""
+
+msgctxt "#33463"
+msgid "Today's conditions and the days ahead, day and night."
+msgstr ""
+
+msgctxt "#33464"
+msgid "Before you head out"
+msgstr ""
+
+msgctxt "#33465"
+msgid "Check the sky first, any time you like."
+msgstr ""
+
+msgctxt "#33466"
+msgid "Weather, around the clock"
+msgstr ""
+
+msgctxt "#33467"
+msgid "Current conditions and the extended outlook, whenever you tune in."
+msgstr ""
+
+msgctxt "#33468"
+msgid "Tonight's lineup"
+msgstr ""
+
+msgctxt "#33469"
+msgid "Coming up"
+msgstr ""
+
+msgctxt "#33470"
+msgid "%s  %s  ·  Channel %d"
+msgstr ""
+
+msgctxt "#33471"
+msgid "All channels"
+msgstr ""
+

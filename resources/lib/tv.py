@@ -797,6 +797,8 @@ class TVWindow(xbmcgui.WindowXML):
                 self.background_audio(K.setting("weather_music_path"))
             elif kind == "promo":
                 self.start_promo(e, now)
+            elif kind == "house":
+                self.start_house(e, now)
             else:
                 self.stop_player()
                 if kind == "offair":
@@ -849,6 +851,16 @@ class TVWindow(xbmcgui.WindowXML):
     def promo_subject(sched, e):
         """(time, path, title, later) of the programme a promo slot advertises."""
         pt, path, title, later = e.get("pt"), e.get("pp"), e.get("t"), e.get("pw") == "later"
+        if e.get("xc"):                      # another channel's show: still planned there?
+            try:
+                if pt and not TVWindow.cross_still_on(sched, e):
+                    pt = None
+                tgt = sched._cross_target(e) if pt is None else None
+            except Exception:
+                tgt = None
+            if tgt and tgt[0]:
+                pt, path, title, later = tgt[0]["s"], tgt[1], tgt[0]["t"], True
+            return pt, path, title, later
         if pt is None:                       # planned before the next show was known
             try:
                 tgt = sched.promo_target(e)
@@ -871,7 +883,7 @@ class TVWindow(xbmcgui.WindowXML):
             nxt = sched.entry_at(e["e"] + 0.01)
         except Exception:
             pass
-        if not (nxt and nxt.get("k") == "promo" and K.setting_bool("promos_on", False)):
+        if not (nxt and nxt.get("k") == "promo" and (nxt.get("h") or K.setting_bool("promos_on", False))):
             self.setProperty("promo_preload", "")
             return
         _pt, path, title, _later = self.promo_subject(sched, nxt)
@@ -892,16 +904,72 @@ class TVWindow(xbmcgui.WindowXML):
     def start_promo(self, e, now):
         sched = self.lineup.schedule(self.ch, ensure=False)
         pt, path, title, later = self.promo_subject(sched, e)
-        if not K.setting_bool("promos_on", False) or not pt or pt < now:
+        house = bool(e.get("h"))             # house breaks run promos whatever the Promos setting
+        if not (house or K.setting_bool("promos_on", False)) or not pt or pt < now:
             self.card_for({"k": "card", "sub": "id"}, now)     # promos switched off since: a station ID
+            return
+        if e.get("xc"):
+            other = next((c for c in self.lineup.channels if c["id"] == e["xc"]), None)
+            if other is None:
+                self.card_for({"k": "card", "sub": "id"}, now)
+                return
+            self.air_promo(pt, path, title, True, now, e["e"], ch=other,
+                           kicker=_("%s · Channel %d").replace("%d", str(other["number"])))
             return
         self.air_promo(pt, path, title, later, now, e["e"])
 
-    def air_promo(self, pt, path, title, later, now, end):
+    @staticmethod
+    def cross_still_on(sched, e):
+        """A cross-channel promo's show still starts at its time on that channel
+        (a refresh there may have changed it): never promote what won't air."""
+        ch = next((c for c in sched.lineup.channels if c["id"] == e.get("xc")), None)             if sched.lineup is not None else None
+        if ch is None:
+            return False
+        b = sched.lineup.schedule(ch, ensure=False).block_at(e["pt"] + 1)
+        return bool(b and abs(b["s"] - e["pt"]) < 1 and b.get("t") == e.get("t"))
+
+    def start_house(self, e, now):
+        """A system ad: the guide or weather channel, or what's coming up tonight.
+        Only for channels that are there now; otherwise a station ID card."""
+        kind = e.get("h")
+        props = None
+        try:
+            chans = self.lineup.channels
+            if kind in ("guide", "weather"):
+                target = next((c for c in chans if c.get("type") == kind), None)
+                if target and (kind != "weather" or weather.has_place()):
+                    props = promos.house_card(kind, int(e.get("ln", 0)), target, now)
+            elif kind == "lineup":
+                rows = []
+                for c in chans:
+                    if c.get("type") not in scheduler.PROMO_TYPES:
+                        continue
+                    s = self.lineup.schedule(c, ensure=False)
+                    nb = next((b for b in s.blocks_between(now + 300, now + 3 * 3600)
+                               if b.get("k") == "show" and b["s"] >= now + 300), None)
+                    if nb:
+                        rows.append((nb["s"], nb["t"], c["number"]))
+                rows.sort(key=lambda r: (r[0], r[2]))
+                if len(rows) >= 2:
+                    props = promos.house_card("lineup", 0, None, now, rows[:3])
+        except Exception as exc:
+            K.log_err("house ad %s: %s" % (kind, exc))
+            props = None
+        if not props:
+            self.card_for({"k": "card", "sub": "id"}, now)
+            return
+        music = promos.air_house(self, props)
+        self.set_mode("promo")
+        self.start_theme(music, e["e"])
+
+    def air_promo(self, pt, path, title, later, now, end, ch=None, kicker=None):
         """The card and its theme until `end` (promos.air: the same for breaks,
         Preview promo and the Developer tools cheat code)."""
-        music = promos.air(self, self.ch, pt, path, title, later, now)
+        music = promos.air(self, ch or self.ch, pt, path, title, later, now, kicker=kicker)
         self.set_mode("promo")
+        self.start_theme(music, end)
+
+    def start_theme(self, music, end):
         if music:
             self.our_files.add(music)
             self.play_token += 1

@@ -114,6 +114,7 @@ def schedule_cfg():
         "promo_every": setting_int("promo_every", 1),
         "promo_target": setting_int("promo_target", 2),
         "promo_extras": setting_bool("promo_extras", False),
+        "house_breaks": setting_int("house_breaks", 0),
     }
 
 

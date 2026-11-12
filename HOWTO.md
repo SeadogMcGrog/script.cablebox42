@@ -78,7 +78,9 @@ in Kodi → *Information*. To fix one: *Information → Refresh*, or edit its
 
 **Optional extras to gather** (any time later is fine):
 
-- A folder of **old commercials** (15/30/60-second clips work best)
+- A folder of **old commercials** (15/30/60-second clips work best). Without
+  one, channels get *house breaks*: short breaks of promos for your own shows and
+  ads for the guide and weather channels, made from your library
 - A folder of **bumps** ("We'll be right back") and **station IDs**
 - A folder of **background music** for the guide and weather channels
   (smooth jazz and elevator music are the classics)

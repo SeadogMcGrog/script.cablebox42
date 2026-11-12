@@ -249,7 +249,11 @@ What airs when:
   instead.
 - **Pinned shows** from the weekly planner always start on time. Automatic
   picks never run into them.
-- **No commercials?** The gaps show a short *Up next* or station card instead.
+- **No commercials?** House breaks: short breaks of about a minute inside the
+  show, made of the channel's own promos, promos for other channels' shows
+  ("Tonight at 9:00 on Channel 6"), ads for the guide and weather channels and
+  tonight's lineup, rounded off by a station ID. The rest of the time at the end
+  of a slot shows the *Up next* card. See *House breaks* below.
 
 Changes apply from each channel's **next programme**, on their own: close
 Settings, the Channel manager, the Weekly planner or a tool and CableBox
@@ -591,6 +595,27 @@ loudness and fades out by itself.)
 | Promo style | Early-90s cable (default): a chunky magenta band slides in, the show's name lands in heavy italic letters (or its logo), the time drops into a yellow tab, squiggles and confetti pop in; all motion ends within 3 seconds and stays inside a 4:3 area. Modern: the sleek card |
 | Promo music | The show's theme music / None (silent) |
 | Also use short promo clips from a show's Extras folder | Off (default). Videos in the show's `Extras` folder with *Promo* or *Trailer* in the name, up to 2 minutes, sometimes air instead (e.g. `Extras/1988 On-Air Season Two Promo.mkv`) |
+
+### House breaks
+
+*Settings → Programming → House breaks* fills breaks with the cable system's own
+spots, the way cable did, when you have no commercials. Nothing new to download:
+everything comes from your library and CableBox's cards (same look as promos,
+*Promo style* and *Promo music* apply).
+
+| Choice | What happens |
+|---|---|
+| When there are no commercials (default) | Channels without commercials get house breaks of about a minute at the usual break points; channels with commercials are unchanged |
+| Mix in with commercials | As above, and now and then one house ad inside a normal commercial break (at most one per break) |
+| Off | No house breaks: without commercials a show plays straight through and the end of the slot shows *Up next* |
+
+A house break has, in some order: a promo for this channel's own shows, promos
+for shows on other channels (only what's really planned there, at that time), an
+ad for the guide channel and the weather channel (only if you have them; weather
+only with a location set), *Tonight's lineup* (what starts next on your channels),
+then a station ID card. Never the same thing twice in one break, never the same
+show promoted twice in a row. Your own commercials, bumps and promo clips always
+come first.
 
 **See one now:** *Settings → Advanced → Preview promo*: pick a channel, then
 *Up next* or a programme in the next 6 hours, and its promo plays full screen

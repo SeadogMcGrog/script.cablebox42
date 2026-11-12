@@ -73,6 +73,8 @@
                 <texture background="true">$INFO[Window.Property(promo_bg)]</texture>
                 <visible>!String.IsEmpty(Window.Property(promo_bg))</visible>
                 <animation effect="zoom" start="100" end="106" center="960,540" time="16000" tween="linear">Visible</animation>
+                <!-- gone at once when the next card has no picture: the zoom outlasts a short card -->
+                <animation effect="fade" start="100" end="0" time="150">Hidden</animation>
             </control>
             <control type="image">
                 <left>0</left><top>0</top><width>1920</width><height>1080</height>
