@@ -1,4 +1,12 @@
 Unreleased
+- Breaks run tight: no more second or two of black after every commercial. The
+  next spot, bump or programme part waits in Kodi's playlist, so Kodi cuts
+  straight to it. Breaks are filled completely: commercials picked to fit the
+  break, then your bumps, then the station's 'We'll be right back' card for the
+  last few seconds. A channel with only a few commercials repeats them in a
+  break once every one has aired, never the same spot twice in a row. A few
+  spare seconds start the next programme part that much early instead. New
+  breaks from each channel's next programme on
 - Library changes reach the schedules by themselves: about 30 seconds after Kodi
   finishes scanning or cleaning the video library, new episodes, movies and shows
   (on channels whose sources cover them) are planned from each channel's next

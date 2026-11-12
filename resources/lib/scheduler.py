@@ -787,8 +787,10 @@ class ChannelSchedule(object):
             self._add(pos, pos + seg, "show", p=prog["path"], o=round(prog.get("o0", 0) + points[i], 2),
                       t=prog["title"], sub=prog.get("sub"), lb=prog.get("label"))
             pos += seg
-            blen = brk if i < k else end - pos
-            pos = self._fill(pos, blen, ads, bumps, rng, final=(i == k), ids=ids if i == k else None)
+            # to the break's planned end: a part that started early (absorbed seconds) gives them back here
+            blen = (t + points[i + 1] + brk * (i + 1) - pos) if i < k else end - pos
+            pos = self._fill(pos, blen, ads, bumps, rng, final=(i == k), ids=ids if i == k else None,
+                             absorb=i < k)
         self._add_block(t, end, prog["title"], "show", prog.get("sub", ""), prog.get("label", ""))
         return end
 
@@ -1106,14 +1108,15 @@ class ChannelSchedule(object):
         end = self._shorts_end(t, total, hard)
         gap = max(0.0, end - t - total)
         brk = gap / len(items)
-        pos = t
+        pos = planned = t
         for i, it in enumerate(items):
             self._add(pos, pos + float(it["dur"]), "show", p=it["path"], o=round(it.get("o0", 0), 2),
                       t=it["title"], sub=it.get("sub"), lb=it.get("label"))
             pos += float(it["dur"])
+            planned += float(it["dur"]) + brk      # where this break was meant to end
             last = i == len(items) - 1
-            pos = self._fill(pos, (end - pos) if last else brk, ads, bumps, rng,
-                             final=last, ids=ids if last else None)
+            pos = self._fill(pos, (end - pos) if last else (planned - pos), ads, bumps, rng,
+                             final=last, ids=ids if last else None, absorb=not last)
         titles = []
         for it in items:
             if it["title"] not in titles:
@@ -1127,7 +1130,46 @@ class ChannelSchedule(object):
         self._add_block(t, end, title, "show", sub, "")
         return end
 
-    def _fill(self, pos, length, ads, bumps, rng, final, ids=None):
+    CARD_MIN, CARD_MAX = 3.0, 10.0   # a station ID card stretched to fill what's left
+    ABSORB = 3.0                     # smaller leftovers: the next programme part starts that much early
+
+    def _pack(self, avail, ads, rng, absorb):
+        """Commercials whose total lands as close to `avail` as possible.  A spot
+        airs again in the same break only after every spot has had a turn, and
+        never twice in a row (a channel with only a few spots).  Leftovers the
+        card can't take (0.5 s up to CARD_MIN, unless the next part absorbs them)
+        count as bad as a big gap."""
+        def score(rem):
+            if rem < 0.5 or (absorb and rem < self.ABSORB):
+                return rem
+            return rem + (1000 if rem < self.CARD_MIN else 0)
+
+        best = None
+        for _attempt in range(60):
+            pick, rem, used, last = [], avail, set(), None
+            while True:
+                if len(used) == len(ads):
+                    used = set()             # every spot has had a turn: a new round
+                fit = [a for a in ads if a["dur"] <= rem and a["path"] not in used and a["path"] != last]
+                if not fit:
+                    break
+                a = rng.choice(fit)
+                used.add(a["path"])
+                last = a["path"]
+                pick.append(a)
+                rem -= a["dur"]
+            if best is None or score(rem) < score(best[1]):
+                best = (pick, rem)
+            if score(rem) < 0.5:
+                break
+        return best
+
+    def _fill(self, pos, length, ads, bumps, rng, final, ids=None, absorb=False):
+        """One break from pos, `length` seconds long, filled completely: commercials
+        to fit, a bump or station ID, a promo, then the station ID card stretched to
+        the seconds left.  Never planned black.  absorb: a mid-programme break that
+        may end up to ABSORB s early (the next part starts early, ends on time);
+        returns where the break really ends."""
         end = pos + length
         if length < 0.5:
             return end
@@ -1143,53 +1185,48 @@ class ChannelSchedule(object):
         if promo:
             avail -= promo["dur"]
 
-        # Pack commercials: try several random fills and keep the tightest.
-        chosen, remaining = [], avail
-        if ads:
-            best = None
-            for _attempt in range(40):
-                pick, rem, used = [], avail, set()
-                while True:
-                    fit = [a for a in ads if a["dur"] <= rem and a["path"] not in used]
-                    if not fit:
-                        break
-                    a = rng.choice(fit)
-                    used.add(a["path"])
-                    pick.append(a)
-                    rem -= a["dur"]
-                if best is None or rem < best[1]:
-                    best = (pick, rem)
-                if rem < 1.0:
-                    break
-            chosen, remaining = best
+        chosen, remaining = self._pack(avail, ads, rng, absorb) if ads else ([], avail)
+        if not absorb and 0.5 <= remaining < self.CARD_MIN and chosen:
+            # too little for a card, too much to hide: one spot fewer, a longer card
+            short = min(range(len(chosen)), key=lambda i: chosen[i]["dur"])
+            remaining += chosen.pop(short)["dur"]
+        # The viewer's own bumps before any built-in card.
+        extra = []
+        if remaining >= self.CARD_MIN:
+            for b in rng.sample(list(bumps or []), min(len(bumps or []), 12)):
+                if len(extra) < 2 and b["dur"] <= remaining - self.CARD_MIN and \
+                        (bump is None or b["path"] != bump["path"]) and b not in extra:
+                    extra.append(b)
+                    remaining -= b["dur"]
 
-        if chosen:
-            # Spread small leftovers as the short black gaps real breaks have.
-            gap = remaining / len(chosen) if remaining <= 2.0 * len(chosen) else 0
-            for i, a in enumerate(chosen):
-                self._add(pos, pos + a["dur"] + gap, "ad", p=a["path"], o=0, t=a.get("title"))
-                pos += a["dur"] + gap
-                if promo and i == 0:         # a promo after the first spot, like a real station
-                    pos = self._add_promo(pos, promo)
-            remaining -= gap * len(chosen)
-            if remaining >= 0.5:
-                # Fill the rest with the start of one more spot, cut off by the
-                # network - just like a late cable switch-over.
-                longer = [a for a in ads if a["dur"] > remaining] or ads
-                a = rng.choice(longer)
-                self._add(pos, pos + remaining, "ad", p=a["path"], o=0, t=a.get("title"))
-                pos += remaining
-        else:
-            if promo:
+        for i, a in enumerate(chosen):
+            self._add(pos, pos + a["dur"], "ad", p=a["path"], o=0, t=a.get("title"))
+            pos += a["dur"]
+            if promo and i == 0:             # a promo after the first spot, like a real station
                 pos = self._add_promo(pos, promo)
-            if remaining >= 0.5:
-                self._add(pos, pos + remaining, "card", sub="next" if final else "id")
-                pos += remaining
+                promo = None
+        if promo:
+            pos = self._add_promo(pos, promo)
+        for b in extra:
+            self._add(pos, pos + b["dur"], "bump", p=b["path"], o=0)
+            pos += b["dur"]
+        short = absorb and remaining < self.ABSORB
+        if remaining >= 0.5 and not short:
+            # cards of at most CARD_MAX s; a channel without commercials keeps its one 'Up next' card
+            n = max(1, int(-(-remaining // self.CARD_MAX))) if ads else 1
+            first = "next" if final else "id"
+            for j in range(n):
+                ln = remaining / n
+                self._add(pos, pos + ln, "card", sub=first if j % 2 == 0 else ("id" if final else "next"))
+                pos += ln
+            remaining = 0
         if bump:
             self._add(pos, pos + bump["dur"], "bump", p=bump["path"], o=0)
             pos += bump["dur"]
+        if short:
+            return round(pos, 3)             # the next part starts these few seconds early
         if self.data["entries"] and pos < end:
-            self.data["entries"][-1]["e"] = round(end, 3)
+            self.data["entries"][-1]["e"] = round(end, 3)    # under half a second: the last item holds
         return end
 
     # ------------------------------------------------------------- promos
