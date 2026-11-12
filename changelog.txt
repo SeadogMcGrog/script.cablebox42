@@ -1,4 +1,11 @@
 Unreleased
+- On air, titles leave the year out: the guide, the channel banner, 'Up next',
+  promo and house cards, BACKLOT blocks and the home widget say 'The Fugitive',
+  not 'The Fugitive (1993)' (a film's year shows as small text under its title
+  in the banner). Two shows that share a name keep their years ('Doctor Who
+  (1963)' and 'Doctor Who (2005)'); a year that's part of the title ('Fantasia
+  2000') stays. Menus where you pick things keep the years. An episode Kodi has
+  no title for shows the show's name alone, not a bare 'S01E02'
 - Fixed (Windows): commercials, bumps, station clips and folder channels were named
   by their full path (E:\Kodi\Commercials\...) in Kodi's player info and phone remotes,
   and a folder channel's programme in the guide and banner

@@ -65,6 +65,12 @@ POWER_OFF_SETTLE_MS = 250   # Kodi's audio output reopening after the programme 
 # swallows the start of the sound while it reopens its audio device)
 
 
+def scheduler_year(title):
+    """The year a title ends in, '(1993)' -> '1993'; '' when it has none."""
+    from . import titles
+    return titles.split_year(title)[1]
+
+
 def fmt_time(ts):
     try:
         f = xbmc.getRegion("time").replace(":%S", "")
@@ -948,7 +954,7 @@ class TVWindow(xbmcgui.WindowXML):
                     nb = next((b for b in s.blocks_between(now + 300, now + 3 * 3600)
                                if b.get("k") == "show" and b["s"] >= now + 300), None)
                     if nb:
-                        rows.append((nb["s"], nb["t"], c["number"]))
+                        rows.append((nb["s"], library.on_air(nb["t"]), c["number"]))
                 rows.sort(key=lambda r: (r[0], r[2]))
                 if len(rows) >= 2:
                     props = promos.house_card("lineup", 0, None, now, rows[:3])
@@ -1057,11 +1063,12 @@ class TVWindow(xbmcgui.WindowXML):
 
     @staticmethod
     def list_item(e, offset):
-        li = xbmcgui.ListItem(label=e.get("t") or "", path=e["p"])
+        title = library.on_air(e.get("t") or "")            # Kodi's player info and phone remotes: no year
+        li = xbmcgui.ListItem(label=title, path=e["p"])
         try:
             tag = li.getVideoInfoTag()
-            tag.setTitle(e.get("sub") or e.get("t") or "")
-            tag.setTvShowTitle(e.get("t") or "")
+            tag.setTitle(e.get("sub") or title)
+            tag.setTvShowTitle(title)
         except Exception:
             pass
         if offset > 1.0:
@@ -1747,12 +1754,12 @@ class TVWindow(xbmcgui.WindowXML):
         elif sub == "nosignal":
             self.card(self.ch["name"], _("No programming"), _("Add sources to this channel in the Channel Manager"), "")
         elif sub == "next" and nb:
-            t = nb["t"] + (("  -  " + nb["sub"]) if nb.get("sub") else "")
+            t = library.on_air(nb["t"]) + (("  -  " + nb["sub"]) if nb.get("sub") else "")
             self.card(_("UP NEXT"), t, _("at %s") % fmt_time(nb["s"]), self.ch["name"])
         else:
             line = ""
             if nb:
-                line = _("Coming up at %s: %s") % (fmt_time(nb["s"]), nb["t"])
+                line = _("Coming up at %s: %s") % (fmt_time(nb["s"]), library.on_air(nb["t"]))
             self.card(_("You're watching"), self.ch["name"], _("We'll be right back"), line)
         self.stop_player()
         self.set_mode("card")
@@ -1797,15 +1804,21 @@ class TVWindow(xbmcgui.WindowXML):
         sched = self.lineup.schedule(self.ch, ensure=False)
         b = sched.block_at(now)
         if b:
-            self.setProperty("now_title", b["t"])
-            sub = " ".join(x for x in (b.get("lb", ""), b.get("sub", "")) if x)
+            title = library.on_air(b["t"])
+            self.setProperty("now_title", title)
+            if b.get("sub"):
+                sub = " ".join(x for x in (b.get("lb", ""), b["sub"]) if x)
+            else:
+                # no episode name: the line stays empty (never a bare "S01E02");
+                # a film's year, left out of its title, goes here as small text
+                sub = scheduler_year(b["t"]) if title != b["t"] else ""
             self.setProperty("now_sub", sub)
             self.setProperty("now_time", "%s - %s" % (fmt_time(b["s"]), fmt_time(b["e"])))
         else:
             for k in ("now_title", "now_sub", "now_time"):
                 self.setProperty(k, "")
         nb = sched.next_block(now)
-        self.setProperty("next_line", (_("Next: %s  %s") % (fmt_time(nb["s"]), nb["t"])) if nb else "")
+        self.setProperty("next_line", (_("Next: %s  %s") % (fmt_time(nb["s"]), library.on_air(nb["t"]))) if nb else "")
         self.update_progress(now)
 
     def update_progress(self, now):
@@ -1881,7 +1894,7 @@ class TVWindow(xbmcgui.WindowXML):
                 b = sched.block_at(c + 1)
                 txt = ""
                 if b:
-                    txt = b["t"]
+                    txt = library.on_air(b["t"])
                     if b["s"] < c - 60 and i == 0:
                         txt = _("(cont.) ") + txt
                     elif b["s"] < c - 60:
@@ -1892,7 +1905,7 @@ class TVWindow(xbmcgui.WindowXML):
             for b in sched.blocks_between(now, now + 4 * 3600):
                 if b["s"] > now and b.get("k") == "show" and b["e"] - b["s"] >= 3600:
                     promos.append(_("Coming up at %s on %s %s:  %s") % (
-                        fmt_time(b["s"]), ch["number"], ch["name"], b["t"]))
+                        fmt_time(b["s"]), ch["number"], ch["name"], library.on_air(b["t"])))
                     break
         try:
             lst = self.getControl(50)

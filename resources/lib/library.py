@@ -25,6 +25,7 @@ import os
 
 from .kodiutil import rpc, load_json, save_json, DURATIONS_FILE, PROFILE, log, setting_int
 from . import probe
+from . import titles as tnames
 
 VIDEO_EXT = (".mkv", ".mp4", ".m4v", ".avi", ".ts", ".m2ts", ".mts", ".mov",
              ".webm", ".mpg", ".mpeg", ".wmv", ".flv", ".vob", ".divx", ".ogv")
@@ -55,6 +56,7 @@ def _check_gen():
         if _GEN[0]:
             _POOL_CACHE.clear()
             _AIR_CACHE.clear()
+            _SHOWS[1] = None
         _GEN[0] = g
 
 
@@ -500,7 +502,7 @@ def _walk(path, exts, depth=0):
 
 def _basename(p):
     """The last part of a path, whichever slashes it uses (Windows paths use backslashes)."""
-    return re.split(r"[\\/]", (p or "").rstrip("/\\"))[-1]
+    return tnames.basename(p)
 
 
 def _file_item(p, show=""):
@@ -512,6 +514,27 @@ def _file_item(p, show=""):
         label = "S%02dE%02d" % (int(m.group(1)), int(m.group(2)))
     return {"path": p, "title": show or title, "sub": title if show else "", "label": label,
             "dur": durations().get(p)}
+
+
+_SHOWS = [0, None]          # (when, (shared names, {title lower: year})) of the library's shows
+
+
+def on_air(title):
+    """A programme's title as the TV shows it: no trailing '(1993)' (display only),
+    except for shows whose names two library shows share ("Doctor Who")."""
+    if not title:
+        return title or ""
+    _check_gen()
+    if _SHOWS[1] is None or time.time() - _SHOWS[0] > _POOL_TTL:
+        try:
+            shows = all_tvshows()
+        except Exception:
+            shows = []
+        _SHOWS[0] = time.time()
+        _SHOWS[1] = (tnames.shared_names(s["title"] for s in shows),
+                     dict((s["title"].lower(), str(s.get("year") or "")) for s in shows))
+    keep, years = _SHOWS[1]
+    return tnames.on_air(title, keep, years)
 
 
 def folder_files(path, exts=VIDEO_EXT):

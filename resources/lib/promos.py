@@ -461,7 +461,7 @@ def card(inf, title, pt, now, ch=None, channel_name="", later=False):
     return {
         "promo_style": style(),
         "promo_kicker": channel_name or "",     # the heading: the channel, no time words
-        "promo_title": "" if logo else (inf.get("title") or title or ""),
+        "promo_title": "" if logo else library.on_air(inf.get("title") or title or ""),   # no year on air
         "promo_ep": (u"\u201c%s\u201d" % episode) if episode else "",
         "promo_plot": inf.get("plot") or "",
         "promo_when": time_phrase(pt, now, ch, bool(episode), not later),
