@@ -766,7 +766,9 @@ No commercials, or want more variety? Promos are made from your own library.
 
 1. *Settings → Programming → **Promos for what's coming up, in breaks*** → On.
 2. *How often*: every break, about half of them, or now and then.
-3. *Promote*: what's on next (like a real station), or something later today.
+3. *Promote*: *Up next and later today* (like a real station: breaks during a
+   show tease the evening, the last one says what's up next), only what's on
+   next, or only something later today.
    *Promo style*: early-90s cable (bright bands, chunky italic letters, a bouncing
    time tab) or Modern (the sleek card).
 4. Watch a channel. During a break you'll see the channel's name, the show's

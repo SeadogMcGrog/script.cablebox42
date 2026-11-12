@@ -550,7 +550,8 @@ Tips:
 ### Promos
 
 With *Settings → Programming → Promos* on, a break can include a 15-second promo
-for what this channel airs next: *Channel 7 — Seinfeld: "The Contest" — Up next*.
+for what this channel airs next (*Channel 7 — Seinfeld: "The Contest" — Up next*)
+or later today (*Tonight at 8:00*).
 Everything comes from your own
 library, so promos always fit what's really on, and nothing is needed besides
 your shows. CableBox only reads your files; it never changes them.
@@ -573,7 +574,7 @@ loudness and fades out by itself.)
 |---|---|
 | Promos for what's coming up, in breaks | Off (default) / On. At most one per break |
 | How often | Every break / About half the breaks / Now and then |
-| Promote | What's on next / Something later today |
+| Promote | Up next and later today (default): breaks inside a programme promote something later today on this channel (never the show you're watching, and not the same show twice in a row), the break before the next programme says *Up next* for it. On a movie channel, with breaks only between movies, that's always *Up next*. What's on next: always the next programme. Something later today: always a later show. Nothing later today to promote → the next programme |
 | Promo style | Early-90s cable (default): a chunky magenta band slides in, the show's name lands in heavy italic letters (or its logo), the time drops into a yellow tab, squiggles and confetti pop in; all motion ends within 3 seconds and stays inside a 4:3 area. Modern: the sleek card |
 | Promo music | The show's theme music / None (silent) |
 | Also use short promo clips from a show's Extras folder | Off (default). Videos in the show's `Extras` folder with *Promo* or *Trailer* in the name, up to 2 minutes, sometimes air instead (e.g. `Extras/1988 On-Air Season Two Promo.mkv`) |
@@ -873,7 +874,7 @@ tap to tune. Yatse custom commands can call the `RunScript` actions above.
 | Commercial breaks per half hour | 2 | 0–4 |
 | Promos for what's coming up, in breaks | Off | At most one per break ([Promos](#promos)) |
 | How often | About half the breaks | Every break / About half the breaks / Now and then |
-| Promote | What's on next | Or something later today |
+| Promote | Up next and later today | Or only what's on next, or only something later today |
 | Promo style | Early-90s cable | Or Modern |
 | Promo music | The show's theme music | Or none (silent) |
 | Also use short promo clips from a show's Extras folder | Off | *Promo* / *Trailer* videos up to 2 minutes |

@@ -47,6 +47,11 @@ Unreleased
 - Your own promo clips in a station folder's promos/ come first; optionally,
   short Promo/Trailer videos in a show's Extras folder air as its promo
 - Off by default; with promos off breaks are exactly as before
+- Promote: 'Up next and later today' (the default) - breaks inside a programme
+  promote something later today on the channel ('Tonight at 8:00'), never the
+  same show twice in a row, and the break before the next programme says
+  'Up next' for it. 'What's on next' and 'Something later today' still work as
+  before
 - Fixed: while the TV was on, each Volume press moved the volume two steps and
   Mute did nothing (CableBox passed the keys on although Kodi already handles them)
 - Promo style: early-90s cable (default) - a sliding magenta band, the show's name

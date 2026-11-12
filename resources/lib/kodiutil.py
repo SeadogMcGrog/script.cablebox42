@@ -112,7 +112,7 @@ def schedule_cfg():
         "seasons": seasons_cfg(),
         "promos": setting_bool("promos_on", False),
         "promo_every": setting_int("promo_every", 1),
-        "promo_target": setting_int("promo_target", 0),
+        "promo_target": setting_int("promo_target", 2),
         "promo_extras": setting_bool("promo_extras", False),
     }
 

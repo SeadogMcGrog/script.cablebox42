@@ -1023,10 +1023,42 @@ class ChannelSchedule(object):
             self._add(pos, pos + promo["dur"], "promo")
         return pos + promo["dur"]
 
+    def _final_break(self, e, cur):
+        """True when the break e airs in is the last one of its programme:
+        nothing but breaks and IDs between it and the next programme."""
+        if cur is None:
+            return True
+        ents = self.data["entries"]
+        j = bisect.bisect_right(self._starts, e["s"])
+        while j < len(ents) and ents[j]["s"] < cur["e"] - 0.05:
+            if ents[j].get("k") == "show":
+                return False
+            j += 1
+        return True
+
+    def _prev_promo_title(self, e, cur):
+        """Title of the card promo before e in the same programme, if any."""
+        if cur is None:
+            return None
+        ents = self.data["entries"]
+        j = bisect.bisect_left(self._starts, e["s"] - 0.001) - 1
+        while j >= 0 and ents[j]["s"] >= cur["s"] - 0.05:
+            p = ents[j]
+            if p.get("k") == "promo":
+                if "pt" in p:
+                    return p.get("t")
+                tgt = self.promo_target(p)
+                return tgt[0]["t"] if tgt and tgt[0] else None
+            j -= 1
+        return None
+
     def promo_target(self, e):
         """(block, programme path) a promo airing at e should name; (None, None)
         when there is nothing to promote; None while the schedule after it isn't
-        planned yet.  Only ever this channel's own programmes."""
+        planned yet.  Only ever this channel's own programmes.
+        Promote (promo_target): 0 what's on next, 1 something later today,
+        2 both - the break that ends a programme says 'Up next', the breaks
+        inside it promote something later today."""
         d = self.data
         span = PROMO_LOOKAHEAD
         planned = d["until"] >= e["s"] + span
@@ -1035,14 +1067,31 @@ class ChannelSchedule(object):
                  if b["s"] > e["s"] and b.get("k") == "show"]
         nb = self.next_block(e["s"])
         pick = None
-        if self.cfg.get("promo_target", 0) == 1:
+        mode = self.cfg.get("promo_target", 2)
+        if mode == 2 and not self._final_break(e, cur):
+            if d["until"] < e["s"] + 3 * 3600:      # pick from at least the next three hours
+                return None
+            # a mid-programme break: something later today, not the show we're
+            # in, not the next programme (that's the last break's 'Up next') and
+            # not the show this programme's previous promo named
+            skip = {cur["t"]} if cur else set()
+            prev = self._prev_promo_title(e, cur)
+            if prev:
+                skip.add(prev)
+            pool = [b for b in shows if b is not nb and b["t"] not in skip]
+            pool = [b for b in pool if not (nb and b["t"] == nb["t"])] or pool
+            if pool:
+                pick = random.Random("%s|%.0f|ptgt" % (self.ch["id"], e["s"])).choice(pool)
+            else:
+                mode = 0                 # nothing else today: promote the next programme
+        if pick is None and mode == 1:
             if d["until"] < e["s"] + 3 * 3600:      # pick from at least the next three hours
                 return None
             # something later today: not the show we're in the middle of
             pool = [b for b in shows if not (cur and b["t"] == cur["t"])] or shows
             if pool:
                 pick = random.Random("%s|%.0f|ptgt" % (self.ch["id"], e["s"])).choice(pool)
-        else:
+        elif pick is None:
             if nb is None and not planned:
                 return None
             if nb is not None and nb.get("k") == "show":
