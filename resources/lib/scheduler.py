@@ -5,6 +5,11 @@ schedule file that is extended on demand (when you tune in, when the guide
 needs it, or by the background service).  Programme picks are seeded from the
 channel id and the wall-clock slot, so a 'strip' channel airs the same show at
 the same time every weekday, while series always advance episode by episode.
+
+Where a show is in its series is its bookmark (bookmarks.py): shared by the show's
+home channel wherever that is, kept per channel elsewhere.  Every bookmark a plan
+moves is written to the schedule's undo log with the start of the block that moved
+it, so the plan can be cut after any block and the bookmarks put back (cut()).
 """
 import bisect
 import json
@@ -24,6 +29,7 @@ from . import seasons
 from . import stations
 from . import promos
 from . import musicvideos
+from . import bookmarks
 from .kodiutil import _
 
 DAY = 86400
@@ -155,6 +161,7 @@ class ChannelSchedule(object):
 
     def save(self):
         ensure_dirs()
+        bookmarks.flush()                # the shared bookmarks this plan moved
         save_json(self.path, self.data)
         try:
             self.mtime = os.path.getmtime(self.path)
@@ -168,6 +175,124 @@ class ChannelSchedule(object):
     @property
     def slot(self):
         return int(self.ch.get("slot", 30)) * 60
+
+    # -- series bookmarks (bookmarks.py) and the undo log
+    def _shared(self, key):
+        """Does this channel move the show's shared bookmark?  Yes on the show's home
+        channel, or when the show has no home (a folder series).  Pinned slots
+        ('rule:...') and other channels airing the show keep their own run here."""
+        if key.startswith("rule:"):
+            return False
+        title = key[3:].lower() if key.startswith("tv:") else None
+        home = ((self.assignment() or {}).get("home") or {}).get(title) if title else None
+        return home is None or home == self.ch["id"]
+
+    def _bm_get(self, key):
+        if self._shared(key):
+            known, last = bookmarks.get(key)
+            if known:
+                return last
+        return self.data["state"]["last"].get(key)
+
+    def _bm_set(self, key, path):
+        """Move a bookmark while planning (undone by cut())."""
+        shared = self._shared(key)
+        self._undo("s" if shared else "l", key, self._bm_get(key))
+        if shared:
+            bookmarks.put(key, path)
+        else:
+            self.data["state"]["last"][key] = path
+
+    def _undo(self, kind, key, prev):
+        """Note how to put a change back: [block start, kind, key, value before]."""
+        t = getattr(self, "_plan_t", None)
+        if t is not None:
+            self.data.setdefault("undo", []).append([t, kind, key, prev])
+
+    def _cut_point(self, now):
+        """End of what's on air now: the start of the first planned block after now."""
+        d = self.data
+        later = [m for m in d.get("marks", []) if m > now]
+        if later:
+            return min(later)
+        b = self.block_at(now)
+        return b["e"] if b is not None else now
+
+    def cut(self, now=None):
+        """Forget the plan after the programme on air now (and its breaks), and put
+        every bookmark it moved back, so the next plan airs the same episodes next.
+        Returns True if anything was cut."""
+        d = self.data
+        now = now or time.time()
+        c = self._cut_point(now)
+        if c >= d["until"]:
+            return False
+        st = d["state"]
+        if "undo" in d:
+            for t, kind, key, prev in reversed(d["undo"]):
+                if t < c:
+                    break
+                if kind == "s":
+                    bookmarks.put(key, prev)
+                elif kind == "l":
+                    if prev is None:
+                        st["last"].pop(key, None)
+                    else:
+                        st["last"][key] = prev
+                elif kind == "rr":
+                    st.setdefault("rr", {})[key] = prev
+                elif kind == "ra":
+                    rec = st["recent"].get(key)
+                    if rec and rec[-1] == prev:
+                        rec.pop()
+                elif kind == "st":
+                    if prev is None:
+                        st.pop(key, None)
+                    else:
+                        st[key] = prev
+            d["undo"] = [u for u in d["undo"] if u[0] < c]
+        else:
+            self._legacy_rollback(c)         # planned before the update: no undo log
+        for p in [p for p, when in st.get("srecent", {}).items() if when >= c]:
+            del st["srecent"][p]             # holiday specials that won't air after all
+        d["entries"] = [e for e in d["entries"] if e["s"] < c]
+        d["blocks"] = [b for b in d["blocks"] if b["s"] < c]
+        d["marks"] = [m for m in d.get("marks", []) if m < c]
+        d["until"] = c
+        self._index()
+        return True
+
+    def _legacy_rollback(self, c):
+        """cut() for a schedule planned before bookmarks had an undo log: each series
+        goes back to the episode before the first one cut, found in the library's
+        episode order.  Bookmarks here are this channel's own (state 'last')."""
+        st = self.data["state"]
+        srcs = [{"type": "alltv"}] + list(self.ch.get("sources", []))
+        for dp in self.ch.get("dayparts", []) or []:
+            srcs += dp.get("sources", []) or []
+        for rule in self._rules():
+            srcs += rule.get("sources", []) or []
+        where = {}                           # episode path -> (series key, its episodes)
+        for src in srcs:
+            try:
+                pool = library.resolve([src])
+            except Exception:
+                continue
+            for ser in pool["series"]:
+                for e in ser["episodes"]:
+                    where.setdefault(e["path"], (ser["key"], ser["episodes"]))
+        done = set()
+        for e in self.data["entries"]:
+            if e["s"] < c or e.get("k") != "show" or not e.get("p") or e["p"] not in where:
+                continue
+            skey, eps = where[e["p"]]
+            rule = self._rule_at(e["s"])[0]
+            key = "rule:%s|%s" % (rule.get("id", ""), skey) if rule and rule.get("order") != "random" else skey
+            if key in done:
+                continue
+            done.add(key)
+            i = next((j for j, x in enumerate(eps) if x["path"] == e["p"]), 0)
+            st["last"][key] = eps[i - 1]["path"] if i > 0 else None    # None: from the first episode
 
     # -- public api
     def assignment(self):
@@ -203,19 +328,27 @@ class ChannelSchedule(object):
         changed = False
         if d["hash"] != h or not d["entries"] or d["until"] < now:
             start = floor_slot(now, self.slot or 1800) - (1800 if self.slot else 0)
-            d.update(hash=h, entries=[], blocks=[], until=start)
+            d.update(hash=h, entries=[], blocks=[], until=start, undo=[], marks=[])
             changed = True
         if d["until"] < now + low_water or changed:
             target = now + horizon
             guard = 0
-            while d["until"] < target and guard < 5000:
-                d["until"] = self._block(d["until"])
-                guard += 1
+            marks = d.setdefault("marks", [])
+            try:
+                while d["until"] < target and guard < 5000:
+                    self._plan_t = d["until"]        # bookmarks moved now are undone with this block
+                    marks.append(d["until"])
+                    d["until"] = self._block(d["until"])
+                    guard += 1
+            finally:
+                self._plan_t = None
             changed = True
         if changed:
             cut = now - 3600
             d["entries"] = [e for e in d["entries"] if e["e"] > cut]
             d["blocks"] = [b for b in d["blocks"] if b["e"] > cut]
+            d["marks"] = [m for m in d.get("marks", []) if m > cut]
+            d["undo"] = [u for u in d.get("undo", []) if u[0] > cut]
             self._index()
             try:
                 self._resolve_promos(now)
@@ -881,7 +1014,7 @@ class ChannelSchedule(object):
                 ep = self._next_episode(src, ptr)
                 if ep["path"] in used or ep["dur"] > room or ep["dur"] > self.short_limit():
                     break
-                st["last"][ptr] = ep["path"]
+                self._bm_set(ptr, ep["path"])
             else:
                 fit = [it for it in src if it["path"] not in used
                        and 0 < it["dur"] <= min(room, self.short_limit())]
@@ -893,6 +1026,7 @@ class ChannelSchedule(object):
                 elif ptr:
                     rec = st["recent"].setdefault(ptr, [])
                     rec.append(ep["path"])
+                    self._undo("ra", ptr, ep["path"])
             used.add(ep["path"])
             out.append(ep)
             total += float(ep["dur"]) + reserve
@@ -1181,7 +1315,7 @@ class ChannelSchedule(object):
 
     def _next_episode(self, ser, ptr_key):
         eps = ser["episodes"]
-        last = self.data["state"]["last"].get(ptr_key)
+        last = self._bm_get(ptr_key)
         idx = 0
         if last:
             for i, e in enumerate(eps):
@@ -1218,16 +1352,17 @@ class ChannelSchedule(object):
         shows = [("s", ser) for ser in series] + ([("m", None)] if singles else [])
         rr = st.setdefault("rr", {})
         i = rr.get(rid, 0) % len(shows)
+        self._undo("rr", rid, rr.get(rid, 0))
         rr[rid] = i + 1
         kind, ser = shows[i]
         if kind == "s":
             ep = self._next_episode(ser, rid + "|" + ser["key"])
-            st["last"][rid + "|" + ser["key"]] = ep["path"]
+            self._bm_set(rid + "|" + ser["key"], ep["path"])
             self._cont = ("series", ser, rid + "|" + ser["key"])
             return ep
         self._cont = ("singles", singles, None)
         ep = self._next_episode({"episodes": singles}, rid + "|movies")
-        st["last"][rid + "|movies"] = ep["path"]
+        self._bm_set(rid + "|movies", ep["path"])
         return ep
 
     def _pick(self, pool, t, key, maxdur=None):
@@ -1268,7 +1403,7 @@ class ChannelSchedule(object):
         st = self.data["state"]
         if choice is not None:
             ep = self._next_episode(choice, choice["key"])
-            st["last"][choice["key"]] = ep["path"]
+            self._bm_set(choice["key"], ep["path"])
             self._cont = ("series", choice, choice["key"])
             return ep
         self._cont = ("singles", singles, key)
@@ -1283,6 +1418,7 @@ class ChannelSchedule(object):
         r2 = random.Random("%s|%.0f|single" % (self.ch["id"], t))
         it = r2.choice(fresh)
         recent.append(it["path"])
+        self._undo("ra", key, it["path"])
         del recent[:-max(keep, 1)]
         return it
 
@@ -1319,6 +1455,8 @@ class Lineup(object):
             s = self.sched[ch["id"]] = ChannelSchedule(ch, self.cfg)
             s.lineup = self
         if ensure:
+            if not bookmarks.exists():
+                self.migrate(now)
             try:
                 if s.needs_work(now):
                     with self.lock:
@@ -1326,6 +1464,33 @@ class Lineup(object):
             except Exception as exc:
                 log("Schedule build failed for %s: %s" % (ch.get("name"), exc))
         return s
+
+    def migrate(self, now=None):
+        """The first run with shared bookmarks (no series.json yet).  Each channel's
+        plan is cut after the programme on air, so its bookmarks go back to what has
+        aired; a show's bookmark on its home channel becomes the shared one.  What's
+        on air keeps playing, and the episodes cut are planned again, in order."""
+        with self.lock:
+            if bookmarks.exists():
+                return
+            now = now or time.time()
+            shared, cut = {}, 0
+            for c in self.channels:
+                try:
+                    s = self.schedule(c, ensure=False)
+                    changed = bool(s.data["entries"]) and s.cut(now)
+                    cut += changed
+                    last = s.data["state"]["last"]
+                    for k in [k for k in last if not k.startswith("rule:") and s._shared(k)]:
+                        shared.setdefault(k, last.pop(k))
+                        changed = True
+                    if changed:
+                        s.save()
+                except Exception as exc:
+                    log("Series bookmarks: %s not moved over: %s" % (c.get("name"), exc))
+            bookmarks.save_all(shared)
+            log("Series bookmarks: %d shows, from what has aired (%d channels planned again)"
+                % (len(shared), cut), level=xbmc.LOGINFO)
 
     def refresh_assignment(self):
         """Work out every show's home channel again (slow: resolves all sources)."""

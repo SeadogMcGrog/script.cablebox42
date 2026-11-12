@@ -1,4 +1,8 @@
 Unreleased
+- Each show has one place in its series, kept by its home channel: a show that
+  moves to another channel, or leaves the lineup and comes back, continues with
+  its next episode. Other channels airing it keep their own run. The first start
+  after updating takes every show's place from what has actually aired
 - New station: Red Thread TV (RED), for Korean and Chinese (incl. Taiwanese)
   dramas. Build my lineup makes it with 5 or more shows from Korean, Chinese or
   Taiwanese networks (KBS, SBS, tvN, iQiyi, Tencent Video...) or with an original
