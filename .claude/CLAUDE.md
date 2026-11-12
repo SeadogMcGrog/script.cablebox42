@@ -197,6 +197,13 @@ A task often starts as "implement `briefs\<name>.md`".
   it's `Right Right Select` (the scrollbar takes the first Right).
 - **Drive it:** `send Down Select 2 Back` (numbers are pauses), `shot FILE.png`,
   `rec FILE.mp4 SECS [actions]` (picture + sound), `log [N]`, `sh 'CMD'`, `zap`, `stop`.
+- **Break gaps** (`.claude/tools/`): `gaps.py [HOURS] [-v]` (inside the rig:
+  `sh 'python3 /mnt/g/CableBox42/script.cablebox42/.claude/tools/gaps.py 6'`) lists every
+  break's length, what its clips really play (ffprobe) and the leftover, flags a clip in a
+  longer slot and spot repeats, and ends PASS/FAIL. `gaps_user.py ADDON_DATA HOURS` does
+  the same read-only on a real Kodi's schedules (Windows Python, durations.json lengths).
+  `notes.py SECS OUT` logs Kodi's player events with times (switch = OnStop -> next
+  OnAVStart); `queue.py` plays three spots in a plain Kodi playlist as a reference.
 - **Fresh start without rebuilding:** `reset-profile` wipes only the Kodi profile and
   the test library (Kodi stays), then makes and scans a new library; install again.
 - **Snapshots:** `baseline.tar` is the clean rig (library, commercials, no CableBox).
