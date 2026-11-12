@@ -144,11 +144,8 @@ A task often starts as "implement `briefs\<name>.md`".
 
 - `python3 -m pyflakes resources/lib/*.py` and `python3 -m py_compile resources/lib/*.py`.
 - Check `strings.po` covers every `_("...")` literal and has no stale entries.
-- Real Kodi: `.claude/kodi21-test-vm.sh` builds a headless Kodi 21.3 (Ubuntu 26.04
-  chroot, Xvfb, PulseAudio null sink you can record) and has helpers to install the
-  add-on, start the TV, flip channels and count audio errors. Linux with root only
-  (a cloud session, or WSL). Audio timing in the VM is not hardware-accurate; the N2
-  has the final word.
+- Real Kodi: the test rig (next section). Audio timing there is not hardware-accurate;
+  the N2 has the final word.
 - Promo cards: `python .claude/promo-contact-sheet.py --kodi G:/Kodi` renders every
   library show's promo at 1080p and 720p in a portable *copy* of Kodi (own profile; the
   user's library DB and CableBox data are copied in, never written) and writes
@@ -157,6 +154,44 @@ A task often starts as "implement `briefs\<name>.md`".
   *Settings → Advanced → Preview promo*.
 - Hardware: the maintainer tests on the N2. On CoreELEC, `pastekodi` uploads the log;
   BusyBox tools (`ps`, `sed`) have fewer options than GNU.
+
+## Test rig (Kodi 21, already built: run `ensure`, never rebuild)
+
+- **Where:** a WSL distro of its own, **`CableBoxRig`** (Ubuntu 26.04, Kodi 21.3, Xvfb,
+  PulseAudio null sink you can record). Its disk is
+  `C:\Users\mrdav\AppData\Local\wsl\CableBoxRig\ext4.vhdx` (SSD: on G:, a USB hard
+  disk, a cold Kodi start took 20 s); snapshots go in `G:\CableBox42\rig\snapshots\`.
+  Outside the repo; it survives
+  sessions, reboots and `wsl --shutdown`. Inside: Kodi profile `/root/.kodi`, test
+  library `/root/library/tv` (Seinfeld, Friends, Mr. Bean, Star Trek TNG), outputs
+  `/root/test`. The repo is at `/mnt/g/CableBox42/script.cablebox42`.
+- **Start of every session:** `bash .claude/kodi21-test-vm.sh ensure` (Git Bash). It
+  reuses the rig and starts Kodi in seconds; it builds only if the distro is missing or
+  broken (from the newest snapshot if there is one, otherwise ~10 min of debootstrap in
+  the `Ubuntu` distro). **Never run `setup` on Windows** and never make a second rig.
+- **Install a build:** `bash .claude/kodi21-test-vm.sh install ../test-builds/<zip>`
+  (enables it in Kodi's database and restarts Kodi). `lineup [FILE.json]` writes the
+  3-channel test lineup (or yours), turns on the test commercials (`/root/library/ads`)
+  and starts schedules afresh; `setting ID=VALUE...` sets CableBox settings (Kodi is
+  stopped around it, or it writes its own copy back); `status` says what's installed
+  and running.
+- **Drive it:** `send Down Select 2 Back` (numbers are pauses), `shot FILE.png`,
+  `rec FILE.mp4 SECS [actions]` (picture + sound), `log [N]`, `sh 'CMD'`, `zap`, `stop`.
+- **Fresh start without rebuilding:** `reset-profile` wipes only the Kodi profile and
+  the test library (Kodi stays), then makes and scans a new library; install again.
+- **Snapshots:** `baseline.tar` is the clean rig (library, commercials, no CableBox).
+  `ensure` restores the newest snapshot if the distro is missing or broken.
+- **Snapshot / restore** (an export stops the distro first):
+  `bash .claude/kodi21-test-vm.sh snapshot NAME` and
+  `bash .claude/kodi21-test-vm.sh restore NAME.tar`, or by hand:
+  `wsl --terminate CableBoxRig`, then
+  `wsl --export CableBoxRig G:\CableBox42\rig\snapshots\NAME.tar`; restore with
+  `wsl --unregister CableBoxRig`, then
+  `wsl --import CableBoxRig C:\Users\mrdav\AppData\Local\wsl\CableBoxRig G:\CableBox42\rig\snapshots\NAME.tar`.
+  (`wsl --manage CableBoxRig --move DIR` moves its disk; `wsl --shutdown` first.)
+- Why it works under WSL: Xvfb, PulseAudio and Kodi start with `setsid nohup`; WSLg's
+  `PULSE_SERVER` and its read-only `/tmp/.X11-unix` are put aside; ALSA goes to Pulse.
+  On a plain Linux cloud VM the same script uses a chroot (`setup` builds it there).
 
 ## Release checklist
 
