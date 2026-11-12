@@ -10,12 +10,15 @@ d = json.load(open(os.path.join(D, sys.argv[1] + ".json")))
 n = int(sys.argv[2]) if len(sys.argv) > 2 else 4
 ents, blocks = d["entries"], d["blocks"]
 shown, brk = 0, []
-for e in ents:
+for e in [x for x in ents if x["e"] > time.time()]:
     if e["k"] == "show":
         if brk:
             print("  break %.2f s: %s" % (brk[-1]["e"] - brk[0]["s"], "  ".join(
                 "%s%s %.2f" % (b["k"], ("(" + os.path.basename(b["p"])[:10] + ")") if b.get("p") else
-                               ("(" + b.get("sub", "") + ")" if b.get("sub") else ""), b["e"] - b["s"]) for b in brk)))
+                               ("(" + str(b.get("h") if b.get("k") == "house" else b.get("sub", "")) +
+                                (" ch " + b["xc"] if b.get("xc") else "") +
+                                (" " + b["t"] if b.get("k") == "promo" and b.get("t") else "") + ")"),
+                               b["e"] - b["s"]) for b in brk)))
             brk = []
             shown += 1
             if shown >= n:
