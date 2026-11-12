@@ -213,6 +213,8 @@ A task often starts as "implement `briefs\<name>.md`".
   0 problems and 1 warning, *403 Forbidden for url: https://forum.kodi.tv/...*: Kodi's forum
   blocks the checker's request, so it can't check the `<forum>` link (1.1.1 had it too).
   Only file endings on its whitelist pass: sounds ship as `.wav` (not mp3/ogg), clips as `.mp4`.
+  *ERROR: 'Repository' object has no attribute 'addons'* (1 problem) means it couldn't
+  download Kodi's omega repository index for the dependency check: run it again.
 - **Drive it:** `send Down Select 2 Back` (numbers are pauses), `shot FILE.png`,
   `rec FILE.mp4 SECS [actions]` (picture + sound), `log [N]`, `sh 'CMD'`, `zap`, `stop`.
 - **Break gaps** (`.claude/tools/`): `gaps.py [HOURS] [-v]` (inside the rig:
