@@ -498,8 +498,13 @@ def _walk(path, exts, depth=0):
     return out
 
 
+def _basename(p):
+    """The last part of a path, whichever slashes it uses (Windows paths use backslashes)."""
+    return re.split(r"[\\/]", (p or "").rstrip("/\\"))[-1]
+
+
 def _file_item(p, show=""):
-    name = p.rstrip("/").split("/")[-1]
+    name = _basename(p)
     title = re.sub(r"\.[^.]+$", "", name).replace(".", " ").replace("_", " ")
     label = ""
     m = re.search(r"[Ss](\d{1,2})[Ee](\d{1,3})", name)
@@ -539,7 +544,7 @@ def _resolve_folder(src, pool):
         items = [it for it in (_file_item(p) for p in _walk(path, VIDEO_EXT)) if it["dur"] > 0]
         if mode == "sequential":
             if items:
-                pool["series"].append({"key": "seq:" + path, "title": path.rstrip("/").split("/")[-1],
+                pool["series"].append({"key": "seq:" + path, "title": _basename(path),
                                        "episodes": items})
         else:
             pool["singles"].extend(items)

@@ -1,4 +1,7 @@
 Unreleased
+- Fixed (Windows): commercials, bumps, station clips and folder channels were named
+  by their full path (E:\Kodi\Commercials\...) in Kodi's player info and phone remotes,
+  and a folder channel's programme in the guide and banner
 - House breaks: with no commercials, channels now get short breaks of about a
   minute inside shows, like cable: promos for the channel's own shows, promos for
   shows on other channels (the card names the channel, e.g. 'Drama Movies ·
