@@ -1,4 +1,4 @@
-Unreleased
+v1.2.0 (2026-11-12)
 - Fixed: a clip added later to a movie's Extras folder could take hours to reach
   the Behind the scenes channel. After a library scan or clean, CableBox looks at
   every Extras folder (once the TV is off) and plans new extras from the
