@@ -777,7 +777,22 @@ def schedule_inputs(clips=True, lib=False):
         out["clips"] = stations.clips_fingerprint(chans)
     if lib:
         out["library"] = library.fingerprint()
+    out["code"] = code_fingerprint()
     return out
+
+
+def code_fingerprint():
+    """The add-on version and its planning code: a new build (test builds keep the
+    version number) plans breaks differently, so the first run after one refreshes."""
+    import hashlib
+    h = hashlib.md5(K.ADDON.getAddonInfo("version").encode("utf-8"))
+    for name in ("scheduler.py", "promos.py"):
+        try:
+            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), name), "rb") as f:
+                h.update(f.read())
+        except OSError:
+            pass
+    return h.hexdigest()
 
 
 def refresh_now(quiet=False):
@@ -821,10 +836,11 @@ def refresh_if_changed(clips=True, quiet=False, lib=False):
         if old is None:                      # first time: this is what the plans use
             K.save_json(APPLIED_FILE, cur)
             return False
-        new_keys = [k for k in cur if k not in old]
+        new_keys = [k for k in cur if k not in old and k != "code"]
         if new_keys:                         # e.g. the library, first seen: nothing to compare
             old.update((k, cur[k]) for k in new_keys)
             K.save_json(APPLIED_FILE, old)
+        # no "code" yet: planned by a build from before this check - that's a change too
         if all(old.get(k) == v for k, v in cur.items()):
             return False
         K.log("Schedules: %s changed - refreshing" % ", ".join(k for k, v in cur.items() if old.get(k) != v),

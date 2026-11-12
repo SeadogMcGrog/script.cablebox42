@@ -68,6 +68,14 @@ def run():
     for key in ("weather_source", "weather_units"):  # 1.1 stored text, 1.3 uses numbers
         if not K.ADDON.getSetting(key).isdigit():
             K.set_setting(key, "0")
+    if os.path.exists(K.CHANNELS_FILE) and not home.getProperty(TOOL_BUSY):
+        # a new build of the add-on: breaks planned by the old one take the new
+        # layout from each channel's next programme (keep my place; what's on air stays)
+        try:
+            from . import manager
+            manager.refresh_if_changed(clips=False, quiet=True)
+        except Exception as exc:
+            K.log_err("refresh after an update failed: %s" % exc)
     if K.setting_bool("autostart", False) and os.path.exists(K.CHANNELS_FILE):
         # wait for the home screen, then switch the TV on
         # Only right after Kodi starts, and never once the viewer has started
