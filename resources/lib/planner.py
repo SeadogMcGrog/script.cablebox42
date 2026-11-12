@@ -5,7 +5,6 @@ off-air hours, copy or clear days.  Anything not pinned is filled by the
 automatic scheduler, which never runs into a pinned slot.
 """
 import json
-import os
 import uuid
 
 import xbmc
@@ -449,16 +448,22 @@ class Planner(xbmcgui.WindowXMLDialog):
         return self.col
 
     def restart_series(self, rule):
-        path = os.path.join(K.SCHEDULE_DIR, "%s.json" % self.ch["id"])
-        d = K.load_json(path, None)
-        if not d:
+        """This pinned slot's series from the first episode again, from the end of
+        what's on air (the slot keeps its own bookmark; other airings of the show
+        are not affected)."""
+        from . import scheduler
+        lineup = scheduler.Lineup(K.schedule_cfg())
+        ch = next((c for c in lineup.channels if c["id"] == self.ch["id"]), None)
+        if ch is None:
             return
-        rid = "rule:%s" % rule.get("id", "")
-        st = d.setdefault("state", {})
-        st["last"] = dict((k, v) for k, v in st.get("last", {}).items() if not k.startswith(rid))
-        st.get("rr", {}).pop(rid, None)
-        d.update(hash="", entries=[], blocks=[], until=0)   # replan from now
-        K.save_json(path, d)
+        s = lineup.schedule(ch, ensure=False)
+        with lineup.lock:
+            s.cut()                          # first: the cut puts back what the plan moved
+            rid = "rule:%s" % rule.get("id", "")
+            st = s.data["state"]
+            st["last"] = dict((k, v) for k, v in st.get("last", {}).items() if not k.startswith(rid))
+            st.get("rr", {}).pop(rid, None)
+            s.save()                         # planned again from here when next needed
 
     def add_offair(self, m):
         end = M.ask_time(_("Back on the air at"), "07:00")

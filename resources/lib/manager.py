@@ -745,17 +745,24 @@ def prebuild(chans=None):
     library.durations().save()
 
 
+def refresh_schedules():
+    """Settings, channels and clips as they are now, from the end of each channel's
+    programme on air; every show keeps its next episode (scheduler.Lineup.refresh)."""
+    lineup = scheduler.Lineup(K.schedule_cfg())
+    pd = xbmcgui.DialogProgress()
+    pd.create(TITLE, _("Programming the channels..."))
+    try:
+        lineup.refresh(progress=lambda i, n, c: pd.update(int(100.0 * i / max(1, n)),
+                                                         "%d  %s" % (c["number"], c["name"])))
+    finally:
+        pd.close()
+    library.durations().save()
+
+
 def rebuild_all():
     if not confirm(_("Rebuild every channel's schedule from now?[CR]Episode progress is kept."), _("Rebuild")):
         return
-    library.clear_cache()
-    for c in C.load():
-        p = os.path.join(K.SCHEDULE_DIR, "%s.json" % c["id"])
-        d = K.load_json(p, None)
-        if d:
-            d.update(hash="", entries=[], blocks=[], until=0)
-            K.save_json(p, d)
-    prebuild()
+    refresh_schedules()
 
 
 # ------------------------------------------------------------------ manager
@@ -1111,10 +1118,9 @@ def edit_channel(cid):
                               _("Delete")):
                 chans = [c for c in chans if c["id"] != cid]
                 C.save(chans)
-                try:
-                    os.remove(os.path.join(K.SCHEDULE_DIR, "%s.json" % cid))
-                except OSError:
-                    pass
+                # its schedule goes; its shows keep their place (their bookmarks go
+                # back to what it aired)
+                scheduler.Lineup(K.schedule_cfg()).drop_removed()
                 return
             continue
         if json.dumps(chans, sort_keys=True) != before:

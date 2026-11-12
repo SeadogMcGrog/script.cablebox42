@@ -12,6 +12,7 @@ moves is written to the schedule's undo log with the start of the block that mov
 it, so the plan can be cut after any block and the bookmarks put back (cut()).
 """
 import bisect
+import hashlib
 import json
 import math
 import os
@@ -178,14 +179,17 @@ class ChannelSchedule(object):
 
     # -- series bookmarks (bookmarks.py) and the undo log
     def _shared(self, key):
-        """Does this channel move the show's shared bookmark?  Yes on the show's home
-        channel, or when the show has no home (a folder series).  Pinned slots
-        ('rule:...') and other channels airing the show keep their own run here."""
+        """Does this channel move the show's shared bookmark?  A TV show: only on its
+        home channel.  A show with no home (taken off every channel, but aired as a
+        fill-in) keeps its shared bookmark untouched for when it comes back.  Pinned
+        slots ('rule:...') and other channels airing the show keep their own run
+        here.  Folder series (no home channels) share theirs."""
         if key.startswith("rule:"):
             return False
-        title = key[3:].lower() if key.startswith("tv:") else None
-        home = ((self.assignment() or {}).get("home") or {}).get(title) if title else None
-        return home is None or home == self.ch["id"]
+        if not key.startswith("tv:"):
+            return True
+        home = ((self.assignment() or {}).get("home") or {}).get(key[3:].lower())
+        return home == self.ch["id"]
 
     def _bm_get(self, key):
         if self._shared(key):
@@ -255,7 +259,19 @@ class ChannelSchedule(object):
             self._legacy_rollback(c)         # planned before the update: no undo log
         for p in [p for p, when in st.get("srecent", {}).items() if when >= c]:
             del st["srecent"][p]             # holiday specials that won't air after all
-        d["entries"] = [e for e in d["entries"] if e["s"] < c]
+        ents = [e for e in d["entries"] if e["s"] < c]
+        # Promos still to air in the breaks kept (the programme on air) may name
+        # what was planned after the cut: they're named again from the new plan
+        # (_resolve_promos), so a promo never names a show that won't air then.
+        for i, e in enumerate(ents):
+            if e["s"] <= now or (e.get("pt") or 0) < c:
+                continue
+            if e.get("k") == "promo":
+                for k in ("pt", "t", "pp", "pw", "sub"):
+                    e.pop(k, None)
+            elif e.get("pr") == "extras":    # a show's own promo clip: back to its card
+                ents[i] = {"s": e["s"], "e": e["e"], "k": "promo"}
+        d["entries"] = ents
         d["blocks"] = [b for b in d["blocks"] if b["s"] < c]
         d["marks"] = [m for m in d.get("marks", []) if m < c]
         d["until"] = c
@@ -307,7 +323,13 @@ class ChannelSchedule(object):
             # rebuild once when the first music videos have been measured
             return chmod.config_hash(self.ch) + ("m1" if library.mv_measured() else "m0")
         a = self.assignment() or {}
-        return chmod.config_hash(self.ch) + (a.get("digest", {}).get(self.ch["id"], "") if a else "")
+        if not a:
+            return chmod.config_hash(self.ch)
+        # ...and the shows whose home it is: when one moves away, this channel is cut
+        # too, so the shared bookmark its plan moved goes back before the new home plans
+        homes = sorted(t for t, cid in (a.get("home") or {}).items() if cid == self.ch["id"])
+        return chmod.config_hash(self.ch) + a.get("digest", {}).get(self.ch["id"], "") + \
+            hashlib.md5("\n".join(homes).encode("utf-8")).hexdigest()[:6]
 
     def needs_work(self, now=None):
         """Cheap check: is the schedule stale or running short?"""
@@ -326,18 +348,29 @@ class ChannelSchedule(object):
         d = self.data
         h = self.full_hash()
         changed = False
-        if d["hash"] != h or not d["entries"] or d["until"] < now:
+        if not d["entries"] or d["until"] < now:
+            # nothing planned, or nothing left (Kodi was off): start at this half hour
             start = floor_slot(now, self.slot or 1800) - (1800 if self.slot else 0)
             d.update(hash=h, entries=[], blocks=[], until=start, undo=[], marks=[])
+            changed = True
+        elif d["hash"] != h:
+            # the channel changed (its settings, or the shows it may air): what's on
+            # air stays, the rest is planned again from the same episodes
+            self.cut(now)
+            d["hash"] = h
             changed = True
         if d["until"] < now + low_water or changed:
             target = now + horizon
             guard = 0
             marks = d.setdefault("marks", [])
+            kind = self.ch.get("type")
             try:
                 while d["until"] < target and guard < 5000:
                     self._plan_t = d["until"]        # bookmarks moved now are undone with this block
                     marks.append(d["until"])
+                    if kind in ("extras", "musicvideos"):   # their rotation, as it was before this block
+                        name = "x" if kind == "extras" else "mv"
+                        self._undo("st", name, json.loads(json.dumps(d["state"].get(name))))
                     d["until"] = self._block(d["until"])
                     guard += 1
             finally:
@@ -1306,7 +1339,7 @@ class ChannelSchedule(object):
             new_end = max(new_end, ents[k]["e"])
             k += 1
         repl = [{"s": s0, "e": round(new_end, 3), "k": "ad", "p": clip["path"], "o": 0,
-                 "t": clip["title"], "pr": "extras"}]
+                 "t": clip["title"], "pr": "extras", "pt": e.get("pt")}]   # pt: for cut()
         if k < j and ents[k]["s"] < new_end - 0.05:
             repl.append(dict(ents[k], s=round(new_end, 3), o=0))
             k += 1
@@ -1460,10 +1493,83 @@ class Lineup(object):
             try:
                 if s.needs_work(now):
                     with self.lock:
+                        if s.data["entries"] and s.data["hash"] != s.full_hash():
+                            self.cut_changed(now)
                         s.ensure(now)
             except Exception as exc:
                 log("Schedule build failed for %s: %s" % (ch.get("name"), exc))
         return s
+
+    def cut_changed(self, now=None, every=False):
+        """Cut every changed channel (every channel, with every=True) after what's
+        on air, all of them before any is planned again: a show that moved from one
+        channel to another gets its bookmark back from the old one first.  The
+        channels' hashes are brought up to date, so ensure() just plans on."""
+        now = now or time.time()
+        with self.lock:
+            n = self.drop_removed(now)
+            for c in self.channels:
+                s = self.schedule(c, ensure=False)
+                s.reload()
+                h = s.full_hash()
+                if not s.data["entries"] or (s.data["hash"] == h and not every):
+                    continue
+                if s.data["until"] >= now:
+                    s.cut(now)
+                s.data["hash"] = h
+                s.save()
+                n += 1
+            return n
+
+    def drop_removed(self, now=None):
+        """Schedules of channels no longer in the lineup: cut first (the bookmarks
+        their plans moved go back to what aired, so a show that moves on continues
+        from there), then deleted."""
+        now = now or time.time()
+        ids = set(c["id"] for c in self.channels)
+        try:
+            names = [f for f in os.listdir(SCHEDULE_DIR) if f.endswith(".json") and f[:-5] not in ids]
+        except OSError:
+            return 0
+        with self.lock:
+            for f in names:
+                s = ChannelSchedule({"id": f[:-5], "type": "network"}, self.cfg)
+                s.lineup = self
+                try:
+                    if "undo" in s.data and s.data["until"] >= now:
+                        s.cut(now)
+                        bookmarks.flush()
+                    os.remove(s.path)
+                except Exception as exc:
+                    log("Removed channel %s: %s" % (f, exc))
+        return len(names)
+
+    def refresh(self, now=None, progress=None):
+        """Refresh schedules, keep my place: settings, channels and clips as they are
+        now apply from the end of each channel's programme on air; what's on air and
+        every show's next episode stay.  progress(i, n, channel) is called per
+        channel.  Returns how long it took (s)."""
+        t0 = time.time()
+        now = now or t0
+        library.clear_cache()                # the library and station clips as they are now
+        stations.clear_cache()
+        with self.lock:
+            self.reload_channels()
+            self.refresh_assignment()
+            if not bookmarks.exists():
+                self.migrate(now)
+            n = self.cut_changed(now, every=True)
+            for i, c in enumerate(self.channels):
+                if progress:
+                    progress(i, len(self.channels), c)
+                try:
+                    self.schedule(c, ensure=False).ensure(now)
+                except Exception as exc:
+                    log("Schedule build failed for %s: %s" % (c.get("name"), exc))
+        took = time.time() - t0
+        log("Refresh schedules: %d channels from the end of what's on air, %.1f s" % (n, took),
+            level=xbmc.LOGINFO)
+        return took
 
     def migrate(self, now=None):
         """The first run with shared bookmarks (no series.json yet).  Each channel's

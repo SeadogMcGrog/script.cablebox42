@@ -1,4 +1,9 @@
 Unreleased
+- Editing a channel (its shows, pins, breaks) or Tools > Rebuild schedules no
+  longer replans from the half hour: what's on air keeps playing, the change
+  applies from the next programme, and every show's next episode stays next
+  (before, episodes already planned were skipped). Promos still to air in the
+  current programme are named again, so 'Up next' is always what's next
 - Each show has one place in its series, kept by its home channel: a show that
   moves to another channel, or leaves the lineup and comes back, continues with
   its next episode. Other channels airing it keep their own run. The first start
