@@ -1,8 +1,9 @@
 Unreleased
 - House breaks: with no commercials, channels now get short breaks of about a
   minute inside shows, like cable: promos for the channel's own shows, promos for
-  shows on other channels ('Tonight at 9:00 on Channel 6', only what's really
-  planned there), ads for the guide and weather channels and tonight's lineup,
+  shows on other channels (the card names the channel, e.g. 'Drama Movies ·
+  Channel 6', with the time in its tab, e.g. 'Tonight at 9:00'; only what's
+  really planned there), ads for the guide and weather channels and tonight's lineup,
   and a station ID card. At the end of a show, house breaks run back to back and
   the 'Up next' card, the last thing before the next show, lasts at most about
   90 seconds. Settings > Programming > House breaks: When there are no
@@ -88,6 +89,8 @@ Unreleased
   stays for music videos back to back with no clock
 - Boombox TV is now the music video channel (it used to brand a channel with
   'music' in its name or MTV/CMT shows); existing channels keep their branding
+- Fixed: a music video renamed after the library scan (only the case changed,
+  e.g. '9 to 5' to '9 To 5') couldn't be played; CableBox uses the name on disk
 - New: schedule promos. With Settings > Programming > Promos on, breaks include
   a short promo for what the channel airs next ('Up next', 'Tonight at 8:00'),
   made from your own library: the episode's still (or fanart, landscape,
@@ -115,6 +118,24 @@ Unreleased
 - Developer tools (Settings > Advanced, off by default): 0 0 0 on the remote
   while watching plays the promo of the channel's next break right now, then
   the channel again at the live point. Nothing in the schedule changes
+- Build my lineup: every screen ends in OK or Cancel. Nothing is saved until the
+  last screen; Back or Cancel on any step leaves everything as it was ('Setup
+  cancelled - nothing changed'). Back on a three-way question means Cancel, never
+  No (it used to open a file browser on 'Same music for Weather?'). Overnight
+  sign-off and prime time are one list, both ticked. Cancel on 'Looking through
+  your library...' now stops the scan. The last screen: Start watching / Not now
+  / What I set up
+- Every menu and question works the same way: buttons say what they do, Back
+  always cancels, removing anything asks first (time blocks, branding blocks,
+  off-air hours, planner pins), and changing a channel's type asks before
+  resetting its settings. Add a channel: Back on any step adds nothing; a number
+  that's taken offers to move that channel, slide the others over or pick
+  another number
+- The TV's Menu has a 'CableBox menu' row: it turns the TV off (with the
+  turn-off effect) and opens CableBox's menu. Back from the TV returns to where
+  you started it: CableBox's menu if you started it there, otherwise Kodi
+- Station kits can have their own corner bug (a simpler logo for the corner);
+  BACKLOT has one
 - New channel type: Behind the scenes (movie extras). Making-of pieces,
   documentaries and interviews from your movies' Extras folders, in per-film
   blocks ('Inside 2001: A Space Odyssey (1968)', the segments in the guide
