@@ -17,6 +17,7 @@ import json
 import math
 import os
 import random
+import re
 import threading
 import time
 
@@ -38,6 +39,15 @@ SHORTS_PACK, SHORTS_PINNED_ONLY, SHORTS_ONE_PER_SLOT = 0, 1, 2
 PROMO_RATES = (1.0, 0.5, 0.25)      # every break, about half, now and then
 PROMO_LOOKAHEAD = 6 * 3600          # 'later today' looks this far ahead
 PROMO_TYPES = assign.PROGRAM_TYPES + ("musicvideos",)    # channels whose breaks carry promos
+
+
+def _episode_order(label):
+    """'S01E04' -> a key in the library's episode order (specials, season 0, last)."""
+    m = re.match(r"S(\d+)E(\d+)", label or "")
+    if not m:
+        return None
+    season, episode = int(m.group(1)), int(m.group(2))
+    return (season == 0, season, episode)
 
 
 # ----------------------------------------------------------------- time utils
@@ -198,8 +208,10 @@ class ChannelSchedule(object):
                 return last
         return self.data["state"]["last"].get(key)
 
-    def _bm_set(self, key, path):
-        """Move a bookmark while planning (undone by cut())."""
+    def _bm_set(self, key, path, label=None):
+        """Move a bookmark while planning (undone by cut()).  label ('S01E04'):
+        where the episode is in the series, should its file leave the library."""
+        bookmarks.remember(path, label)
         shared = self._shared(key)
         self._undo("s" if shared else "l", key, self._bm_get(key))
         if shared:
@@ -309,6 +321,8 @@ class ChannelSchedule(object):
             done.add(key)
             i = next((j for j, x in enumerate(eps) if x["path"] == e["p"]), 0)
             st["last"][key] = eps[i - 1]["path"] if i > 0 else None    # None: from the first episode
+            if i > 0:
+                bookmarks.remember(eps[i - 1]["path"], eps[i - 1].get("label"))
 
     # -- public api
     def assignment(self):
@@ -1047,7 +1061,7 @@ class ChannelSchedule(object):
                 ep = self._next_episode(src, ptr)
                 if ep["path"] in used or ep["dur"] > room or ep["dur"] > self.short_limit():
                     break
-                self._bm_set(ptr, ep["path"])
+                self._bm_set(ptr, ep["path"], ep.get("label"))
             else:
                 fit = [it for it in src if it["path"] not in used
                        and 0 < it["dur"] <= min(room, self.short_limit())]
@@ -1355,6 +1369,13 @@ class ChannelSchedule(object):
                 if e["path"] == last:
                     idx = (i + 1) % len(eps)
                     break
+            else:
+                # the bookmarked file has left the library (deleted, renamed, a new
+                # copy): go on after the same season/episode, not from the start
+                k = _episode_order(bookmarks.label_of(last))
+                if k is not None:
+                    idx = next((i for i, e in enumerate(eps)
+                                if (_episode_order(e.get("label")) or k) > k), 0)
         when = getattr(self, "_season_t", None)
         # skip files Kodi couldn't open lately, and (automatic programming only)
         # holiday episodes outside their season
@@ -1390,7 +1411,7 @@ class ChannelSchedule(object):
         kind, ser = shows[i]
         if kind == "s":
             ep = self._next_episode(ser, rid + "|" + ser["key"])
-            self._bm_set(rid + "|" + ser["key"], ep["path"])
+            self._bm_set(rid + "|" + ser["key"], ep["path"], ep.get("label"))
             self._cont = ("series", ser, rid + "|" + ser["key"])
             return ep
         self._cont = ("singles", singles, None)
@@ -1436,7 +1457,7 @@ class ChannelSchedule(object):
         st = self.data["state"]
         if choice is not None:
             ep = self._next_episode(choice, choice["key"])
-            self._bm_set(choice["key"], ep["path"])
+            self._bm_set(choice["key"], ep["path"], ep.get("label"))
             self._cont = ("series", choice, choice["key"])
             return ep
         self._cont = ("singles", singles, key)

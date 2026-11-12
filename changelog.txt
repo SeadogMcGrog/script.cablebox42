@@ -1,4 +1,6 @@
 Unreleased
+- A show whose next-up episode file is deleted, renamed or replaced by a new copy
+  carries on with the episode after it, instead of starting again at S01E01
 - Changes apply by themselves: closing Settings, the Channel manager, the Weekly
   planner or a tool refreshes the schedules when something they're planned from
   changed (channels, pins, station clips, commercials, promo and break settings),

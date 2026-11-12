@@ -82,6 +82,7 @@ def flush():
     """Write our changes, merged with whatever the other process wrote meanwhile."""
     global _data, _mtime
     with _lock:
+        _flush_labels()
         if not _dirty:
             return
         disk = load_json(FILE, None)
@@ -101,6 +102,54 @@ def flush():
             return
         _dirty.clear()
         _data, _mtime = disk, _mt()
+
+
+# ---- which episode a bookmarked file was (season/episode), for when it's gone
+# A bookmark is a file path.  If that file leaves the library (deleted, renamed,
+# replaced by a better copy), the run continues after the same season/episode
+# instead of going back to S01E01 (scheduler._next_episode).
+LABELS_FILE = os.path.join(PROFILE, "episode_labels.json")
+_labels = None
+_labels_dirty = {}
+
+
+def _load_labels():
+    global _labels
+    if _labels is None:
+        d = load_json(LABELS_FILE, None)
+        _labels = d if isinstance(d, dict) else {}
+    return _labels
+
+
+def remember(path, label):
+    """'S01E04' for a planned episode's file."""
+    if not path or not label:
+        return
+    with _lock:
+        if _load_labels().get(path) != label:
+            _labels[path] = label
+            _labels_dirty[path] = label
+
+
+def label_of(path):
+    with _lock:
+        return _load_labels().get(path) if path else None
+
+
+def _flush_labels():
+    if not _labels_dirty:
+        return
+    disk = load_json(LABELS_FILE, None)
+    disk = disk if isinstance(disk, dict) else {}
+    disk.update(_labels_dirty)
+    tmp = "%s.%d.tmp" % (LABELS_FILE, os.getpid())
+    try:
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(disk, f, separators=(",", ":"))
+        os.replace(tmp, LABELS_FILE)
+        _labels_dirty.clear()
+    except (IOError, OSError) as exc:
+        log("episode labels not saved: %s" % exc)
 
 
 def save_all(shows):
