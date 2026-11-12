@@ -44,10 +44,30 @@ def run():
         lineup.ensure_all(abort=lambda: monitor.abortRequested() or tv_running())
         library.durations().save()
 
-    def extras():
-        # movie Extras folders: listed and measured only here, while the TV is off
+    def extras(dates=False):
+        # movie Extras folders: listed and measured only here, while the TV is off.
+        # Returns how many folders' lists of extras changed.
         from . import library
-        library.extras_refresh(abort=lambda: monitor.abortRequested() or tv_running())
+        library.EXTRAS_LAST["changed"] = 0
+        library.extras_refresh(abort=lambda: monitor.abortRequested() or tv_running(), dates=dates)
+        return library.EXTRAS_LAST["changed"]
+
+    def extras_after_scan():
+        # after a library scan or clean: every Extras folder's own date is looked at
+        # now (a clip added to an Extras folder doesn't change the movie's folder),
+        # and a Behind the scenes channel is planned again when something changed
+        chans = []
+        try:
+            from . import channels as C
+            chans = C.load()
+        except Exception:
+            pass
+        if not any(c.get("type") == "extras" for c in chans):
+            return
+        if extras(dates=True) and not tv_running() and not home.getProperty(TOOL_BUSY):
+            from . import manager
+            K.log("Schedules: movie extras changed - refreshing", xbmc.LOGINFO)
+            manager.refresh_now(quiet=True)
 
     def music_videos():
         # Boombox: length, frame rate, audio and tags of music videos not read yet
@@ -95,6 +115,7 @@ def run():
     from . import progress
     was_on = tv_running()
     idle = 0
+    extras_due = False                       # a scan or clean happened: look at the Extras folders when the TV is off
     tick = 0
     while not monitor.abortRequested():
         tick += 1
@@ -121,11 +142,18 @@ def run():
             # the library changed: new episodes, shows, movies, files gone.  Works
             # with the TV on too: a refresh never touches what's on air
             monitor.library_at = 0
+            extras_due = True
             try:
                 from . import manager
                 manager.refresh_if_changed(clips=False, quiet=True, lib=True)
             except Exception as exc:
                 K.log_err("refresh after a library change failed: %s" % exc)
+        if extras_due and not on and not home.getProperty(TOOL_BUSY):
+            extras_due = False
+            try:
+                extras_after_scan()
+            except Exception as exc:
+                K.log_err("extras after a library change failed: %s" % exc)
         if not on and idle <= 0:
             try:
                 progress.repair_pending()

@@ -1,4 +1,8 @@
 Unreleased
+- Fixed: a clip added later to a movie's Extras folder could take hours to reach
+  the Behind the scenes channel. After a library scan or clean, CableBox looks at
+  every Extras folder (once the TV is off) and plans new extras from the
+  channel's next programme
 - Clips get proper names: commercials, bumps, station clips and folder channels
   use the clip's own NFO <title> (a show folder's tvshow.nfo), else the file name
   cleaned up - no dots or underscores, no release tags (720p, x264, WEB-DL...) and

@@ -940,13 +940,18 @@ def _extras_fresh(entry, folder, now, recheck=False):
 EXTRAS_UNREADABLE_RETRY = 3 * 86400  # a file whose length couldn't be read is tried again after this
 
 
-def extras_refresh(abort=lambda: False, progress=None, retry=False):
+EXTRAS_LAST = {"changed": 0}           # folders whose list of extras changed in the last scan
+
+
+def extras_refresh(abort=lambda: False, progress=None, retry=False, dates=False):
     """Find and list movie Extras folders that changed, then measure the files
     not measured yet.  Runs in the background while the TV is off, or from
     'Look for movie extras' (progress(fraction, line) drives its dialog; retry=True also
     tries again the files whose length couldn't be read).  Saves as it goes, so
     a cancelled or interrupted run carries on next time.  Returns True when it
-    finished."""
+    finished.  dates=True: look at every Extras folder's dates now, not just the
+    ones not looked at for EXTRAS_RECHECK (after a library scan or clean: a clip
+    added to an Extras folder changes that folder's date, not the movie's)."""
     home = _home()
     busy = home.getProperty(_X_BUSY)
     if busy and time.time() - float(busy or 0) < 900:
@@ -956,7 +961,7 @@ def extras_refresh(abort=lambda: False, progress=None, retry=False):
     stop = abort
     abort = lambda: stop() or home.getProperty(_X_STOP) == "1"
     try:
-        return _extras_refresh(abort, progress, retry)
+        return _extras_refresh(abort, progress, retry, dates)
     finally:
         home.clearProperty(_X_BUSY)
 
@@ -985,13 +990,13 @@ def extras_take_over(wait=15.0):
     return not home.getProperty(_X_BUSY)
 
 
-def _extras_refresh(abort, progress, retry):
+def _extras_refresh(abort, progress, retry, dates=False):
     t0 = time.time()
     cache = load_json(EXTRAS_FILE, {})
     folders = cache.get("folders") or {}
     unreadable = cache.get("unreadable") or {}
     movies = _extras_movies()
-    listed = 0
+    listed = changed = 0
     for n, (folder, ms) in enumerate(movies.items()):
         if abort():
             break
@@ -999,7 +1004,7 @@ def _extras_refresh(abort, progress, retry):
             progress(0.3 * n / max(1, len(movies)), "list", n, len(movies))
         now = time.time()
         entry = folders.get(folder)
-        if _extras_fresh(entry, folder, now, recheck=retry):        # Look for movie extras looks at every folder's dates
+        if _extras_fresh(entry, folder, now, recheck=retry or dates):   # dates: every folder's dates, now
             continue
         disc = ms[0].get("disc", "")
         base = {folder: _mtime(folder)}
@@ -1007,12 +1012,16 @@ def _extras_refresh(abort, progress, retry):
         if not top and disc:
             base[disc] = _mtime(disc)
             top = _find_extras(disc)
-        files, dates = _list_extras(top) if top else ([], {})
-        folders[folder] = {"extras": top, "files": files, "dates": dates, "base": base,
+        files, fdates = _list_extras(top) if top else ([], {})
+        if not entry or entry.get("files") != files or entry.get("extras") != top:
+            changed += 1
+        folders[folder] = {"extras": top, "files": files, "dates": fdates, "base": base,
                            "listed": now, "checked": now}
         listed += 1
     for gone in [f for f in folders if f not in movies]:
         del folders[gone]
+        changed += 1
+    EXTRAS_LAST["changed"] = changed
     cache["folders"] = folders
     save_json(EXTRAS_FILE, cache)
     t1 = time.time()
@@ -1049,8 +1058,8 @@ def _extras_refresh(abort, progress, retry):
     save_json(EXTRAS_FILE, cache)
     done = probed == len(todo) and not abort()
     _AIR_CACHE.clear()
-    log("extras: %d movie folders, %d listed in %.1f s, %d of %d new files measured in %.1f s%s" % (
-        len(movies), listed, t1 - t0, probed, len(todo), time.time() - t1, "" if done else " (stopped early)"),
+    log("extras: %d movie folders, %d listed (%d changed) in %.1f s, %d of %d new files measured in %.1f s%s" % (
+        len(movies), listed, changed, t1 - t0, probed, len(todo), time.time() - t1, "" if done else " (stopped early)"),
         level=xbmc.LOGINFO)
     return done
 
