@@ -186,6 +186,8 @@ A task often starts as "implement `briefs\<name>.md`".
   and starts schedules afresh; `setting ID=VALUE...` sets CableBox settings (Kodi is
   stopped around it, or it writes its own copy back); `status` says what's installed
   and running.
+- **Kodi 21's add-on settings dialog: Back cancels, only OK saves.** From a list item
+  it's `Right Right Select` (the scrollbar takes the first Right).
 - **Drive it:** `send Down Select 2 Back` (numbers are pauses), `shot FILE.png`,
   `rec FILE.mp4 SECS [actions]` (picture + sound), `log [N]`, `sh 'CMD'`, `zap`, `stop`.
 - **Fresh start without rebuilding:** `reset-profile` wipes only the Kodi profile and
