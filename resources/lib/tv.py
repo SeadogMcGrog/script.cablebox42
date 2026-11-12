@@ -323,6 +323,8 @@ class TVWindow(xbmcgui.WindowXML):
         with self.lock:
             self.digits = (self.digits + str(d))[-3:]
             self.digits_at = time.time()
+            if self.digits == self.DEV_CODE and self.dev_code():
+                return                       # Developer tools: a promo now (no "CH 000" on screen)
             self.show_digits(self.digits.ljust(2, "_") if len(self.digits) < 2 else self.digits)
             if len(self.digits) >= 3:
                 self.commit_digits()
@@ -351,6 +353,7 @@ class TVWindow(xbmcgui.WindowXML):
             if self.ch and ch["id"] != self.ch["id"]:
                 self.prev_ch = self.ch
             self.promo_stop()                # mid-promo: the theme off
+            self.dev_promo_until = 0
             self.cc.leave()                  # before the static clip replaces the programme
             self.ch = ch
             self.cur_key = None
@@ -470,12 +473,7 @@ class TVWindow(xbmcgui.WindowXML):
         close Kodi's busy wheel if it pops up (slow drive, screen recording...)."""
         if now - self.play_started_at > 4:
             return
-        try:
-            for dlg in ("busydialog", "busydialognocancel"):
-                if xbmc.getCondVisibility("Window.IsActive(%s)" % dlg):
-                    xbmc.executebuiltin("Dialog.Close(%s,true)" % dlg)
-        except Exception:
-            pass
+        promos.close_busy_wheel()
 
     def pull_back_from_fullscreen(self, now):
         """Kodi sometimes switches our video to its own full-screen player (a key
@@ -683,6 +681,10 @@ class TVWindow(xbmcgui.WindowXML):
             if now < self.hold_until:
                 return
             self.hold_until = 0
+        if self.dev_promo_until:
+            if now < self.dev_promo_until:
+                return                       # the cheat code's promo is on
+            self.end_dev_promo()
         if self.power_on:
             self.end_power_on()
         sched = self.lineup.schedule(self.ch)
@@ -875,19 +877,18 @@ class TVWindow(xbmcgui.WindowXML):
         if not K.setting_bool("promos_on", False) or not pt or pt < now:
             self.card_for({"k": "card", "sub": "id"}, now)     # promos switched off since: a station ID
             return
-        try:
-            inf = promos.info(path, title or "")
-        except Exception as exc:
-            K.log_err("promo: %s" % exc)
-            inf = {}
-        promos.apply_card(self, promos.card(inf, title, pt, now, self.ch, stations.brand(self.ch, pt)["name"], later))
+        self.air_promo(pt, path, title, later, now, e["e"])
+
+    def air_promo(self, pt, path, title, later, now, end):
+        """The card and its theme until `end` (promos.air: the same for breaks,
+        Preview promo and the Developer tools cheat code)."""
+        music = promos.air(self, self.ch, pt, path, title, later, now)
         self.set_mode("promo")
-        music = promos.music(inf)
         if music:
             self.our_files.add(music)
             self.play_token += 1
             self.play_started_at = time.time()
-            self.theme.start(music, e["e"])
+            self.theme.start(music, end)
         else:
             self.stop_player()
 
@@ -896,6 +897,77 @@ class TVWindow(xbmcgui.WindowXML):
 
     def promo_stop(self, stop_music=True):
         self.theme.stop(stop_music)
+
+    # Settings > Advanced > Developer tools: 0 0 0 while watching airs this
+    # channel's next promo right now, then the channel again at the live point
+    # (like coming back from a break).  Read-only: nothing in the schedule
+    # changes, so the next real break, "How often" and series stay as they were.
+    DEV_CODE = "000"
+    dev_promo_until = 0
+
+    def dev_code(self):
+        """The 0 0 0 cheat code.  False when it isn't one (Developer tools off, or
+        the lineup really has a channel 0): then it's ordinary channel entry."""
+        if not K.setting_bool("dev_tools", False) or self.lineup.by_number(0):
+            return False
+        self.digits = ""
+        self.clear_overlays()                # nothing on screen but the promo
+        if not K.setting_bool("promos_on", False) or not self.ch or self.power_on \
+                or self.ch.get("type") not in scheduler.PROMO_TYPES:
+            return True                      # promos off: the code shows nothing
+        now = time.time()
+        try:
+            subj = self.dev_promo_subject(self.lineup.schedule(self.ch, ensure=False), now)
+        except Exception as exc:
+            K.log_err("developer promo: %s" % exc)
+            subj = None
+        if not subj:
+            K.log("Developer tools: nothing to promote on %s" % self.ch.get("name"), xbmc.LOGINFO)
+            return True
+        pt, path, title, later = subj
+        K.log("Developer tools: promo now on %s for %s" % (self.ch.get("name"), title), xbmc.LOGINFO)
+        self.promo_stop()
+        self.stop_player()                   # the programme off (its resume point is put back)
+        self.show_bug(False)
+        self.cur_key = ("dev-promo", now)    # afterwards tick() starts the live entry again
+        self.dev_promo_until = now + promos.PROMO_LEN
+        self.air_promo(pt, path, title, later, now, self.dev_promo_until)
+        return True
+
+    def dev_promo_subject(self, sched, now):
+        """(time, path, title, later) of the promo this channel's next break would
+        air: its planned promo if it has one, otherwise what promo_target would
+        pick for a promo there.  None when there's nothing to promote."""
+        e = sched.entry_at(now)
+        t = e["e"] if (e and e.get("k") in ("show", "clip")) else now    # the next break starts here
+        ents = sched.data["entries"]
+        for x in ents:
+            if x["s"] < t - 0.05:
+                continue
+            if x.get("k") in ("show", "clip"):
+                break                        # the break is over: no planned promo in it
+            if x.get("k") == "promo":
+                pt, path, title, later = self.promo_subject(sched, x)
+                if pt and pt > now:
+                    return pt, path, title, later
+                break
+        tgt = sched.promo_target({"s": t, "e": t + promos.PROMO_LEN})
+        if tgt is None:                      # the schedule isn't planned that far: what's on next
+            b = next((b for b in sched.blocks_between(t, t + scheduler.PROMO_LOOKAHEAD)
+                      if b["s"] > t and b.get("k") == "show"), None)
+            tgt = (b, None)
+            if b:
+                tgt = (b, next((x.get("p") for x in ents if b["s"] <= x["s"] < b["e"]
+                                and x.get("k") == "show" and x.get("p")), None))
+        b, path = tgt
+        if not b:
+            return None
+        return b["s"], path, b["t"], b is not sched.next_block(t)
+
+    def end_dev_promo(self):
+        self.dev_promo_until = 0
+        self.promo_stop()                    # the theme cut with the card
+        self.cur_key = None                  # back to the channel at the live point
 
     def play(self, e, now):
         self.clear_music()

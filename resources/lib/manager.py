@@ -2197,7 +2197,7 @@ what this channel airs next - the episode's still, the show's logo, the episode
 title, a short synopsis when one fits, 'Up next' or the day and time, and the show's
 theme.mp3, all from your own library (nothing in it is changed).  Your own promo
 clips in a station folder's promos/ come first.  Settings > Advanced > Preview promo
-shows any show's promo straight away.
+plays one channel's next promo (or a later one) straight away.
 
 [B]Files[/B]
 Your lineup lives in userdata/addon_data/script.cablebox42/channels.json if you
@@ -2469,15 +2469,24 @@ def run_tool(name):
 
 def open_settings():
     """Settings; if a tool was started from its Tools page, wait for it to
-    finish before showing the menu again (so two dialogs never collide)."""
+    finish before showing the menu again (so two dialogs never collide).
+    Preview promo marks itself busy too (it sets TOOL_BUSY like the tools) and
+    opens Settings again when its promo is over: then wait for that Settings
+    and for whatever is picked there."""
     K.ADDON.openSettings()
     home = xbmcgui.Window(10000)
     mon = xbmc.Monitor()
-    for _i in range(8):                      # the tool starts a moment after Settings closes
-        if home.getProperty(TOOL_BUSY) or mon.waitForAbort(0.25):
-            break
-    while home.getProperty(TOOL_BUSY) and not mon.waitForAbort(0.3):
-        pass
+    while True:
+        for _i in range(8):                  # the tool starts a moment after Settings closes
+            if home.getProperty(TOOL_BUSY) or mon.waitForAbort(0.25):
+                break
+        name = home.getProperty(TOOL_BUSY)
+        if not name:
+            return
+        while home.getProperty(TOOL_BUSY) and not mon.waitForAbort(0.3):
+            pass
+        if name != "preview_promo" or mon.abortRequested():
+            return
 
 
 def welcome():

@@ -625,6 +625,50 @@ def music(inf):
     return inf.get("theme") or (BED if os.path.exists(BED) else "")
 
 
+def air(win, ch, pt, path, title, later, now):
+    """Put one promo card on `win` (a window with the TV's layout,
+    script-cablebox42-tv.xml) and return its music ('' for a silent card).
+    The one way a promo goes on screen: in a break (tv.start_promo), in
+    Settings > Advanced > Preview promo and with the Developer tools cheat code.
+    The caller starts the music with ThemeAudio.start(music, end)."""
+    try:
+        inf = info(path, title or "")
+    except Exception as exc:
+        K.log_err("promo: %s" % exc)
+        inf = {}
+    from . import stations
+    name = stations.brand(ch, pt)["name"] if ch else ""      # its branding at that hour
+    apply_card(win, card(inf, title, pt, now, ch, name, later))
+    win.setProperty("mode", "promo")
+    return music(inf)
+
+
+def close_busy_wheel():
+    """A TV never shows a loading spinner: close Kodi's busy wheel if it pops up
+    while something of ours starts (a theme, a channel coming in)."""
+    try:
+        for dlg in ("busydialog", "busydialognocancel"):
+            if xbmc.getCondVisibility("Window.IsActive(%s)" % dlg):
+                xbmc.executebuiltin("Dialog.Close(%s,true)" % dlg)
+    except Exception:
+        pass
+
+
+def wait_stopped(player, secs=5.0):
+    """Wait until Kodi's player has really stopped (not on a timer); True if it has."""
+    mon = xbmc.Monitor()
+    end = time.time() + secs
+    while time.time() < end:
+        try:
+            if not player.isPlaying():
+                return True
+        except Exception:
+            return True
+        if mon.waitForAbort(0.05):
+            break
+    return False
+
+
 class ThemeAudio(object):
     """A promo's theme music.  Played like the guide's music, at the file's own
     level: CableBox never changes Kodi's volume.  It is cut off cleanly when the

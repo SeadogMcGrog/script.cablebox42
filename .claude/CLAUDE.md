@@ -132,6 +132,11 @@ A task often starts as "implement `briefs\<name>.md`".
   ('9 to 5' -> '9 To 5') after the library scan. Music videos use the name found on disk (`musicvideo_files`).
 - **Vertical `grouplist` + `<align>right</align>` sits its items on the bottom edge** (Boombox caption):
   hidden lines close up and the block keeps one baseline.
+- **This add-on's `settings.xml` is the old format, which has no setting levels**: Kodi 21 ignores a
+  `level="3"` attribute (the setting shows at Standard). Expert-only settings need the new format.
+- **Anything started from a Settings button must set `manager.TOOL_BUSY`** while it runs (tools via
+  `run_tool`, Preview promo itself): `open_settings` waits only 2 s for it, then the CableBox menu
+  opens again - over whatever is on screen.
 - `kodi-addon-checker` rejects `<news>` over 1500 characters. Keep the newest release
   notes there and the full history in `changelog.txt`.
 

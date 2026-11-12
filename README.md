@@ -578,8 +578,9 @@ loudness and fades out by itself.)
 | Promo music | The show's theme music / None (silent) |
 | Also use short promo clips from a show's Extras folder | Off (default). Videos in the show's `Extras` folder with *Promo* or *Trailer* in the name, up to 2 minutes, sometimes air instead (e.g. `Extras/1988 On-Air Season Two Promo.mkv`) |
 
-**See one now:** *Settings → Advanced → Preview promo* plays any show's promo
-straight away, with its music, using its next airing on your channels.
+**See one now:** *Settings → Advanced → Preview promo*: pick a channel, then
+*Up next* or a programme in the next 6 hours, and its promo plays full screen
+exactly as in a break, between 2 s and 1 s of black (clean for a recording).
 
 **Your own promos win:** video clips in a channel's station folder under
 `promos/` are played instead of the automatic ones. Like other clips, new
@@ -935,7 +936,7 @@ tap to tune. Yatse custom commands can call the `RunScript` actions above.
 
 | Setting | |
 |---|---|
-| Preview promo | Pick a show and its promo card plays straight away, with its music, exactly as in a break (Back ends it). Also `RunScript(script.cablebox42,preview_promo,<tvshowid>)` for a skin button or a favourite. Not while the TV is on |
+| Preview promo | Pick a channel, then *Up next* or *Later today* (its programmes in the next 6 hours): about 2 s of black, the promo exactly as in a break, 1 s of black, then Settings again. Changes nothing (schedules, breaks, series, *How often*). Back ends it. Also `RunScript(script.cablebox42,preview_promo,<tvshowid>)` for a skin button or a favourite. Not while the TV is on |
 
 ## Video formats and AV1
 

@@ -1,12 +1,14 @@
-"""Settings > Advanced > Preview promo: one show's promo card, straight away,
-exactly as it appears in a break (same card, same theme music, same fade).
+"""Settings > Advanced > Preview promo: one promo, full screen, exactly as it
+airs in a break (same window, same card, same theme music: promos.air), with
+clean black before and after it for a screen recorder.
 
-    RunScript(script.cablebox42,preview_promo)            pick a show
-    RunScript(script.cablebox42,preview_promo,<tvshowid>)  that show
+    RunScript(script.cablebox42,preview_promo,settings)    pick a channel and a promo,
+                                                            then back to Settings
+    RunScript(script.cablebox42,preview_promo)             the same, without reopening Settings
+    RunScript(script.cablebox42,preview_promo,<tvshowid>)  that show (contact sheet, keymaps)
 
-It uses the show's next airing in the channels' schedules when there is one
-(nothing is built or changed); otherwise its home channel, its first episode
-and the next half hour.
+Read-only: it reads the channels' saved schedules (never builds or changes
+one), so "How often", the planned breaks and the series stay as they were.
 """
 import threading
 import time
@@ -21,23 +23,9 @@ from . import stations
 from . import logos
 from .kodiutil import _
 
-
-
-def pick_show():
-    """The show picker (with posters): a tvshowid, or None."""
-    shows = K.rpc("VideoLibrary.GetTVShows", {"properties": ["title", "year", "art"],
-                                               "sort": {"method": "title", "ignorearticle": True}}).get("tvshows", [])
-    if not shows:
-        xbmcgui.Dialog().ok(_("Preview promo"), _("No TV shows in the library"))
-        return None
-    items = []
-    for s in shows:
-        li = xbmcgui.ListItem(s.get("title", ""), str(s.get("year") or ""))
-        art = s.get("art") or {}
-        li.setArt({"thumb": art.get("poster") or art.get("thumb") or "", "icon": art.get("poster") or ""})
-        items.append(li)
-    i = xbmcgui.Dialog().select(_("Preview a promo for which show?"), items, useDetails=True)
-    return shows[i]["tvshowid"] if i >= 0 else None
+LEAD_IN = 2.0           # seconds of black before the card (time to start recording)
+LEAD_OUT = 1.0          # ...and after it, once the music has stopped
+TOOL = "preview_promo"  # manager.TOOL_BUSY while it runs: the CableBox menu waits for it
 
 
 def _first_episode(tvshowid):
@@ -46,8 +34,17 @@ def _first_episode(tvshowid):
     return eps[0]["file"] if eps else ""
 
 
+def _block_path(sc, b):
+    """The file of a programme block (its first episode)."""
+    for e in sc.data["entries"]:
+        if b["s"] <= e["s"] < b["e"] and e.get("k") == "show" and e.get("p"):
+            return e["p"]
+    return ""
+
+
 def target(tvshowid, now=None):
-    """{title, path, pt, ch, later} for this show's promo."""
+    """{title, path, pt, ch, later} for this show's promo (contact sheet and
+    RunScript(...,preview_promo,<tvshowid>))."""
     now = now or time.time()
     d = K.rpc("VideoLibrary.GetTVShowDetails", {"tvshowid": int(tvshowid), "properties": ["title"]})
     title = (d.get("tvshowdetails") or {}).get("title") or ""
@@ -70,12 +67,7 @@ def target(tvshowid, now=None):
                 break
     if best:
         b, c, sc = best
-        path = ""
-        for e in sc.data["entries"]:
-            if b["s"] <= e["s"] < b["e"] and e.get("k") == "show" and e.get("p"):
-                path = e["p"]
-                break
-        out.update(path=path, pt=b["s"], ch=c, later=b is not sc.next_block(now))
+        out.update(path=_block_path(sc, b), pt=b["s"], ch=c, later=b is not sc.next_block(now))
     else:
         home = ((lineup.assignment if lineup else None) or {}).get("home", {}).get(title.lower())
         ch = next((c for c in (lineup.channels if lineup else []) if c["id"] == home), None)
@@ -83,89 +75,230 @@ def target(tvshowid, now=None):
     return out
 
 
+def _window_props(ch, now):
+    """What the TV window has on top of the card itself: the station logo the
+    card shows, and the CRT look."""
+    logo = ""
+    if ch and K.setting_bool("logo_banner", True):
+        logo = stations.brand(ch, now)["logo"] or logos.logo_for(ch) or ""
+    crt = K.setting_int("crt_mode", 0)
+    return {"banner_logo": logo, "crt": str(crt) if crt in (1, 2) else ""}
+
+
 def card_for_show(tvshowid, now=None):
-    """(window properties, music path, title) of a show's promo card."""
+    """(window properties, music path, title) of a show's promo card (the
+    contact sheet draws every show's card with this)."""
     now = now or time.time()
     t = target(tvshowid, now)
     inf = promos.info(t["path"], t["title"])
     ch = t["ch"]
     name = stations.brand(ch, t["pt"])["name"] if ch else ""      # its branding at that hour
     props = promos.card(inf, t["title"], t["pt"], now, ch, name, t["later"])
-    logo = ""
-    if ch and K.setting_bool("logo_banner", True):
-        logo = stations.brand(ch, now)["logo"] or logos.logo_for(ch) or ""
-    crt = K.setting_int("crt_mode", 0)
     # like the TV: a logo not yet in the texture cache gives a title-only card; it
     # loads in the background meanwhile, so the next preview of this show has it
     preload = "" if props.get("promo_logo") else (inf.get("logo") or "")
-    props.update(banner_logo=logo, crt=str(crt) if crt in (1, 2) else "", mode="promo", promo_preload=preload)
+    props.update(_window_props(ch, now), mode="promo", promo_preload=preload)
     return props, promos.music(inf), t["title"]
 
 
+# ------------------------------------------------------------------ pickers
+def _upcoming(sc, now):
+    """This channel's programmes starting in the next 6 hours (promos' look-ahead)."""
+    return [b for b in sc.blocks_between(now, now + scheduler.PROMO_LOOKAHEAD)
+            if b["s"] > now and b.get("k") == "show"]
+
+
+def pick_channel(lineup, now, last=None):
+    """The channel picker: (channel, its schedule), or None for Back."""
+    rows, chans = [], []
+    for c in lineup.channels:
+        if c.get("type") not in scheduler.PROMO_TYPES:
+            continue
+        try:
+            sc = lineup.schedule(c, ensure=False)          # never builds anything
+        except Exception:
+            continue
+        up = _upcoming(sc, now)
+        li = xbmcgui.ListItem("%d  %s" % (c["number"], stations.brand(c, now)["name"]),
+                              _("Up next: %s") % up[0]["t"] if up else
+                              _("Nothing in the next 6 hours"))
+        logo = stations.brand(c, now)["logo"] or logos.logo_for(c) or ""
+        li.setArt({"thumb": logo, "icon": logo})
+        rows.append(li)
+        chans.append((c, sc))
+    if not rows:
+        xbmcgui.Dialog().ok(_("Preview promo"), _("No channels with programmes yet"))
+        return None
+    pre = next((i for i, (c, _sc) in enumerate(chans) if last and c["id"] == last), 0)
+    i = xbmcgui.Dialog().select(_("Preview a promo for which channel?"), rows, useDetails=True, preselect=pre)
+    return chans[i] if i >= 0 else None
+
+
+def pick_promo(ch, sc, now):
+    """Up next, or one of the programmes later today: (block, later) or None for Back."""
+    up = _upcoming(sc, now)
+    if not up:
+        xbmcgui.Dialog().ok(_("Preview promo"), _("Nothing on %s in the next 6 hours") % ch["name"])
+        return None
+    nxt, later = up[0], up[1:]
+    rows = [xbmcgui.ListItem(_("Up next"), "%s, %s" % (nxt["t"], promos.clock(nxt["s"])))]
+    if later:
+        rows.append(xbmcgui.ListItem(_("Later today"), _("Pick from %d programmes in the next 6 hours") % len(later)))
+    while True:
+        i = xbmcgui.Dialog().select(_("Preview which promo?"), rows, useDetails=True)
+        if i < 0:
+            return None
+        if i == 0:
+            return nxt, nxt is not sc.next_block(now)
+        items = [xbmcgui.ListItem(b["t"], promos.day_phrase(b["s"], now)) for b in later]
+        j = xbmcgui.Dialog().select(_("Later today"), items, useDetails=True)
+        if j >= 0:
+            return later[j], True
+
+
+# ------------------------------------------------------------------ playing it
 class PreviewWindow(xbmcgui.WindowXML):
-    """The TV window's own layout, showing just the promo for its length."""
-    props = None
-    music = ""
-    done = False
-    theme = None
+    """The TV window's own layout: black, the promo as it airs in a break, black.
+    It closes itself once the card has cut to black, the music has stopped and
+    the lead-out has passed; Back, Stop or OK end it early (same clean cut)."""
+    ch = None
+    subj = None                  # (time, path, title, later)
+    win_id = 0
 
     def onInit(self):
+        self.win_id = xbmcgui.getCurrentWindowId()
         self.player = xbmc.Player()
         self.theme = promos.ThemeAudio(self.player)
-        self.setProperty("mode", "")
-        promos.apply_card(self, self.props or {})
-        self.setProperty("mode", "promo")
-        self.end = time.time() + promos.PROMO_LEN
-        if self.music:
-            self.theme.start(self.music, self.end)
+        self.stop = threading.Event()
+        self.setProperty("mode", "")                 # the window's own black background
+        for k, v in _window_props(self.ch, time.time()).items():
+            self.setProperty(k, v)
         threading.Thread(target=self._run, name="cablebox42-preview").start()
 
-    def _run(self):
+    def _wait(self, secs):
+        """False if Back was pressed or Kodi is closing."""
         mon = xbmc.Monitor()
-        while not self.done and not mon.abortRequested():
-            now = time.time()
-            if self.theme.tick(now) or now >= self.end:
-                break
-            mon.waitForAbort(0.1)
-        self.finish()
+        end = time.time() + secs
+        while time.time() < end:
+            if self.stop.is_set() or mon.waitForAbort(0.05):
+                return False
+        return not self.stop.is_set()
 
-    def finish(self):
-        if self.done:
-            return
-        self.done = True
-        if self.theme is not None:
+    def _run(self):
+        try:
+            pt, path, title, later = self.subj
+            # the logo loads into the texture cache during the black, so the
+            # card shows it from its first frame (as tv.prefetch_promo does)
+            try:
+                self.setProperty("promo_preload", promos.info(path, title or "").get("logo") or "")
+            except Exception as exc:
+                K.log_err("preview promo: %s" % exc)
+            if self._wait(LEAD_IN):
+                now = time.time()
+                end = now + promos.PROMO_LEN
+                music = promos.air(self, self.ch, pt, path, title, later, now)
+                if music:
+                    self.theme.start(music, end)
+                mon = xbmc.Monitor()
+                while not self.stop.is_set() and time.time() < end - 0.05:
+                    if time.time() < now + 4:
+                        promos.close_busy_wheel()    # as the TV does while the theme starts
+                    if mon.waitForAbort(0.02):
+                        break
+            self.setProperty("mode", "")              # cut to black...
+            self.theme.stop()                         # ...and the music with it
+            if not promos.wait_stopped(self.player):
+                K.log("preview promo: the player didn't stop", xbmc.LOGWARNING)
+            if not self.stop.is_set():
+                self._wait(LEAD_OUT)
+        except Exception as exc:
+            K.log_err("preview promo: %s" % exc)
             self.theme.stop()
-        self.close()
+        finally:
+            self.close()
 
     def onAction(self, action):
-        aid = action.getId()
-        if aid in (10, 92, 13, 7):                     # Back, Stop or OK: end the preview
-            self.finish()
+        if action.getId() in (10, 92, 13, 7):         # Back, Stop or OK: end it (same clean cut)
+            self.stop.set()
 
 
-def run(tvshowid=None):
-    if xbmcgui.Window(10000).getProperty("cablebox42.running"):
-        xbmcgui.Dialog().ok(_("Preview promo"), _("Turn CableBox's TV off first"))
-        return
-    if tvshowid is None:
-        tvshowid = pick_show()
-        if tvshowid is None:
+def _settle(player, win_id, secs=5.0):
+    """After the window: wait until it has really closed and the player has
+    stopped, so nothing (Settings, the menu) opens over the last frame or the music."""
+    mon = xbmc.Monitor()
+    end = time.time() + secs
+    while time.time() < end:
+        try:
+            gone = xbmcgui.getCurrentWindowId() != win_id
+            playing = player.isPlaying()
+        except Exception:
             return
+        if gone and not playing:
+            return
+        if mon.waitForAbort(0.05):
+            return
+    K.log("preview promo: still busy after %.0f s" % secs, xbmc.LOGWARNING)
+
+
+def play(ch, subj):
+    """Black, the promo, black; returns once its window has closed and the
+    player has stopped."""
     player = xbmc.Player()
     if player.isPlaying():
         if not xbmcgui.Dialog().yesno(_("Preview promo"), _("Stop what's playing to show the preview?")):
             return
         player.stop()
-        xbmc.sleep(300)
+        promos.wait_stopped(player)
+    K.log("Preview promo: %s on %s" % (subj[2], ch["name"] if ch else "-"), xbmc.LOGINFO)
+    win = PreviewWindow("script-cablebox42-tv.xml", K.ADDON_PATH, "Default", "1080i")
+    win.ch, win.subj = ch, subj
+    win.doModal()
+    win_id = win.win_id
+    del win
+    _settle(player, win_id)
+
+
+def run(tvshowid=None, from_settings=False):
+    from .manager import TOOL_BUSY
+    home = xbmcgui.Window(10000)
+    home.setProperty(TOOL_BUSY, TOOL)       # the CableBox menu waits instead of opening over the promo
     try:
-        props, music, title = card_for_show(tvshowid)
+        if home.getProperty("cablebox42.running"):
+            xbmcgui.Dialog().ok(_("Preview promo"), _("Turn CableBox's TV off first"))
+        elif tvshowid is not None:
+            try:
+                t = target(tvshowid)
+            except Exception as exc:
+                K.log_err("preview promo: %s" % exc)
+                xbmcgui.Dialog().ok(_("Preview promo"), _("Couldn't make this show's promo (see the Kodi log)"))
+            else:
+                play(t["ch"], (t["pt"], t["path"], t["title"], t["later"]))
+        else:
+            _pick_and_play()
+        if from_settings:
+            K.ADDON.openSettings()          # Settings again, only now that the promo is over
+    finally:
+        home.clearProperty(TOOL_BUSY)
+
+
+def _pick_and_play():
+    try:
+        lineup = scheduler.Lineup(K.schedule_cfg())
     except Exception as exc:
         K.log_err("preview promo: %s" % exc)
-        xbmcgui.Dialog().ok(_("Preview promo"), _("Couldn't make this show's promo (see the Kodi log)"))
+        xbmcgui.Dialog().ok(_("Preview promo"), _("No channels with programmes yet"))
         return
-    K.log("Preview promo: %s (%s)" % (title, music or "silent"), xbmc.LOGINFO)
-    win = PreviewWindow("script-cablebox42-tv.xml", K.ADDON_PATH, "Default", "1080i")
-    win.props, win.music = props, music
-    win.doModal()
-    win.finish()
-    del win
+    last = None
+    while True:
+        now = time.time()
+        got = pick_channel(lineup, now, last)
+        if got is None:
+            return
+        ch, sc = got
+        last = ch["id"]
+        sel = pick_promo(ch, sc, now)
+        if sel is None:
+            continue                         # Back: the channel list again
+        b, later = sel
+        play(ch, (b["s"], _block_path(sc, b), b["t"], later))
+        return

@@ -87,6 +87,7 @@
         <setting id="tool_reset" type="action" label="32092" action="RunScript(script.cablebox42,tool,reset)" option="close"/>
     </category>
     <category label="33134">
-        <setting id="tool_preview_promo" type="action" label="33135" action="RunScript(script.cablebox42,preview_promo)" option="close"/>
+        <setting id="tool_preview_promo" type="action" label="33135" action="RunScript(script.cablebox42,preview_promo,settings)" option="close"/>
+        <setting id="dev_tools" type="bool" label="33429" default="false"/>
     </category>
 </settings>

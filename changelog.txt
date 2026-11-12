@@ -51,8 +51,14 @@ Unreleased
   Mute did nothing (CableBox passed the keys on although Kodi already handles them)
 - Promo style: early-90s cable (default) - a sliding magenta band, the show's name
   in chunky italic letters, a bouncing time tab, squiggles and confetti - or Modern
-- Settings > Advanced > Preview promo: any show's promo card straight away, with
-  its music, as it appears in a break
+- Settings > Advanced > Preview promo: pick a channel, then Up next or one of
+  its programmes in the next 6 hours; the promo plays full screen exactly as in
+  a break, with 2 seconds of black before it and 1 after (clean for a screen
+  recording), then Settings come back. Nothing is changed: no schedule, break,
+  series or 'How often' count. Back ends it cleanly
+- Developer tools (Settings > Advanced, off by default): 0 0 0 on the remote
+  while watching plays the promo of the channel's next break right now, then
+  the channel again at the live point. Nothing in the schedule changes
 - New channel type: Behind the scenes (movie extras). Making-of pieces,
   documentaries and interviews from your movies' Extras folders, in per-film
   blocks ('Inside 2001: A Space Odyssey (1968)', the segments in the guide

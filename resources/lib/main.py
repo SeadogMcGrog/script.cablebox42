@@ -20,8 +20,10 @@ def run(args):
         manager.run_tool(args[1] if len(args) > 1 else "")
     elif args and args[0] == "preview_promo":
         # Settings > Advanced > Preview promo, or RunScript(script.cablebox42,preview_promo,<tvshowid>)
+        # (",settings": started from Settings, which it opens again when the promo is over)
         from . import promo_preview
-        promo_preview.run(int(args[1]) if len(args) > 1 and args[1].isdigit() else None)
+        promo_preview.run(int(args[1]) if len(args) > 1 and args[1].isdigit() else None,
+                          from_settings="settings" in args[1:])
     elif "watch" in args:
         # a Kodi shortcut, widget or RunScript(script.cablebox42,watch,7): Back goes to Kodi,
         # Menu > CableBox menu opens the main menu

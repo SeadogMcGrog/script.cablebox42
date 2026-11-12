@@ -788,11 +788,23 @@ Promos already planned stay in the breaks they're in; *Settings → Tools →
 Rebuild schedules* applies a change straight away. With promos off, breaks are
 exactly as they were before.
 
-**Check a show's promo without waiting for a break:** *Settings → Advanced →
-Preview promo*, pick the show, and its card plays at once with its music —
-handy after adding a `clearlogo.png` or `theme.mp3`. Back ends it. The first
-preview after adding a logo may show the title while Kodi loads the logo;
-preview it again to see the logo.
+**Check a promo without waiting for a break:** *Settings → Advanced →
+Preview promo*, pick the channel, then **Up next** (its next programme) or
+**Later today** (pick from its programmes in the next 6 hours). The screen goes
+black for about 2 seconds, the promo plays exactly as it airs in a break, with
+its music, then 1 second of black and Settings come back — handy after adding a
+`clearlogo.png` or `theme.mp3`, and clean to record. Back ends it. Previews
+change nothing: no schedule, break or series moves, and they don't count
+towards *How often*.
+
+**Developer tools: a promo right now while watching.** In *Settings →
+Advanced*, turn on *Developer tools* (off by default). Then, while watching a
+channel, press **0 0 0** on the remote (within 2 seconds, as for a channel
+number). The promo that channel's next break would air plays at once, then the
+channel comes back at the live point, as after a break. Promos must be on
+(*Settings → Programming*); nothing in the schedule changes. 0 0 0 can't clash
+with a channel: channel numbers start at 1, and 007 still tunes channel 7. With
+Developer tools off, 0 0 0 says *Channel 0 not available*, as always.
 
 ---
 

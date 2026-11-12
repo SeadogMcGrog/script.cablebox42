@@ -30,6 +30,7 @@ DAY = 86400
 SHORTS_PACK, SHORTS_PINNED_ONLY, SHORTS_ONE_PER_SLOT = 0, 1, 2
 PROMO_RATES = (1.0, 0.5, 0.25)      # every break, about half, now and then
 PROMO_LOOKAHEAD = 6 * 3600          # 'later today' looks this far ahead
+PROMO_TYPES = assign.PROGRAM_TYPES + ("musicvideos",)    # channels whose breaks carry promos
 
 
 # ----------------------------------------------------------------- time utils
@@ -424,7 +425,6 @@ class ChannelSchedule(object):
 
     def _block(self, t):
         ch = self.ch
-        slot = self.slot
         if ch["type"] in ("guide", "weather"):
             e = floor_slot(t, 1800) + 1800
             self._add(t, e, ch["type"])
@@ -998,7 +998,7 @@ class ChannelSchedule(object):
         schedule after this break is known (_resolve_promos).  Uses its own
         random numbers, so with promos off breaks come out exactly as before."""
         cfg = self.cfg
-        if not cfg.get("promos") or self.ch.get("type") not in assign.PROGRAM_TYPES + ("musicvideos",):
+        if not cfg.get("promos") or self.ch.get("type") not in PROMO_TYPES:
             return None
         if room < promos.PROMO_LEN + 10:
             return None
