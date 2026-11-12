@@ -133,6 +133,14 @@ A task often starts as "implement `briefs\<name>.md`".
   library change call `library.new_generation()` (refresh() does) so the others drop
   theirs too, and re-read `assign.json` before treating a channel as changed, or the
   TV and the service undo each other's home channels.
+- **Planned black + one file at a time = 1.5-2 s gaps between spots.** `_fill` used to
+  spread leftover seconds as black after each spot, and each spot ending on its own made
+  Kodi close the player and the audio device and open the next file (~0.5 s in the rig,
+  slower with passthrough). Now breaks are filled completely and the next item waits in
+  Kodi's video playlist (`tv.queue_next`/`take_queued`): Kodi moves on in ~0.12 s with no
+  black frame. Don't `playnext()` an item in its last ~1.5 s: it crosses Kodi's own move
+  and leaves the player stopped (12 s of black until the watchdog). Rig: 1.3-1.7 s black
+  per switch before, 0-0.12 s after (2026-11-12).
 - **Never hand Kodi a planned file without checking it exists** (`tv.file_missing`):
   for a missing file Kodi shows its own "Playback failed" box, which stays over the TV
   until someone presses OK, and `onPlayBackError` doesn't come for it (12 s of black).
@@ -204,6 +212,12 @@ A task often starts as "implement `briefs\<name>.md`".
   the same read-only on a real Kodi's schedules (Windows Python, durations.json lengths).
   `notes.py SECS OUT` logs Kodi's player events with times (switch = OnStop -> next
   OnAVStart); `queue.py` plays three spots in a plain Kodi playlist as a reference.
+  `recbreak.sh CH_ID CH_NUM` records the channel's next break and lists every switch,
+  black frame and silence; `queue_test.py zap|back|refresh` checks the queued item never
+  plays on the wrong channel, after Back, or after a replan; `breaks.py CH_ID [N]` prints
+  breaks item by item. `lineup-gaps.json` is the 4-channel lineup with the movie channel.
+  On Windows: `fill_replay.py ADDON_DATA [HOURS]` replays a real Kodi's breaks through
+  this repo's `_fill` offline; `build_zip.py OUT.zip` builds a test zip (Git Bash has no zip).
 - **Fresh start without rebuilding:** `reset-profile` wipes only the Kodi profile and
   the test library (Kodi stays), then makes and scans a new library; install again.
 - **Snapshots:** `baseline.tar` is the clean rig (library, commercials, no CableBox).
