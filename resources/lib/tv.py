@@ -51,6 +51,10 @@ DIGITS = dict((58 + i, i) for i in range(10))
 DIGITS.update(dict((140 + i, i) for i in range(2, 10)))  # JUMP_SMS2..9 numeric keypads
 
 VIDEO_KINDS = ("show", "ad", "bump", "clip")
+QUEUE_AHEAD = 10.0      # hand Kodi the next item this many seconds before the current one ends
+QUEUE_MAX = 24          # playlist length at which the next item starts a fresh playlist instead
+QUEUE_EARLY = 1.0       # seconds a queued item may run ahead of its slot before we log it
+QUEUE_NEAR_END = 1.5    # an item this close to its end is left to finish; Kodi moves on itself
 LOAD_TIMEOUT = 12.0
 STATIC_HOLD = 0.55     # Windows: seconds of the static clip before the new channel comes in
 STATIC_CLIP_WAIT = 2.0  # ...or this long if the clip never starts
@@ -152,6 +156,7 @@ class TVWindow(xbmcgui.WindowXML):
         self.our_files = set()
         self.aliases = {}            # name Kodi plays a file under -> the path we asked for
         self.pending_play = None     # (path, when) of our last play() until its picture is on
+        self.queued = None           # the next entry, already in Kodi's video playlist (queue_next)
         # captions mode: programmes in Kodi's full-screen player, our overlay on top
         self.cc_fullscreen = K.setting_bool("cc_fullscreen", True)
         self.overlay = None
@@ -705,7 +710,10 @@ class TVWindow(xbmcgui.WindowXML):
         elif key == self.failed_key:
             self.cover_failure(e, now)
         elif self.is_video(e):
+            if self.awaiting:
+                self.check_awaiting(e, key, now)
             self.watchdog(e, key, now)
+            self.queue_next(sched, e, key, now)
         self.caption_tick(now)
         if e["k"] == "guide":
             self.guide_tick(now)
@@ -765,12 +773,16 @@ class TVWindow(xbmcgui.WindowXML):
                 self.sub_at = 0
                 self.play_substitute(e, now)
                 return
-            if self.file_missing(e.get("p")):
-                self.missing(e, key, now)
-                return
-            self.play(e, now)
-            self.set_mode("video")
+            if self.take_queued(e, key, now):
+                self.set_mode("video")
+            else:
+                if self.file_missing(e.get("p")):
+                    self.missing(e, key, now)
+                    return
+                self.play(e, now)
+                self.set_mode("video")
         else:
+            self.unqueue()
             if kind == "guide":
                 self.set_mode("guide")
                 self.guide_next = 0
@@ -975,9 +987,8 @@ class TVWindow(xbmcgui.WindowXML):
         self.promo_stop()                    # the theme cut with the card
         self.cur_key = None                  # back to the channel at the live point
 
-    def play(self, e, now):
-        self.clear_music()
-        offset = max(0.0, float(e.get("o", 0)) + (now - e["s"]))
+    @staticmethod
+    def list_item(e, offset):
         li = xbmcgui.ListItem(label=e.get("t") or "", path=e["p"])
         try:
             tag = li.getVideoInfoTag()
@@ -987,6 +998,13 @@ class TVWindow(xbmcgui.WindowXML):
             pass
         if offset > 1.0:
             li.setProperty("StartOffset", "%.2f" % offset)
+        return li
+
+    def play(self, e, now):
+        self.clear_music()
+        offset = max(0.0, float(e.get("o", 0)) + (now - e["s"]))
+        li = self.list_item(e, offset)
+        if offset > 1.0:
             # starting partway in is a jump, and Kodi's skin shows its seek bar for
             # 3 s after any jump in its full-screen player: do it in the TV window
             self.fs_leave()
@@ -1006,10 +1024,162 @@ class TVWindow(xbmcgui.WindowXML):
         playlist current and reported the video under the music player's id 0 -
         where phone remotes (Yatse, Kore) and CableBox's own track details found
         no subtitles or audio tracks at all."""
+        self.queued = None
+        self.awaiting = None
         pl = xbmc.PlayList(getattr(xbmc, "PLAYLIST_VIDEO", 1))
         pl.clear()
         pl.add(path, li)
         self.player.play(pl, windowed=True)
+
+    # ----------------------------------------------------------- queue ahead
+    # One file at a time, each spot that ended on its own meant Kodi closing the
+    # player and the audio device and opening them again: about half a second of
+    # black and silence after every spot (more with passthrough).  So the next item
+    # waits in Kodi's video playlist and Kodi moves on to it by itself, in ~0.1 s.
+    # The add-on stays in charge: at every slot start it checks that Kodi is on the
+    # planned item (take_queued); anything else goes the old way (play()).
+    @staticmethod
+    def queueable(e):
+        p = (e or {}).get("p") or ""
+        if e.get("k") not in VIDEO_KINDS or not p:
+            return False
+        low = p.lower()
+        # names Kodi reports differently (adopt_playing) or that resolve elsewhere
+        return not (low.endswith((".strm", ".iso", ".img")) or
+                    low.startswith(("udf://", "bluray://", "plugin://", "http://", "https://", "stack://")))
+
+    def queue_next(self, sched, e, key, now):
+        """Put the entry after e in Kodi's playlist, shortly before e ends."""
+        q = self.queued
+        if q and q["after"] == key:
+            nxt = sched.entry_at(e["e"] + 0.01)
+            if nxt is not None and nxt["s"] == q["e"]["s"] and nxt.get("p") == q["e"].get("p") \
+                    and abs(nxt.get("o", 0) - q["e"].get("o", 0)) < 0.05:
+                return
+            self.unqueue("plan changed")          # a refresh replanned the break: never a stale item
+        if self.queued or e["e"] - now > QUEUE_AHEAD or self.closing:
+            return
+        if self.av_started_token != self.play_token or not self.player.isPlaying():
+            return                                # the current item isn't on screen yet
+        if self.power_on or self.hold_until or self.dev_promo_until or self.sub or key == self.failed_key:
+            return
+        try:
+            left = self.player.getTotalTime() - self.player.getTime()
+        except Exception:
+            return
+        if left < e["e"] - now - QUEUE_EARLY:
+            return                                # the file ends well before its slot: the watchdog's case
+        nxt = sched.entry_at(e["e"] + 0.01)
+        if nxt is None or abs(nxt["s"] - e["e"]) > 0.05 or not self.queueable(nxt):
+            return
+        p = nxt["p"]
+        if (nxt["k"] == "show" and library.is_bad(p)) or self.file_missing(p):
+            return
+        offset = float(nxt.get("o", 0))
+        if offset > 1.0 and self.fs_state != "off":
+            return                                # a start partway in shows Kodi's seek bar full screen
+        pl = xbmc.PlayList(getattr(xbmc, "PLAYLIST_VIDEO", 1))
+        try:
+            size, pos = pl.size(), pl.getposition()
+        except Exception:
+            return
+        if size >= QUEUE_MAX or pos != size - 1:
+            return                                # long chains start afresh at the next slot
+        self.our_files.add(p)
+        pl.add(p, self.list_item(nxt, offset))
+        self.queued = {"after": key, "e": nxt, "pos": size, "key": (self.ch["id"], nxt["s"])}
+
+    def check_awaiting(self, e, key, now):
+        """take_queued left an ending item to finish: Kodi should be on the queued
+        one by now.  If not, play it the ordinary way."""
+        akey, q, deadline = self.awaiting
+        if akey != key:
+            self.awaiting = None
+            return
+        try:
+            on = xbmc.PlayList(getattr(xbmc, "PLAYLIST_VIDEO", 1)).getposition() == q["pos"] and \
+                self.player.isPlaying()
+        except Exception:
+            on = False
+        if on:
+            self.awaiting = None
+        elif now > deadline:
+            self.awaiting = None
+            K.log("Kodi didn't move on to queued %s - playing it" % e.get("p"), xbmc.LOGINFO)
+            if not self.file_missing(e.get("p")):
+                self.play(e, now)
+
+    def unqueue(self, why=""):
+        """Take the queued item out of Kodi's playlist again."""
+        q, self.queued = self.queued, None
+        if not q:
+            return
+        try:
+            pl = xbmc.PlayList(getattr(xbmc, "PLAYLIST_VIDEO", 1))
+            if pl.getposition() < q["pos"] < pl.size():
+                K.rpc("Playlist.Remove", {"playlistid": getattr(xbmc, "PLAYLIST_VIDEO", 1), "position": q["pos"]})
+        except Exception as exc:
+            K.log("unqueue: %s" % exc)
+        if why:
+            K.log("Queued %s dropped: %s" % (q["e"].get("p"), why), xbmc.LOGINFO)
+
+    def take_queued(self, e, key, now):
+        """The slot of e has started.  If e is the queued item, Kodi is on it
+        already (the item before ended by itself) or moves to it now (the item
+        before is cut at its slot end, like a network switch).  False: play() it."""
+        q, self.queued = self.queued, None
+        if not q:
+            return False
+        if q["key"] != key or q["e"].get("p") != e.get("p"):
+            self.queued = q
+            self.unqueue("not what is on now")
+            return False
+        try:
+            pl = xbmc.PlayList(getattr(xbmc, "PLAYLIST_VIDEO", 1))
+            pos = pl.getposition()
+            playing = self.player.isPlaying()
+            if pos == q["pos"] - 1 and playing:
+                try:
+                    left = self.player.getTotalTime() - self.player.getTime()
+                except Exception:
+                    left = 0
+                if left > QUEUE_NEAR_END:
+                    self.player.playnext()        # cut what's on, like the network switching over
+                else:
+                    # It's ending anyway: Kodi moves on by itself in a moment.  A playnext()
+                    # now crosses Kodi's own move and leaves the player stopped.
+                    self.awaiting = (key, q, now + QUEUE_NEAR_END + 1.0)
+                started = False
+            elif pos == q["pos"] and playing:
+                started = True                    # Kodi moved on by itself
+            else:
+                self.queued = q
+                self.unqueue()
+                return False
+        except Exception as exc:
+            K.log("queued %s: %s" % (e.get("p"), exc))
+            return False
+        self.clear_music()
+        self.play_token += 1
+        self.play_started_at = time.time()
+        self.pending_play = None
+        if started:
+            try:
+                ahead = self.player.getTime() - (float(e.get("o", 0)) + (now - e["s"]))
+            except Exception:
+                ahead = 0
+            if ahead > QUEUE_EARLY:
+                K.log("Queued %s started %.1f s before its slot" % (e["p"], ahead), xbmc.LOGINFO)
+            if self.av_started_q == q["key"]:
+                self.av_started_token = self.play_token   # its picture came up just before the slot
+            if e.get("k") == "show" and e["p"] == self.programme_path():
+                try:
+                    self.cc.started(self.player.getPlayingFile())
+                except Exception:
+                    pass
+        if e.get("k") in ("show", "clip"):
+            self.progress.remember(e["p"])
+        return True
 
     def watchdog(self, e, key, now):
         """Detect files that never started or ended early."""
@@ -1039,10 +1209,15 @@ class TVWindow(xbmcgui.WindowXML):
 
     def fill_rest(self, e, now):
         """The rest of a spot's time: another commercial, or the station ID card."""
+        last = self.fill_last if self.fill_last and self.fill_last[0] == e["s"] else (e["s"], e.get("p"))
         ads = [a for a in self.channel_ads() if not self.file_missing(a["path"])]
+        ads = [a for a in ads if a["path"] != last[1]] or ads     # never the same spot twice in a row
         if ads:
             fit = [a for a in ads if a["dur"] <= e["e"] - now] or ads
             a = random.choice(fit)
+            self.fill_last = (e["s"], a["path"])
+            K.log("%s ended %.1f s before its slot: filling with %s" % (
+                os.path.basename(e.get("p") or ""), e["e"] - now, a["path"]), xbmc.LOGINFO)
             self.play({"p": a["path"], "o": 0, "s": now, "t": a.get("title")}, now)
             self.set_mode("video")
         elif self.prop_mode != "card":
@@ -1050,6 +1225,9 @@ class TVWindow(xbmcgui.WindowXML):
 
     # ----------------------------------------------------------- missing files
     failed_at = 0
+    fill_last = None             # (slot start, path) of the watchdog's last filler spot
+    av_started_q = None
+    awaiting = None              # (key, queued, deadline): Kodi is about to move on to the queued item
 
     @staticmethod
     def file_missing(path):
@@ -1364,6 +1542,7 @@ class TVWindow(xbmcgui.WindowXML):
             pass
 
     def stop_player(self):
+        self.unqueue()
         self.cc.leave()
         self.fs_leave(exit_fullscreen=False)   # Kodi returns to the TV window when the video stops
         try:
@@ -1405,6 +1584,13 @@ class TVWindow(xbmcgui.WindowXML):
         tok = self.play_token
         self.av_started_token = tok
         self.av_started_at = time.time()
+        q = self.queued
+        try:
+            if q and self.requested(self.player.getPlayingFile()) == q["e"].get("p") and \
+                    xbmc.PlayList(getattr(xbmc, "PLAYLIST_VIDEO", 1)).getposition() == q["pos"]:
+                self.av_started_q = q["key"]       # Kodi moved on to the queued item by itself
+        except Exception:
+            pass
         try:
             if self.hold_until and self.player.getPlayingFile() == self.STATIC_CLIP:
                 self.hold_until = time.time() + STATIC_HOLD     # the static is on screen now
