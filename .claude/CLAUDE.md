@@ -207,6 +207,12 @@ A task often starts as "implement `briefs\<name>.md`".
   and running.
 - **Kodi 21's add-on settings dialog: Back cancels, only OK saves.** From a list item
   it's `Right Right Select` (the scrollbar takes the first Right).
+- **Kodi repository checker:** `bash .claude/kodi21-test-vm.sh check ../test-builds/<zip>` runs
+  `kodi-addon-checker --branch omega` on the unzipped build (installed in the rig in its own
+  venv `/opt/kac`, on PATH; `ensure` and `setup` install it if it's missing). Expected result:
+  0 problems and 1 warning, *403 Forbidden for url: https://forum.kodi.tv/...*: Kodi's forum
+  blocks the checker's request, so it can't check the `<forum>` link (1.1.1 had it too).
+  Only file endings on its whitelist pass: sounds ship as `.wav` (not mp3/ogg), clips as `.mp4`.
 - **Drive it:** `send Down Select 2 Back` (numbers are pauses), `shot FILE.png`,
   `rec FILE.mp4 SECS [actions]` (picture + sound), `log [N]`, `sh 'CMD'`, `zap`, `stop`.
 - **Break gaps** (`.claude/tools/`): `gaps.py [HOURS] [-v]` (inside the rig:
@@ -250,7 +256,8 @@ A task often starts as "implement `briefs\<name>.md`".
 3. Build the zip from a clean tree, top folder `script.cablebox42/`, excluding
    dot-folders and caches:
    `zip -qr -X script.cablebox42-X.Y.Z.zip script.cablebox42 -x "*/.*" "*/__pycache__/*" "*.pyc"`
-4. Run `kodi-addon-checker --branch omega` on the unzipped build: 0 problems.
+4. Run `kodi-addon-checker --branch omega` on the unzipped build (`kodi21-test-vm.sh check ZIP`):
+   0 problems; the only warning allowed is the forum link's 403 (see Test rig).
 5. Install the zip in Kodi 21 and smoke-test (TV on, flip channels, turn off).
 6. Branch `release/X.Y.Z` → pull request → the maintainer merges.
 7. GitHub release `vX.Y.Z` on `main` with the zip attached: **the maintainer creates

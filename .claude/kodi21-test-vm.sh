@@ -21,6 +21,7 @@
 #   bash .claude/kodi21-test-vm.sh rec FILE.mp4 SECS [A [SECS] B...]  # record picture + sound
 #   bash .claude/kodi21-test-vm.sh zap [N] [SECS]  # TV on, flip N channels, count audio errors
 #   bash .claude/kodi21-test-vm.sh log [N]         # CableBox and audio lines of kodi.log
+#   bash .claude/kodi21-test-vm.sh check ZIP       # kodi-addon-checker --branch omega on a release zip
 #   bash .claude/kodi21-test-vm.sh sh 'CMD'        # run a command in the rig (HOME=/root, DISPLAY=:9)
 #   bash .claude/kodi21-test-vm.sh snapshot [NAME] # wsl --export to G:\CableBox42\rig\snapshots\NAME.tar
 #   bash .claude/kodi21-test-vm.sh restore FILE    # replace the rig with a snapshot (wsl --import)
@@ -183,7 +184,25 @@ setup() {
       python3 python3-numpy sqlite3 x11-apps imagemagick unzip libgl1-mesa-dri dbus-x11 ca-certificates \
       libasound2-plugins procps fonts-dejavu-core'
   base_profile
+  addon_checker
   echo "Kodi: $(in_root 'dpkg-query -W -f=\${Version} kodi-bin')"
+}
+
+addon_checker() {   # kodi-addon-checker in its own venv (/opt/kac), on PATH; installs once
+  in_root 'command -v kodi-addon-checker >/dev/null && exit 0
+    export $(cat /root/proxy.env 2>/dev/null | xargs) DEBIAN_FRONTEND=noninteractive
+    python3 -m venv --help >/dev/null 2>&1 || { apt-get update -qq && apt-get install -y -qq python3-venv; }
+    python3 -m venv /opt/kac && /opt/kac/bin/pip install -q kodi-addon-checker &&
+      ln -sf /opt/kac/bin/kodi-addon-checker /usr/local/bin/kodi-addon-checker &&
+      echo "kodi-addon-checker $(/opt/kac/bin/pip show kodi-addon-checker | sed -n "s/^Version: //p") installed"'
+}
+
+check_zip() {   # unzip a build to /root/test/check and run the Kodi repository's checker on it
+  local zip; zip=$(readlink -f "${1:?zip file}")
+  addon_checker
+  rm -rf "$ROOT/root/test/check"; mkdir -p "$ROOT/root/test/check"
+  (cd "$ROOT/root/test/check" && unzip -q "$zip")
+  in_root 'cd /root/test/check && kodi-addon-checker --branch omega . 2>&1 | grep -v "^$"' || true
 }
 
 package() {
@@ -364,6 +383,7 @@ ensure() {
   if [ ! -d "$ROOT/root/library/tv/Friends" ]; then make_library; scan
   elif [ "$(tvshows)" -lt 4 ]; then scan; fi
   [ -d "$ROOT/root/library/ads" ] || make_ads
+  addon_checker || echo "kodi-addon-checker: not installed (no network?) - 'check' will try again"
   status
 }
 
@@ -464,6 +484,7 @@ case "${1:-}" in
   rec) shift; rec "$@" ;;
   send) shift; send "$@" ;;
   sh) shift; in_root "$*" ;;
+  check) check_zip "${2:?zip file}" ;;
   log) grep -E "$ADDON|cablebox|AESink|ActiveAE|Traceback" "$P/temp/kodi.log" | tail -"${2:-60}" ;;
   *) sed -n '2,/^# CRLF-safe/p' "$0" | sed '$d'; exit 1 ;;
 esac

@@ -25,7 +25,7 @@ from .kodiutil import rpc, log, media, _
 
 PROMO_LEN = 15.0            # seconds of an image promo in a break
 EXTRAS_MAX = 120.0          # Extras clips longer than this never air as promos
-BED = media("promo_bed.mp3")
+BED = media("promo_bed.wav")     # WAV: the Kodi repository checker allows wav, not mp3
 
 _CACHE = {}
 _CACHE_TTL = 1800
