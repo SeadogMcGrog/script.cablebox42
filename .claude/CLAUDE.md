@@ -141,6 +141,10 @@ A task often starts as "implement `briefs\<name>.md`".
   black frame. Don't `playnext()` an item in its last ~1.5 s: it crosses Kodi's own move
   and leaves the player stopped (12 s of black until the watchdog). Rig: 1.3-1.7 s black
   per switch before, 0-0.12 s after (2026-11-12).
+- **A control keeps drawing while its `Visible` animation runs**, even after its condition
+  turns false (Kodi 21). The Modern promo background zooms for 16 s; a house break's
+  next card (8-15 s later) without a picture still showed the old one. Long `Visible`
+  animations need a short `Hidden` animation. Setting the property empty doesn't help.
 - **Never hand Kodi a planned file without checking it exists** (`tv.file_missing`):
   for a missing file Kodi shows its own "Playback failed" box, which stays over the TV
   until someone presses OK, and `onPlayBackError` doesn't come for it (12 s of black).
@@ -218,6 +222,10 @@ A task often starts as "implement `briefs\<name>.md`".
   breaks item by item. `lineup-gaps.json` is the 4-channel lineup with the movie channel.
   On Windows: `fill_replay.py ADDON_DATA [HOURS]` replays a real Kodi's breaks through
   this repo's `_fill` offline; `build_zip.py OUT.zip` builds a test zip (Git Bash has no zip).
+  House breaks: `house_check.py [HOURS]` (rig) checks cross-channel promos against the
+  other schedule, repeats and system-ad availability; `ab.sh save|run|diff` plans two
+  builds from the same saved state and compares them entry by entry; `shots_at.sh`
+  screenshots at given times; `check_strings.py` checks every `_()` text is in strings.po.
 - **Fresh start without rebuilding:** `reset-profile` wipes only the Kodi profile and
   the test library (Kodi stays), then makes and scans a new library; install again.
 - **Snapshots:** `baseline.tar` is the clean rig (library, commercials, no CableBox).
