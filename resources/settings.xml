@@ -41,6 +41,7 @@
         <setting id="logo_corner" type="enum" label="32078" lvalues="32079|32080|32081|32082" default="3" enable="eq(-1,true)"/>
         <setting id="logo_opacity" type="enum" label="32083" lvalues="32084|32085|32086|32087" default="1" enable="eq(-2,true)"/>
         <setting id="logo_banner" type="bool" label="32089" default="true"/>
+        <setting id="rating_box" type="bool" label="34052" default="true"/>
         <setting id="keep_progress" type="bool" label="32043" default="true"/>
         <setting id="skip_menu" type="bool" label="32016" default="false"/>
         <setting id="autostart" type="bool" label="32017" default="false"/>

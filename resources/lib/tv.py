@@ -395,6 +395,7 @@ class TVWindow(xbmcgui.WindowXML):
             if not self.power_on:
                 self.show_digits(str(ch["number"]))
             self.setProperty("ch_number", str(ch["number"]))
+            self.rating_clear()
             self.set_logo(ch)
             if static and self.static_on and self.static_sound and self.careful_static:
                 # Windows resets its audio device whenever a video starts or
@@ -757,6 +758,7 @@ class TVWindow(xbmcgui.WindowXML):
                 self.watchdog(e, key, now)
                 self.queue_next(sched, e, key, now)
         self.caption_tick(now)
+        self.rating_tick(now)
         if e["k"] == "guide":
             self.guide_tick(now)
         elif e["k"] == "weather":
@@ -799,6 +801,7 @@ class TVWindow(xbmcgui.WindowXML):
         self.setProperty("bug", "1" if on and getattr(self, "bug_on", False) else "")
 
     def start_entry(self, e, key, now):
+        self.rating_start(e, now)
         self.unsqueeze()                     # a new item: the picture is full size again
         self.uncover()
         self.promo_stop()                    # a promo's theme cut with its card, before anything else plays
@@ -862,6 +865,49 @@ class TVWindow(xbmcgui.WindowXML):
         if kind == "show":
             self.update_banner()
         self.prefetch_promo(e)
+
+    # ----------------------------------------------------------- TV rating box
+    # The 1997 TV Parental Guidelines box: top left, for the first 15 seconds of a
+    # show or movie (not after a break, not when you tune in later), with a CC box
+    # beside it when the programme has captions (the skin keys that off now_cc, the
+    # same check as the banner's CC and the CC button).
+    RATING_SECS = 15.0
+    RATING_TUNE_IN = 10.0
+    rating_at = None             # (show from, until)
+
+    def rating_clear(self):
+        self.rating_at = None
+        if self.getProperty("rating"):
+            self.setProperty("rating", "")
+
+    def rating_start(self, e, now):
+        self.rating_clear()
+        if e.get("k") != "show" or not e.get("p") or now - e["s"] > self.RATING_TUNE_IN:
+            return
+        if (self.ch or {}).get("type") in ("musicvideos", "extras") or not K.setting_bool("rating_box", True):
+            return
+        sched = self.lineup.schedule(self.ch, ensure=False)
+        b = sched.block_at(e["s"])
+        first = self.block_entry(sched, b) if b else None
+        if not first or first["s"] != e["s"]:
+            return                           # a later part (after a break) or a later short in the block
+        code = library.rating_for(e["p"])
+        if not code:
+            return
+        self.setProperty("rating_code", code[3:])
+        # from the picture's first second (Kodi opens the file meanwhile)
+        self.rating_at = (max(now, e["s"]) + 1.0, e["s"] + 1.0 + self.RATING_SECS)
+
+    def rating_tick(self, now):
+        if not self.rating_at:
+            return
+        start, until = self.rating_at
+        if now >= until:
+            self.rating_clear()
+            return
+        want = "1" if now >= start else ""
+        if self.getProperty("rating") != want:
+            self.setProperty("rating", want)
 
     # ----------------------------------------------------------- video captions
     # Boombox's lower third, the classic music-channel way: artist, "title",
@@ -2434,17 +2480,22 @@ class TVWindow(xbmcgui.WindowXML):
                 pass
 
     @staticmethod
-    def block_file(sched, b):
-        """The first programme file of a block (for its listing details)."""
+    def block_entry(sched, b):
+        """The first programme entry of a block (None if there's none)."""
         t = b["s"] + 0.01
         for _i in range(12):
             e = sched.entry_at(t)
             if e is None or e["s"] >= b["e"]:
-                return ""
+                return None
             if e.get("k") == "show" and e.get("p"):
-                return e["p"]
+                return e
             t = e["e"] + 0.001
-        return ""
+        return None
+
+    def block_file(self, sched, b):
+        """The first programme file of a block (for its listing details)."""
+        e = self.block_entry(sched, b)
+        return e["p"] if e else ""
 
     def listing(self, sched, b, prefix, width, kids_ch=False):
         """(text, font, two-line text, colour category) of one listing cell."""

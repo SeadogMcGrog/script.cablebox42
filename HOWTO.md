@@ -945,6 +945,7 @@ episodes and movies for their season* keeps Christmas specials out of July.
 | Static mode | **Automatic**; **Quick** (an interface sound over the picture); **Video clip** (most reliable sound — use it on Windows if the static is silent) |
 | CRT effect | Off, Subtle (scanlines, dark corners), Full (curved glass, phosphor mask, rolling hum bar) |
 | Show channel banner for | 3, 6 or 10 seconds |
+| Show rating at start of programmes | The *TV-PG* box (and *CC*) top left for a show's first 15 seconds. It needs ratings in your library: Kodi's scrapers fill them in (*Information → MPAA*) |
 
 > If your TV switches refresh rate for each video (*Kodi Settings → Player →
 > Adjust display refresh rate*), keep static on **Automatic** or **Quick**: the

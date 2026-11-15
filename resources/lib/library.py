@@ -1957,3 +1957,36 @@ def mpaa_code(text):
     if code.startswith("TV") and not code.startswith("TV-"):
         code = "TV-" + code[2:]
     return code.replace("Y7FV", "Y7-FV")
+
+
+_MOVIE_TV = {"G": "TV-G", "PG": "TV-PG", "PG-13": "TV-14", "R": "TV-MA", "NC-17": "TV-MA"}
+
+
+def tv_rating(text):
+    """The 1997 TV Parental Guidelines rating to show: TV ratings as they are,
+    movie ratings mapped (PG-13 -> TV-14, R -> TV-MA)."""
+    code = mpaa_code(text)
+    if code.startswith("TV-"):
+        return "TV-Y7" if code == "TV-Y7-FV" else code
+    return _MOVIE_TV.get(code, "")
+
+
+def rating_for(path):
+    """TV rating of a planned file ('' when unknown): the listing data, or - while
+    that is still being read - one lookup by file name."""
+    info = listing_info(path)
+    if info is not None:
+        return tv_rating(info["mpaa"])
+    name = _pname(path)
+    try:
+        flt = {"field": "filename", "operator": "is", "value": name}
+        for m in rpc("VideoLibrary.GetMovies", {"filter": flt, "properties": ["file", "mpaa"]}).get("movies", []):
+            if m.get("file") == path:
+                return tv_rating(m.get("mpaa"))
+        for e in rpc("VideoLibrary.GetEpisodes", {"filter": flt, "properties": ["file", "tvshowid"]}).get("episodes", []):
+            if e.get("file") == path:
+                s = rpc("VideoLibrary.GetTVShowDetails", {"tvshowid": e["tvshowid"], "properties": ["mpaa"]})
+                return tv_rating((s.get("tvshowdetails") or {}).get("mpaa"))
+    except Exception as exc:
+        log("rating: %s" % exc)
+    return ""

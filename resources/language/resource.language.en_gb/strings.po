@@ -6358,3 +6358,7 @@ msgstr ""
 msgctxt "#34051"
 msgid "Thank you for choosing cable."
 msgstr ""
+
+msgctxt "#34052"
+msgid "Show rating at start of programmes"
+msgstr ""

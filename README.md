@@ -887,6 +887,23 @@ beats the channel's. A new logo shows within a couple of minutes; new clips are
 used from each channel's next programme once you close the Channel manager (or
 with *Settings → Tools → Refresh schedules*).
 
+### The rating box
+
+From 1997 every US show opened with a small black box in the top-left corner:
+**TV** over the rating. CableBox shows it for the first 15 seconds of a show or
+movie (also when you tune in within its first 10 seconds), with a **CC** box next
+to it when the programme has captions (the same check as the CC button).
+
+- The rating is the library's content rating (*MPAA* in Kodi's info). Shows keep
+  their TV rating (*TV-Y*, *TV-Y7*, *TV-G*, *TV-PG*, *TV-14*, *TV-MA*); movies get the
+  TV rating they'd have had on 90s TV: G → TV-G, PG → TV-PG, PG-13 → TV-14,
+  R and NC-17 → TV-MA. *Rated PG-13*, *US:PG-13* and *PG-13* all work; no rating
+  (or another country's), no box.
+- Not after a break, not on commercials, bumps, promos, station IDs, the guide,
+  weather, music videos or *Behind the scenes*.
+- With the logo bug in the top-left corner, the box goes top right.
+- Off: *Settings → Viewing → Show rating at start of programmes*.
+
 ### The corner logo ("bug")
 
 - It shows in a corner during programmes only, fading in a moment after the
@@ -1055,6 +1072,7 @@ tap to tune. Yatse custom commands can call the `RunScript` actions above.
 | Station logo in the corner | On | Only shows when a channel has a logo |
 | Corner / Logo opacity | Bottom right / 50% | |
 | Show the logo in the channel banner | On | Replaces the call letters |
+| Show rating at start of programmes | On | The 1997-style *TV-PG* box in the top-left corner for the first 15 seconds of a show or movie, with a *CC* box beside it when it has captions ([The rating box](#the-rating-box)) |
 | CRT effect | Off | Off / Subtle / Full |
 | Keep my watch progress untouched | On | Puts back resume points, watched status and last-played dates after CableBox plays something |
 | Go straight to TV when opened | Off | Skip the CableBox menu |
