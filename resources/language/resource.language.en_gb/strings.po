@@ -753,7 +753,6 @@ msgctxt "#32195"
 msgid "I couldn't find any TV shows or movies in your Kodi library.[CR]Scan your media into the library first, or add folder channels in the Channel Manager."
 msgstr ""
 
-
 msgctxt "#32198"
 msgid "[B]+ Add a channel[/B]"
 msgstr ""
@@ -2198,8 +2197,6 @@ msgctxt "#32590"
 msgid "Stations folder"
 msgstr ""
 
-
-
 msgctxt "#32599"
 msgid "Bumpers and station IDs"
 msgstr ""
@@ -2263,7 +2260,6 @@ msgstr ""
 msgctxt "#32614"
 msgid "Start over"
 msgstr ""
-
 
 msgctxt "#32617"
 msgid "Every TV show"
@@ -2344,8 +2340,6 @@ msgstr ""
 msgctxt "#32945"
 msgid "Never"
 msgstr ""
-
-
 
 msgctxt "#32948"
 msgid "What I set up"
@@ -2611,7 +2605,6 @@ msgctxt "#33013"
 msgid "        %s: %s"
 msgstr ""
 
-
 msgctxt "#33015"
 msgid "Station folder: %s"
 msgstr ""
@@ -2852,7 +2845,6 @@ msgctxt "#33074"
 msgid "Shows from the %ss"
 msgstr ""
 
-
 msgctxt "#33076"
 msgid "Put it on a channel..."
 msgstr ""
@@ -2860,7 +2852,6 @@ msgstr ""
 msgctxt "#33077"
 msgid "Don't air it on any channel automatically"
 msgstr ""
-
 
 msgctxt "#33079"
 msgid "Shows without a good channel"
@@ -2945,8 +2936,6 @@ msgstr ""
 msgctxt "#33099"
 msgid "Keep %s off every channel's automatic programming?[CR][CR]It's hidden on %d channels. Pinned slots in the weekly planner still air it. 'What's on this channel' brings it back."
 msgstr ""
-
-
 
 msgctxt "#33102"
 msgid "Hidden on %s"
@@ -3520,7 +3509,6 @@ msgctxt "#33335"
 msgid "No movie extras to air yet"
 msgstr ""
 
-
 msgctxt "#33337"
 msgid "Look now"
 msgstr ""
@@ -4059,3 +4047,2098 @@ msgctxt "#33471"
 msgid "All channels"
 msgstr ""
 
+msgctxt "#33472"
+msgid "Retro ads"
+msgstr ""
+
+msgctxt "#33473"
+msgid "Auto"
+msgstr ""
+
+msgctxt "#33474"
+msgid "General"
+msgstr ""
+
+msgctxt "#33475"
+msgid "Kids"
+msgstr ""
+
+msgctxt "#33476"
+msgid "Sports"
+msgstr ""
+
+msgctxt "#33477"
+msgid "Late night"
+msgstr ""
+
+msgctxt "#33478"
+msgid "Ad flavour"
+msgstr ""
+
+msgctxt "#33479"
+msgid "Ad flavour: %s"
+msgstr ""
+
+msgctxt "#33480"
+msgid "Auto (%s)"
+msgstr ""
+
+msgctxt "#33481"
+msgid "A message from %s"
+msgstr ""
+
+msgctxt "#33482"
+msgid "and this station."
+msgstr ""
+
+msgctxt "#33483"
+msgid "Rated %s"
+msgstr ""
+
+msgctxt "#33484"
+msgid "CRISP-O-MATIC"
+msgstr ""
+
+msgctxt "#33485"
+msgid "Countertop Fryer"
+msgstr ""
+
+msgctxt "#33486"
+msgid "Fries in 4 minutes. Cleans in 4 seconds!"
+msgstr ""
+
+msgctxt "#33487"
+msgid "ONLY"
+msgstr ""
+
+msgctxt "#33488"
+msgid "$19.99"
+msgstr ""
+
+msgctxt "#33489"
+msgid "Order now! %s"
+msgstr ""
+
+msgctxt "#33490"
+msgid "NEVER-DULL"
+msgstr ""
+
+msgctxt "#33491"
+msgid "Knife Set"
+msgstr ""
+
+msgctxt "#33492"
+msgid "Cuts a shoe. Then a tomato!"
+msgstr ""
+
+msgctxt "#33493"
+msgid "3 easy payments of"
+msgstr ""
+
+msgctxt "#33494"
+msgid "$9.99"
+msgstr ""
+
+msgctxt "#33495"
+msgid "SPIN-WIZ"
+msgstr ""
+
+msgctxt "#33496"
+msgid "Salad Spinner"
+msgstr ""
+
+msgctxt "#33497"
+msgid "Salad so dry it's practically toast."
+msgstr ""
+
+msgctxt "#33498"
+msgid "$12.99"
+msgstr ""
+
+msgctxt "#33499"
+msgid "STEAM GENIE"
+msgstr ""
+
+msgctxt "#33500"
+msgid "Garment Steamer"
+msgstr ""
+
+msgctxt "#33501"
+msgid "Wrinkles? Never heard of 'em."
+msgstr ""
+
+msgctxt "#33502"
+msgid "$24.99"
+msgstr ""
+
+msgctxt "#33503"
+msgid "THERMASEAL"
+msgstr ""
+
+msgctxt "#33504"
+msgid "Window Film"
+msgstr ""
+
+msgctxt "#33505"
+msgid "Keep the cold out and the cash in."
+msgstr ""
+
+msgctxt "#33506"
+msgid "$14.99"
+msgstr ""
+
+msgctxt "#33507"
+msgid "LEMON THUNDER"
+msgstr ""
+
+msgctxt "#33508"
+msgid "Dish Soap"
+msgstr ""
+
+msgctxt "#33509"
+msgid "Cuts grease like a summer storm."
+msgstr ""
+
+msgctxt "#33510"
+msgid "At grocers everywhere"
+msgstr ""
+
+msgctxt "#33511"
+msgid "Lemon Thunder Dish Soap"
+msgstr ""
+
+msgctxt "#33512"
+msgid "SUPER GLOW"
+msgstr ""
+
+msgctxt "#33513"
+msgid "Floor Wax"
+msgstr ""
+
+msgctxt "#33514"
+msgid "For a shine that lasts!"
+msgstr ""
+
+msgctxt "#33515"
+msgid "ROSE GLOW"
+msgstr ""
+
+msgctxt "#33516"
+msgid "Beauty Bar, by Sunflower Soap Co."
+msgstr ""
+
+msgctxt "#33517"
+msgid "Pure rose extract. Softer skin by Tuesday."
+msgstr ""
+
+msgctxt "#33518"
+msgid "At fine drugstores"
+msgstr ""
+
+msgctxt "#33519"
+msgid "Rose Glow Beauty Bar"
+msgstr ""
+
+msgctxt "#33520"
+msgid "CLEARSOUND 2000"
+msgstr ""
+
+msgctxt "#33521"
+msgid "Cordless Phone"
+msgstr ""
+
+msgctxt "#33522"
+msgid "Talk from the backyard! Up to 300 feet!"
+msgstr ""
+
+msgctxt "#33523"
+msgid "$59.99"
+msgstr ""
+
+msgctxt "#33524"
+msgid "At electronics stores"
+msgstr ""
+
+msgctxt "#33525"
+msgid "IS YOUR PICTURE FUZZY?"
+msgstr ""
+
+msgctxt "#33526"
+msgid "VideoVault VCR Head Cleaner"
+msgstr ""
+
+msgctxt "#33527"
+msgid "It might not be the weather."
+msgstr ""
+
+msgctxt "#33528"
+msgid "$6.99"
+msgstr ""
+
+msgctxt "#33529"
+msgid "At Video Village"
+msgstr ""
+
+msgctxt "#33530"
+msgid "BRIGHTBEAM"
+msgstr ""
+
+msgctxt "#33531"
+msgid "Flashlight"
+msgstr ""
+
+msgctxt "#33532"
+msgid "Never be in the dark again. Unless you want to."
+msgstr ""
+
+msgctxt "#33533"
+msgid "POP-TOP"
+msgstr ""
+
+msgctxt "#33534"
+msgid "Umbrella"
+msgstr ""
+
+msgctxt "#33535"
+msgid "Opens with one button. Closes with three people."
+msgstr ""
+
+msgctxt "#33536"
+msgid "$8.99"
+msgstr ""
+
+msgctxt "#33537"
+msgid "HAIR AGAIN"
+msgstr ""
+
+msgctxt "#33538"
+msgid "Spray-On Coverage"
+msgstr ""
+
+msgctxt "#33539"
+msgid "Thicker-looking hair in 30 seconds. From across the room."
+msgstr ""
+
+msgctxt "#33540"
+msgid "MOUNTAIN RIDGE"
+msgstr ""
+
+msgctxt "#33541"
+msgid "Aftershave"
+msgstr ""
+
+msgctxt "#33542"
+msgid "Smells like a pine tree that got a promotion."
+msgstr ""
+
+msgctxt "#33543"
+msgid "At fine stores"
+msgstr ""
+
+msgctxt "#33544"
+msgid "Mountain Ridge Aftershave"
+msgstr ""
+
+msgctxt "#33545"
+msgid "AQUA SMILE"
+msgstr ""
+
+msgctxt "#33546"
+msgid "Toothpaste"
+msgstr ""
+
+msgctxt "#33547"
+msgid "Now with tiny blue crystals!"
+msgstr ""
+
+msgctxt "#33548"
+msgid "NEW!"
+msgstr ""
+
+msgctxt "#33549"
+msgid "Ask your dentist. Or don't."
+msgstr ""
+
+msgctxt "#33550"
+msgid "NETWAVE ONLINE"
+msgstr ""
+
+msgctxt "#33551"
+msgid "500 free hours! Look for the disc in your mailbox."
+msgstr ""
+
+msgctxt "#33552"
+msgid "Free trial"
+msgstr ""
+
+msgctxt "#33553"
+msgid "Call %s"
+msgstr ""
+
+msgctxt "#33554"
+msgid "VOLT"
+msgstr ""
+
+msgctxt "#33555"
+msgid "Energy Drink"
+msgstr ""
+
+msgctxt "#33556"
+msgid "Zero to ALL CAPS."
+msgstr ""
+
+msgctxt "#33557"
+msgid "In the cooler aisle"
+msgstr ""
+
+msgctxt "#33558"
+msgid "Volt Energy Drink"
+msgstr ""
+
+msgctxt "#33559"
+msgid "FIZZLE POP"
+msgstr ""
+
+msgctxt "#33560"
+msgid "Soda"
+msgstr ""
+
+msgctxt "#33561"
+msgid "The taste that tickles."
+msgstr ""
+
+msgctxt "#33562"
+msgid "Ice cold, everywhere"
+msgstr ""
+
+msgctxt "#33563"
+msgid "Fizzle Pop Soda"
+msgstr ""
+
+msgctxt "#33564"
+msgid "GRANNY MAE'S"
+msgstr ""
+
+msgctxt "#33565"
+msgid "Frozen Pot Pies"
+msgstr ""
+
+msgctxt "#33566"
+msgid "Like Granny made, if Granny had a microwave."
+msgstr ""
+
+msgctxt "#33567"
+msgid "$1.79"
+msgstr ""
+
+msgctxt "#33568"
+msgid "In your grocer's freezer"
+msgstr ""
+
+msgctxt "#33569"
+msgid "CHEEZ RIDGES"
+msgstr ""
+
+msgctxt "#33570"
+msgid "Ridges so deep you could lose a dime in 'em."
+msgstr ""
+
+msgctxt "#33571"
+msgid "Snack-size or party-size"
+msgstr ""
+
+msgctxt "#33572"
+msgid "Cheez Ridges"
+msgstr ""
+
+msgctxt "#33573"
+msgid "MIDNIGHT MINT"
+msgstr ""
+
+msgctxt "#33574"
+msgid "Gum"
+msgstr ""
+
+msgctxt "#33575"
+msgid "For when your breath has a bigger night than you do."
+msgstr ""
+
+msgctxt "#33576"
+msgid "5 sticks"
+msgstr ""
+
+msgctxt "#33577"
+msgid "25¢"
+msgstr ""
+
+msgctxt "#33578"
+msgid "Midnight Mint Gum"
+msgstr ""
+
+msgctxt "#33579"
+msgid "MUSCLE MIGHTY"
+msgstr ""
+
+msgctxt "#33580"
+msgid "Rub"
+msgstr ""
+
+msgctxt "#33581"
+msgid "Rub it in. Walk it off."
+msgstr ""
+
+msgctxt "#33582"
+msgid "At drugstores"
+msgstr ""
+
+msgctxt "#33583"
+msgid "Muscle Mighty Rub"
+msgstr ""
+
+msgctxt "#33584"
+msgid "CRUNCH COMETS"
+msgstr ""
+
+msgctxt "#33585"
+msgid "Marshmallow planets in every bowl!"
+msgstr ""
+
+msgctxt "#33586"
+msgid "Part of a balanced breakfast"
+msgstr ""
+
+msgctxt "#33587"
+msgid "TURBO TRAX"
+msgstr ""
+
+msgctxt "#33588"
+msgid "Two loops! One jump! Zero brakes!"
+msgstr ""
+
+msgctxt "#33589"
+msgid "$29.99"
+msgstr ""
+
+msgctxt "#33590"
+msgid "Batteries not included"
+msgstr ""
+
+msgctxt "#33591"
+msgid "SQUISHLINGS"
+msgstr ""
+
+msgctxt "#33592"
+msgid "Collect all 24! (Number 24 is very rare.)"
+msgstr ""
+
+msgctxt "#33593"
+msgid "$2.99"
+msgstr ""
+
+msgctxt "#33594"
+msgid "Each sold separately"
+msgstr ""
+
+msgctxt "#33595"
+msgid "ROBO-REX"
+msgstr ""
+
+msgctxt "#33596"
+msgid "He roars! He stomps! He's afraid of the vacuum."
+msgstr ""
+
+msgctxt "#33597"
+msgid "$39.99"
+msgstr ""
+
+msgctxt "#33598"
+msgid "GRAVITY HOPPERS"
+msgstr ""
+
+msgctxt "#33599"
+msgid "Bounce like you're on the moon!"
+msgstr ""
+
+msgctxt "#33600"
+msgid "Helmet sold separately"
+msgstr ""
+
+msgctxt "#33601"
+msgid "GLITTER GOO LAB"
+msgstr ""
+
+msgctxt "#33602"
+msgid "Make your own goo! Clean up your own goo."
+msgstr ""
+
+msgctxt "#33603"
+msgid "Ages 6 and up"
+msgstr ""
+
+msgctxt "#33604"
+msgid "FRUIT ZAPPERS"
+msgstr ""
+
+msgctxt "#33605"
+msgid "Made with real fruit! Somewhere in there!"
+msgstr ""
+
+msgctxt "#33606"
+msgid "In the snack aisle"
+msgstr ""
+
+msgctxt "#33607"
+msgid "SIR TOASTINGTON"
+msgstr ""
+
+msgctxt "#33608"
+msgid "Breakfast with a moustache."
+msgstr ""
+
+msgctxt "#33609"
+msgid "Ask a grown-up to toast"
+msgstr ""
+
+msgctxt "#33610"
+msgid "NO MONEY DOWN!"
+msgstr ""
+
+msgctxt "#33611"
+msgid "If you can sit on it, Earl's got it!"
+msgstr ""
+
+msgctxt "#33612"
+msgid "Route 9 by the water tower"
+msgstr ""
+
+msgctxt "#33613"
+msgid "Big Earl's"
+msgstr ""
+
+msgctxt "#33614"
+msgid "Furniture Barn"
+msgstr ""
+
+msgctxt "#33615"
+msgid "BIGGEST SALE EVER!"
+msgstr ""
+
+msgctxt "#33616"
+msgid "(Again!) This time Earl means it."
+msgstr ""
+
+msgctxt "#33617"
+msgid "BLACK FRIDAY BLOWOUT!"
+msgstr ""
+
+msgctxt "#33618"
+msgid "Recliners at prices that'll recline YOU."
+msgstr ""
+
+msgctxt "#33619"
+msgid "Doors open 5 am"
+msgstr ""
+
+msgctxt "#33620"
+msgid "SPRING CLEARANCE!"
+msgstr ""
+
+msgctxt "#33621"
+msgid "Everything must go, including Earl's patience."
+msgstr ""
+
+msgctxt "#33622"
+msgid "Route 9"
+msgstr ""
+
+msgctxt "#33623"
+msgid "NEW YEAR, NEW COUCH!"
+msgstr ""
+
+msgctxt "#33624"
+msgid "Earl ate too much ham. So are the prices: big!"
+msgstr ""
+
+msgctxt "#33625"
+msgid "ACE DISCOUNT MUFFLER"
+msgstr ""
+
+msgctxt "#33626"
+msgid "We'll quiet your car, not your wallet."
+msgstr ""
+
+msgctxt "#33627"
+msgid "Off Main St."
+msgstr ""
+
+msgctxt "#33628"
+msgid "Ace Discount"
+msgstr ""
+
+msgctxt "#33629"
+msgid "Muffler"
+msgstr ""
+
+msgctxt "#33630"
+msgid "FREE DELIVERY!"
+msgstr ""
+
+msgctxt "#33631"
+msgid "30 minutes or it's free. Sal is very fast."
+msgstr ""
+
+msgctxt "#33632"
+msgid "Sal's"
+msgstr ""
+
+msgctxt "#33633"
+msgid "Pizza Palace"
+msgstr ""
+
+msgctxt "#33634"
+msgid "OVER 200 CARS!"
+msgstr ""
+
+msgctxt "#33635"
+msgid "Zero down. Zero worries. Cupholders extra."
+msgstr ""
+
+msgctxt "#33636"
+msgid "Exit 12"
+msgstr ""
+
+msgctxt "#33637"
+msgid "Lakeside"
+msgstr ""
+
+msgctxt "#33638"
+msgid "Auto Mall"
+msgstr ""
+
+msgctxt "#33639"
+msgid "TWO-FOR-ONE TUESDAYS!"
+msgstr ""
+
+msgctxt "#33640"
+msgid "Shoes sprayed fresh daily."
+msgstr ""
+
+msgctxt "#33641"
+msgid "Lucky Lanes"
+msgstr ""
+
+msgctxt "#33642"
+msgid "Bowling"
+msgstr ""
+
+msgctxt "#33643"
+msgid "NEW PATIENTS WELCOME"
+msgstr ""
+
+msgctxt "#33644"
+msgid "We'll make you smile. We'll ask first."
+msgstr ""
+
+msgctxt "#33645"
+msgid "Sunrise"
+msgstr ""
+
+msgctxt "#33646"
+msgid "Dental"
+msgstr ""
+
+msgctxt "#33647"
+msgid "WALK-INS WELCOME"
+msgstr ""
+
+msgctxt "#33648"
+msgid "Dr. Joe will crack you up."
+msgstr ""
+
+msgctxt "#33649"
+msgid "Dr. Joe's"
+msgstr ""
+
+msgctxt "#33650"
+msgid "Chiropractic"
+msgstr ""
+
+msgctxt "#33651"
+msgid "INJURED?"
+msgstr ""
+
+msgctxt "#33652"
+msgid "Call before you even get up."
+msgstr ""
+
+msgctxt "#33653"
+msgid "Dewey, Settle & Howe"
+msgstr ""
+
+msgctxt "#33654"
+msgid "Attorneys"
+msgstr ""
+
+msgctxt "#33655"
+msgid "NEW RELEASES EVERY TUESDAY"
+msgstr ""
+
+msgctxt "#33656"
+msgid "Late fees forgiven on your birthday."
+msgstr ""
+
+msgctxt "#33657"
+msgid "Next to Sal's"
+msgstr ""
+
+msgctxt "#33658"
+msgid "Video"
+msgstr ""
+
+msgctxt "#33659"
+msgid "Village"
+msgstr ""
+
+msgctxt "#33660"
+msgid "SNOW TIRES MOUNTED WHILE YOU WAIT"
+msgstr ""
+
+msgctxt "#33661"
+msgid "(And wait.) Free coffee!"
+msgstr ""
+
+msgctxt "#33662"
+msgid "Tread Masters"
+msgstr ""
+
+msgctxt "#33663"
+msgid "Tire"
+msgstr ""
+
+msgctxt "#33664"
+msgid "FURNACE ACTING UP?"
+msgstr ""
+
+msgctxt "#33665"
+msgid "We'll make it toasty by suppertime."
+msgstr ""
+
+msgctxt "#33666"
+msgid "Polar Bear"
+msgstr ""
+
+msgctxt "#33667"
+msgid "Heating & Cooling"
+msgstr ""
+
+msgctxt "#33668"
+msgid "AC ON THE FRITZ?"
+msgstr ""
+
+msgctxt "#33669"
+msgid "We'll chill you out."
+msgstr ""
+
+msgctxt "#33670"
+msgid "WE'LL GET THE BUGS OUT"
+msgstr ""
+
+msgctxt "#33671"
+msgid "Hot wax Thursdays!"
+msgstr ""
+
+msgctxt "#33672"
+msgid "Kwik Kleen"
+msgstr ""
+
+msgctxt "#33673"
+msgid "Car Wash"
+msgstr ""
+
+msgctxt "#33674"
+msgid "REAL TREES!"
+msgstr ""
+
+msgctxt "#33675"
+msgid "Real needles! Real everywhere!"
+msgstr ""
+
+msgctxt "#33676"
+msgid "Behind the Kwik Kleen"
+msgstr ""
+
+msgctxt "#33677"
+msgid "Pine Hollow"
+msgstr ""
+
+msgctxt "#33678"
+msgid "Tree Lot"
+msgstr ""
+
+msgctxt "#33679"
+msgid "NEW YEAR, NEW YOU"
+msgstr ""
+
+msgctxt "#33680"
+msgid "Old you welcome too. First month free!"
+msgstr ""
+
+msgctxt "#33681"
+msgid "Iron Paradise"
+msgstr ""
+
+msgctxt "#33682"
+msgid "Gym"
+msgstr ""
+
+msgctxt "#33683"
+msgid "BEAT THE HEAT!"
+msgstr ""
+
+msgctxt "#33684"
+msgid "Above-ground, in-ground, on-sale."
+msgstr ""
+
+msgctxt "#33685"
+msgid "Splash Zone"
+msgstr ""
+
+msgctxt "#33686"
+msgid "Pools & Spas"
+msgstr ""
+
+msgctxt "#33687"
+msgid "BOTTOMLESS COFFEE!"
+msgstr ""
+
+msgctxt "#33688"
+msgid "Pie of the day, every day."
+msgstr ""
+
+msgctxt "#33689"
+msgid "Open 24 hours"
+msgstr ""
+
+msgctxt "#33690"
+msgid "The Rusty Spoon"
+msgstr ""
+
+msgctxt "#33691"
+msgid "Diner"
+msgstr ""
+
+msgctxt "#33692"
+msgid "BACK TO SCHOOL!"
+msgstr ""
+
+msgctxt "#33693"
+msgid "Crayons! Lunchboxes! A whole aisle of folders!"
+msgstr ""
+
+msgctxt "#33694"
+msgid "Kiddie"
+msgstr ""
+
+msgctxt "#33695"
+msgid "Kingdom"
+msgstr ""
+
+msgctxt "#33696"
+msgid "HAYRIDES EVERY WEEKEND"
+msgstr ""
+
+msgctxt "#33697"
+msgid "Pick your own pumpkin. Carve your own fate."
+msgstr ""
+
+msgctxt "#33698"
+msgid "County Rd. 4"
+msgstr ""
+
+msgctxt "#33699"
+msgid "Miller Farm"
+msgstr ""
+
+msgctxt "#33700"
+msgid "Pumpkin Patch"
+msgstr ""
+
+msgctxt "#33701"
+msgid "FREE TOASTER WITH NEW ACCOUNTS"
+msgstr ""
+
+msgctxt "#33702"
+msgid "Keeping your money since before you had any."
+msgstr ""
+
+msgctxt "#33703"
+msgid "Hometown"
+msgstr ""
+
+msgctxt "#33704"
+msgid "Savings & Loan"
+msgstr ""
+
+msgctxt "#33705"
+msgid "Sit up straight."
+msgstr ""
+
+msgctxt "#33706"
+msgid "Your spine has feelings too."
+msgstr ""
+
+msgctxt "#33707"
+msgid "the Council for Sitting Up Straight"
+msgstr ""
+
+msgctxt "#33708"
+msgid "COUNCIL"
+msgstr ""
+
+msgctxt "#33709"
+msgid "FOR"
+msgstr ""
+
+msgctxt "#33710"
+msgid "POSTURE"
+msgstr ""
+
+msgctxt "#33711"
+msgid "Eat a vegetable today."
+msgstr ""
+
+msgctxt "#33712"
+msgid "Ketchup does not count."
+msgstr ""
+
+msgctxt "#33713"
+msgid "the Society of Green Things"
+msgstr ""
+
+msgctxt "#33714"
+msgid "SOCIETY"
+msgstr ""
+
+msgctxt "#33715"
+msgid "OF"
+msgstr ""
+
+msgctxt "#33716"
+msgid "GREENS"
+msgstr ""
+
+msgctxt "#33717"
+msgid "Look both ways."
+msgstr ""
+
+msgctxt "#33718"
+msgid "Then once more, just in case."
+msgstr ""
+
+msgctxt "#33719"
+msgid "the Crosswalk League"
+msgstr ""
+
+msgctxt "#33720"
+msgid "CROSSWALK"
+msgstr ""
+
+msgctxt "#33721"
+msgid "LEAGUE"
+msgstr ""
+
+msgctxt "#33722"
+msgid "Call your mother."
+msgstr ""
+
+msgctxt "#33723"
+msgid "She's not mad. She's just saying."
+msgstr ""
+
+msgctxt "#33724"
+msgid "Mothers United"
+msgstr ""
+
+msgctxt "#33725"
+msgid "MOTHERS"
+msgstr ""
+
+msgctxt "#33726"
+msgid "UNITED"
+msgstr ""
+
+msgctxt "#33727"
+msgid "Your VCR clock is blinking 12:00."
+msgstr ""
+
+msgctxt "#33728"
+msgid "It's okay. We all know."
+msgstr ""
+
+msgctxt "#33729"
+msgid "Friends of the Correct Time"
+msgstr ""
+
+msgctxt "#33730"
+msgid "FRIENDS"
+msgstr ""
+
+msgctxt "#33731"
+msgid "TIME"
+msgstr ""
+
+msgctxt "#33732"
+msgid "It's 10 o'clock."
+msgstr ""
+
+msgctxt "#33733"
+msgid "Do you know where your remote is?"
+msgstr ""
+
+msgctxt "#33734"
+msgid "Couch Cushion Search & Rescue"
+msgstr ""
+
+msgctxt "#33735"
+msgid "COUCH"
+msgstr ""
+
+msgctxt "#33736"
+msgid "RESCUE"
+msgstr ""
+
+msgctxt "#33737"
+msgid "Read a book tonight."
+msgstr ""
+
+msgctxt "#33738"
+msgid "TV will still be here. Probably."
+msgstr ""
+
+msgctxt "#33739"
+msgid "the Library Friends Association"
+msgstr ""
+
+msgctxt "#33740"
+msgid "LIBRARY"
+msgstr ""
+
+msgctxt "#33741"
+msgid "Turn off the lights when you leave a room."
+msgstr ""
+
+msgctxt "#33742"
+msgid "The lights need their rest too."
+msgstr ""
+
+msgctxt "#33743"
+msgid "the Committee for Darker Rooms"
+msgstr ""
+
+msgctxt "#33744"
+msgid "COMMITTEE"
+msgstr ""
+
+msgctxt "#33745"
+msgid "DARKNESS"
+msgstr ""
+
+msgctxt "#33746"
+msgid "Wear a jacket."
+msgstr ""
+
+msgctxt "#33747"
+msgid "It's cold out there. We checked."
+msgstr ""
+
+msgctxt "#33748"
+msgid "your local weather friends"
+msgstr ""
+
+msgctxt "#33749"
+msgid "WEATHER"
+msgstr ""
+
+msgctxt "#33750"
+msgid "Drink some water."
+msgstr ""
+
+msgctxt "#33751"
+msgid "It's hot out. Even the sun is sweating."
+msgstr ""
+
+msgctxt "#33752"
+msgid "Go outside today."
+msgstr ""
+
+msgctxt "#33753"
+msgid "The sun misses you."
+msgstr ""
+
+msgctxt "#33754"
+msgid "the Department of Outdoors"
+msgstr ""
+
+msgctxt "#33755"
+msgid "DEPT."
+msgstr ""
+
+msgctxt "#33756"
+msgid "OUTDOORS"
+msgstr ""
+
+msgctxt "#33757"
+msgid "NOW ON"
+msgstr ""
+
+msgctxt "#33758"
+msgid "VIDEOCASSETTE!"
+msgstr ""
+
+msgctxt "#33759"
+msgid "NOW RENTING AT"
+msgstr ""
+
+msgctxt "#33760"
+msgid "VIDEO VILLAGE"
+msgstr ""
+
+msgctxt "#33761"
+msgid "OWN IT"
+msgstr ""
+
+msgctxt "#33762"
+msgid "TODAY!"
+msgstr ""
+
+msgctxt "#33763"
+msgid "Own it today! Ask for it by name."
+msgstr ""
+
+msgctxt "#33764"
+msgid "Rent it this weekend!"
+msgstr ""
+
+msgctxt "#33765"
+msgid "Now at a video store near you!"
+msgstr ""
+
+msgctxt "#33766"
+msgid "Available wherever videos are sold"
+msgstr ""
+
+msgctxt "#33767"
+msgid "Ask for it by name"
+msgstr ""
+
+msgctxt "#33768"
+msgid "Be the first on your block!"
+msgstr ""
+
+msgctxt "#33769"
+msgid "%s · CH %d"
+msgstr ""
+
+msgctxt "#33770"
+msgid "Your hometown station"
+msgstr ""
+
+msgctxt "#33771"
+msgid "Shining bright every night"
+msgstr ""
+
+msgctxt "#33772"
+msgid "Look ahead to great TV"
+msgstr ""
+
+msgctxt "#33773"
+msgid "Your forecast, around the clock"
+msgstr ""
+
+msgctxt "#33774"
+msgid "Cartoons all day, every day"
+msgstr ""
+
+msgctxt "#33775"
+msgid "Every color of fun"
+msgstr ""
+
+msgctxt "#33776"
+msgid "Fun for the whole family"
+msgstr ""
+
+msgctxt "#33777"
+msgid "See the world from your couch"
+msgstr ""
+
+msgctxt "#33778"
+msgid "Learning never looked so good"
+msgstr ""
+
+msgctxt "#33779"
+msgid "Laughs around the clock"
+msgstr ""
+
+msgctxt "#33780"
+msgid "Every clue, every night"
+msgstr ""
+
+msgctxt "#33781"
+msgid "Saddle up for the classics"
+msgstr ""
+
+msgctxt "#33782"
+msgid "Great stories, beautifully told"
+msgstr ""
+
+msgctxt "#33783"
+msgid "The news, whenever you want it"
+msgstr ""
+
+msgctxt "#33784"
+msgid "Crime and justice, all night long"
+msgstr ""
+
+msgctxt "#33785"
+msgid "Stories that tie hearts together"
+msgstr ""
+
+msgctxt "#33786"
+msgid "Stories straight from the heart"
+msgstr ""
+
+msgctxt "#33787"
+msgid "Turn it up"
+msgstr ""
+
+msgctxt "#33788"
+msgid "Real people. Real TV."
+msgstr ""
+
+msgctxt "#33789"
+msgid "Everybody plays, everybody wins"
+msgstr ""
+
+msgctxt "#33790"
+msgid "Movies, all night long"
+msgstr ""
+
+msgctxt "#33791"
+msgid "The golden age of the movies"
+msgstr ""
+
+msgctxt "#33792"
+msgid "Out of this world"
+msgstr ""
+
+msgctxt "#33793"
+msgid "Turn up the music"
+msgstr ""
+
+msgctxt "#33794"
+msgid "Behind the scenes, all day"
+msgstr ""
+
+msgctxt "#33795"
+msgid "Big fun for little viewers"
+msgstr ""
+
+msgctxt "#33796"
+msgid "Classic TV after dark"
+msgstr ""
+
+msgctxt "#33797"
+msgid "SNACK-O-MATIC"
+msgstr ""
+
+msgctxt "#33798"
+msgid "Popcorn Popper"
+msgstr ""
+
+msgctxt "#33799"
+msgid "Movie night starts here! Pops in 3 minutes!"
+msgstr ""
+
+msgctxt "#33800"
+msgid "$16.99"
+msgstr ""
+
+msgctxt "#33801"
+msgid "CUDDLE CAPE"
+msgstr ""
+
+msgctxt "#33802"
+msgid "Wearable Blanket"
+msgstr ""
+
+msgctxt "#33803"
+msgid "A blanket! With sleeves! Why didn't anyone think of this?"
+msgstr ""
+
+msgctxt "#33804"
+msgid "TURBO TIDY"
+msgstr ""
+
+msgctxt "#33805"
+msgid "Vacuum Cleaner"
+msgstr ""
+
+msgctxt "#33806"
+msgid "Picks up cat hair, cereal and one missing sock!"
+msgstr ""
+
+msgctxt "#33807"
+msgid "$79.99"
+msgstr ""
+
+msgctxt "#33808"
+msgid "At department stores"
+msgstr ""
+
+msgctxt "#33809"
+msgid "SUNNY DAYS"
+msgstr ""
+
+msgctxt "#33810"
+msgid "Orange Juice"
+msgstr ""
+
+msgctxt "#33811"
+msgid "Squeezed from oranges that had a really nice life."
+msgstr ""
+
+msgctxt "#33812"
+msgid "In the dairy case"
+msgstr ""
+
+msgctxt "#33813"
+msgid "RISE & GRIND"
+msgstr ""
+
+msgctxt "#33814"
+msgid "Instant Coffee"
+msgstr ""
+
+msgctxt "#33815"
+msgid "Tastes like coffee. Mostly!"
+msgstr ""
+
+msgctxt "#33816"
+msgid "CROCK-MATE"
+msgstr ""
+
+msgctxt "#33817"
+msgid "Slow Cooker"
+msgstr ""
+
+msgctxt "#33818"
+msgid "Leave in the morning. Come home to supper."
+msgstr ""
+
+msgctxt "#33819"
+msgid "GLEAMO"
+msgstr ""
+
+msgctxt "#33820"
+msgid "Glass Cleaner"
+msgstr ""
+
+msgctxt "#33821"
+msgid "So clear, you'll walk right into it."
+msgstr ""
+
+msgctxt "#33822"
+msgid "SNAP-SHOT 110"
+msgstr ""
+
+msgctxt "#33823"
+msgid "Pocket Camera"
+msgstr ""
+
+msgctxt "#33824"
+msgid "Point! Click! Wait a week for your pictures!"
+msgstr ""
+
+msgctxt "#33825"
+msgid "At camera counters"
+msgstr ""
+
+msgctxt "#33826"
+msgid "JIFFY JERKY"
+msgstr ""
+
+msgctxt "#33827"
+msgid "Beef Jerky"
+msgstr ""
+
+msgctxt "#33828"
+msgid "For the road, the game or the couch."
+msgstr ""
+
+msgctxt "#33829"
+msgid "At the checkout"
+msgstr ""
+
+msgctxt "#33830"
+msgid "BUBBLE BLASTA 3000"
+msgstr ""
+
+msgctxt "#33831"
+msgid "Bubbles the size of your head! (Please don't put your head in.)"
+msgstr ""
+
+msgctxt "#33832"
+msgid "Bubble juice sold separately"
+msgstr ""
+
+msgctxt "#33833"
+msgid "CHOCO-ROCKET PUFFS"
+msgstr ""
+
+msgctxt "#33834"
+msgid "Turns your milk chocolate! Turns your morning awesome!"
+msgstr ""
+
+msgctxt "#33835"
+msgid "SPARKLE PONIES"
+msgstr ""
+
+msgctxt "#33836"
+msgid "Brush their manes! Braid their tails! They never need feeding!"
+msgstr ""
+
+msgctxt "#33837"
+msgid "Each pony sold separately"
+msgstr ""
+
+msgctxt "#33838"
+msgid "MEGABRICK"
+msgstr ""
+
+msgctxt "#33839"
+msgid "500 bricks! Build a castle! Step on one barefoot!"
+msgstr ""
+
+msgctxt "#33840"
+msgid "Ages 5 and up"
+msgstr ""
+
+msgctxt "#33841"
+msgid "ZOOM KART"
+msgstr ""
+
+msgctxt "#33842"
+msgid "Pull it back! Let it go! Look under the couch!"
+msgstr ""
+
+msgctxt "#33843"
+msgid "DOODLE WALL"
+msgstr ""
+
+msgctxt "#33844"
+msgid "Draw it! Shake it! Draw it again!"
+msgstr ""
+
+msgctxt "#33845"
+msgid "$11.99"
+msgstr ""
+
+msgctxt "#33846"
+msgid "Ages 4 and up"
+msgstr ""
+
+msgctxt "#33847"
+msgid "SPACE CADET"
+msgstr ""
+
+msgctxt "#33848"
+msgid "Over and out! Range of one whole backyard!"
+msgstr ""
+
+msgctxt "#33849"
+msgid "$21.99"
+msgstr ""
+
+msgctxt "#33850"
+msgid "GUMMY GALAXY"
+msgstr ""
+
+msgctxt "#33851"
+msgid "Eat the planets! Save Pluto for last!"
+msgstr ""
+
+msgctxt "#33852"
+msgid "GOOPERS"
+msgstr ""
+
+msgctxt "#33853"
+msgid "They glow in the dark! They stick to the ceiling! Ask a grown-up first!"
+msgstr ""
+
+msgctxt "#33854"
+msgid "$3.99"
+msgstr ""
+
+msgctxt "#33855"
+msgid "Each · Collect all 12"
+msgstr ""
+
+msgctxt "#33856"
+msgid "POGO PRO"
+msgstr ""
+
+msgctxt "#33857"
+msgid "Boing your way to the bus stop! (Walking also fine.)"
+msgstr ""
+
+msgctxt "#33858"
+msgid "MIGHTY MACK"
+msgstr ""
+
+msgctxt "#33859"
+msgid "Crushes cardboard! Climbs pillows! Afraid of the cat!"
+msgstr ""
+
+msgctxt "#33860"
+msgid "$34.99"
+msgstr ""
+
+msgctxt "#33861"
+msgid "SNOWBALL SAM"
+msgstr ""
+
+msgctxt "#33862"
+msgid "Build the best snow fort on the block!"
+msgstr ""
+
+msgctxt "#33863"
+msgid "Snow not included"
+msgstr ""
+
+msgctxt "#33864"
+msgid "SUPER SQUIRT"
+msgstr ""
+
+msgctxt "#33865"
+msgid "Soak your big brother from 30 feet!"
+msgstr ""
+
+msgctxt "#33866"
+msgid "PB CRUNCH"
+msgstr ""
+
+msgctxt "#33867"
+msgid "Peanut butter inside! Crunch outside! Lunchbox approved!"
+msgstr ""
+
+msgctxt "#33868"
+msgid "In the cereal aisle"
+msgstr ""
+
+msgctxt "#33869"
+msgid "DINO DIG"
+msgstr ""
+
+msgctxt "#33870"
+msgid "Dig up your own dinosaur! (Dinosaur is plaster.)"
+msgstr ""
+
+msgctxt "#33871"
+msgid "$17.99"
+msgstr ""
+
+msgctxt "#33872"
+msgid "POLAR POPS"
+msgstr ""
+
+msgctxt "#33873"
+msgid "Twelve flavors! Your tongue will be every color!"
+msgstr ""
+
+msgctxt "#33874"
+msgid "CAPTAIN COMET"
+msgstr ""
+
+msgctxt "#33875"
+msgid "He keeps an eye on the closet so you don't have to."
+msgstr ""
+
+msgctxt "#33876"
+msgid "Bulb included"
+msgstr ""
+
+msgctxt "#33877"
+msgid "SATURDAY SKATE 1–4!"
+msgstr ""
+
+msgctxt "#33878"
+msgid "Couples skate! Limbo contest! Birthday parties!"
+msgstr ""
+
+msgctxt "#33879"
+msgid "Behind the Riverside Mall"
+msgstr ""
+
+msgctxt "#33880"
+msgid "Rollerdrome"
+msgstr ""
+
+msgctxt "#33881"
+msgid "Skate Center"
+msgstr ""
+
+msgctxt "#33882"
+msgid "4 TOKENS FOR A DOLLAR!"
+msgstr ""
+
+msgctxt "#33883"
+msgid "A claw machine that ALMOST works!"
+msgstr ""
+
+msgctxt "#33884"
+msgid "Riverside Mall, lower level"
+msgstr ""
+
+msgctxt "#33885"
+msgid "Galaxy"
+msgstr ""
+
+msgctxt "#33886"
+msgid "Arcade"
+msgstr ""
+
+msgctxt "#33887"
+msgid "BIRTHDAY PARTIES!"
+msgstr ""
+
+msgctxt "#33888"
+msgid "With a singing pizza chef! Ask your grown-up!"
+msgstr ""
+
+msgctxt "#33889"
+msgid "Next to Video Village"
+msgstr ""
+
+msgctxt "#33890"
+msgid "Sal's Pizza Palace"
+msgstr ""
+
+msgctxt "#33891"
+msgid "Party Room"
+msgstr ""
+
+msgctxt "#33892"
+msgid "We'll make your dog look fancier than you."
+msgstr ""
+
+msgctxt "#33893"
+msgid "Happy Paws"
+msgstr ""
+
+msgctxt "#33894"
+msgid "Grooming"
+msgstr ""
+
+msgctxt "#33895"
+msgid "OPEN SUNDAYS!"
+msgstr ""
+
+msgctxt "#33896"
+msgid "If we don't have it, you don't need it."
+msgstr ""
+
+msgctxt "#33897"
+msgid "Main Street"
+msgstr ""
+
+msgctxt "#33898"
+msgid "Hardware"
+msgstr ""
+
+msgctxt "#33899"
+msgid "OPEN TILL MIDNIGHT"
+msgstr ""
+
+msgctxt "#33900"
+msgid "Bring quarters. Bring a book."
+msgstr ""
+
+msgctxt "#33901"
+msgid "Lucky Star"
+msgstr ""
+
+msgctxt "#33902"
+msgid "Laundromat"
+msgstr ""
+
+msgctxt "#33903"
+msgid "BUS TRIPS EVERY WEEKEND"
+msgstr ""
+
+msgctxt "#33904"
+msgid "To the lake, the outlet mall and the other lake!"
+msgstr ""
+
+msgctxt "#33905"
+msgid "Golden Years"
+msgstr ""
+
+msgctxt "#33906"
+msgid "Travel"
+msgstr ""
+
+msgctxt "#33907"
+msgid "DOUBLE FEATURE FRIDAYS!"
+msgstr ""
+
+msgctxt "#33908"
+msgid "Bring the whole car!"
+msgstr ""
+
+msgctxt "#33909"
+msgid "Route 9 past Big Earl's"
+msgstr ""
+
+msgctxt "#33910"
+msgid "Starlite"
+msgstr ""
+
+msgctxt "#33911"
+msgid "Drive-In"
+msgstr ""
+
+msgctxt "#33912"
+msgid "Brush your teeth."
+msgstr ""
+
+msgctxt "#33913"
+msgid "Two whole minutes. Yes, the back ones too."
+msgstr ""
+
+msgctxt "#33914"
+msgid "the Tooth Fairy Union"
+msgstr ""
+
+msgctxt "#33915"
+msgid "TOOTH"
+msgstr ""
+
+msgctxt "#33916"
+msgid "FAIRY"
+msgstr ""
+
+msgctxt "#33917"
+msgid "UNION"
+msgstr ""
+
+msgctxt "#33918"
+msgid "Share your toys."
+msgstr ""
+
+msgctxt "#33919"
+msgid "Except your favorite. Okay, that one too."
+msgstr ""
+
+msgctxt "#33920"
+msgid "the Playground Council"
+msgstr ""
+
+msgctxt "#33921"
+msgid "PLAYGROUND"
+msgstr ""
+
+msgctxt "#33922"
+msgid "Wear your helmet."
+msgstr ""
+
+msgctxt "#33923"
+msgid "Your brain is the only one you get."
+msgstr ""
+
+msgctxt "#33924"
+msgid "the Bike Safety Squad"
+msgstr ""
+
+msgctxt "#33925"
+msgid "BIKE"
+msgstr ""
+
+msgctxt "#33926"
+msgid "SAFETY"
+msgstr ""
+
+msgctxt "#33927"
+msgid "SQUAD"
+msgstr ""
+
+msgctxt "#33928"
+msgid "Say please and thank you."
+msgstr ""
+
+msgctxt "#33929"
+msgid "It works on grown-ups too."
+msgstr ""
+
+msgctxt "#33930"
+msgid "the Society of Good Manners"
+msgstr ""
+
+msgctxt "#33931"
+msgid "MANNERS"
+msgstr ""
+
+msgctxt "#33932"
+msgid "Test your smoke detector."
+msgstr ""
+
+msgctxt "#33933"
+msgid "It's beeping for a reason."
+msgstr ""
+
+msgctxt "#33934"
+msgid "the Fire Safety Friends"
+msgstr ""
+
+msgctxt "#33935"
+msgid "FIRE"
+msgstr ""
+
+msgctxt "#33936"
+msgid "Don't forget to change your clocks."
+msgstr ""
+
+msgctxt "#33937"
+msgid "Spring forward, fall back. Or just guess."
+msgstr ""
+
+msgctxt "#33938"
+msgid "WOBBLE BOTS"
+msgstr ""
+
+msgctxt "#33939"
+msgid "They wobble! They wiggle! They never fall down! (Okay, sometimes.)"
+msgstr ""
+
+msgctxt "#33940"
+msgid "RAINBOW ROCKET"
+msgstr ""
+
+msgctxt "#33941"
+msgid "64 colors! Including “Mystery Brown”!"
+msgstr ""
+
+msgctxt "#33942"
+msgid "$4.99"
+msgstr ""
+
+msgctxt "#33943"
+msgid "Ages 3 and up"
+msgstr ""
+
+msgctxt "#33944"
+msgid "KABOOM KAZOO"
+msgstr ""
+
+msgctxt "#33945"
+msgid "Sounds like a duck! Played by YOU!"
+msgstr ""
+
+msgctxt "#33946"
+msgid "Grown-ups: we're sorry"
+msgstr ""
+
+msgctxt "#33947"
+msgid "MEGA MARBLE RUN"
+msgstr ""
+
+msgctxt "#33948"
+msgid "Twist it! Drop it! Watch it go-go-go!"
+msgstr ""
+
+msgctxt "#33949"
+msgid "$22.99"
+msgstr ""
+
+msgctxt "#33950"
+msgid "FLUFFERNUT PUPPY"
+msgstr ""
+
+msgctxt "#33951"
+msgid "He's soft! He's sleepy! He never chews your shoes!"
+msgstr ""
+
+msgctxt "#33952"
+msgid "$15.99"
+msgstr ""
+
+msgctxt "#33953"
+msgid "CHOCO-MOO"
+msgstr ""
+
+msgctxt "#33954"
+msgid "From cows who love chocolate. Probably."
+msgstr ""
+
+msgctxt "#33955"
+msgid "PUZZLE PLANET"
+msgstr ""
+
+msgctxt "#33956"
+msgid "A whole planet in 100 pieces! Find the corners first!"
+msgstr ""
+
+msgctxt "#33957"
+msgid "$7.99"
+msgstr ""
+
+msgctxt "#33958"
+msgid "WIZARD GLOW WAND"
+msgstr ""
+
+msgctxt "#33959"
+msgid "Wave it! It glows! Bedtime is still at eight."
+msgstr ""
+
+msgctxt "#33960"
+msgid "Batteries included"
+msgstr ""
+
+msgctxt "#33961"
+msgid "BOUNCY BLOB"
+msgstr ""
+
+msgctxt "#33962"
+msgid "Bounces higher than your house! (Please play outside.)"
+msgstr ""
+
+msgctxt "#33963"
+msgid "$1.99"
+msgstr ""
+
+msgctxt "#33964"
+msgid "Colors may vary"
+msgstr ""
+
+msgctxt "#33965"
+msgid "LOOP-DE-LOOP"
+msgstr ""
+
+msgctxt "#33966"
+msgid "Drink your milk the long way!"
+msgstr ""
+
+msgctxt "#33967"
+msgid "4 FOR"
+msgstr ""
+
+msgctxt "#33968"
+msgid "Wash your hands."
+msgstr ""
+
+msgctxt "#33969"
+msgid "Soap is your friend. Bubbles are a bonus."
+msgstr ""
+
+msgctxt "#33970"
+msgid "the Clean Hands Club"
+msgstr ""
+
+msgctxt "#33971"
+msgid "CLEAN"
+msgstr ""
+
+msgctxt "#33972"
+msgid "HANDS"
+msgstr ""
+
+msgctxt "#33973"
+msgid "CLUB"
+msgstr ""
+
+msgctxt "#33974"
+msgid "Get some sleep."
+msgstr ""
+
+msgctxt "#33975"
+msgid "Even superheroes go to bed."
+msgstr ""
+
+msgctxt "#33976"
+msgid "the Pillow Patrol"
+msgstr ""
+
+msgctxt "#33977"
+msgid "PILLOW"
+msgstr ""
+
+msgctxt "#33978"
+msgid "PATROL"
+msgstr ""
+
+msgctxt "#33979"
+msgid "Be kind to animals."
+msgstr ""
+
+msgctxt "#33980"
+msgid "Even the grumpy cat."
+msgstr ""
+
+msgctxt "#33981"
+msgid "Friends of Furry Things"
+msgstr ""
+
+msgctxt "#33982"
+msgid "FURRY"
+msgstr ""
+
+msgctxt "#33983"
+msgid "Help clean up."
+msgstr ""
+
+msgctxt "#33984"
+msgid "Your toys won't walk back to the box by themselves."
+msgstr ""
+
+msgctxt "#33985"
+msgid "the Tidy Room Task Force"
+msgstr ""
+
+msgctxt "#33986"
+msgid "TIDY"
+msgstr ""
+
+msgctxt "#33987"
+msgid "ROOM"
+msgstr ""
+
+msgctxt "#33988"
+msgid "TASK FORCE"
+msgstr ""
+
+msgctxt "#33989"
+msgid "and more"
+msgstr ""
+
+msgctxt "#33990"
+msgid "%d h %02d min"
+msgstr ""
+
+msgctxt "#33991"
+msgid "Season %d · Episode %d"
+msgstr ""
+
+msgctxt "#33992"
+msgid "AT"
+msgstr ""
+
+msgctxt "#33993"
+msgid "CH %d · %s"
+msgstr ""
+
+msgctxt "#33994"
+msgid "STARTS IN"
+msgstr ""
+
+msgctxt "#33995"
+msgid "STARTING NOW"
+msgstr ""

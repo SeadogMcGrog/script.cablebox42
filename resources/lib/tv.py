@@ -4,6 +4,7 @@ Playback is plain xbmc.Player (windowed into our videowindow control), so on
 every device each file goes through the same hardware decoder as it
 does when you play it from the library.
 """
+import math
 import os
 import random
 import threading
@@ -23,6 +24,7 @@ from . import stations
 from . import captions
 from . import promos
 from . import musicvideos
+from . import ads
 from .kodiutil import _
 
 
@@ -741,6 +743,10 @@ class TVWindow(xbmcgui.WindowXML):
         br = stations.brand(ch)
         self.brand_key = (ch.get("id"), br["name"], br["logo"])
         self.setProperty("ch_name", br["name"])
+        # standby and off-air screens: the name shrinks, then wraps (never cut off)
+        self.setProperty("ch_name_fsb", promos.fit_font(br["name"], 460))
+        self.setProperty("ch_name_foa", promos.fit_font(br["name"], 1000, promos.LADDER_45, promos.TWO_27))
+        self.setProperty("ch_name2", promos.two_lines(br["name"]))
         self.setProperty("ch_call", br["call"] or "")
         path = br["logo"] or logos.logo_for(ch)
         bug = (br.get("bug") if br["logo"] else "") or path      # a station kit may have a simpler corner bug
@@ -805,6 +811,8 @@ class TVWindow(xbmcgui.WindowXML):
                 self.start_promo(e, now)
             elif kind == "house":
                 self.start_house(e, now)
+            elif kind == "retro":
+                self.start_retro(e, now)
             else:
                 self.stop_player()
                 if kind == "offair":
@@ -920,7 +928,7 @@ class TVWindow(xbmcgui.WindowXML):
                 self.card_for({"k": "card", "sub": "id"}, now)
                 return
             self.air_promo(pt, path, title, True, now, e["e"], ch=other,
-                           kicker=_("%s · Channel %d").replace("%d", str(other["number"])))
+                           kicker=lambda name: promos.cross_kicker(name, other["number"]))
             return
         self.air_promo(pt, path, title, later, now, e["e"])
 
@@ -967,6 +975,29 @@ class TVWindow(xbmcgui.WindowXML):
         music = promos.air_house(self, props)
         self.set_mode("promo")
         self.start_theme(music, e["e"])
+
+    _ad_slots = None
+
+    def start_retro(self, e, now):
+        """A retro ad (house breaks): its card and jingle until the entry ends.
+        Retro ads switched off since planning, or a movie no longer in the
+        library: a station ID card instead."""
+        c = None
+        if K.setting_bool("retro_ads", True):
+            try:
+                c = ads.card(e, kids=ads.flavour(self.ch) == "K")
+            except Exception as exc:
+                K.log_err("retro ad %s: %s" % (e.get("ad"), exc))
+        if not c:
+            self.card_for({"k": "card", "sub": "id"}, now)
+            return
+        if self._ad_slots is None:
+            self._ad_slots = ads.Slots()
+        t0 = time.time()
+        ads.apply_card(self, c, self._ad_slots)
+        K.log("retro ad %s: lettered in %.0f ms" % (e.get("ad"), (time.time() - t0) * 1000), xbmc.LOGINFO)
+        self.set_mode("retro")
+        self.start_theme(ads.music(c, e["e"] - time.time()), e["e"])     # tuned in late: silent
 
     def air_promo(self, pt, path, title, later, now, end, ch=None, kicker=None):
         """The card and its theme until `end` (promos.air: the same for breaks,
@@ -1301,17 +1332,17 @@ class TVWindow(xbmcgui.WindowXML):
     def fill_rest(self, e, now):
         """The rest of a spot's time: another commercial, or the station ID card."""
         last = self.fill_last if self.fill_last and self.fill_last[0] == e["s"] else (e["s"], e.get("p"))
-        ads = [a for a in self.channel_ads() if not self.file_missing(a["path"])]
-        ads = [a for a in ads if a["path"] != last[1]] or ads     # never the same spot twice in a row
-        if ads:
-            fit = [a for a in ads if a["dur"] <= e["e"] - now] or ads
+        spots = [a for a in self.channel_ads() if not self.file_missing(a["path"])]
+        spots = [a for a in spots if a["path"] != last[1]] or spots     # never the same spot twice in a row
+        if spots:
+            fit = [a for a in spots if a["dur"] <= e["e"] - now] or spots
             a = random.choice(fit)
             self.fill_last = (e["s"], a["path"])
             K.log("%s ended %.1f s before its slot: filling with %s" % (
                 os.path.basename(e.get("p") or ""), e["e"] - now, a["path"]), xbmc.LOGINFO)
             self.play({"p": a["path"], "o": 0, "s": now, "t": a.get("title")}, now)
             self.set_mode("video")
-        elif self.prop_mode != "card":
+        elif self.prop_mode not in ("card", "station", "upnext"):
             self.card_for({"k": "card", "sub": "id"}, now)
 
     # ----------------------------------------------------------- missing files
@@ -1769,9 +1800,13 @@ class TVWindow(xbmcgui.WindowXML):
                           _("Press OK to look for movie extras"))
         elif sub == "nosignal":
             self.card(self.ch["name"], _("No programming"), _("Add sources to this channel in the Channel Manager"), "")
+        elif sub == "next" and nb and self.up_next(nb, now):
+            return
         elif sub == "next" and nb:
             t = library.on_air(nb["t"]) + (("  -  " + nb["sub"]) if nb.get("sub") else "")
             self.card(_("UP NEXT"), t, _("at %s") % fmt_time(nb["s"]), self.ch["name"])
+        elif self.station_id(now):
+            return
         else:
             line = ""
             if nb:
@@ -1779,6 +1814,119 @@ class TVWindow(xbmcgui.WindowXML):
             self.card(_("You're watching"), self.ch["name"], _("We'll be right back"), line)
         self.stop_player()
         self.set_mode("card")
+
+    def up_next(self, nb, now):
+        """The Up next card (ads.upnext_card): the next programme's picture, title,
+        episode or film details, synopsis (Boombox: the block's artists), start time,
+        channel and a live countdown (upnext_tick).  False if it couldn't be made."""
+        try:
+            sched = self.lineup.schedule(self.ch, ensure=False)
+            first = sched.entry_at(nb["s"] + 0.5) or {}
+            br = stations.brand(self.ch, nb["s"])
+            chlogo = br["logo"] or logos.logo_for(self.ch)
+            if not ads.logo_usable(chlogo):
+                chlogo = ""
+            c = ads.upnext_card(self.ch, self.ch["number"], br["name"], nb, nb["s"], fmt_time(nb["s"]),
+                                first.get("p") if first.get("k") == "show" else "", chlogo)
+            if self._ad_slots is None:
+                self._ad_slots = ads.Slots()
+            ads.apply_upnext(self, c, self._ad_slots, time.time())
+        except Exception as exc:
+            K.log_err("up next: %s" % exc)
+            return False
+        self.upnext_at = nb["s"]
+        self.upnext_shown = int(math.ceil(nb["s"] - time.time()))
+        self.stop_player()
+        self.set_mode("upnext")
+        return True
+
+    upnext_at = 0
+    upnext_shown = None
+    squeezed = False
+    squeeze_checked = 0
+
+    def squeeze_tick(self, now):
+        """Squeezed credits: when the episode's file reaches its end credits (the
+        schedule's "cr", from its chapters) the picture shrinks into a window and the
+        Up next panel comes in; the credits keep their own sound, nothing restarts.
+        Tuned in mid-credits: at once.  The end break follows when the file ends."""
+        if self.squeezed:
+            left = int(math.ceil(self.upnext_at - now))
+            if left != self.upnext_shown and self._ad_slots is not None:
+                self.upnext_shown = left
+                self._ad_slots.fill(self, ads.countdown(self.upnext_at, now, "squeeze"), (ads.SLOT_CLOCK,))
+            return
+        e = self.cur_entry
+        if not e or e.get("k") != "show" or not e.get("cr") or now - self.squeeze_checked < 0.25:
+            return
+        self.squeeze_checked = now
+        try:
+            if not (self.playing_ours() and self.player.isPlayingVideo()):
+                return
+            pos = self.player.getTime()
+        except Exception:
+            return
+        if pos < float(e["cr"]) - 0.3:
+            return
+        try:
+            sched = self.lineup.schedule(self.ch, ensure=False)
+            nb = sched.next_block(now)
+            if not nb or nb.get("k") == "offair":
+                self.squeeze_checked = now + 60     # nothing to announce: the station signs off
+                return
+            first = sched.entry_at(nb["s"] + 0.5) or {}
+            br = stations.brand(self.ch, nb["s"])
+            c = ads.squeeze_card(self.ch, self.ch["number"], br["name"], nb, nb["s"], fmt_time(nb["s"]),
+                                 first.get("p") if first.get("k") == "show" else "")
+            if self._ad_slots is None:
+                self._ad_slots = ads.Slots()
+            ads.apply_squeeze(self, c, self._ad_slots, now)
+        except Exception as exc:
+            K.log_err("squeeze: %s" % exc)
+            self.squeeze_checked = now + 3600      # not again for this item
+            return
+        self.upnext_at = nb["s"]
+        self.upnext_shown = None
+        self.squeezed = True
+        if self.fs_state != "off":
+            self.fs_leave()                  # captions' full-screen player: back to the TV window
+        self.setProperty("squeeze", "1")
+        K.log("squeezed credits at %.1f s: up next %s" % (pos, nb.get("t")), xbmc.LOGINFO)
+
+    def unsqueeze(self):
+        if self.squeezed or self.getProperty("squeeze"):
+            self.squeezed = False
+            self.setProperty("squeeze", "")
+        self.squeeze_checked = 0
+
+    def upnext_tick(self, now):
+        """The countdown, once a second while the Up next card is on."""
+        left = int(math.ceil(self.upnext_at - now))
+        if left == self.upnext_shown or self._ad_slots is None:
+            return
+        self.upnext_shown = left
+        self._ad_slots.fill(self, ads.countdown(self.upnext_at, now), (ads.SLOT_CLOCK,))
+
+    def station_id(self, now):
+        """The station ID card: the channel's logo, number, name and tagline
+        (ads.station_card), silent, its motion looping while the break lasts.
+        False if it couldn't be made (the plain card then)."""
+        try:
+            br = stations.brand(self.ch, now)
+            logo = br["logo"] or logos.logo_for(self.ch)
+            if not ads.logo_usable(logo):
+                logo = ""                       # missing, or web art not cached: the no-logo layout
+            c = ads.station_card(br["name"], self.ch["number"], logo, stations.tagline(self.ch, now),
+                                 ads.genre_line(self.ch))
+            if self._ad_slots is None:
+                self._ad_slots = ads.Slots()
+            ads.apply_card(self, c, self._ad_slots)
+        except Exception as exc:
+            K.log_err("station ID: %s" % exc)
+            return False
+        self.stop_player()
+        self.set_mode("station")
+        return True
 
     def show_digits(self, text):
         """'CH 03' style: at least two digits (leading zero), left-aligned after CH."""
@@ -1893,13 +2041,15 @@ class TVWindow(xbmcgui.WindowXML):
         for i, c in enumerate(cols):
             self.setProperty("g_t%d" % (i + 1), fmt_time(c))
         items = []
-        promos = []
+        guide_promos = []
         for n, ch in enumerate(self.lineup.channels):
             if ch["type"] == "guide":
                 continue
             # never build schedules here - that froze the guide after upgrades
             sched = self.lineup.schedule(ch, ensure=False)
             li = xbmcgui.ListItem(str(ch["number"]), stations.brand(ch, now)["name"])
+            li.setProperty("nfit", promos.fit_font(li.getLabel2(), 270))
+            li.setProperty("name2", promos.two_lines(li.getLabel2()))
             if sched.block_at(now) is None:
                 self.guide_pending = True
                 li.setProperty("c1", _("Updating listings..."))
@@ -1920,7 +2070,7 @@ class TVWindow(xbmcgui.WindowXML):
             items.append(li)
             for b in sched.blocks_between(now, now + 4 * 3600):
                 if b["s"] > now and b.get("k") == "show" and b["e"] - b["s"] >= 3600:
-                    promos.append(_("Coming up at %s on %s %s:  %s") % (
+                    guide_promos.append(_("Coming up at %s on %s %s:  %s") % (
                         fmt_time(b["s"]), ch["number"], ch["name"], library.on_air(b["t"])))
                     break
         try:
@@ -1934,10 +2084,10 @@ class TVWindow(xbmcgui.WindowXML):
                 lst.selectItem(min(len(items) - 1, self.scroll_top + self.GUIDE_ROWS - 1))
         except Exception as exc:
             K.log_err("guide list: %s" % exc)
-        random.shuffle(promos)
-        if not promos:
-            promos = [_("Thanks for watching CableBox 42"), _("Press OK to pick a channel")]
-        self.promos = promos
+        random.shuffle(guide_promos)
+        if not guide_promos:
+            guide_promos = [_("Thanks for watching CableBox 42"), _("Press OK to pick a channel")]
+        self.promos = guide_promos
 
     def background_audio(self, folder):
         if not folder:

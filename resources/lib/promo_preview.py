@@ -10,6 +10,7 @@ clean black before and after it for a screen recorder.
 Read-only: it reads the channels' saved schedules (never builds or changes
 one), so "How often", the planned breaks and the series stay as they were.
 """
+import math
 import threading
 import time
 
@@ -302,3 +303,143 @@ def _pick_and_play():
         b, later = sel
         play(ch, (b["s"], _block_path(sc, b), b["t"], later))
         return
+
+
+# ------------------------------------------------------------------ retro ads
+# RunScript(script.cablebox42,preview_ad,P01) - one retro ad, full screen, as it
+# airs in a house break (ads.card / ads.apply_card, its jingle); "video" or
+# "video:<movieid>" for a Now on videocassette card.  For screenshots and
+# checking cards on the box; no menu entry.
+class AdPreviewWindow(xbmcgui.WindowXML):
+    entry = None
+    win_id = 0
+
+    def onInit(self):
+        self.win_id = xbmcgui.getCurrentWindowId()
+        self.player = xbmc.Player()
+        self.theme = promos.ThemeAudio(self.player)
+        self.stop = threading.Event()
+        self.setProperty("mode", "")
+        threading.Thread(target=self._run, name="cablebox42-adpreview").start()
+
+    def _run(self):
+        from . import ads
+        mon = xbmc.Monitor()
+        try:
+            if self.entry.get("k") == "station":
+                self._station()
+                return
+            if self.entry.get("k") == "upnext":
+                self._upnext()
+                return
+            c = ads.card(self.entry)
+            if not c:
+                K.log_err("preview ad: %s can't run" % self.entry)
+                return
+            if mon.waitForAbort(0.5) or self.stop.is_set():
+                return
+            ads.apply_card(self, c, ads.Slots())
+            self.setProperty("mode", "retro")
+            end = time.time() + ads.length(self.entry)
+            music = ads.music(c)
+            if music:
+                self.theme.start(music, end)
+            while not self.stop.is_set() and time.time() < end - 0.05:
+                if mon.waitForAbort(0.05):
+                    break
+            self.setProperty("mode", "")
+            self.theme.stop()
+            promos.wait_stopped(self.player)
+        except Exception as exc:
+            K.log_err("preview ad: %s" % exc)
+            self.theme.stop()
+        finally:
+            self.close()
+
+    def _upnext(self):
+        from . import ads, logos, stations
+        from .tv import fmt_time
+        mon = xbmc.Monitor()
+        lineup = scheduler.Lineup(K.schedule_cfg())
+        ch = next((c for c in lineup.channels if c["number"] == self.entry.get("num")), None) or lineup.channels[0]
+        sched = lineup.schedule(ch, ensure=False)
+        now = time.time()
+        nb = sched.next_block(now)
+        for _i in range(max(0, self.entry.get("idx", 1) - 1)):
+            nb = sched.next_block(nb["e"] - 1) if nb else None
+        if not nb:
+            K.log_err("preview up next: nothing planned on %s" % ch.get("name"))
+            return
+        first = sched.entry_at(nb["s"] + 0.5) or {}
+        br = stations.brand(ch, nb["s"])
+        chlogo = br["logo"] or logos.logo_for(ch)
+        c = ads.upnext_card(ch, ch["number"], br["name"], nb, nb["s"], fmt_time(nb["s"]),
+                            first.get("p") if first.get("k") == "show" else "",
+                            chlogo if ads.logo_usable(chlogo) else "")
+        if mon.waitForAbort(0.5) or self.stop.is_set():
+            return
+        slots = ads.Slots()
+        ads.apply_upnext(self, c, slots, time.time())
+        self.setProperty("mode", "upnext")
+        end, shown = time.time() + 20, None
+        while not self.stop.is_set() and time.time() < end:
+            left = int(math.ceil(nb["s"] - time.time()))
+            if left != shown:
+                shown = left
+                slots.fill(self, ads.countdown(nb["s"], time.time()), (ads.SLOT_CLOCK,))
+            if mon.waitForAbort(0.1):
+                break
+        self.setProperty("mode", "")
+
+    def _station(self):
+        from . import ads, logos, stations
+        mon = xbmc.Monitor()
+        chans = scheduler.Lineup(K.schedule_cfg()).channels
+        ch = next((c for c in chans if c["number"] == self.entry.get("num")), None) or chans[0]
+        now = time.time()
+        br = stations.brand(ch, now)
+        logo = br["logo"] or logos.logo_for(ch)
+        c = ads.station_card(br["name"], ch["number"], logo if ads.logo_usable(logo) else "",
+                             stations.tagline(ch, now), ads.genre_line(ch))
+        if mon.waitForAbort(0.5) or self.stop.is_set():
+            return
+        ads.apply_card(self, c, ads.Slots())
+        self.setProperty("mode", "station")
+        end = time.time() + 20
+        while not self.stop.is_set() and time.time() < end:
+            if mon.waitForAbort(0.05):
+                break
+        self.setProperty("mode", "")
+
+    def onAction(self, action):
+        if action.getId() in (10, 92, 13, 7):
+            self.stop.set()
+
+
+def run_ad(arg):
+    from . import ads
+    arg = (arg or "").strip()
+    if arg.lower().startswith("upnext"):
+        # upnext:<channel number>: that channel's Up next card for its next programme
+        # upnext:<channel number>[:<k>]: the k-th programme from now (1 = the next)
+        bits = arg.split(":")
+        entry = {"k": "upnext", "num": int(bits[1]) if len(bits) > 1 else 0,
+                 "idx": int(bits[2]) if len(bits) > 2 else 1}
+    elif arg.lower().startswith("station"):
+        # station:<channel number>: that channel's station ID card for a while
+        entry = {"k": "station", "num": int(arg.split(":", 1)[1]) if ":" in arg else 0}
+    elif arg.lower().startswith("video"):
+        movies = ads.library_movies()
+        mv = arg.split(":", 1)[1] if ":" in arg else (movies[0]["movieid"] if movies else 0)
+        entry = {"k": "retro", "ad": "video", "mv": int(mv), "ln": 0}
+    else:
+        entry = {"k": "retro", "ad": arg.upper(), "ln": 0}
+    if xbmcgui.Window(10000).getProperty("cablebox42.running"):
+        xbmcgui.Dialog().ok(_("Preview promo"), _("Turn CableBox's TV off first"))
+        return
+    win = AdPreviewWindow("script-cablebox42-tv.xml", K.ADDON_PATH, "Default", "1080i")
+    win.entry = entry
+    win.doModal()
+    win_id = win.win_id
+    del win
+    _settle(xbmc.Player(), win_id)

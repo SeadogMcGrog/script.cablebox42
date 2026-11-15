@@ -24,6 +24,10 @@ def run(args):
         from . import promo_preview
         promo_preview.run(int(args[1]) if len(args) > 1 and args[1].isdigit() else None,
                           from_settings="settings" in args[1:])
+    elif args and args[0] == "preview_ad" and len(args) > 1:
+        # RunScript(script.cablebox42,preview_ad,P01): one retro ad (screenshots, checks on the box)
+        from . import promo_preview
+        promo_preview.run_ad(args[1])
     elif "watch" in args:
         # a Kodi shortcut, widget or RunScript(script.cablebox42,watch,7): Back goes to Kodi,
         # Menu > CableBox menu opens the main menu

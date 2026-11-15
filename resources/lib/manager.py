@@ -1140,6 +1140,7 @@ def edit_channel(cid):
             ("commercials", _("Commercials: %s") % onoff(ch.get("commercials"))),
             ("midroll", _("Break into shows for commercials: %s") % onoff(ch.get("midroll", ch["type"] != "movies"))),
             ("bumps", _("Bumps: %s") % onoff(ch.get("bumps"))),
+            ("adflavour", _("Ad flavour: %s") % _ad_flavour_label(ch)),
             ("lineup", _("Lineup style: %s") % (_("Same show same time every day") if ch.get("lineup") == "strip"
                                              else _("Shuffle"))),
             ("slot", _("Programs start on: %s") % ({0: _("no clock (back to back)"), 15: ":00 :15 :30 :45",
@@ -1152,6 +1153,8 @@ def edit_channel(cid):
             ("preview", _("[B]Preview today's schedule[/B]")),
             ("delete", _("[COLOR red]Delete channel[/COLOR]")),
         ]
+        if ch["type"] not in AIR_TYPES:
+            items = [x for x in items if x[0] != "adflavour"]     # retro ads run in house breaks only
         if ch["type"] == "extras":
             items = [x for x in items if x[0] not in EXTRAS_HIDDEN]
             secs, n = _extras_air()
@@ -1221,6 +1224,8 @@ def edit_channel(cid):
             ch[key] = not ch.get(key)
         elif key == "midroll":
             ch["midroll"] = not ch.get("midroll", ch["type"] != "movies")
+        elif key == "adflavour":
+            pick_ad_flavour(ch)
         elif key == "shows":
             whats_on(ch)
         elif key == "lineup":
@@ -1271,6 +1276,30 @@ def edit_channel(cid):
         if json.dumps(chans, sort_keys=True) != before:
             changed = True
             C.save(chans)
+
+
+def _ad_flavour_label(ch):
+    from . import ads
+    f = ch.get("ad_flavour") or "auto"
+    if f == "auto":
+        return _("Auto (%s)") % ads.flavour_label(ads.auto_flavour(ch))
+    return ads.flavour_label(f)
+
+
+def pick_ad_flavour(ch):
+    """Channel settings > Ad flavour: which retro ads the channel's house breaks
+    run.  Auto follows its type and genres; Kids runs only kids' ads."""
+    from . import ads
+    codes = list(ads.FLAVOURS)
+    rows = [_("Auto (%s)") % ads.flavour_label(ads.auto_flavour(ch))] + [ads.flavour_label(c) for c in codes[1:]]
+    cur = ch.get("ad_flavour") or "auto"
+    j = D.select(_("Ad flavour"), rows + [_("Cancel")], preselect=codes.index(cur) if cur in codes else 0)
+    if j < 0 or j >= len(codes):
+        return
+    if codes[j] == "auto":
+        ch.pop("ad_flavour", None)
+    else:
+        ch["ad_flavour"] = codes[j]
 
 
 def change_type(ch, chans=()):

@@ -117,6 +117,52 @@ STATIONS = [
 ]
 BY_ID = {s["id"]: s for s in STATIONS}
 
+# The station ID card's tagline (the bottom strip): original lines, English here,
+# looked up in strings.po.  A block's own line beats its station's.  Channels
+# without a built-in station have none (the strip stays empty).
+TAGLINES = {
+    "keystone": "Your hometown station",
+    "beacon": "Shining bright every night",
+    "horizon": "Look ahead to great TV",
+    "retrocast_weather": "Your forecast, around the clock",
+    "animation_station": "Cartoons all day, every day",
+    "chameleon": "Every color of fun",
+    "dexter": "Fun for the whole family",
+    "exploration": "See the world from your couch",
+    "pes": "Learning never looked so good",
+    "comedy_corner": "Laughs around the clock",
+    "whodunit": "Every clue, every night",
+    "tumbleweed_tv": "Saddle up for the classics",
+    "curtain_call": "Great stories, beautifully told",
+    "news_42": "The news, whenever you want it",
+    "siren_tv": "Crime and justice, all night long",
+    "red_thread_tv": "Stories that tie hearts together",
+    "heartstrings_tv": "Stories straight from the heart",
+    "high_octane_tv": "Turn it up",
+    "unscripted": "Real people. Real TV.",
+    "jackpot_tv": "Everybody plays, everybody wins",
+    "popcorn_tv": "Movies, all night long",
+    "picture_show": "The golden age of the movies",
+    "orbit_tv": "Out of this world",
+    "boombox_tv": "Turn up the music",
+    "backlot": "Behind the scenes, all day",
+}
+BLOCK_TAGLINES = {
+    ("chameleon", "CAM Jr."): "Big fun for little viewers",
+    ("chameleon", "Cam O Nite"): "Classic TV after dark",
+}
+
+
+def tagline(ch, ts=None):
+    """The station's tagline at ts ('' for a channel without a built-in station)."""
+    base = BY_ID.get((ch or {}).get("station") or "")
+    if not base:
+        return ""
+    b = block_at(ch, time.time() if ts is None else ts)
+    line = BLOCK_TAGLINES.get((base["id"], b.get("name"))) if b else None
+    line = line or TAGLINES.get(base["id"], "")
+    return K._(line) if line else ""
+
 
 def builtin_logo(fname):
     return os.path.join(STATION_DIR, fname) if fname else ""

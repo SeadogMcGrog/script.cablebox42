@@ -115,6 +115,9 @@ def schedule_cfg():
         "promo_target": setting_int("promo_target", 2),
         "promo_extras": setting_bool("promo_extras", False),
         "house_breaks": setting_int("house_breaks", 0),
+        # Retro ads: the promo style they follow (era ads), "" when off
+        "retro_ads": (("modern" if setting_int("promo_style", 0) == 1 else "90s")
+                      if setting_bool("retro_ads", True) else ""),
     }
 
 

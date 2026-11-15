@@ -51,10 +51,36 @@ HOUSE_ID = 5.0           # the station ID card that rounds a house break off
 HOUSE_KINDS = ("guide", "weather", "lineup")
 UPNEXT_MAX = 90.0        # at a programme's end the 'Up next' card runs at most about this long
 UPNEXT_MIN = 10.0
+GAP_SPLIT = 240.0        # a programme's end gap longer than this is a series of normal breaks...
+GAP_BREAK = 150.0        # ...of about this long (2-3 min), each ending on a station ID card ("sep")
+
+
+_PLANNING_CODE = []
+
+
+def planning_code():
+    """A short fingerprint of the code that plans breaks (as manager.code_fingerprint,
+    without the version): every block keeps the one that planned it ("cf"), so a
+    schedule kept across an update shows which of its breaks an earlier build made
+    (a refresh keeps what's on air; retro_check.py sets those aside)."""
+    if not _PLANNING_CODE:
+        import hashlib
+        h = hashlib.md5()
+        here = os.path.dirname(os.path.abspath(__file__))
+        for name in ("scheduler.py", "promos.py", "ads.py", "chapters.py", os.path.join("..", "ads", "ads.json")):
+            try:
+                with open(os.path.join(here, name), "rb") as f:
+                    h.update(f.read())
+            except OSError:
+                pass
+        _PLANNING_CODE.append(h.hexdigest()[:8])
+    return _PLANNING_CODE[0]
 
 
 def _house_key(it):
     """What makes two house ads the same ad (this channel's promos name different shows)."""
+    if it.get("k") == "retro":
+        return ("retro", ads.key(it))
     return (it.get("k"), it.get("h"), it.get("xc")) if it.get("k") == "house" or it.get("xc") else None
 
 
@@ -499,7 +525,7 @@ class ChannelSchedule(object):
         self.data["entries"].append(ent)
 
     def _add_block(self, s, e, title, kind="show", sub="", label=""):
-        b = {"s": round(s, 3), "e": round(e, 3), "t": title, "k": kind}
+        b = {"s": round(s, 3), "e": round(e, 3), "t": title, "k": kind, "cf": planning_code()}
         if sub:
             b["sub"] = sub
         if label:
@@ -729,7 +755,7 @@ class ChannelSchedule(object):
             # Nothing short enough before the next pinned show: station break.
             ads, bumps, ids = self._fillers(t)
             rng = random.Random("%s|%.0f|gap" % (ch["id"], t))
-            self._fill(t, hard - t, ads, bumps, rng, final=True, ids=ids)
+            self._breaks(ads)(t, hard - t, ads, bumps, rng, final=True, ids=ids)
             self._add_block(t, hard, _("Station Break"), "card")
             return hard
         e = t + (slot or 1800)
@@ -791,7 +817,7 @@ class ChannelSchedule(object):
         gap = end - t - dur
 
         house = self._house_on(ads)
-        fill = self._house_fill if house else self._fill
+        fill = self._breaks(ads)
         k = 0
         if (ads or house) and gap >= 90:
             per = self.cfg.get("breaks_per_slot", 2)
@@ -941,8 +967,8 @@ class ChannelSchedule(object):
             self._add(pos, pos + s["dur"], "show", p=s["path"], o=0, t=title, sub=s["title"])
             pos += s["dur"]
             if j in after:
-                pos = self._fill(pos, brk, ads, bumps, rng, final=False)
-        self._fill(pos, end - pos, ads, bumps, rng, final=True, ids=ids)
+                pos = self._breaks(ads)(pos, brk, ads, bumps, rng, final=False)
+        self._breaks(ads)(pos, end - pos, ads, bumps, rng, final=True, ids=ids)
         self._add_block(t, end, title, "show", " · ".join(s["title"] for s in segs))
         return end
 
@@ -1057,8 +1083,8 @@ class ChannelSchedule(object):
                       cap=[list(x) for x in musicvideos.caption(info)], d=round(it["dur"], 2))
             pos += it["dur"]
             if j in after:
-                pos = self._fill(pos, brk, ads, bumps, rng, final=False)
-        self._fill(pos, end - pos, ads, bumps, rng, final=True, ids=ids)
+                pos = self._breaks(ads)(pos, brk, ads, bumps, rng, final=False)
+        self._breaks(ads)(pos, end - pos, ads, bumps, rng, final=True, ids=ids)
         self._add_block(t, end, title, "show",
                         u" · ".join(it["mv"].get("artist") or it["mv"].get("title", "") for it in picks))
         return end
@@ -1136,7 +1162,7 @@ class ChannelSchedule(object):
             pos += float(it["dur"])
             planned += float(it["dur"]) + brk      # where this break was meant to end
             last = i == len(items) - 1
-            pos = self._fill(pos, (end - pos) if last else (planned - pos), ads, bumps, rng,
+            pos = self._breaks(ads)(pos, (end - pos) if last else (planned - pos), ads, bumps, rng,
                              final=last, ids=ids if last else None, absorb=not last)
         titles = []
         for it in items:
@@ -1261,6 +1287,12 @@ class ChannelSchedule(object):
         return end
 
     # ------------------------------------------------------------- house breaks
+    def _breaks(self, ads):
+        """The one way a break is filled: house breaks (promos, system ads, retro ads,
+        the station ID card) where the channel runs them, else commercial breaks.
+        Every layout (programmes, shorts, music videos, extras, empty hours) uses it."""
+        return self._house_fill if self._house_on(ads) else self._fill
+
     def _house_on(self, ads):
         """House breaks instead of commercial breaks on this channel."""
         mode = int(self.cfg.get("house_breaks", HOUSE_NO_ADS))
@@ -1324,10 +1356,20 @@ class ChannelSchedule(object):
                 bump = rng.choice(fit)
                 break
         house = length - upnext - (bump["dur"] if bump else 0)
-        n = max(1, int(math.ceil(house / HOUSE_MAX - 0.001)))
         last = None
-        for _j in range(n):
-            pos, last = self._house_block(pos, house / n, rng, last)
+        if final and house > GAP_SPLIT:
+            # a long gap (a short episode in a long slot): normal breaks of 2-3 minutes,
+            # each its own break for the retro-ad rules, the station ID card between them
+            nb = max(2, int(round(house / GAP_BREAK)))
+            for b in range(nb):
+                m = max(1, int(math.ceil(house / nb / HOUSE_MAX - 0.001)))
+                for j in range(m):
+                    pos, last = self._house_block(pos, house / nb / m, rng, last, gap=True,
+                                                  sep=(j == m - 1 and b < nb - 1))
+        else:
+            n = max(1, int(math.ceil(house / HOUSE_MAX - 0.001)))
+            for _j in range(n):
+                pos, last = self._house_block(pos, house / n, rng, last)
         if bump:
             self._add(pos, pos + bump["dur"], "bump", p=bump["path"], o=0)
             pos += bump["dur"]
@@ -1338,10 +1380,13 @@ class ChannelSchedule(object):
             self.data["entries"][-1]["e"] = round(end, 3)
         return end
 
-    def _house_block(self, pos, avail, rng, last=None):
+    def _house_block(self, pos, avail, rng, last=None, gap=False, sep=False):
         """One house break of `avail` seconds from pos: house ads, then the station
         ID card.  last: the ad the house break before it ended on (back to back at
-        a programme's end), never repeated next.  Returns (end, last ad)."""
+        a programme's end), never repeated next.  gap: one of a long gap's breaks;
+        sep: its last card ends that break (see _house_fill).  Returns (end, last ad)."""
+        if self._retro_on():
+            return self._retro_block(pos, avail, rng, last, gap, sep)
         n = max(0, int(math.ceil((avail - 10.0) / HOUSE_ITEM)))
         items = self._house_items(rng, n)
         if items and last is not None and len(items) > 1 and _house_key(items[0]) == last:
@@ -1358,8 +1403,8 @@ class ChannelSchedule(object):
             pos += ln
         rest = avail - n * ln
         cards = max(1, int(math.ceil(rest / self.CARD_MAX)))
-        for _j in range(cards):
-            self._add(pos, pos + rest / cards, "card", sub="id")
+        for j in range(cards):
+            self._add(pos, pos + rest / cards, "card", sub="id", sep=1 if sep and j == cards - 1 else None)
             pos += rest / cards
         return pos, last
 
@@ -1372,12 +1417,213 @@ class ChannelSchedule(object):
         hrng = random.Random("%s|%.0f|house" % (self.ch["id"], t))
         if hrng.random() >= 0.5:
             return None
+        if self._retro_on() and hrng.random() < 0.5:
+            it = self._retro_pick(t, hrng, (), (), self._prev_break_video())
+            self._retro_count("placed" if it else "none")
+            if it:
+                it["dur"] = ads.length(it)
+                return it
         items = self._house_items(hrng, 1, own=False)
         if not items:
             return None
         it = items[0]
         it["dur"] = HOUSE_ITEM
         return it
+
+    # ------------------------------------------------------------- retro ads
+    def _retro_on(self):
+        """Settings > House breaks > Retro ads (cfg: the promo style, '' when off)."""
+        return bool(self.cfg.get("retro_ads")) and self.ch.get("type") in PROMO_TYPES
+
+    def _retro_recent(self, t):
+        """Retro ads this channel aired in the last ads.RECENT seconds."""
+        out = set()
+        ents = self.data["entries"]
+        for e in reversed(ents):
+            if e["s"] < t - ads.RECENT:
+                break
+            if e.get("k") == "retro":
+                out.add(ads.key(e))
+        return out
+
+    def _retro_movies(self, t):
+        """Library movies a 'Now on videocassette' card may name at t: none that
+        a channel airs in the next PROMO_LOOKAHEAD (its promos may name them)."""
+        movies = ads.library_movies()
+        if not movies:
+            return []
+        busy = set()
+        chans = self.lineup.channels if self.lineup is not None else [self.ch]
+        for c in chans:
+            if c.get("type") not in PROMO_TYPES:
+                continue
+            try:
+                s = self if c["id"] == self.ch["id"] else self.lineup.schedule(c, ensure=False)
+                busy.update(b["t"] for b in s.blocks_between(t - 3600, t + PROMO_LOOKAHEAD))
+            except Exception as exc:
+                log("retro ads: %s %s" % (c.get("id"), exc))
+        return [m for m in movies if m["label"] not in busy and m["title"] not in busy]
+
+    def _retro_share(self, t, more=()):
+        """(video-themed, all) retro ads on this channel in the ads.VIDEO_WINDOW
+        before t, plus `more` (items of the break being planned)."""
+        v = n = 0
+        for e in reversed(self.data["entries"]):
+            if e["s"] <= t - ads.VIDEO_WINDOW:      # the window is (t - 6 h, t), as retro_check counts it
+                break
+            if e.get("k") == "retro" and e["s"] < t:
+                n += 1
+                v += ads.is_video(e)
+        for it in more:
+            if it.get("k") == "retro":
+                n += 1
+                v += ads.is_video(it)
+        return v, n
+
+    def _prev_break_video(self):
+        """Did this channel's break before the one being planned have a video-themed
+        retro ad?  (Never two breaks in a row; back-to-back breaks at a programme's
+        end are one break: the walk skips the whole run.)"""
+        ents = self.data["entries"]
+        prog = ("show", "clip", "offair")
+        i = len(ents) - 1
+        while i >= 0 and ents[i].get("k") not in prog and not ents[i].get("sep"):
+            i -= 1                                           # the break being planned, so far
+        if i < 0:
+            return False
+        if not ents[i].get("sep"):                           # (a long gap's card ends the break before)
+            while i >= 0 and ents[i].get("k") in prog:       # the programme before it
+                i -= 1
+        while i >= 0 and ents[i].get("k") not in prog:       # the break before that
+            if ents[i].get("k") == "retro" and ads.is_video(ents[i]):
+                return True
+            i -= 1
+            if i >= 0 and ents[i].get("sep"):
+                break
+        return False
+
+    def _retro_count(self, what):
+        """Planning statistics (schedule state 'retro_stats', for retro_check.py):
+        every turn the planner asks for a retro ad - placed, nothing fits (every
+        ad that fits ran within 2 hours, or the caps), or an ad too long for the room left."""
+        st = self.data["state"].setdefault("retro_stats", {})
+        st["turns"] = st.get("turns", 0) + 1
+        st[what] = st.get(what, 0) + 1
+
+    def _retro_pick(self, t, rng, used, gags, brk_video=False, more=()):
+        """brk_video: the break already has a video-themed ad; more: the retro ads
+        planned in this break so far (not added yet)."""
+        flav = ads.flavour(self.ch)
+        movies = (lambda: self._retro_movies(t)) if flav != "K" else None
+        want = not brk_video and ads.video_ok(flav, *self._retro_share(t, more))
+        return ads.pick(rng, flav, t, self.cfg.get("retro_ads"), recent=self._retro_recent(t),
+                        used=used, gags=gags, movies=movies, want_video=want)
+
+    def _retro_videos(self, now):
+        """A 'Now on videocassette' card never names a movie a promo in the same
+        break names (the movie channel's next film is planned after its break):
+        such a card names another library movie.  Returns True if any changed."""
+        ents = self.data["entries"]
+        changed = False
+        start = 0
+        for i in range(len(ents) + 1):
+            if i < len(ents) and ents[i].get("k") not in ("show", "clip", "offair"):
+                continue
+            brk = ents[start:i]
+            start = i + 1
+            vids = [e for e in brk if e.get("k") == "retro" and e.get("ad") == "video" and e["s"] > now]
+            if not vids:
+                continue
+            named = set(e.get("t") for e in brk if e.get("k") == "promo" and e.get("t"))
+            for v in vids:
+                if v.get("t") not in named:
+                    continue
+                taken = named | set(e.get("t") for e in brk if e.get("k") == "retro")
+                recent = self._retro_recent(v["s"])
+                movies = [m for m in self._retro_movies(v["s"])
+                          if m["label"] not in taken and "V%s" % m["movieid"] not in recent]
+                if movies:
+                    m = random.Random("%s|%.0f|vid" % (self.ch["id"], v["s"])).choice(movies)
+                    v.update(mv=m["movieid"], t=m["label"])
+                else:
+                    v.update(k="card", sub="id")          # nothing else to name: the station ID
+                    for key in ("ad", "mv", "t", "ln"):
+                        v.pop(key, None)
+                changed = True
+        return changed
+
+    def _retro_block(self, pos, avail, rng, last=None, gap=False, sep=False):
+        """A house break with retro ads: ad, house ad, ad, house ad... (a retro
+        ad stays up for its jingle, a house ad 8-15 s), then the station ID card
+        for the seconds left.  Like a real break, it opens on a commercial.  At
+        most ads.per_break retro ads, and ads.per_run in a run of back-to-back breaks
+        (one of a long gap's breaks: ads.per_break in all of it)."""
+        budget = avail - HOUSE_ID
+        # house breaks back to back at a programme's end are one long break to the
+        # viewer: running gags once in all of it, and the house ad the one before
+        # ended on doesn't open this one
+        gags, last_house, brk_video = set(), None, self._prev_break_video()
+        run = 0                          # retro ads in the breaks before this one in the run
+        in_break = True                  # still in this break (not past a long gap's "sep" card)
+        for e in reversed(self.data["entries"]):
+            if e.get("k") not in ("retro", "promo", "house", "card", "bump"):
+                break                    # a programme
+            if e.get("sep"):
+                in_break = False         # the break before: only the house ad it ended on matters
+            if in_break and e.get("k") == "retro":
+                run += 1
+                brk_video = brk_video or ads.is_video(e)
+                if ads.gag(e):
+                    gags.add(ads.gag(e))
+            elif last_house is None and e.get("k") in ("promo", "house"):
+                last_house = _house_key(e)
+            if not in_break and last_house is not None:
+                break
+        house = self._house_items(rng, 6)
+        if house and last_house is not None and len(house) > 1 and _house_key(house[0]) == last_house:
+            house.append(house.pop(0))
+        flav = ads.flavour(self.ch)
+        allowed = max(0, min(ads.per_break(flav), (ads.per_break(flav) if gap else ads.per_run(flav)) - run))
+        seq, used, total, placed = [], set(), 0.0, 0
+        want_retro, misses = True, 0
+        while misses < 2:                # stop when neither kind fits any more
+            ok = False
+            if want_retro and placed >= allowed:
+                pass                     # this break has its retro ads: house ads only (not a picker turn)
+            elif want_retro:
+                it = self._retro_pick(pos + total, rng, used, gags, brk_video, [x for x, _l in seq])
+                ln = ads.length(it) if it else 0
+                place = bool(it) and total + ln <= budget and (seq or last is None or _house_key(it) != last)
+                self._retro_count("placed" if place else "none" if not it else
+                                  "long" if total + ln > budget else "repeat")
+                if place:
+                    placed += 1
+                    used.add(ads.key(it))
+                    brk_video = brk_video or ads.is_video(it)
+                    if ads.gag(it):
+                        gags.add(ads.gag(it))
+                    seq.append((it, ln))
+                    total += ln
+                    ok = True
+            elif house and total + HOUSE_ITEM_MIN <= budget:
+                ln = min(HOUSE_ITEM, budget - total)
+                seq.append((house.pop(0), ln))
+                total += ln
+                ok = True
+            misses = 0 if ok else misses + 1
+            want_retro = not want_retro
+        for it, ln in seq:
+            last = _house_key(it)
+            it = dict(it)
+            kind = it.pop("k")
+            self._add(pos, pos + ln, kind, **it)
+            pos += ln
+        rest = avail - total
+        cards = max(1, int(math.ceil(rest / self.CARD_MAX)))
+        for j in range(cards):
+            self._add(pos, pos + rest / cards, "card", sub="id", sep=1 if sep and j == cards - 1 else None)
+            pos += rest / cards
+        return pos, last
 
     def _add_house(self, pos, it):
         it = dict(it)
@@ -1565,10 +1811,15 @@ class ChannelSchedule(object):
                 elif e.get("h"):
                     tgt = self.promo_target(e, avoid, house=True)
                     nb = self.next_block(e["s"])
-                    if tgt and tgt[0] is not None and tgt[0] is nb:
+                    if tgt and tgt[0] is not None and (tgt[0] is nb or tgt[0]["t"] in avoid):
                         # nothing else here to promote, and the 'Up next' card before the
-                        # next programme names it anyway: another channel's show
-                        tgt = self._house_cross_for(e, avoid | {nb["t"]}) or tgt
+                        # next programme names it anyway - or it's the show the promo before
+                        # named (a marathon: nothing else for hours): another channel's show
+                        alt = self._house_cross_for(e, avoid | ({nb["t"]} if nb else set()))
+                        if alt:
+                            tgt = alt
+                        elif tgt[0]["t"] in avoid:
+                            tgt = (None, None)   # never the same show twice in a row: the station ID card
                 else:
                     tgt = self.promo_target(e)
                 if tgt is None:
@@ -1592,6 +1843,8 @@ class ChannelSchedule(object):
         for i, path, b in reversed(extras):  # from the end: swaps don't move earlier entries
             if self._extras_promo(i, path, b):
                 self._index()
+        if self._retro_videos(now):
+            touched = True
         if touched:
             self._index()
         return touched
@@ -1608,6 +1861,14 @@ class ChannelSchedule(object):
                 if ents[j].get("xc"):
                     used.add(ents[j]["xc"])
                 j += step
+            # nor the one the house break before ended on / the one after starts with
+            # (back to back at a programme's end: never the same ad either side of a card)
+            while 0 <= j < len(ents) and ents[j]["k"] == "card":
+                j += step
+            while 0 <= j < len(ents) and ents[j]["k"] not in ("show", "card") and not ents[j].get("h"):
+                j += step                # a retro ad between: the house ad behind it counts
+            if 0 <= j < len(ents) and ents[j].get("h") and ents[j].get("xc"):
+                used.add(ents[j]["xc"])
         others = [c for c in self._house_others() if c["id"] not in used]
         random.Random("%s|%.0f|xalt" % (self.ch["id"], e["s"])).shuffle(others)
         for c in others:

@@ -161,6 +161,66 @@ def fits(text, lines=SYNOPSIS_LINES, width=SYNOPSIS_WIDTH):
     return True
 
 
+# ------------------------------------------------------------------ names that must fit
+# A channel's name is never cut off and never ends in "...": its label steps down
+# through smaller skin fonts until it fits on one line, then wraps to two lines
+# (the skin has a variant of the label for each font; the property names the
+# one to show, "<font>2" for two lines).  Sizes as in Estuary (Noto Sans).
+LADDER_27 = (("font27", 27), ("font12", 25), ("font10", 23))
+LADDER_60 = (("font60", 60), ("font45", 45), ("font37", 37), ("font32", 32), ("font27", 27))
+LADDER_45 = (("font45", 45), ("font37", 37), ("font32", 32), ("font27", 27))
+TWO_23 = "font23_narrow"
+TWO_27 = "font27_narrow"
+FIT_SLACK = 0.96                       # the font's own rounding, and a bold-ish skin
+
+
+def fit_font(text, width, ladder=LADDER_27, two=TWO_23, upper=False):
+    """The skin font a label of `width` px shows `text` in without cutting it:
+    the first of `ladder` it fits on one line, else `two` + '2' (two lines)."""
+    t = (text or "").upper() if upper else (text or "")
+    w = _px(t)
+    for name, px in ladder:
+        if w * px / 27.0 <= width * FIT_SLACK:
+            return name
+    return two + "2"
+
+
+def two_lines(text, upper=False):
+    """text split into two lines ('[CR]' between them) at the space that makes the
+    wider line narrowest - before a ' · ' if that is about as good, never between
+    'CH' and its number.  For the two-line variants of fit_font (Kodi's own wrap
+    is greedy: 'NAME · CH' and a lone '3')."""
+    t = (text or "").upper() if upper else (text or "")
+    words = t.split(" ")
+    best = None
+    for i in range(1, len(words)):
+        if words[i - 1] in ("CH", "Ch"):
+            continue
+        a, b = " ".join(words[:i]), " ".join(words[i:])
+        cost = max(_px(a), _px(b))
+        if b.startswith("· ") or a.endswith(" ·"):
+            cost *= 0.9                  # break at the separator when it's nearly as good
+        if a.endswith(" ·"):
+            cost *= 1.2                  # ...with the dot starting the second line
+        if best is None or cost < best[0]:
+            best = (cost, a, b)
+    return text if best is None else "%s[CR]%s" % (best[1], best[2])
+
+
+def cross_kicker(name, number):
+    """Another channel's promo heading: 'Name · Channel 6', or 'Name · CH 6' when
+    the name is already long (or says Channel itself) - it must fit the early-90s
+    card's channel strip on one line at the full size."""
+    full = _("%s · Channel %d").replace("%d", str(number)).replace("%s", name)
+    if "channel" not in name.lower() and fit_font(full, KICKER_90S, upper=True) == LADDER_27[0][0]:
+        return full
+    return _("%s · CH %d").replace("%d", str(number)).replace("%s", name)
+
+
+KICKER_90S = 388                       # the early-90s card's channel strip (label width)
+KICKER_MODERN = 1500
+
+
 _ABBREV = re.compile(r"(\b(Mr|Mrs|Ms|Dr|St|Jr|Sr|Mt|Ft|Lt|Col|Gen|Capt|Cmdr|Sgt|Prof|Rev|No|vs|etc)|\b[A-Z])\.$")
 
 
@@ -558,12 +618,16 @@ def _fill(win, slots, layout, offset=0):
             return False
         if i < len(layout):
             path, x, y, w, h = layout[i]
+            c.setVisible(True)
             c.setImage(path)
             c.setPosition(x + offset, y + offset)
             c.setWidth(w)
             c.setHeight(h)
         else:
+            # hidden as well as emptied: lettered while the promo group is hidden (a
+            # card after a programme), an emptied slot kept its old letter in Kodi 21
             c.setImage("")
+            c.setVisible(False)
     return True
 
 
@@ -578,6 +642,10 @@ def apply_card(win, props):
     window's mode becomes "promo", so the entrances play."""
     props = dict(props)
     props.update(promo_title_glyphs="", promo_tab_glyphs="")
+    kicker = props.get("promo_kicker") or ""
+    props.update(promo_kicker_f90=fit_font(kicker, KICKER_90S, upper=True),
+                 promo_kicker_fm=fit_font(kicker, KICKER_MODERN, upper=True),
+                 promo_kicker2=two_lines(kicker, upper=True))
     try:
         _letter(win, props)
     except Exception as exc:
@@ -639,7 +707,7 @@ def air(win, ch, pt, path, title, later, now, kicker=None):
     from . import stations
     name = stations.brand(ch, pt)["name"] if ch else ""      # its branding at that hour
     if kicker:
-        name = kicker % name                 # another channel's show: 'Name - Channel 6'
+        name = kicker(name) if callable(kicker) else kicker % name    # another channel's: cross_kicker
     apply_card(win, card(inf, title, pt, now, ch, name, later))
     win.setProperty("mode", "promo")
     return music(inf)
