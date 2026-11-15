@@ -2474,7 +2474,7 @@ class TVWindow(xbmcgui.WindowXML):
         """A fresh start for the top half; a run that's playing is stopped only by
         what plays next (leaving the guide) or by the next text stretch."""
         self.top = {"slot": None, "plan": None, "idx": None, "building": False, "seek": None,
-                    "paths": [], "pos": -2}
+                    "paths": [], "pos": -2, "tries": 0, "wait": 0}
         for k in ("gtop", "gt_cap", "gt_title"):
             if self.getProperty(k):
                 self.setProperty(k, "")
@@ -2509,19 +2509,34 @@ class TVWindow(xbmcgui.WindowXML):
                 t.start()
         plan = st["plan"]
         if not plan:
-            if st["idx"] is None or (st["idx"] != "wait" and not self.top_playing()):
-                st["idx"] = "wait"               # being planned: text and music meanwhile
+            # being planned (a moment when the plan is saved): text and music meanwhile.
+            # Not at once - a play asked for just after a stop is dropped by Kodi, so a
+            # run ready in a moment replaces what plays, like a programme change does
+            if st["idx"] is None:
+                st["idx"], st["wait"] = "wait0", time.time()
+            if st["idx"] == "wait0" and time.time() - st["wait"] > 1.5 or \
+                    st["idx"] not in ("wait", "wait0") and not self.top_playing():
+                st["idx"] = "wait"
                 self.top_music()
             return
         i, it = guide.top_at(plan, now - slot)
         if st["idx"] != i:
             st["idx"] = i
             if it["k"] == "run":
+                st["tries"] = 0
                 self.top_run(it, now - slot)
             else:
                 self.top_music()
             return
         if it["k"] == "run":
+            if self.av_started_token != self.play_token and time.time() - self.play_started_at > 4 \
+                    and st["tries"] < 3 and not self.player.isPlaying():
+                # Kodi drops a play asked for while it's still stopping the static or
+                # turn-on clip (rig): start the run again, at the clock
+                st["tries"] += 1
+                K.log("guide run didn't start: again (%d)" % st["tries"], xbmc.LOGINFO)
+                self.top_run(it, now - slot)
+                return
             self.top_follow(now)
 
     def top_playing(self):
@@ -2568,6 +2583,8 @@ class TVWindow(xbmcgui.WindowXML):
             self.top_music()
             return
         lead = into - acc if clips[0] is it["clips"][start] else 0.0
+        if lead > clips[0]["dur"] - 4 and len(clips) > 1:
+            clips, lead = clips[1:], 0.0     # the clip's last seconds: the next one, a moment early
         pl = xbmc.PlayList(getattr(xbmc, "PLAYLIST_VIDEO", 1))
         pl.clear()
         for c in clips:
@@ -2575,7 +2592,8 @@ class TVWindow(xbmcgui.WindowXML):
             self.our_files.add(c["path"])
         st["paths"] = clips
         st["pos"] = -2
-        st["seek"] = (clips[0]["path"], lead) if lead > 2 else None
+        # the seek is worked out when the picture is on: Kodi's open time (2-5 s) counts too
+        st["seek"] = (clips[0]["path"], lead, time.time(), clips[0]["dur"])
         self.clear_music()
         self.play_token += 1
         self.play_started_at = time.time()
@@ -2585,14 +2603,17 @@ class TVWindow(xbmcgui.WindowXML):
             it["fam"], len(clips), round(it["e"] - it["s"]), round(into)), xbmc.LOGINFO)
 
     def top_follow(self, now):
-        """During a run: a late tune-in's seek once the picture is on, and the caption
+        """During a run: the seek to the clock once the picture is on, and the caption
         of the clip playing (Kodi's playlist position)."""
         st = self.top
         try:
             if st["seek"] and self.av_started_token == self.play_token and \
                     self.requested(self.player.getPlayingFile()) == st["seek"][0]:
-                self.player.seekTime(st["seek"][1])
+                path, lead, t0, dur = st["seek"]
                 st["seek"] = None
+                to = lead + (time.time() - t0)
+                if 1.0 < to < dur - 1.5:     # not in a clip's last moments (Kodi's own move)
+                    self.player.seekTime(to)
             pos = xbmc.PlayList(getattr(xbmc, "PLAYLIST_VIDEO", 1)).getposition()
         except Exception:
             return
