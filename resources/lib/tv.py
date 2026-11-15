@@ -58,7 +58,14 @@ QUEUE_MAX = 24          # playlist length at which the next item starts a fresh 
 QUEUE_EARLY = 1.0       # seconds a queued item may run ahead of its slot before we log it
 QUEUE_NEAR_END = 1.5    # an item this close to its end is left to finish; Kodi moves on itself
 LOAD_TIMEOUT = 12.0
+SWITCH_LEAD = 0.25      # s: Kodi's switch from a programme to the break's first item (rig), asked for this early
+PART_START = 1.5        # a part started within this long of its slot start: a planned start (after a break)
+PART_HOLD = 4.0         # a part running behind the clock keeps the screen this long at most past its slot end
+EARLY_STOP = 3.0        # a file that stops within this many seconds of starting is opened again at once (once)
 STATIC_HOLD = 0.55     # Windows: seconds of the static clip before the new channel comes in
+# (the clip itself lasts 2.5 s: when it reached its end just as the next file was
+# opened, Kodi's end-of-playlist handling closed the new file - a channel change
+# to black until the watchdog reopened it)
 STATIC_CLIP_WAIT = 2.0  # ...or this long if the clip never starts
 POWER_ON_LEN = 3.5      # the TV warming up, with the CableBox 42 title card
 POWER_OFF_LEN = 1.4     # the picture shrinking to a dot
@@ -92,6 +99,12 @@ class Player(xbmc.Player):
 
     def onPlayBackError(self):
         self.owner.on_error()
+
+    def onPlayBackStopped(self):
+        self.owner.on_stopped()
+
+    def onPlayBackEnded(self):
+        self.owner.on_stopped()
 
 
 FULLSCREEN = 12005               # Kodi's own full-screen video window
@@ -280,6 +293,7 @@ class TVWindow(xbmcgui.WindowXML):
                 pass
         xbmc.executebuiltin("InhibitScreensaver(false)")
         xbmcgui.Window(10000).clearProperty("cablebox42.running")
+        xbmcgui.Window(10000).clearProperty("cablebox42.cover")
         self.close()                     # back to Kodi straight away; the tidying up follows
         if self.progress.pending:
             # let Kodi write its resume point first, then undo it
@@ -359,6 +373,8 @@ class TVWindow(xbmcgui.WindowXML):
 
     # ----------------------------------------------------------- tuning
     def tune(self, ch, static=True):
+        self.unsqueeze()
+        self.uncover()
         with self.lock:
             if static and self.power_on:     # changing channel cuts the turn-on short
                 self.power_on = False
@@ -534,8 +550,8 @@ class TVWindow(xbmcgui.WindowXML):
         # track for foreign-language scenes by themselves, and those need it too
         if not (self.cc_fullscreen and self.overlay is not None and (self.cc.on or self.cc.showing)):
             return False
-        if self.closing or self.power_on or self.prop_mode != "video":
-            return False
+        if self.closing or self.power_on or self.prop_mode != "video" or self.squeezed or self.cover_mark:
+            return False                 # (squeezed credits play in the TV window's video window)
         # programmes only: commercials and bumps carry no captions, and each switch
         # into full screen is a chance for the display to change mode
         if not (self.cur_entry and self.cur_entry.get("k") in ("show", "clip")):
@@ -709,6 +725,14 @@ class TVWindow(xbmcgui.WindowXML):
             self.end_power_on()
         sched = self.lineup.schedule(self.ch)
         e = sched.entry_at(now)
+        if self.early_to:
+            # a part ended at its mark by the file's position: the break is on already,
+            # though the clock still says the part (end_at_mark)
+            cid, ne = self.early_to
+            if cid == self.ch["id"] and e is not None and now < ne["s"] and e["e"] <= ne["s"] + 0.01:
+                e = ne
+            else:
+                self.early_to = None
         if e is None:
             if self.cur_key != "none":
                 self.cur_key = "none"
@@ -717,6 +741,8 @@ class TVWindow(xbmcgui.WindowXML):
                 self.card(self.ch["name"], _("Please stand by"), "", "")
             return
         key = (self.ch["id"], e["s"])
+        if key != self.cur_key and self.hold_part(e, now):
+            e, key = self.cur_entry, self.cur_key
         if key != self.cur_key:
             self.start_entry(e, key, now)
         elif key == self.failed_key:
@@ -724,8 +750,10 @@ class TVWindow(xbmcgui.WindowXML):
         elif self.is_video(e):
             if self.awaiting:
                 self.check_awaiting(e, key, now)
-            self.watchdog(e, key, now)
-            self.queue_next(sched, e, key, now)
+            self.cover_tick()
+            if not self.end_at_mark(sched, e, key, now):
+                self.watchdog(e, key, now)
+                self.queue_next(sched, e, key, now)
         self.caption_tick(now)
         if e["k"] == "guide":
             self.guide_tick(now)
@@ -769,6 +797,8 @@ class TVWindow(xbmcgui.WindowXML):
         self.setProperty("bug", "1" if on and getattr(self, "bug_on", False) else "")
 
     def start_entry(self, e, key, now):
+        self.unsqueeze()                     # a new item: the picture is full size again
+        self.uncover()
         self.promo_stop()                    # a promo's theme cut with its card, before anything else plays
         self.cc.leave()
         if e.get("k") not in VIDEO_KINDS:
@@ -1110,9 +1140,34 @@ class TVWindow(xbmcgui.WindowXML):
             li.setProperty("StartOffset", "%.2f" % offset)
         return li
 
+    # Starting partway into a file (tuning in mid-programme): Kodi takes a moment to
+    # open the file and seek (2-3 s in the rig), so the picture would start that much
+    # behind the real clock.  The delay is learned from each start (start_measured)
+    # and added to the start position.  Kodi itself may start at the keyframe before
+    # the position asked for (files with keyframes far apart): that part isn't ours.
+    start_lag = 1.0
+    start_good = []              # Kodi's open + seek time of the last good tune-ins (s)
+    start_odd = []               # ...and of the last ones left out
+    start_ask = None             # (path, entry, delay added) of a tune-in partway in, measured at AV start
+
     def play(self, e, now):
         self.clear_music()
-        offset = max(0.0, float(e.get("o", 0)) + (now - e["s"]))
+        self.uncover()
+        o, late = float(e.get("o", 0)), now - e["s"]
+        offset = max(0.0, o + late)
+        self.start_ask = None
+        if e.get("k") == "show" and o > 1.0 and late < PART_START:
+            offset = o                       # CableBox's own start of a part (after a break): at the mark exactly
+            self.cover_mark = (e["p"], o, time.time() + 6.0)
+            self.set_cover(True)             # Kodi starts a little before it: black until the picture gets there
+        elif offset > 1.0:
+            offset += self.start_lag         # a tune-in: Kodi's open and seek take a moment
+            self.start_ask = (e.get("p"), e, self.start_lag)
+            if e.get("k") == "show":
+                # black until the first captions check has run: a file Kodi remembers
+                # with subtitles on never flashes them with CC off
+                self.cover_mark = (e["p"], None, time.time() + 6.0)
+                self.set_cover(True)
         li = self.list_item(e, offset)
         if offset > 1.0:
             # starting partway in is a jump, and Kodi's skin shows its seek bar for
@@ -1155,6 +1210,7 @@ class TVWindow(xbmcgui.WindowXML):
         pl = xbmc.PlayList(getattr(xbmc, "PLAYLIST_VIDEO", 1))
         pl.clear()
         pl.add(path, li)
+        xbmcgui.Window(10000).setProperty("cablebox42.play_at", "%.1f" % time.time())  # the service's chapter reader waits
         self.player.play(pl, windowed=True)
 
     # ----------------------------------------------------------- queue ahead
@@ -1169,6 +1225,8 @@ class TVWindow(xbmcgui.WindowXML):
         p = (e or {}).get("p") or ""
         if e.get("k") not in VIDEO_KINDS or not p:
             return False
+        if e.get("k") == "show" and float(e.get("o", 0)) > 1.0:
+            return False                     # a part after a break: play() covers the picture until the mark
         low = p.lower()
         # names Kodi reports differently (adopt_playing) or that resolve elsewhere
         return not (low.endswith((".strm", ".iso", ".img")) or
@@ -1307,13 +1365,34 @@ class TVWindow(xbmcgui.WindowXML):
             self.progress.remember(e["p"])
         return True
 
+    seen_playing = -1            # play_token of the last file the watchdog saw playing
+    stopped_at = 0.0             # Kodi's last playback stopped / ended callback
+
     def watchdog(self, e, key, now):
         """Detect files that never started or ended early."""
         if self.closing:
             return
-        if time.time() - self.play_started_at < LOAD_TIMEOUT:
+        since = time.time() - self.play_started_at
+        playing = self.player.isPlaying()
+        if playing:
+            self.seen_playing = self.play_token
             return
-        if self.player.isPlaying():
+        if (since < LOAD_TIMEOUT or self.av_started_token == self.play_token) and self.early_stop(e, since):
+            self.retries += 1
+            if self.retries <= 1 and not self.file_missing(e.get("p")):
+                K.log("%s stopped %.1f s after it was opened - opening it again" % (
+                    e.get("p"), self.stopped_at - self.play_started_at if self.stopped_at else since), xbmc.LOGINFO)
+                self.play(e, now)
+                return
+            if e.get("k") == "show":
+                self.failed_key = key
+                self.failed_at = time.time()
+                self.give_up(e, mark=False)      # the stand-in fills the slot
+                return
+            if self.av_started_token != self.play_token:
+                self.fill_rest(e, now)       # a spot: the next commercial
+                return
+        if since < LOAD_TIMEOUT:
             return
         if self.av_started_token == self.play_token:
             # The file finished before its slot did.  A second or two of black
@@ -1332,6 +1411,153 @@ class TVWindow(xbmcgui.WindowXML):
             self.failed_key = key
             self.failed_at = time.time()
             self.give_up(e)
+
+    def early_stop(self, e, since):
+        """Kodi stopped the file it was asked for within EARLY_STOP s of opening it
+        (seen playing or told so, nothing playing now), with its slot far from over.
+        Kodi's own player reports a file as playing from the moment it's opening, so
+        nothing playing a second after play() means it stopped - a slow drive or
+        share waking up stays 'playing' and still gets LOAD_TIMEOUT."""
+        now = time.time()
+        if since < 1.0 or e["e"] - now < 10:
+            return False
+        try:
+            total = library.durations().get(e.get("p"), probe_if_missing=False) or 0
+        except Exception:
+            total = 0
+        if total and float(e.get("o", 0)) + (now - e["s"]) > total - 10:
+            return False                     # the file itself is over (shorter than planned)
+        told = self.stopped_at > self.play_started_at
+        if self.av_started_token == self.play_token:
+            # the picture came and went: stopped within EARLY_STOP s of AV start
+            return told and self.stopped_at - self.av_started_at < EARLY_STOP
+        return (told or self.seen_playing == self.play_token) and since < EARLY_STOP + 2
+
+    early_to = None              # (channel id, entry) started early by end_at_mark
+
+    cover_mark = None            # (path, mark, give-up time): the picture is covered until the mark
+
+    def cover_tick(self):
+        """Uncover a programme's picture started partway in once the first captions
+        check has run on it (Kodi may show subtitles it remembers for the file) and,
+        for a part after a break, the moment the picture reaches its mark."""
+        cm = self.cover_mark
+        if not cm:
+            return
+        if self.cc.checked_at < self.av_started_at and time.time() < cm[2] and \
+                (self.av_started_token != self.play_token or time.time() - self.av_started_at < 1.5):
+            return                           # the captions check comes ~0.3 s after AV start (1.5 s at most)
+        if not self.cc.on and time.time() - self.cc.checked_at < 1.5 and time.time() < cm[2] and \
+                xbmc.getCondVisibility("VideoPlayer.SubtitlesEnabled"):
+            return                           # CC off: Kodi takes a moment to drop the subtitles it switched on
+        if cm[1] is None:
+            if self.av_started_token == self.play_token or time.time() >= cm[2]:
+                self.uncover()
+            return
+        if (self.av_started_token != self.play_token or time.time() - self.av_started_at < 0.05) \
+                and time.time() < cm[2]:
+            return                           # until its picture is up, Kodi reports the position it was asked for
+        try:
+            if self.requested(self.player.getPlayingFile()) != cm[0]:
+                raise ValueError
+            left = cm[1] - self.player.getTime()
+            if 0 < left <= 0.6:
+                v, w = self.fresh_pos()
+                left = cm[1] - (v + time.time() - w)
+        except Exception:
+            left = 9
+        if left > 0.25 and time.time() < cm[2]:
+            return
+        if 0 < left <= 0.25:
+            xbmc.sleep(int((left + 0.04) * 1000))    # a frame late rather than early
+        self.uncover()
+
+    def fresh_pos(self, wait=0.3):
+        """(position, wall time) of Kodi's player, fresher than getTime(): Kodi moves
+        the position in ~0.2 s steps, so getTime() can be that far behind the picture.
+        Waits for the next step (at most `wait` s) and returns it with its time."""
+        v0, t0 = self.player.getTime(), time.time()
+        while time.time() - t0 < wait:
+            xbmc.sleep(10)
+            v = self.player.getTime()
+            if v != v0:
+                return v, time.time()
+        return v0, t0
+
+    def set_cover(self, on):
+        self.setProperty("cover", "1" if on else "")
+        xbmcgui.Window(10000).setProperty("cablebox42.cover", "1" if on else "")   # for the rig's captions test
+
+    def uncover(self):
+        if self.cover_mark:
+            self.cover_mark = None
+            self.set_cover(False)
+
+    def mid_file_mark(self, e):
+        """Where a show part ending in the middle of its file ends (file time), else None."""
+        if not e or e.get("k") != "show":
+            return None
+        mark = float(e.get("o", 0)) + (e["e"] - e["s"])
+        try:
+            total = library.durations().get(e.get("p"), probe_if_missing=False) or 0
+        except Exception:
+            total = 0
+        return mark if total and mark <= total - 5 else None
+
+    def hold_part(self, e, now):
+        """The clock says the break, but the part's picture hasn't reached its mark yet
+        (it started late, after Kodi's open): keep it until it does (end_at_mark),
+        at most PART_HOLD s - the break absorbs it."""
+        cur = self.cur_entry
+        if not cur or cur.get("k") != "show" or self.early_to or self.cur_key == self.failed_key or self.sub:
+            return False
+        if abs(e["s"] - cur["e"]) > 0.05 or now - cur["e"] > PART_HOLD or self.av_started_token != self.play_token:
+            return False
+        mark = self.mid_file_mark(cur)
+        if mark is None:
+            return False
+        try:
+            return self.requested(self.player.getPlayingFile()) == cur["p"] and                 self.player.getTime() < mark - SWITCH_LEAD
+        except Exception:
+            return False
+
+    def end_at_mark(self, sched, e, key, now):
+        """A part that ends in the middle of its file (at a chapter mark, or a timed
+        break) ends by the file's position, not the clock: the break comes in when the
+        picture reaches the mark (less Kodi's switch time), so no frame of the next act
+        shows.  The break starts that much early; it absorbs it (its cards and the
+        next part keep the real clock).  True when it switched."""
+        if e.get("k") != "show" or self.early_to or e["e"] - now > 2.0 or key == self.failed_key or self.sub:
+            return False
+        if self.av_started_token != self.play_token or self.closing:
+            return False
+        mark = self.mid_file_mark(e)
+        if mark is None:
+            return False                     # the part ends with its file
+        nxt = sched.entry_at(e["e"] + 0.01)
+        if nxt is None or abs(nxt["s"] - e["e"]) > 0.05:
+            return False
+        try:
+            if self.requested(self.player.getPlayingFile()) != e["p"]:
+                return False
+            left = mark - SWITCH_LEAD - self.player.getTime()
+            if left > 0.6:
+                return False                 # the next tick (0.2 s) is still in time
+            v, w = self.fresh_pos()          # getTime() lags the picture by up to ~0.2 s
+            left = mark - SWITCH_LEAD - (v + time.time() - w)
+        except Exception:
+            return False
+        if left > 0.25:
+            return False
+        if left > 0:
+            xbmc.sleep(int(left * 1000))
+        t = time.time()
+        if t < nxt["s"]:
+            self.early_to = (self.ch["id"], nxt)
+        K.log("Part of %s ended at its mark (%.2f s) by the picture, %+.2f s from its slot end" % (
+            os.path.basename(e["p"]), mark, t - e["e"]), xbmc.LOGINFO)
+        self.start_entry(nxt, (self.ch["id"], nxt["s"]), min(t, nxt["s"]))    # the break's first item from its start
+        return True
 
     def fill_rest(self, e, now):
         """The rest of a spot's time: another commercial, or the station ID card."""
@@ -1428,12 +1654,13 @@ class TVWindow(xbmcgui.WindowXML):
         except Exception:
             return False
 
-    def give_up(self, e):
+    def give_up(self, e, mark=True):
         """Kodi couldn't open this.  'Technical difficulties' for a few
-        seconds, then something else from the channel fills the time."""
+        seconds, then something else from the channel fills the time.  mark=False
+        (it opened, then stopped twice): not kept off the schedules."""
         path = e.get("p") or ""
         K.log_err("Couldn't play %s" % path)
-        if self.really_bad(path):
+        if mark and self.really_bad(path):
             library.mark_bad(path, _("Kodi couldn't open it"))
         self.trouble()
         self.sub = None
@@ -1731,6 +1958,7 @@ class TVWindow(xbmcgui.WindowXML):
         except Exception:
             actual = ""
         path = self.requested(actual)
+        self.start_measured(path)
         try:
             self.progress.release(keep=path)   # the file before this one
         except Exception:
@@ -1747,10 +1975,48 @@ class TVWindow(xbmcgui.WindowXML):
             K.log("Captions: playing %s but the programme on now is %s - not treated as the programme"
                   % (actual, self.programme_path()), xbmc.LOGINFO)
 
+    def start_measured(self, path):
+        """At AV start of a tune-in partway in: how far behind the real clock the
+        picture is.  Each sample says how long Kodi's open and seek took (the delay
+        added + how far behind it still was); the learned delay is the median of the
+        last 10 good ones, 0-3 s.  A sample more than 1.5 s off is Kodi landing on a
+        keyframe away from the position asked for - not a delay - and is left out
+        (unless 3 in a row agree: the device really is that much slower or faster)."""
+        ask, self.start_ask = self.start_ask, None
+        if not ask or not path or ask[0] != path:
+            return
+        e, added = ask[1], ask[2]
+        try:
+            behind = float(e.get("o", 0)) + (time.time() - e["s"]) - self.player.getTime()
+        except Exception:
+            return
+        took = added + behind
+        cls = type(self)
+        if abs(behind) <= 1.5:
+            cls.start_odd = []
+            cls.start_good = (cls.start_good + [took])[-10:]
+            note = ""
+        else:
+            cls.start_odd = (cls.start_odd + [took])[-3:]
+            if len(cls.start_odd) == 3 and max(cls.start_odd) - min(cls.start_odd) <= 0.5:
+                cls.start_good = (cls.start_good + cls.start_odd)[-10:]
+                cls.start_odd = []
+                note = " - three alike: taken"
+            else:
+                note = " - Kodi started at a keyframe away from it: left out"
+        if cls.start_good:
+            g = sorted(cls.start_good)
+            cls.start_lag = max(0.0, min(3.0, g[len(g) // 2]))
+        K.log("tune-in: %.1f s behind the clock at start (start delay now %.1f s)%s" % (
+            behind, self.start_lag, note), xbmc.LOGINFO)
+
     def on_error(self):
         if self.closing:
             return
         self.play_started_at = 0  # let the watchdog react immediately
+
+    def on_stopped(self):
+        self.stopped_at = time.time()
 
     # ----------------------------------------------------------- screens
     prop_mode = ""
