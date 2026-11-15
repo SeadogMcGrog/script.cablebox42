@@ -6295,3 +6295,66 @@ msgctxt "#34035"
 msgid "Chapters read: %d of %d - schedules updated"
 msgstr ""
 
+msgctxt "#34036"
+msgid "Guide scroll speed"
+msgstr ""
+
+msgctxt "#34037"
+msgid "Slow"
+msgstr ""
+
+msgctxt "#34038"
+msgid "Normal"
+msgstr ""
+
+msgctxt "#34039"
+msgid "Fast"
+msgstr ""
+
+msgctxt "#34040"
+msgid "(CC)"
+msgstr ""
+
+msgctxt "#34041"
+msgid "(Stereo)"
+msgstr ""
+
+msgctxt "#34042"
+msgid "Add a premium channel today!  Call your cable company."
+msgstr ""
+
+msgctxt "#34043"
+msgid "Pay-Per-View: call 555-0142 to order."
+msgstr ""
+
+msgctxt "#34044"
+msgid "Ask about our Movie Lovers package."
+msgstr ""
+
+msgctxt "#34045"
+msgid "Two months of premium channels, half price."
+msgstr ""
+
+msgctxt "#34046"
+msgid "Moving?  Take your cable with you.  Call 555-0199."
+msgstr ""
+
+msgctxt "#34047"
+msgid "Remote not working?  Free replacement at the cable office."
+msgstr ""
+
+msgctxt "#34048"
+msgid "New this month: more channels on the basic tier."
+msgstr ""
+
+msgctxt "#34049"
+msgid "Watch the big fight live on Pay-Per-View."
+msgstr ""
+
+msgctxt "#34050"
+msgid "Cable installation: just $9.95 this month."
+msgstr ""
+
+msgctxt "#34051"
+msgid "Thank you for choosing cable."
+msgstr ""

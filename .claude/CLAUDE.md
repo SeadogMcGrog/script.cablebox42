@@ -220,6 +220,16 @@ A task often starts as "implement `briefs\<name>.md`".
 - **Anything started from a Settings button must set `manager.TOOL_BUSY`** while it runs (tools via
   `run_tool`, Preview promo itself): `open_settings` waits only 2 s for it, then the CableBox menu
   opens again - over whatever is on screen.
+- **The guide crawl** (`tv.crawl_loop`): list 50 is a `wraplist` with `<scrolltime tween="linear">3200`,
+  moved by `Control.Move(50,1)` from its own thread every step (3.0 / 2.5 / 1.7 s). A linear scroll
+  restarts from where it is, so a move arriving mid-scroll keeps the speed at exactly one row a
+  step - the scroll time must stay above the slowest step and below twice the fastest (the list
+  is 8 rows tall so Kodi's jump correction, `itemsPerPage / 4` rows, never fires). The 5-minute
+  refresh changes the rows in place (`getListItem(i).setProperty`); `reset()` would jump.
+  Rig: `rec F.mp4 40 "RunScript(script.cablebox42,watch,2)"`, then `.claude/tools/crawl_speed.py F.mp4`
+  (in the rig) measures the grid's motion: a constant 35 px/s at 1080p (Normal), no still frames.
+- **Skin conditions group with `[ ]`, not `( )`**, and `String.EndsWith(...,2)` also matches
+  `font12`: the guide's cells use the value `two` for their two-line variant.
 - `kodi-addon-checker` rejects `<news>` over 1500 characters. Keep the newest release
   notes there and the full history in `changelog.txt`.
 

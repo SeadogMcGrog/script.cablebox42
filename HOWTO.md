@@ -862,9 +862,15 @@ pitch cards with a jingle, local businesses, public service announcements and
 
 ## 15. The guide channel and the weather channel
 
-**TV Guide (channel 2):** scrolling listings for every channel with background
-music. Press **OK** on it to pick a channel. Title: *Settings → Programming →
-Guide title*; music: *Guide channel music folder*.
+**TV Guide (channel 2):** listings for every channel crawl up the screen with
+background music. Press **OK** on it to pick a channel. Title: *Settings →
+Programming → Guide title*; music: *Guide channel music folder*; pace: *Guide
+scroll speed*.
+
+Your own "cable company" ads in the crawl: make a text file `guide.txt` in the
+guide channel's station folder (e.g. `Stations/TV Guide/guide.txt`) with one ad
+per line, such as `Call 555-0123 for Pay-Per-View`. Lines starting with `#` are
+skipped.
 
 **Weather channel (25):**
 

@@ -25,6 +25,7 @@ from . import captions
 from . import promos
 from . import musicvideos
 from . import ads
+from . import guide
 from .kodiutil import _
 
 
@@ -153,8 +154,8 @@ class TVWindow(xbmcgui.WindowXML):
         self.sleep_at = 0
         self.guide_next = 0
         self.promo_next = 0
-        self.scroll_top = 0          # first guide row on screen
-        self.scroll_next = 0
+        self.crawl_token = 0         # the guide crawl's thread runs while this stays the same
+        self.guide_shape = None      # the guide list's rows (channel ids, scroll ads) as filled
         self.promos = []
         self.closing = False
         self.exit_how = "back"       # how the TV was turned off: back / menu / sleep / away
@@ -208,7 +209,8 @@ class TVWindow(xbmcgui.WindowXML):
         self.started = True
         self.win_id = xbmcgui.getCurrentWindowId()
         xbmcgui.Window(10000).setProperty("cablebox42.running", "1")
-        crt = K.setting_int("crt_mode", 0)   # 0 off, 1 subtle, 2 full
+        library.listing_warm()               # guide details and ratings, read in the background
+        crt =K.setting_int("crt_mode", 0)   # 0 off, 1 subtle, 2 full
         self.setProperty("crt", str(crt) if crt in (1, 2) else "")
         if self.cc_fullscreen:
             # made here, on the script's main thread, so its button callbacks are delivered
@@ -833,9 +835,9 @@ class TVWindow(xbmcgui.WindowXML):
                 self.set_mode("guide")
                 self.guide_next = 0
                 self.promo_next = 0
-                self.scroll_top = 0
-                self.scroll_next = now + 5.0
+                self.guide_shape = None      # a fresh list from the top each time you tune in
                 self.guide_tick(now)
+                self.crawl_start()
                 self.background_audio(K.setting("guide_music_path"))
             elif kind == "weather":
                 self.set_mode("weather")
@@ -2393,86 +2395,148 @@ class TVWindow(xbmcgui.WindowXML):
         if now >= self.guide_next:
             self.fill_guide(now)
             self.guide_next = min(now + 300, scheduler.floor_slot(now, 1800) + 1801)
+            if not library.listing_ready():
+                self.guide_next = now + 4         # details still being read: fill them in (in place) soon
         if now >= self.promo_next and self.promos:
             self.setProperty("guide_promo", self.promos[0])
             self.promos = self.promos[1:] + self.promos[:1]
             self.promo_next = now + 8
-        if now >= self.scroll_next:
-            self.guide_scroll(now)
 
-    GUIDE_ROWS = 7          # rows visible in the guide list (620 / 88)
-    SCROLL_STEP = 2.5       # seconds per row
-    SCROLL_HOLD = 5.0       # pause at the bottom (and top) before moving on
+    def crawl_start(self):
+        """The grid crawls up at a constant speed and never pauses: list 50 is a
+        wraplist whose linear scroll lasts longer than a step, and this thread moves
+        it one row each step by the clock, so every move takes over the one still
+        running and the steps blend into one motion."""
+        self.crawl_token += 1
+        t = threading.Thread(target=self.crawl_loop,
+                             args=(self.crawl_token, guide.speed(K.setting_int("guide_speed", 1))),
+                             name="cb42-crawl")
+        t.daemon = True
+        t.start()
 
-    def guide_scroll(self, now):
-        """Scroll one row at a time; hold at the end, then jump back to the top."""
-        try:
-            lst = self.getControl(50)
-            n = lst.size()
-        except Exception:
-            return
-        last_top = max(0, n - self.GUIDE_ROWS)
-        if last_top == 0:                      # everything fits - nothing to scroll
-            self.scroll_next = now + 30
-            return
-        if self.scroll_top >= last_top:        # held at the bottom long enough
-            self.scroll_top = 0
-            lst.selectItem(0)
-            self.scroll_next = now + self.SCROLL_HOLD
-            return
-        self.scroll_top += 1
-        # selecting the row just below the screen pushes the view down by one
-        lst.selectItem(min(n - 1, self.scroll_top + self.GUIDE_ROWS - 1))
-        self.scroll_next = now + (self.SCROLL_HOLD if self.scroll_top >= last_top else self.SCROLL_STEP)
+    def crawl_loop(self, token, step):
+        nxt = time.time() + 1.0
+        while not self.closing and token == self.crawl_token and self.prop_mode == "guide":
+            wait = nxt - time.time()
+            if wait > 0:
+                if self.monitor.waitForAbort(min(wait, 0.5)):
+                    return
+                continue
+            nxt += step
+            if time.time() > nxt:                 # held up (a dialog, a busy box): no catching up
+                nxt = time.time() + step
+            try:
+                # only in our own window: Control.Move goes to the window that has focus
+                if xbmcgui.getCurrentWindowDialogId() == 9999 and \
+                        (not self.win_id or xbmcgui.getCurrentWindowId() == self.win_id):
+                    xbmc.executebuiltin("Control.Move(50,1)")
+            except Exception:
+                pass
+
+    @staticmethod
+    def block_file(sched, b):
+        """The first programme file of a block (for its listing details)."""
+        t = b["s"] + 0.01
+        for _i in range(12):
+            e = sched.entry_at(t)
+            if e is None or e["s"] >= b["e"]:
+                return ""
+            if e.get("k") == "show" and e.get("p"):
+                return e["p"]
+            t = e["e"] + 0.001
+        return ""
+
+    def listing(self, sched, b, prefix, width):
+        """(text, font, two-line text) of one listing cell: title and details."""
+        title = prefix + library.on_air(b["t"])
+        extra = []
+        if b.get("k") == "show":
+            info = library.listing_info(self.block_file(sched, b))
+            if info and info.get("kind") == "movie" and info.get("year") and \
+                    title.endswith("(%s)" % info["year"]):
+                info = dict(info, year=0)             # a shared name keeps its year in the title
+            extra = guide.details(info)
+        return guide.fit_cell(title, extra, width)
+
+    ROW_KEYS = ("nfit", "name2", "rowbg", "ad", "c1", "c1f", "c12", "c2", "c2f", "c22", "c3", "c3f", "c32")
 
     def fill_guide(self, now):
         t0 = scheduler.floor_slot(now, 1800)
         cols = [t0, t0 + 1800, t0 + 3600]
-        self.setProperty("guide_title", K.setting("guide_title", _("CableBox 42 Program Guide")))
+        title = K.setting("guide_title", _("CableBox 42 Program Guide"))
+        self.setProperty("guide_title", title)
         for i, c in enumerate(cols):
             self.setProperty("g_t%d" % (i + 1), fmt_time(c))
-        items = []
+        rows = []                     # (shape key, label, label2, {property: value})
         guide_promos = []
-        for n, ch in enumerate(self.lineup.channels):
+        guide_ch = None
+        for ch in self.lineup.channels:
             if ch["type"] == "guide":
+                guide_ch = guide_ch or ch
                 continue
             # never build schedules here - that froze the guide after upgrades
             sched = self.lineup.schedule(ch, ensure=False)
-            li = xbmcgui.ListItem(str(ch["number"]), stations.brand(ch, now)["name"])
-            li.setProperty("nfit", promos.fit_font(li.getLabel2(), 270))
-            li.setProperty("name2", promos.two_lines(li.getLabel2()))
+            br = stations.brand(ch, now)
+            call = guide.short_call(br["name"], br["call"])
+            nfit, name2 = guide.call_fit(call)
+            props = {"rt": "ch", "nfit": nfit, "name2": name2,
+                     "rowbg": "guide_row_a.png" if len(rows) % 2 == 0 else "guide_row_b.png"}
             if sched.block_at(now) is None:
                 self.guide_pending = True
-                li.setProperty("c1", _("Updating listings..."))
-                li.setProperty("rowbg", "guide_row_a.png" if n % 2 == 0 else "guide_row_b.png")
-                items.append(li)
-                continue
-            for i, c in enumerate(cols):
-                b = sched.block_at(c + 1)
-                txt = ""
-                if b:
-                    txt = library.on_air(b["t"])
-                    if b["s"] < c - 60 and i == 0:
-                        txt = _("(cont.) ") + txt
-                    elif b["s"] < c - 60:
-                        txt = ">>> " + txt
-                li.setProperty("c%d" % (i + 1), txt)
-            li.setProperty("rowbg", "guide_row_a.png" if n % 2 == 0 else "guide_row_b.png")
-            items.append(li)
-            for b in sched.blocks_between(now, now + 4 * 3600):
-                if b["s"] > now and b.get("k") == "show" and b["e"] - b["s"] >= 3600:
-                    guide_promos.append(_("Coming up at %s on %s %s:  %s") % (
-                        fmt_time(b["s"]), ch["number"], ch["name"], library.on_air(b["t"])))
-                    break
+                props["c1"] = _("Updating listings...")
+                props["c1f"] = "font27"
+            else:
+                for i, c in enumerate(cols):
+                    b = sched.block_at(c + 1)
+                    if not b:
+                        continue
+                    prefix = ""
+                    if b["s"] < c - 60:
+                        prefix = _("(cont.) ") if i == 0 else ">>> "
+                    txt, font, two = self.listing(sched, b, prefix, guide.CELL_W[i])
+                    props.update({"c%d" % (i + 1): txt, "c%df" % (i + 1): font, "c%d2" % (i + 1): two})
+                for b in sched.blocks_between(now, now + 4 * 3600):
+                    if b["s"] > now and b.get("k") == "show" and b["e"] - b["s"] >= 3600:
+                        guide_promos.append(_("Coming up at %s on %s %s:  %s") % (
+                            fmt_time(b["s"]), ch["number"], ch["name"], library.on_air(b["t"])))
+                        break
+            rows.append((ch["id"], str(ch["number"]), call, props))
+        # the scroll-ad rows after the last channel: the guide's title, then 1-3 ads
+        # (the viewer's own guide.txt lines first, then the built-in ones)
+        count = guide.ad_count(len(rows))
+        own = guide.own_ads(stations.brand(guide_ch, now)["folder"] if guide_ch else "")
+        picks = random.sample(own, min(len(own), count))
+        if len(picks) < count:
+            picks += random.sample(guide.builtin_ads(), count - len(picks))
+        rows.append(("hdr", "", "", {"rt": "hdr", "ad": title}))
+        rows += [("ad%d" % i, "", "", {"rt": "ad", "ad": t}) for i, t in enumerate(picks)]
+        for _k, _l, _l2, p in rows:
+            for k in self.ROW_KEYS:
+                p.setdefault(k, "")
+        shape = [r[0] for r in rows]
         try:
             lst = self.getControl(50)
-            lst.reset()
-            lst.addItems(items)
-            # keep the scroll position across the 5-minute refresh
-            self.scroll_top = min(self.scroll_top, max(0, len(items) - self.GUIDE_ROWS))
-            if self.scroll_top:
-                lst.selectItem(0)
-                lst.selectItem(min(len(items) - 1, self.scroll_top + self.GUIDE_ROWS - 1))
+            if shape == self.guide_shape and lst.size() == len(rows):
+                # the same rows: change them in place, so the 5-minute refresh never jumps the crawl
+                for i, (_k, label, label2, props) in enumerate(rows):
+                    li = lst.getListItem(i)
+                    if li.getLabel() != label:
+                        li.setLabel(label)
+                    if li.getLabel2() != label2:
+                        li.setLabel2(label2)
+                    for k, v in props.items():
+                        if li.getProperty(k) != v:
+                            li.setProperty(k, v)
+            else:
+                items = []
+                for _k, label, label2, props in rows:
+                    li = xbmcgui.ListItem(label, label2)
+                    for k, v in props.items():
+                        li.setProperty(k, v)
+                    items.append(li)
+                lst.reset()
+                lst.addItems(items)
+                self.guide_shape = shape
         except Exception as exc:
             K.log_err("guide list: %s" % exc)
         random.shuffle(guide_promos)

@@ -94,7 +94,8 @@ hardware video decoding works exactly as it does for the rest of your library.
 - **Promos.** "Channel 7 — Seinfeld: \"The Contest\" — Up next", with the
   episode's still, the show's logo and its theme music, made from your own
   library (opt-in).
-- **Guide channel.** A scrolling grid of what's on now and next, with promos.
+- **Guide channel.** A Prevue-style grid that crawls up without stopping: call
+  letters, titles with year, rating, *(CC)* and *(Stereo)*, and cable-company ads.
 - **Weather channel.** Current conditions, a text forecast, a 4-day outlook and
   the next few hours, with a ticker and optional background music.
 - **The look of a CRT.** Static and a static sound between channels, a glowing
@@ -902,10 +903,29 @@ logos to PNG first. Real network logos are trademarks, so use your own images.
 
 ## The guide channel
 
-A scrolling grid of every channel with what's on now, in 30 minutes and in an
-hour, and promos for upcoming movies and long programs. Press **OK** on the
-guide to pick a channel. Add music under *Settings → Programming → Guide channel
-music folder*, and change the title with *Guide title*.
+A grid of every channel with what's on now, in 30 minutes and in an hour, and
+promos for upcoming movies and long programs. Press **OK** on the guide to pick
+a channel. Add music under *Settings → Programming → Guide channel music folder*,
+and change the title with *Guide title*.
+
+The grid crawls up at a steady speed, the way the 90s preview channel did, and
+never stops: after the last channel come a row with the guide's title and one to
+three ads from the "cable company", then the first channel again. *Guide scroll
+speed* sets the pace (Slow, Normal or Fast: about 3, 2.5 or 1.7 seconds a row).
+
+- **Channels** show their number and call letters (*3 KEY*). A channel without
+  call letters gets a short abbreviation of its name (at most 5 letters); the full
+  name stays in the banner.
+- **Listings** add what your library knows: movies get their year and rating
+  (*The Fugitive (1993) PG-13*), and anything with a subtitle track, or a subtitle
+  file next to it, gets *(CC)*; *(Stereo)* when the audio has two or more channels.
+  A long title drops these details first, then gets a smaller font, then two lines;
+  it's never cut off. The details are read from the library in the background just
+  after the TV turns on, so they can appear a few seconds after the titles. Files
+  are never opened for this.
+- **Your own ads:** put a `guide.txt` in the guide channel's station folder, one ad
+  per line (lines starting with `#` are skipped). They're used before the built-in
+  ones. CableBox only reads the file.
 
 Listings appear immediately. A channel whose listings are still being prepared
 shows *Updating listings…* and fills in shortly afterwards.
@@ -1006,6 +1026,7 @@ tap to tune. Yatse custom commands can call the `RunScript` actions above.
 | Also use short promo clips from a show's Extras folder | Off | *Promo* / *Trailer* videos up to 2 minutes |
 | Guide channel music folder | – | Music behind the guide |
 | Guide title | *CableBox 42 Program Guide* | |
+| Guide scroll speed | Normal | Slow / Normal / Fast ([The guide channel](#the-guide-channel)) |
 | Shows on more than one channel | TV shows on one channel each | Or everything on one channel each, or allow repeats |
 | Short programmes (under 12 min) | Pack several into one time slot | Back-to-back like a cartoon block (next episodes of the same series, or several short films), a break after each. Or *only where I pinned them* (skipped by the automatic schedule while anything longer is available), or *one per time slot* |
 | Commercial breaks at chapter marks | On | An episode with good chapter marks gets its commercial breaks where the original broadcast's act breaks were (Seinfeld's "The Opposite": after the cold open, at 13:27 and before the end tag). Chapters are read once per file, in the background: whenever Kodi is idle, as fast as the drive answers quickly (it slows down at once for a busy or waking drive, and pauses on a busy CPU); with the TV on, the episodes airing in the next 6 hours first, gently; never while you watch something else in Kodi. The episodes they change are planned again. *Chapters read* below the setting shows how far it is; until then, and for files without usable chapters (none, one, evenly spaced automatic ones), breaks are evenly spaced as before. Scene chapters every couple of minutes keep the usual number of breaks, each moved to the nearest mark. The leftover time decides how many breaks there are (at least a minute each). *Tools → Check chapters* shows each show's episodes and lets you set a show to *Always* or *Never* use chapters. Files are only read, never changed |
