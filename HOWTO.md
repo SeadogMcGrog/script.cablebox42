@@ -685,8 +685,10 @@ networks (3–5) come with a full network day of blocks already.
 *Settings → Tools → Quick setup*:
 
 - **Sign off overnight on all channels** — choose the hours (default 12 AM–5 AM).
-  Off-air shows a 1950s *Please Stand By* card or colour bars; the planner's
-  Menu sets an optional sign-off clip (anthem) and sign-on clip.
+  Off-air shows a 1950s *Please Stand By* card or colour bars (silent or with
+  tone), after a built-in "This concludes our broadcast day" card; the
+  planner's Menu changes the screen and sets a sign-off clip of your own
+  (anthem) instead of the card, or none, and a sign-on clip.
 - **Never sign off** — removes off-air hours everywhere.
 - **Build prime-time lineups** — fills 8–11 PM (or your hours) with fixed weekly
   slots of each channel's best-rated shows; movie channels get a *Movie at 8*.

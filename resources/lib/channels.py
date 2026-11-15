@@ -65,6 +65,20 @@ def load():
     return sorted(chans, key=lambda c: c["number"])
 
 
+def signoff_mode(ch):
+    """How the channel signs off at the start of its off-air hours: "card" (the
+    built-in sign-off card, the default), "none", or "folder" (a clip from
+    signoff_path).  Channels from before 1.3 have no signoff_mode: a sign-off
+    folder makes them "folder", otherwise the card.  (Not written on load, so an
+    update doesn't change every channel's config_hash.)"""
+    mode = ch.get("signoff_mode")
+    if mode == "folder" and not ch.get("signoff_path"):
+        return "card"
+    if mode in ("card", "none", "folder"):
+        return mode
+    return "folder" if ch.get("signoff_path") else "card"
+
+
 def save(chans):
     keep = [dict((k, v) for k, v in c.items() if not k.startswith("_")) for c in chans]   # wizard-only notes
     save_json(CHANNELS_FILE, {"version": 2, "channels": sorted(keep, key=lambda c: c["number"])})

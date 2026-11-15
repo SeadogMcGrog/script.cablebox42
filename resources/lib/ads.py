@@ -658,12 +658,17 @@ def _lines(text, font, size, maxw, cx, mid, color, line=None, minsize=52, upper=
                  align="c", minf=0.3) for i, p in enumerate(parts)]
 
 
-def station_card(name, number, logo="", tagline="", genre=""):
+def station_card(name, number, logo="", tagline="", genre="", headline=None, resume=""):
     """{"fmt": "station", "zones", "logo", "label"...}: the channel's logo fitted in
     the box, its number on the badge, its name on the gold band, the tagline in
     the bottom strip.  No logo: the name in the logo box, the tagline (or the
-    genre) on the band, the strip empty.  Never cut off: shrink, then two lines."""
-    z = [Zone(_("You're watching"), "sbi", 960, 160, 64, 1200, "ffffff", "070d33", align="c", upper=True),
+    genre) on the band, the strip empty.  Never cut off: shrink, then two lines.
+    headline: instead of "You're watching" (signoff_card); resume: a line between
+    the logo box and the band."""
+    head = _("You're watching") if headline is None else headline
+    # a longer headline stays clear of the CH badge (its left edge is at ~1540)
+    z = [Zone(head, "sbi", 960, 160, 64, 1200 if headline is None else 1100, "ffffff", "070d33", align="c",
+              upper=True, minf=0.3),
          Zone("CH", "sb", 1660, 160, 36, 190, "ffffff", align="c"),
          Zone(str(number), "sb", 1660, 250, 96, 190, "ffffff", align="c", minf=0.3)]
     sname = _spelled((name or "").upper(), "sb")
@@ -689,8 +694,18 @@ def station_card(name, number, logo="", tagline="", genre=""):
         band = band or (_spelled(genre, "sb") if genre else None)
         if band:
             z += _lines(band, "sb", 92, 1400, 960, 798, "14257a", upper=False)
+    if resume:
+        z.append(Zone(resume, "sbi", 960, 692, 56, 1300, "ffd23a", "070d33", align="c", minf=0.4))
     return {"fmt": "station", "bg": "", "poster": "", "zones": z, "jingle": "", "title": "",
             "logo": logo, "label": label, "label_box": "" if logo else "1"}
+
+
+def signoff_card(name, number, logo="", tagline="", genre="", resume=""):
+    """The sign-off card at the start of a channel's off-air hours: the station ID
+    card with "This concludes our broadcast day" on top and "We return at 6:00 AM"
+    (resume: the time, as the off-air screen writes it).  Silent, like the ID card."""
+    return station_card(name, number, logo, tagline, genre, headline=_("This concludes our broadcast day"),
+                        resume=(_("We return at %s") % resume) if resume else "")
 
 
 def logo_usable(path):

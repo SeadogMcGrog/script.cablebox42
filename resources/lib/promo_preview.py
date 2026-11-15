@@ -326,7 +326,7 @@ class AdPreviewWindow(xbmcgui.WindowXML):
         from . import ads
         mon = xbmc.Monitor()
         try:
-            if self.entry.get("k") == "station":
+            if self.entry.get("k") in ("station", "signoff"):
                 self._station()
                 return
             if self.entry.get("k") == "upnext":
@@ -399,8 +399,17 @@ class AdPreviewWindow(xbmcgui.WindowXML):
         now = time.time()
         br = stations.brand(ch, now)
         logo = br["logo"] or logos.logo_for(ch)
-        c = ads.station_card(br["name"], ch["number"], logo if ads.logo_usable(logo) else "",
-                             stations.tagline(ch, now), ads.genre_line(ch))
+        logo = logo if ads.logo_usable(logo) else ""
+        if self.entry.get("k") == "signoff":
+            # when this channel's next off-air hours end (else 6:00 AM, for the look)
+            from .tv import fmt_time
+            ends = [b["e"] for b in scheduler.Lineup(K.schedule_cfg()).schedule(ch).blocks_between(now, now + 86400)
+                    if b.get("k") == "offair"]
+            resume = fmt_time(ends[0]) if ends else fmt_time(time.mktime(time.localtime()[:3] + (6, 0, 0, 0, 0, -1)))
+            c = ads.signoff_card(br["name"], ch["number"], logo, stations.tagline(ch, now), ads.genre_line(ch),
+                                 resume)
+        else:
+            c = ads.station_card(br["name"], ch["number"], logo, stations.tagline(ch, now), ads.genre_line(ch))
         if mon.waitForAbort(0.5) or self.stop.is_set():
             return
         ads.apply_card(self, c, ads.Slots())
@@ -425,6 +434,9 @@ def run_ad(arg):
         bits = arg.split(":")
         entry = {"k": "upnext", "num": int(bits[1]) if len(bits) > 1 else 0,
                  "idx": int(bits[2]) if len(bits) > 2 else 1}
+    elif arg.lower().startswith("signoff"):
+        # signoff:<channel number>: that channel's sign-off card for a while
+        entry = {"k": "signoff", "num": int(arg.split(":", 1)[1]) if ":" in arg else 0}
     elif arg.lower().startswith("station"):
         # station:<channel number>: that channel's station ID card for a while
         entry = {"k": "station", "num": int(arg.split(":", 1)[1]) if ":" in arg else 0}

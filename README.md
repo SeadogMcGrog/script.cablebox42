@@ -88,8 +88,9 @@ hardware video decoding works exactly as it does for the rest of your library.
   where it left off the week before.
 - **Time blocks.** Saturday-morning cartoons, prime-time movies, late-night
   blocks.
-- **Off the air.** Sign-off hours with a 1950s stand-by card or colour bars,
-  plus optional sign-off and sign-on clips.
+- **Off the air.** Sign-off hours with a 1950s stand-by card or colour bars
+  (silent or with the 1 kHz tone), a "This concludes our broadcast day" card
+  at sign-off, and optional sign-off and sign-on clips.
 - **Commercials, bumps and station IDs** from your own folders.
 - **Promos.** "Channel 7 — Seinfeld: \"The Contest\" — Up next", with the
   episode's still, the show's logo and its theme music, made from your own
@@ -558,7 +559,7 @@ USB disks or network shares.
 | **Commercials** | Settings → Programming (global), or per channel | In breaks during and between programs |
 | **Bumps** | Settings → Programming (global), or per channel | At the end of each break ("…and now back to") |
 | **Station IDs** | Per channel | Right before each new program ("You're watching…") |
-| **Sign-off clips** | Per channel → Off-air hours | When the channel signs off (anthem, farewell) |
+| **Sign-off clips** | Per channel → Off-air hours | When the channel signs off (anthem, farewell), instead of the built-in sign-off card |
 | **Sign-on clips** | Per channel → Off-air hours | When the channel comes back on the air |
 | **Guide / weather music** | Settings | Behind the guide and weather channels |
 | **Promos** | Station folder `promos/` (optional) | In breaks, with *Promos* on (see below) |
@@ -725,12 +726,25 @@ sign-off time, a sign-on time and the nights it applies to.
 While a channel is off the air it shows either:
 
 - **A 1950s "Please Stand By" test card**, with the channel number and name in
-  the centre and "Programming resumes at 7:00 AM", or
-- **Colour bars**.
+  the centre and "Programming resumes at 7:00 AM",
+- **Colour bars** (silent), or
+- **Colour bars with tone**: the same bars with a steady 1 kHz tone, like a
+  real station after sign-off. It plays through Kodi's music player, so there's
+  no refresh-rate switch, and stops as soon as programming resumes or you
+  change channel.
 
-Optionally a **sign-off clip** plays as the channel goes off the air, and a
-**sign-on clip** plays just before programming resumes. A show that's still
-running at sign-off time finishes first, as on real TV.
+As the channel goes off the air it signs off for about 25 seconds:
+
+- **Built-in sign-off card** (the default): the station ID card's look, with
+  "This concludes our broadcast day" and "We return at 7:00 AM". Silent.
+- **A sign-off clip** of your own (anthem, farewell) from a folder you choose.
+  If none of its clips fits the off-air hours, the built-in card plays instead.
+- **None**: straight to the off-air screen.
+
+Set it under *Off-air hours → Sign-off clip*. Tuning in after sign-off shows the
+off-air screen, not the card. A **sign-on clip** plays just before programming
+resumes. A show that's still running at sign-off time finishes first, as on
+real TV.
 
 ---
 
@@ -1128,6 +1142,7 @@ Everything lives in the add-on's data folder,
   "offair": [{"start": "00:00", "end": "07:00", "days": "all"}],
   "offair_style": "standby",
   "ids_path": "smb://nas/tv/station-ids/comedy/",
+  "signoff_mode": "folder",
   "signoff_path": "smb://nas/tv/signoff/",
   "commercials_path": "smb://nas/tv/ads/80s/"
 }
@@ -1135,6 +1150,10 @@ Everything lives in the add-on's data folder,
 
 - **Days** can be `"all"`, `"weekdays"`, `"weekends"`, or a list of numbers
   (0 = Monday … 6 = Sunday).
+- **Off-air:** `offair_style` is `"standby"`, `"bars"` or `"bars_tone"`;
+  `signoff_mode` is `"card"` (the built-in sign-off card, the default),
+  `"none"` or `"folder"` (a clip from `signoff_path`; a channel with only a
+  `signoff_path` counts as `"folder"`).
 - **Source types:** `tvshow`, `tvgenre`, `tvdecade`, `movies` (with `genre`,
   `years`, `set`, `tag`), `folder` (with `path` and `mode`: `shows`, `random`
   or `sequential`), `playlist`, `studio`, `tag`, `keyword`, `movie`.

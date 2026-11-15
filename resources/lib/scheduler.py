@@ -94,6 +94,7 @@ GAP_PROMO_SPACING = 600.0
 GAP_PROMO_MAX = 3
 GAP_PROMOS = 3
 OFFAIR_PROMOS = 2
+SIGNOFF_CARD_SECS = 25.0    # the built-in "This concludes our broadcast day" card
 BREAK_KINDS = ("retro", "promo", "house", "card", "bump", "ad")
 
 
@@ -848,19 +849,34 @@ class ChannelSchedule(object):
         return e
 
     def _offair(self, t, end, real_end):
-        """Sign-off clip, stand-by card (or bars), sign-on clip."""
+        """Sign-off clip or card, stand-by card (or bars), sign-on clip."""
         ch = self.ch
         style = ch.get("offair_style") or self.cfg.get("offair_style") or "standby"
         rng = random.Random("%s|%.0f|offair" % (ch["id"], t))
         pos = t
-        # sign-off only at the real start of the off-air window
-        starting = not any(in_window(t - 30, w) for w in ch.get("offair", []))
-        if starting and ch.get("signoff_path"):
+        # sign-off only at the real start of the off-air window: programming or a break
+        # right before (a window starting mid-slot begins when that slot's programme
+        # ends), never when planning continues mid-window after off-air or the card
+        ents = self.data["entries"]
+        if ents and ents[-1]["e"] >= t - 1:
+            starting = ents[-1].get("k") not in ("offair", "signoff")
+        else:
+            starting = not any(in_window(t - 30, w) for w in ch.get("offair", []))
+        mode = chmod.signoff_mode(ch) if starting else "none"
+        if mode == "folder":
+            # the user's own clip always wins; a folder with nothing that fits gets the card
             clips = [c for c in library.filler_pool(ch["signoff_path"]) if c["dur"] < end - pos - 60]
             if clips:
                 c = rng.choice(clips)
                 self._add(pos, pos + c["dur"], "clip", p=c["path"], o=0, t=_("Sign-off"))
                 pos += c["dur"]
+                mode = "none"
+            else:
+                mode = "card"
+        if mode == "card" and SIGNOFF_CARD_SECS < end - pos - 60:
+            # silent, like the station ID card; r: when the off-air hours end ("We return at")
+            self._add(pos, pos + SIGNOFF_CARD_SECS, "signoff", r=round(real_end, 3))
+            pos += SIGNOFF_CARD_SECS
         signon = None
         if end == real_end and ch.get("signon_path"):
             clips = [c for c in library.filler_pool(ch["signon_path"]) if c["dur"] < end - pos - 60]

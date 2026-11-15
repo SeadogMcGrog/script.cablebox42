@@ -63,6 +63,7 @@ PART_START = 1.5        # a part started within this long of its slot start: a p
 PART_HOLD = 4.0         # a part running behind the clock keeps the screen this long at most past its slot end
 EARLY_STOP = 3.0        # a file that stops within this many seconds of starting is opened again at once (once)
 STATIC_HOLD = 0.55     # Windows: seconds of the static clip before the new channel comes in
+TONE_SETTLE = 0.4      # off-air tone: seconds after a video stopped or ended before asking Kodi to play it
 # (the clip itself lasts 2.5 s: when it reached its end just as the next file was
 # opened, Kodi's end-of-playlist handling closed the new file - a channel change
 # to black until the watchdog reopened it)
@@ -273,6 +274,7 @@ class TVWindow(xbmcgui.WindowXML):
             self.finished.set()
 
     def _shutdown(self, power_off):
+        self.tone_off()                      # the off-air tone: repeat off; the player is stopped below
         self.promo_stop(stop_music=False)    # forget the theme; the player is stopped below
         if self.ch:
             st = K.load_json(K.STATE_FILE, {})
@@ -754,6 +756,8 @@ class TVWindow(xbmcgui.WindowXML):
             if not self.end_at_mark(sched, e, key, now):
                 self.watchdog(e, key, now)
                 self.queue_next(sched, e, key, now)
+        elif e["k"] == "offair" and e.get("sub") == "bars_tone":
+            self.tone_tick(now)
         self.caption_tick(now)
         if e["k"] == "guide":
             self.guide_tick(now)
@@ -848,13 +852,21 @@ class TVWindow(xbmcgui.WindowXML):
             elif kind == "retro":
                 self.start_retro(e, now)
             else:
-                self.stop_player()
+                tone = kind == "offair" and e.get("sub") == "bars_tone"
+                was_playing = False
+                if not (tone and self.tone_playing()):
+                    was_playing = self.player.isPlaying()
+                    self.stop_player()       # (the same off-air entry again: the tone carries on)
                 if kind == "offair":
                     b = self.lineup.schedule(self.ch, ensure=False).block_at(now)
                     resume = fmt_time(b["e"]) if b else ""
                     self.setProperty("offair_line", _("Programming resumes at %s") % resume)
                     self.setProperty("offair_style", e.get("sub") or "bars")
                     self.set_mode("offair")
+                    if tone:
+                        self.tone_start(after_stop=was_playing)
+                elif kind == "signoff":
+                    self.signoff(e, now)
                 else:
                     self.card_for(e, now)
         if kind == "show":
@@ -1041,6 +1053,7 @@ class TVWindow(xbmcgui.WindowXML):
         self.start_theme(music, end)
 
     def start_theme(self, music, end):
+        self.tone_off()
         if music:
             self.our_files.add(music)
             self.play_token += 1
@@ -1197,6 +1210,80 @@ class TVWindow(xbmcgui.WindowXML):
             pass
         return li
 
+    # ----------------------------------------------------------- off-air tone
+    # "Color bars with tone": a 10 s 1 kHz WAV (exactly 10,000 cycles, so the loop
+    # is seamless; Kodi starts the repeat of a file of 4 s or less 0.4 s before it
+    # ends, doubling the level) through the music player (PAPlayer) on repeat-one - no video
+    # window, so no refresh-rate switch.  Repeat goes back off whenever anything
+    # else is handed to the player, so the viewer's own music player is never
+    # left on repeat-one.  No audio setting is touched.
+    TONE = K.media("offair_tone.wav")
+    tone_active = False
+    tone_at = 0.0
+    tone_tries = 0
+
+    def tone_playing(self):
+        try:
+            return self.tone_active and self.player.isPlayingAudio() and self.player.getPlayingFile() == self.TONE
+        except Exception:
+            return False
+
+    def tone_start(self, retry=False, after_stop=False):
+        if self.tone_playing():
+            return
+        self.tone_tries = self.tone_tries + 1 if retry else 1
+        self.tone_at = time.time()
+        K.log("Off-air tone: start%s" % (" (try %d)" % self.tone_tries if retry else ""), xbmc.LOGINFO)
+        try:
+            # Kodi drops a play request that arrives just after a video stopped or
+            # ended (its own 'playback stopped' handling comes after it): give it
+            # TONE_SETTLE s from the stop (rig: every flip back lost the first request)
+            t0 = time.time()
+            while self.player.isPlaying() and time.time() - t0 < 1.5:
+                xbmc.sleep(20)
+            since = time.time() - (t0 if after_stop else self.stopped_at)
+            if since < TONE_SETTLE:
+                xbmc.sleep(int((TONE_SETTLE - since) * 1000))
+            pl = xbmc.PlayList(getattr(xbmc, "PLAYLIST_MUSIC", 0))
+            pl.clear()
+            pl.add(self.TONE)
+            self.our_files.add(self.TONE)
+            self.play_token += 1
+            self.play_started_at = time.time()
+            self.tone_active = True
+            self.player.play(pl, windowed=True)
+            # the music playlist is Kodi's current one now: repeat-one applies to it
+            xbmc.executebuiltin("PlayerControl(RepeatOne)", True)
+        except Exception as exc:
+            K.log_err("off-air tone: %s" % exc)
+
+    def tone_tick(self, now):
+        """Kodi drops a play request that arrives while it is still closing the
+        video before (the power-on clip, a programme just flipped away from):
+        ask again until the tone plays."""
+        if not self.tone_active or now - self.tone_at < 1.5 or self.tone_tries >= 5:
+            return
+        try:
+            if self.player.isPlaying():
+                if self.tone_playing():
+                    self.tone_tries = 1          # playing: a later drop counts afresh from 1
+                return
+        except Exception:
+            return
+        self.tone_start(retry=True)
+
+    def tone_off(self):
+        """Repeat back off before anything else plays (while the music playlist is
+        still Kodi's current one); the caller stops or replaces the tone."""
+        if not self.tone_active:
+            return
+        self.tone_active = False
+        K.log("Off-air tone: off, repeat off", xbmc.LOGINFO)
+        try:
+            xbmc.executebuiltin("PlayerControl(RepeatOff)", True)
+        except Exception:
+            pass
+
     def play_video(self, path, li):
         """Every video of ours goes through Kodi's video playlist (one item, in the
         TV window).  That makes the video playlist Kodi's current one, so Kodi
@@ -1205,6 +1292,7 @@ class TVWindow(xbmcgui.WindowXML):
         playlist current and reported the video under the music player's id 0 -
         where phone remotes (Yatse, Kore) and CableBox's own track details found
         no subtitles or audio tracks at all."""
+        self.tone_off()
         self.queued = None
         self.awaiting = None
         pl = xbmc.PlayList(getattr(xbmc, "PLAYLIST_VIDEO", 1))
@@ -2010,12 +2098,14 @@ class TVWindow(xbmcgui.WindowXML):
 
     def clear_music(self):
         """Empty the music playlist the guide and weather music play from."""
+        self.tone_off()
         try:
             xbmc.PlayList(getattr(xbmc, "PLAYLIST_MUSIC", 0)).clear()
         except Exception:
             pass
 
     def stop_player(self):
+        self.tone_off()
         self.unqueue()
         self.cc.leave()
         self.fs_leave(exit_fullscreen=False)   # Kodi returns to the TV window when the video stops
@@ -2319,6 +2409,32 @@ class TVWindow(xbmcgui.WindowXML):
         self.set_mode("station")
         return True
 
+    def signoff(self, e, now):
+        """The sign-off card ("This concludes our broadcast day"): the station ID
+        card's layout and machinery (mode station), silent, with when the off-air
+        hours end.  The plain card if it couldn't be made."""
+        resume = e.get("r")
+        if not resume:
+            b = self.lineup.schedule(self.ch, ensure=False).block_at(now)
+            resume = b["e"] if b else None
+        when = fmt_time(resume) if resume else ""
+        try:
+            br = stations.brand(self.ch, now)
+            logo = br["logo"] or logos.logo_for(self.ch)
+            if not ads.logo_usable(logo):
+                logo = ""
+            c = ads.signoff_card(br["name"], self.ch["number"], logo, stations.tagline(self.ch, now),
+                                 ads.genre_line(self.ch), when)
+            if self._ad_slots is None:
+                self._ad_slots = ads.Slots()
+            ads.apply_card(self, c, self._ad_slots)
+            self.set_mode("station")
+        except Exception as exc:
+            K.log_err("sign-off card: %s" % exc)
+            self.card(self.ch["name"], _("This concludes our broadcast day"),
+                      (_("We return at %s") % when) if when else "", "")
+            self.set_mode("card")
+
     def show_digits(self, text):
         """'CH 03' style: at least two digits (leading zero), left-aligned after CH."""
         text = (text or "")[-3:]
@@ -2481,6 +2597,7 @@ class TVWindow(xbmcgui.WindowXML):
         self.promos = guide_promos
 
     def background_audio(self, folder):
+        self.tone_off()
         if not folder:
             self.stop_player()
             return

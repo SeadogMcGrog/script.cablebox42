@@ -1738,16 +1738,23 @@ def pick_days(heading, current="all"):
     return sorted(sel) if sel else None
 
 
+def _signoff_label(ch):
+    mode = C.signoff_mode(ch)
+    if mode == "folder":
+        return os.path.basename(ch["signoff_path"].rstrip("/\\")) or ch["signoff_path"]
+    return _("Built-in sign-off card") if mode == "card" else _("none")
+
+
 def edit_offair(ch):
-    styles = [("standby", _("1950s 'Please stand by' test card")), ("bars", _("Color bars"))]
+    styles = [("standby", _("1950s 'Please stand by' test card")), ("bars", _("Color bars")),
+              ("bars_tone", _("Color bars with tone"))]
     while True:
         style = ch.get("offair_style", "standby")
         rows = [_("[B]+ Add off-air hours[/B]")]
         rows += ["%s - %s   %s" % (w["start"], w["end"], _days_label(w.get("days"))) for w in ch["offair"]]
         n = len(rows)
         rows += [_("Off-air screen: %s") % dict(styles).get(style, style),
-                 _("Sign-off clip (anthem, farewell...): %s") % (
-                     os.path.basename(ch.get("signoff_path", "").rstrip("/\\")) or _("none")),
+                 _("Sign-off clip (anthem, farewell...): %s") % _signoff_label(ch),
                  _("Sign-on clip (morning start-up): %s") % (
                      os.path.basename(ch.get("signon_path", "").rstrip("/\\")) or _("none"))]
         i = done_select(_("Off-air hours"), rows)
@@ -1781,8 +1788,20 @@ def edit_offair(ch):
             j = D.select(_("Off-air screen"), [x[1] for x in styles])
             if j >= 0:
                 ch["offair_style"] = styles[j][0]
+        elif i == n + 1:
+            modes = ["none", "card", "folder"]
+            j = D.select(rows[i], [_("None"), _("Built-in sign-off card"), _("Choose folder...")],
+                         preselect=modes.index(C.signoff_mode(ch)))
+            if j in (0, 1):
+                ch["signoff_mode"] = modes[j]
+                ch.pop("signoff_path", None)
+            elif j == 2:
+                p = D.browse(0, rows[i], "video", defaultt=ch.get("signoff_path", ""))
+                if p:
+                    ch["signoff_mode"] = "folder"
+                    ch["signoff_path"] = p
         else:
-            field = "signoff_path" if i == n + 1 else "signon_path"
+            field = "signon_path"
             j = D.select(rows[i], [_("None"), _("Choose folder...")])
             if j == 0:
                 ch.pop(field, None)

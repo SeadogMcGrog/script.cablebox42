@@ -6295,3 +6295,18 @@ msgctxt "#34035"
 msgid "Chapters read: %d of %d - schedules updated"
 msgstr ""
 
+msgctxt "#34036"
+msgid "Color bars with tone"
+msgstr ""
+
+msgctxt "#34037"
+msgid "This concludes our broadcast day"
+msgstr ""
+
+msgctxt "#34038"
+msgid "We return at %s"
+msgstr ""
+
+msgctxt "#34039"
+msgid "Built-in sign-off card"
+msgstr ""
