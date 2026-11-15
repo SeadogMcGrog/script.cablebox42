@@ -1,4 +1,91 @@
 v1.2.0 (2026-11-12)
+- New: retro ads in house breaks: made-up commercials as cards with a short
+  jingle - pitch cards ('Crisp-O-Matic, only $19.99!'), kids' toys and cereal,
+  local businesses (Big Earl's Furniture Barn), public service announcements and
+  'Now on videocassette' for movies really in your library. 119 ads plus the
+  videocassette cards; they fit the time of day, the season and the channel.
+  Settings > Programming > House breaks > Retro ads (on by default; only where
+  house breaks run, so your own commercials always win). Channel manager > a
+  channel > Ad flavour: Auto (from its type and genres), General, Kids, Sports,
+  Movies, Late night; a Kids channel only gets ads made for kids. No ad twice in
+  a break or within two hours on a channel. Backgrounds and jingles are original,
+  made by the scripts in tools/retro-ads; text is drawn by Kodi, so it can be
+  translated. Video rental ads (Now on videocassette, Video Village, VideoVault)
+  at most once a break, never in two breaks in a row, and at most 1 in 6 of a
+  General channel's retro ads (1 in 3 on Movies channels, 1 in 4 on the others).
+  Two retro ads a break (four on Movies channels), three in the run of breaks
+  at the end of a show (four on Movies); promos and system ads fill the rest.
+  Nothing a kids' channel shows has a phone number. A long gap at a show's end
+  (a short episode in a long slot) is a series of 2-3 minute breaks with the
+  station ID card between them, each its own break for these rules
+- Fixed: shorts packed into one slot got a bare station ID card between them on
+  channels with house breaks; they now get house breaks like any programme
+- Fixed: the Program Guide channel showed no rows (retro10-14 test builds)
+- Fixed: a file the library still lists after it was renamed or deleted (no
+  Clean library since) was planned and found missing only on air. Now it is
+  never planned: the same episode under its new name airs once, and kodi.log
+  says 'Library lists a missing file (run Clean library)'. A file found missing
+  on air: the rest of its slot is planned again at once (the episode's other
+  file, or one stand-in that stays on after each break and when you tune back
+  in). Stand-ins come from the channel's own shows or the missing show's genre,
+  never a show the channel excludes or an unrelated one
+- New Up next card at the end of a show: the next programme's picture, title or
+  clear logo, season and episode (a film's year, rating and running time), episode
+  title, synopsis, start time, channel and a live countdown; on Boombox the block's
+  artists. Nothing on it is cut off; its stripes drift and a glint loops
+- New: commercial breaks at chapter marks (Settings > Programming, on): an
+  episode with act-break chapters gets its breaks where the broadcast's were.
+  Chapters are read once per file in the background (MKV, MP4) and kept in
+  chapters.json; no chapters, automatic chapters or not read yet: evenly spaced
+  breaks as before. Scene chapters keep the usual breaks, moved to the nearest
+  mark. Tools > Check chapters: verdicts per episode, and Always / Never per show.
+  Chapters are read whenever Kodi is idle, at a pace that follows how fast the
+  drive answers (backing off at once when it's slow, pausing on a busy CPU);
+  with the TV on, the episodes airing in the next 6 hours first, then the rest
+  gently; never while something else plays. The episodes they change are planned
+  again (what's on air stays). Check chapters shows how many are read and has
+  Read now; Settings > Programming shows the count too
+- New: squeezed credits: at the end of an episode with chapters (a credits
+  chapter, or the last 30 s of a short tag-and-credits chapter) the picture
+  shrinks into a window, still playing with its own sound, and the rest of the
+  screen says what's up next with a live countdown. An episode without chapters
+  (or not read yet) of 15 min or more squeezes for its last 30 s. Episodes only,
+  never before the station signs off or when a pinned slot cuts the show; nothing
+  restarts, and the break follows when the file ends
+- Fixed: a channel change could leave the screen black for 12 s (the static
+  clip ended just as the programme opened, and Kodi closed the programme); a
+  programme that stops within a few seconds of starting is now opened again at
+  once, and a stand-in fills its time if it stops again
+- Fixed: with captions off, a film tuned in partway could show subtitles anyway
+  (Kodi remembered them as on for that file and switched them back on as its
+  seek settled). Captions off now holds for the whole programme, and means no
+  subtitles at all: forced tracks and subtitle files next to the video too. When
+  you tune in partway, the picture stays black for the moment until CableBox has
+  checked the captions, so Kodi's remembered subtitles never flash on screen.
+  The CC setting changes only with CableBox's own CC button and menu: subtitles
+  Kodi switches back on by itself (or a phone remote) never turn captions on for
+  good, only ever for the programme on screen
+- Fixed: on a channel running one show for hours (a marathon), a house break
+  could promote that show twice in a row; it now promotes another channel's show,
+  or shows the station ID card
+- Tuning in mid-programme starts closer to the real clock: CableBox learns how
+  long Kodi takes to open and seek (the median of the last few tune-ins, odd
+  ones left out), and starts that much further in
+- Breaks at chapter marks are exact: the show cuts to the break when its picture
+  reaches the mark (no frame of the next act before the break), and the next act
+  starts exactly at the mark after the break
+- New: Settings > Programming > Skip episodes shorter than (Off / 2 / 5 / 10 min,
+  default 5): an intro, trailer or recap filed as an episode no longer fills a
+  whole slot; its series goes on to the next real episode. Short-form series,
+  short films, pinned slots and episodes of unknown length are left alone.
+  Tools > Check skipped episodes lists them; files are never touched
+- New station ID card at the end of a break: the channel's logo, number badge,
+  name on a gold band and the station's tagline; without a logo the name takes
+  its place. The rays turn and a glint crosses the band while it fills the break
+- Fixed: long channel names were cut off ('The Animation Station Chann...') on
+  promo and house cards, the guide and the standby and off-air screens. A long
+  name now shrinks, then wraps to two lines; another channel's promo says
+  'Name · CH 6' instead of 'Name · Channel 6' when the name is long
 - Fixed: a clip added later to a movie's Extras folder could take hours to reach
   the Behind the scenes channel. After a library scan or clean, CableBox looks at
   every Extras folder (once the TV is off) and plans new extras from the

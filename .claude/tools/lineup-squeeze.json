@@ -1,0 +1,351 @@
+{
+ "version": 2,
+ "channels": [
+  {
+   "id": "guide002",
+   "number": 2,
+   "name": "TV Guide",
+   "type": "guide",
+   "sources": [],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": false,
+   "midroll": false,
+   "bumps": false,
+   "lineup": "shuffle",
+   "slot": 30,
+   "callsign": "TG"
+  },
+  {
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "id": "plain040",
+   "number": 40,
+   "name": "Plain TV",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvshow",
+     "value": "Friends"
+    },
+    {
+     "type": "tvshow",
+     "value": "Cheers"
+    },
+    {
+     "type": "tvshow",
+     "value": "Taxi"
+    },
+    {
+     "type": "tvshow",
+     "value": "Doctor.Who.2005.COMPLETE.720p"
+    },
+    {
+     "type": "tvshow",
+     "value": "Mr. Bean"
+    }
+   ],
+   "callsign": "PLAI"
+  },
+  {
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "id": "shrt0041",
+   "number": 41,
+   "name": "Shorties TV",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvshow",
+     "value": "Shorties"
+    }
+   ],
+   "callsign": "SHOR"
+  },
+  {
+   "id": "film0042",
+   "number": 42,
+   "name": "Squeeze Movies",
+   "type": "movies",
+   "sources": [
+    {
+     "type": "movies",
+     "genre": "Drama"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "midroll": false,
+   "bumps": false,
+   "lineup": "shuffle",
+   "slot": 30,
+   "callsign": "DRM"
+  },
+  {
+   "dayparts": [],
+   "offair": [],
+   "slots": [
+    {
+     "id": "t0",
+     "start": "00:00",
+     "minutes": 30,
+     "days": "all",
+     "sources": [
+      {
+       "type": "tvshow",
+       "value": "Star Trek: The Next Generation (1987)"
+      }
+     ]
+    },
+    {
+     "id": "f0",
+     "start": "00:30",
+     "minutes": 30,
+     "days": "all",
+     "sources": [
+      {
+       "type": "tvshow",
+       "value": "Friends"
+      }
+     ]
+    },
+    {
+     "id": "t3",
+     "start": "03:00",
+     "minutes": 30,
+     "days": "all",
+     "sources": [
+      {
+       "type": "tvshow",
+       "value": "Star Trek: The Next Generation (1987)"
+      }
+     ]
+    },
+    {
+     "id": "f3",
+     "start": "03:30",
+     "minutes": 30,
+     "days": "all",
+     "sources": [
+      {
+       "type": "tvshow",
+       "value": "Friends"
+      }
+     ]
+    },
+    {
+     "id": "t6",
+     "start": "06:00",
+     "minutes": 30,
+     "days": "all",
+     "sources": [
+      {
+       "type": "tvshow",
+       "value": "Star Trek: The Next Generation (1987)"
+      }
+     ]
+    },
+    {
+     "id": "f6",
+     "start": "06:30",
+     "minutes": 30,
+     "days": "all",
+     "sources": [
+      {
+       "type": "tvshow",
+       "value": "Friends"
+      }
+     ]
+    },
+    {
+     "id": "t9",
+     "start": "09:00",
+     "minutes": 30,
+     "days": "all",
+     "sources": [
+      {
+       "type": "tvshow",
+       "value": "Star Trek: The Next Generation (1987)"
+      }
+     ]
+    },
+    {
+     "id": "f9",
+     "start": "09:30",
+     "minutes": 30,
+     "days": "all",
+     "sources": [
+      {
+       "type": "tvshow",
+       "value": "Friends"
+      }
+     ]
+    },
+    {
+     "id": "t12",
+     "start": "12:00",
+     "minutes": 30,
+     "days": "all",
+     "sources": [
+      {
+       "type": "tvshow",
+       "value": "Star Trek: The Next Generation (1987)"
+      }
+     ]
+    },
+    {
+     "id": "f12",
+     "start": "12:30",
+     "minutes": 30,
+     "days": "all",
+     "sources": [
+      {
+       "type": "tvshow",
+       "value": "Friends"
+      }
+     ]
+    },
+    {
+     "id": "t15",
+     "start": "15:00",
+     "minutes": 30,
+     "days": "all",
+     "sources": [
+      {
+       "type": "tvshow",
+       "value": "Star Trek: The Next Generation (1987)"
+      }
+     ]
+    },
+    {
+     "id": "f15",
+     "start": "15:30",
+     "minutes": 30,
+     "days": "all",
+     "sources": [
+      {
+       "type": "tvshow",
+       "value": "Friends"
+      }
+     ]
+    },
+    {
+     "id": "t18",
+     "start": "18:00",
+     "minutes": 30,
+     "days": "all",
+     "sources": [
+      {
+       "type": "tvshow",
+       "value": "Star Trek: The Next Generation (1987)"
+      }
+     ]
+    },
+    {
+     "id": "f18",
+     "start": "18:30",
+     "minutes": 30,
+     "days": "all",
+     "sources": [
+      {
+       "type": "tvshow",
+       "value": "Friends"
+      }
+     ]
+    },
+    {
+     "id": "t21",
+     "start": "21:00",
+     "minutes": 30,
+     "days": "all",
+     "sources": [
+      {
+       "type": "tvshow",
+       "value": "Star Trek: The Next Generation (1987)"
+      }
+     ]
+    },
+    {
+     "id": "f21",
+     "start": "21:30",
+     "minutes": 30,
+     "days": "all",
+     "sources": [
+      {
+       "type": "tvshow",
+       "value": "Friends"
+      }
+     ]
+    }
+   ],
+   "commercials": true,
+   "id": "trek0043",
+   "number": 43,
+   "name": "Trek Pinned",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvshow",
+     "value": "Star Trek: The Next Generation (1987)"
+    }
+   ],
+   "callsign": "TREK"
+  },
+  {
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "id": "chap0044",
+   "number": 44,
+   "name": "Chapter TV",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvshow",
+     "value": "Chapter Show"
+    },
+    {
+     "type": "tvshow",
+     "value": "Credits Show"
+    }
+   ],
+   "callsign": "CHAP"
+  },
+  {
+   "dayparts": [],
+   "offair": [
+    {
+     "start": "12:00",
+     "end": "13:00",
+     "days": "all",
+     "style": "bars"
+    }
+   ],
+   "slots": [],
+   "commercials": true,
+   "id": "sign0045",
+   "number": 45,
+   "name": "Sign-off TV",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvshow",
+     "value": "Taxi"
+    },
+    {
+     "type": "tvshow",
+     "value": "Cheers"
+    }
+   ],
+   "callsign": "SIGN"
+  }
+ ]
+}

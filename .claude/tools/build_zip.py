@@ -1,7 +1,7 @@
 """Test zip without the zip tool (Git Bash has none):
     python .claude/tools/build_zip.py OUT.zip
 Same layout as the release checklist: top folder script.cablebox42/, no dot-folders,
-no __pycache__ or .pyc."""
+no __pycache__ or .pyc, no tools/ (the art scripts, not part of the add-on)."""
 import os
 import sys
 import zipfile
@@ -10,7 +10,8 @@ repo = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 out = os.path.abspath(sys.argv[1])
 with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
     for root, dirs, files in os.walk(repo):
-        dirs[:] = sorted(d for d in dirs if not d.startswith(".") and d != "__pycache__")
+        dirs[:] = sorted(d for d in dirs if not d.startswith(".") and d != "__pycache__"
+                         and not (root == repo and d == "tools"))
         for f in sorted(files):
             if f.startswith(".") or f.endswith(".pyc"):
                 continue

@@ -252,7 +252,7 @@ What airs when:
 - **No commercials?** House breaks: short breaks of about a minute inside the
   show, made of the channel's own promos, promos for other channels' shows
   ("Tonight at 9:00 on Channel 6"), ads for the guide and weather channels and
-  tonight's lineup, rounded off by a station ID. At the end of a slot, house
+  tonight's lineup, and made-up retro commercials, rounded off by a station ID. At the end of a slot, house
   breaks run back to back, then the *Up next* card (at most about a minute and a
   half) right before the next show. See *House breaks* below.
 
@@ -266,9 +266,14 @@ sound and other device settings don't touch the schedules.
 **Your library too:** about 30 seconds after Kodi finishes scanning or cleaning
 the video library, new episodes, movies and shows (on channels whose sources
 cover them) are in the schedules from each channel's next programme, even with
-the TV on. A scan that finds nothing changes nothing. A planned file that has
-gone never means dead air: a stand-in plays and the channel is planned again,
-the show going on with its next episode. New shows no channel airs are
+the TV on. A scan that finds nothing changes nothing. A file the library still
+lists after it was renamed or deleted is never planned (if the library has the
+same episode under its new name, that one airs; kodi.log says *run Clean
+library*). A planned file that has gone never means dead air: the rest of its
+slot airs the same episode from another file the library has, or one stand-in
+from the channel's own shows (the same one after each break and when you tune
+back in), and the channel is planned again, the show going on with its next
+episode. New shows no channel airs are
 mentioned once in the CableBox menu (*OK* opens *Shows without a good channel*).
 
 ### One home channel per show
@@ -344,6 +349,8 @@ Each button closes Settings and opens the tool.
 | **Move shows between channels** | Pick a show or movie, then tick the channels it should air on. It airs exactly there |
 | **Check my videos** | Lists commercials, bumps and videos that can't be used, and why |
 | **Check extras** | Every movie's `Extras` folder (next to the movie's file, or in `VIDEO_TS` / `BDMV`): each video's cleaned-up title, length and *Air* or *Skipped* with the reason, plus totals at the top. Making-of pieces, documentaries, featurettes, interviews and other readably named videos air; deleted/extended/alternate scenes, bloopers, trailers and promos, galleries, music videos, short films, commentaries, anything under a minute and names like `title_t03` are skipped. Everything in an `Extras` subfolder named *Behind the scenes*, *Making of*, *Interviews*, *Featurettes* or *Documentaries* airs. CableBox lists and measures these folders in the background while the TV is off and never changes them. The summary shows *Lengths measured: X of Y*; while some are still to do, **Look now** (*Look for movie extras*) does the rest straight away (progress bar, *Cancel* keeps what's found so far) and says how much there is to air when it finishes. After the list it offers to look for the rest, or to add a Behind the scenes channel when there's enough and you have none. Videos whose length can't be read don't air |
+| **Check skipped episodes** | The TV episodes the last refresh left out for being shorter than *Skip episodes shorter than*, by series, with their length and file. Nothing is moved or hidden in Kodi |
+| **Check chapters** | *Chapters read: X of Y*, with *Read now* (Cancel keeps what's read). Every TV show with how many episodes have act breaks, scene chapters, automatic chapters or none, and how many aren't read yet. Pick a show for *Automatic* (default), *Always use chapters* or *Never use chapters*, or its episodes with where their breaks (and end credits) are |
 | **Clean up my 'In progress' list** | Clears resume points left by channel surfing. You keep the ones you tick |
 | **Refresh schedules (keep my place)** | The same refresh CableBox does by itself when something changes: from each channel's next programme, what's on air keeps playing, every show keeps its next episode. No question asked |
 | **Start series over…** | The only thing that sends shows back to their first episode: *All shows*, *One channel* (the shows it's home to, its own runs and pinned slots) or *One show*, then *Cancel* / *Start over* (Cancel has the focus) |
@@ -455,6 +462,7 @@ Open a channel in the **Channel manager**:
 | Off-air hours | Sign-off times, the off-air screen, sign-off and sign-on clips |
 | **What's on this channel** | A checklist of every show and movie the channel airs. Untick what doesn't belong |
 | Commercials / Break into shows / Bumps | On or off for this channel |
+| Ad flavour | Which retro ads its house breaks run: *Auto* (default: from its type and genres), *General*, *Kids*, *Sports*, *Movies*, *Late night* |
 | Lineup style | Same show same time every day, or shuffle |
 | Programs start on | :00 and :30, the hour, every 15 minutes, or no clock |
 | Channel commercials / bumps folder | Override the global folders for this channel |
@@ -617,6 +625,77 @@ only with a location set), *Tonight's lineup* (what starts next on your channels
 then a station ID card. Never the same thing twice in one break, never the same
 show promoted twice in a row. Your own commercials, bumps and promo clips always
 come first.
+
+**Squeezed credits:** at the end of an episode with chapters, the picture shrinks
+into a window on the left and keeps playing with the show's own sound, while the
+right side says what's up next with a live countdown, like the networks did in
+the '90s. It starts at a credits chapter of its own (*Credits*, *End Credits*, or
+a short last chapter after a short tag), or, where the tag and the credits share
+one short last chapter (most disc rips), 30 seconds before the end (the whole
+chapter if it's under 40 s): the tag keeps playing in the window, so nothing is
+hidden. An episode without chapters (or whose chapters aren't read yet) squeezes
+for its last 30 seconds if it's 15 minutes or longer. The break follows when the
+file ends, as always. Not for movies, shorts, a last chapter over 3 minutes, a show
+a pinned slot cuts off, or the last programme before the station signs off.
+
+The **Up next card** at the end of a show says what comes next: its picture (the
+episode's still or the show's fanart; a film's poster on a dimmed copy of itself;
+else the channel's logo or number), its clear logo or title, *Season 2 · Episode 5*
+or a film's year, rating and running time, the episode title and up to three lines
+of its synopsis, the start time, the channel and a live **Starts in** countdown.
+On Boombox it lists the block's artists. Titles, the channel and the artists are
+never cut off: they shrink, then wrap. Its stripes drift and a glint crosses the
+tab for as long as it's on.
+
+The **station ID card** ("You're watching") shows the channel's logo, its number on
+a red badge, its name on a gold band and the station's tagline (the built-in
+stations each have one) along the bottom. A channel without a logo gets its name
+in big letters in the logo's place and its tagline, or else its genre, on the band.
+The card fills the last seconds of a break, so its rays turn slowly and a glint
+crosses the band for as long as it's on, in both promo styles.
+
+Channel names are never cut off, here or anywhere else (promo and house cards,
+the guide, the standby and off-air screens): a long name gets smaller, then
+takes two lines. A promo for another channel's show says *Name · Channel 6*, or
+*Name · CH 6* when the name is long or already says Channel.
+
+#### Retro ads
+
+House breaks also run **retro ads**: made-up commercials from a cable channel
+that never existed, as cards with a short jingle. Pitch cards (*Crisp-O-Matic*,
+*only $19.99, order now!*), kids' toys and cereal, local businesses (*Big Earl's
+Furniture Barn*), public service announcements (*Sit up straight*) and **Now on
+videocassette** for a movie that really is in your library (its poster, title,
+year and rating). *Settings → Programming → House breaks → Retro ads*: on by
+default; only used when house breaks are.
+
+- They fit the **time of day** (breakfast cereal in the morning, pizza and cars
+  in prime time, the diner and the late-night lawyers after 11), the **season**
+  (tree lots and Earl's Black Friday blowout from mid-November, gyms in January,
+  pools in summer, back-to-school in August) and the channel's **Ad flavour**
+  (*Channel manager → channel → Ad flavour*). *Auto* picks *Movies* for movie
+  channels, *Kids* for channels of children's genres, *Sports* for sports,
+  otherwise *General*. A **Kids** channel only gets ads made for kids.
+- **A long gap at the end of a show** (a short episode in a long slot) becomes a
+  series of normal breaks of 2–3 minutes, the station ID card between them, and
+  the *Up next* card at the end. Shorts packed into one slot get house breaks
+  between them too.
+- **Two retro ads a break** (four on a *Movies* channel), and three in all of
+  the back-to-back breaks at the end of a show (four on *Movies*); the rest of the break is promos,
+  system ads and the station ID card.
+- No ad twice in a break, the same ad not again on a channel within two hours,
+  a running joke (Big Earl's sale) once per break. When every ad that fits has
+  run, the break uses promos instead of repeating one.
+- **Video rental ads** (*Now on videocassette*, Video Village, VideoVault): at
+  most one a break and never in two breaks in a row on a channel (the
+  back-to-back breaks at the end of a show count as one), and at most 1 in 6 of
+  a channel's retro ads on *General* channels, 1 in 3 on *Movies*, 1 in 4 on the
+  others. Past that, another ad that fits takes the slot.
+- *Promo style* sets how cards come in (snappy or soft); *Promo music* off makes
+  them silent. Your own commercials always win: retro ads are house-break content
+  only, and with *Mix in with commercials* a normal break gets at most one house
+  ad, retro or promo.
+- Phone numbers are all 555-0100–0199; brands, places and people are made up.
 
 **See one now:** *Settings → Advanced → Preview promo*: pick a channel, then
 *Up next* or a programme in the next 6 hours, and its promo plays full screen
@@ -921,6 +1000,8 @@ tap to tune. Yatse custom commands can call the `RunScript` actions above.
 | Guide title | *CableBox 42 Program Guide* | |
 | Shows on more than one channel | TV shows on one channel each | Or everything on one channel each, or allow repeats |
 | Short programmes (under 12 min) | Pack several into one time slot | Back-to-back like a cartoon block (next episodes of the same series, or several short films), a break after each. Or *only where I pinned them* (skipped by the automatic schedule while anything longer is available), or *one per time slot* |
+| Commercial breaks at chapter marks | On | An episode with good chapter marks gets its commercial breaks where the original broadcast's act breaks were (Seinfeld's "The Opposite": after the cold open, at 13:27 and before the end tag). Chapters are read once per file, in the background: whenever Kodi is idle, as fast as the drive answers quickly (it slows down at once for a busy or waking drive, and pauses on a busy CPU); with the TV on, the episodes airing in the next 6 hours first, gently; never while you watch something else in Kodi. The episodes they change are planned again. *Chapters read* below the setting shows how far it is; until then, and for files without usable chapters (none, one, evenly spaced automatic ones), breaks are evenly spaced as before. Scene chapters every couple of minutes keep the usual number of breaks, each moved to the nearest mark. The leftover time decides how many breaks there are (at least a minute each). *Tools → Check chapters* shows each show's episodes and lets you set a show to *Always* or *Never* use chapters. Files are only read, never changed |
+| Skip episodes shorter than | 5 min | Off, 2, 5 or 10 min. A TV episode shorter than this (an intro, trailer or recap filed as an episode) is passed over and its series goes on to the next real episode. Not for series whose usual episode is that short (7-minute cartoons still air, packed), not for episodes of unknown length, never movies, short films, music videos or extras, and a pinned slot airs what you pinned. Files are never moved or hidden. *Tools → Check skipped episodes* lists them |
 | AV1 videos | Automatic | Automatic / Always skip / Always play (see below) |
 | Schedule ahead (hours) | 12 | 6, 12 or 24 |
 | Also air extras with unrecognised names | Off | Movie extras named like `title_t03.mkv` or "Bonus 2" count too (see *Check extras*) |
@@ -1143,6 +1224,13 @@ FieldStation42 code. It is not affiliated with that project.
 
 All artwork in this add-on (test card, channel digits, backgrounds, CRT
 overlays, the 90s promo bands and shapes) is original. CableBox 42 plays only media you provide.
+
+The retro ads' backgrounds and jingles are original: drawn and synthesized from
+scratch by the scripts in `tools/retro-ads/` (`make_bg.py`, `make_station_layers.py`, `make_jingle.py`; no
+photos, samples or outside art), released under MPL-2.0 like the rest of the add-on.
+Their lettering is pictures of letters from the **DejaVu** fonts (Bitstream Vera
+license and public domain), made by `tools/retro-ads/make_glyphs.py`. See
+`resources/skins/Default/media/retroads/LICENSE.txt`.
 
 The 90s promo lettering is pictures of letters from **Bebas Neue** by Dharma Type,
 licensed under the [SIL Open Font License 1.1](https://openfontlicense.org); the promo

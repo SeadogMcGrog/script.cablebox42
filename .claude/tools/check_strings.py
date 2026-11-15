@@ -22,5 +22,14 @@ block = src[src.index("HOUSE_LINES = {"):src.index("def house_card")]
 for t in re.findall(r'"([^"]+)"', block):
     if t not in ("guide", "weather") and t not in ids:
         miss.append(("promos.HOUSE_LINES", t))
+# the retro-ad texts (resources/ads/ads.json): tools/retro-ads/check_ads.py checks them in full
+sys.path.insert(0, os.path.join(REPO, "tools", "retro-ads"))
+import check_ads  # noqa: E402
+import json  # noqa: E402
+_d = json.load(open(os.path.join(REPO, "resources/ads/ads.json"), encoding="utf-8"))
+for _ad in _d["ads"]:
+    for _f, _t in check_ads.texts(_ad):
+        if _f not in check_ads.PLAIN_FIELDS and _t not in ids:
+            miss.append(("ads.json " + _ad["id"], _t))
 print("missing:", miss or "none")
 sys.exit(1 if miss else 0)

@@ -1,0 +1,101 @@
+{
+ "version": 2,
+ "channels": [
+  {
+   "id": "guide002",
+   "number": 2,
+   "name": "TV Guide",
+   "type": "guide",
+   "sources": [],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": false,
+   "midroll": false,
+   "bumps": false,
+   "lineup": "shuffle",
+   "slot": 30,
+   "callsign": "TG"
+  },
+  {
+   "id": "keys0003",
+   "number": 3,
+   "name": "The Exploration Channel",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvgenre",
+     "value": "Comedy"
+    },
+    {
+     "type": "tvgenre",
+     "value": "Science Fiction"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "callsign": "EXP",
+   "station": "exploration"
+  },
+  {
+   "id": "beac0004",
+   "number": 4,
+   "name": "The Wonderful World of Reruns After Dark",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvgenre",
+     "value": "Comedy"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "callsign": "WWR",
+   "logo": "none"
+  },
+  {
+   "id": "film0006",
+   "number": 6,
+   "name": "Popcorn TV",
+   "type": "movies",
+   "sources": [
+    {
+     "type": "movies",
+     "genre": "Drama"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "midroll": false,
+   "bumps": false,
+   "lineup": "shuffle",
+   "slot": 30,
+   "callsign": "POP",
+   "station": "popcorn_tv"
+  },
+  {
+   "id": "kids0007",
+   "number": 7,
+   "name": "Kid Stuff",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvgenre",
+     "value": "Comedy"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "callsign": "KID",
+   "ad_flavour": "K"
+  }
+ ]
+}

@@ -1,0 +1,55 @@
+{
+ "version": 2,
+ "channels": [
+  {
+   "id": "guide002",
+   "number": 2,
+   "name": "TV Guide",
+   "type": "guide",
+   "sources": [],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": false,
+   "midroll": false,
+   "bumps": false,
+   "lineup": "shuffle",
+   "slot": 30,
+   "callsign": "TG"
+  },
+  {
+   "id": "chap0011",
+   "number": 11,
+   "name": "Chapter TV",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvshow",
+     "value": "Chapter Show"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "callsign": "CHAP"
+  },
+  {
+   "id": "cred0012",
+   "number": 12,
+   "name": "Credits TV",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvshow",
+     "value": "Credits Show"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "callsign": "CRED"
+  }
+ ]
+}

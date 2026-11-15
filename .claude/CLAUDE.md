@@ -30,6 +30,8 @@ The repository root **is** the add-on folder.
 | `resources/lib/library.py` | Kodi library queries (JSON-RPC); music videos for Boombox (library + folder files, background measuring into `musicvideos.json`) |
 | `resources/lib/musicvideos.py` | Boombox, no Kodi imports: "Artist - Title (Year)" names, caption lines (library > file tags > name), frame-rate groups, rotation |
 | `.claude/make-promo-art.py` | Rebuilds the 90s promo art (`media/promo90s/`: Bebas Neue letter pictures, bands, shapes). Not shipped |
+| `resources/lib/ads.py` | Retro ads in house breaks: data (`resources/ads/ads.json`), picking (time of day, season, Ad flavour, 2-hour no-repeat), card layout lettered with DejaVu letter pictures (`media/retroads`) into skin slots 3000-3399 / 3400-3539 (countdown 3600-3615); placed by `scheduler._retro_block`, shown by `tv.start_retro`; `RunScript(script.cablebox42,preview_ad,P01)` shows one. Jingles: mono 22.05 kHz WAV (`tools/retro-ads/to_wav.py`), never cut short: a card lasts its jingle + 0.45 s, late tune-in = silent card. Video-themed ads (`video` cards, ads with `"theme": "video"`): one a break, not in two breaks in a row (`scheduler._prev_break_video`; a back-to-back run is one break), at most 1 in 6 of a General channel's retro ads in 6 h (1 in 3 Movies, 1 in 4 others; `ads.video_ok`). Two retro ads a house break (4 Movies; `ads.per_break`), 3 in a back-to-back run (4 Movies; `ads.per_run`). A local spot's phone number is left off on kids' channels (`ads.card(e, kids=True)`; `check_ads.py`: no other number on a K ad). A programme-end gap over `GAP_SPLIT` (240 s) is a series of ~150 s breaks (`_house_fill`), each ending on a station ID card with `"sep": 1`; the walk-backs (`_retro_block`, `_prev_break_video`) stop there, and each such break gets `ads.per_break` in all. Every layout fills breaks through `_breaks(ads)` (house breaks where the channel runs them). Blocks carry `"cf"` (`planning_code()`): a refresh keeps the on-air block as an earlier build planned it. Schedule state `retro_stats` counts the planner's retro turns (placed / none / long / repeat) for retro_check. `ads.station_card` is the station ID card (`tv.station_id`, mode `station`, layers in `media/station`; `preview_ad,station:N`). `ads.upnext_card` is the end-of-show Up next card (`tv.up_next`, mode `upnext`, layers in `media/upnext`, countdown relettered each second by `tv.upnext_tick`; `preview_ad,upnext:N[:K]`). Chapter breaks: `probe.chapters` (MKV Chapters, MP4 Nero chpl) read by `library.ChapterReader` in the service's own thread (pace from measured read times: ~1/s to start, up to 5/s idle, backs off at once on a slow read, pauses on /proc/loadavg over 0.9 per CPU; TV on: planned episodes airing in the next 6 h first, at most 1/s, never within 4 s of the TV opening a file (home property `cablebox42.play_at`), the rest never from the playing share; paused while anything else plays or a tool runs; one summary log line a minute; Settings `chapters_status` shows X of Y; Check chapters' *Read now* = `chapters_read_all`; `Chapters.save` merges with the file; the main loop re-plans (`refresh_now`) when planned episodes got chapters, at most every 10 min) into `chapters.json`; `chapters.py` (no Kodi imports) gives act / dense / auto / none and the credits start; `scheduler._chapter_points` uses cached chapters only, `_credits_at` puts `"cr"` (file time) on an episode's last part. `chapter_shows.json`: per-show Always/Never (Check chapters). Squeezed credits: `tv.squeeze_tick` sets the window property `squeeze` when the playing file reaches the last part's `"cr"` (mode stays `video`); the skin draws `media/squeeze/sq_base.jpg` *behind* the video window (id 10), zooms the video window (Conditional zoom 58.33 % about 168,360 → 70,150 1120×630) and slides in the panel (`ads.squeeze_card`, letter slots, countdown in the clock slots); `tv.unsqueeze` on every new item and channel change; captions' full-screen player is left while squeezed (`fs_wanted`). No chapters (or not read yet): `_credits_at` squeezes the final 30 s of a TV episode of 15 min or more that plays to its natural end; `tv.squeeze_tick` never squeezes before an off-air block. `scheduler._skip_short` drops TV episodes under *Skip episodes shorter than* from automatic pools (not short-form series, unknown lengths, singles or pinned slots); skipped files go to `skipped.json` (*Tools → Check skipped episodes*) |
+| `tools/retro-ads/` | Scripts that make the retro-ad backgrounds, jingles, letter pictures, station ID, Up next and squeeze layers (`make_station_layers.py`, `make_upnext_layers.py`, `make_squeeze_layers.py`) and skin slots; `check_ads.py` checks the ad data. Not shipped (build_zip/release zip exclude `tools/`) |
 | `resources/lib/promos.py` | Schedule promos: artwork/plot/theme/Extras lookup (read-only); slots are placed in `scheduler._fill`, shown by `tv.start_promo` |
 | Others | `planner.py`, `weather.py`, `progress.py`, `presets.py`, `seasons.py`, `probe.py`, `logos.py`, `widget.py`, `kodiutil.py` |
 | `resources/language/resource.language.en_gb/strings.po` | All UI strings |
@@ -97,6 +99,57 @@ A task often starts as "implement `briefs\<name>.md`".
   ignored (labels fall back to the default font); only the active skin's fonts work. The 90s
   promo lettering is therefore pictures of letters (`media/promo90s/glyphs`) placed by
   `promos.apply_card` into fixed image slots in the skin XML (ids 1300-1527).
+- **Channel names are never cut off** (no "..."): Kodi labels can't shrink text, so each
+  name label has a variant per skin font plus a two-line one, and Python picks one with
+  `promos.fit_font(text, width, ladder, two)` (Noto Sans widths, `promos._px`), setting a
+  property the variants' `<visible>` test (`promo_kicker_f90` / `_fm`, `ch_name_fsb` /
+  `_foa`, the guide's `nfit`, `sid_label_fit`). A new place that shows a channel name
+  needs the same. Fonts are Estuary's; other skins' sizes may differ.
+- **An image slot emptied with `setImage("")` while its group is hidden keeps showing its old
+  picture** when the group shows again (Kodi 21): the squeeze and a break's first card after a
+  programme are lettered while their group is hidden. Letter slots are emptied *and*
+  `setVisible(False)`, and `setVisible(True)` when used (`ads.Slots.fill`, `promos._fill`).
+- **Never open a file just as the static clip ends:** Kodi's end-of-playlist handling for
+  the clip then closes the file just opened (0.35 s of playback, `CVideoPlayer::OnExit`, then
+  black until the watchdog). The clip is 2.5 s long so the 0.55 s hold always ends well before
+  it. A file that stops within `EARLY_STOP` s of opening is reopened at once (`tv.early_stop`),
+  a second stop gets the stand-in (not marked unplayable). EDL files' "Error adding mute"
+  warnings are harmless (rig: 9 mid-file starts around overlapping cuts and mutes all played).
+- **Tuning in mid-programme:** Kodi takes a moment to open and seek (2-3 s in the rig), and starts
+  at the keyframe before the asked position when that's more than ~16 s back (the rig's
+  25-second-GOP test media; real encodes have keyframes every 0.5-10 s). `tv.play` adds a learned
+  start delay (`start_lag`: median of the last 10 tune-ins' open + seek time, 0-3 s; a sample
+  more than 1.5 s off is a keyframe landing and is left out unless 3 in a row agree); the
+  keyframe part is Kodi's. Only real tune-ins get it: CableBox's own start of a part after a
+  break (`PART_START`) starts exactly at the mark.
+- **The black cover (`tv.set_cover`) at every start partway in:** a tune-in keeps it until
+  the first captions check has run (`Captions.checked_at`) and, with CC off, until Kodi
+  reports its remembered subtitles off (1.5 s at most); a part after a break keeps it until
+  the picture reaches the mark. Never trust `getTime()` before AV start: Kodi reports the
+  position it was asked for (then the old file's). The cover is mirrored to the Home
+  property `cablebox42.cover` for `cc_off_check.py`, which fails a round on any subtitle
+  sample not under it. Run `cc_off_check.py setup` before every run: each CC-off round makes
+  Kodi save "subtitles off" in the film's per-file memory, and a worn fixture turns the
+  re-show test into a viewer's choice (CableBox then rightly switches CC on).
+- **The CC setting (`state.json` cc_on) changes only through CableBox's own CC controls**
+  (`Captions.switch` / `set_track` / `set_off` / `load_file`). What `_watch` sees from
+  outside - Kodi re-applying its per-file "subtitles on", a phone remote, Kodi's menu - is
+  for that programme only (`allowed` / `muted` sets), never the setting: Kodi's own re-show
+  used to switch CC on for good (the Godfather setup). `cc_off_check.py` fails a round when
+  the CC setting has changed.
+- **guide_check.py switches the TV off with the Stop key first:** in captions mode (Kodi's
+  full-screen player under CableBox's overlay dialog) Kodi refuses ActivateWindow(home)
+  ("active modal dialogs") and the guide never comes up.
+- **House promos never name the show the promo before named:** on a marathon channel the
+  only show for hours is also the next one; `_resolve_promos` turns it into another
+  channel's promo (`_house_cross_for`) or, failing that, the station ID card (`pt` 0).
+- **A part ending mid-file (chapter mark or timed break) ends by the picture, not the clock**
+  (`tv.end_at_mark`): the switch to the break is asked for when `getTime()` reaches the mark
+  less `SWITCH_LEAD` (Kodi's switch time, measured in the rig), and `early_to` keeps the clock
+  from bringing the part back until its slot ends. Without it the picture ran a few tenths
+  ahead of the clock and ~0.5 s of the next act showed before the break. Rig check:
+  `break_frames.py` films the screen around each break of the colour-act episodes
+  (`rig/mkacts.sh`, `lineup-acts.json`): no frame of the wrong act on either side.
 - **Image controls added from Python are unreliable**: `addControls` + a visible condition +
   entrance animations drew nothing until something else was added later. Use controls
   declared in the skin XML and fill them from Python (`setImage`, `setPosition`).
@@ -234,6 +287,25 @@ A task often starts as "implement `briefs\<name>.md`".
   other schedule, repeats and system-ad availability; `ab.sh save|run|diff` plans two
   builds from the same saved state and compares them entry by entry; `shots_at.sh`
   screenshots at given times; `check_strings.py` checks every `_()` text is in strings.po.
+  Retro ads: `retro_check.py [HOURS] [-v]` (rig) checks repeats, the 2-hour rule, running
+  gags, kids' channels, seasons, that videocassette cards name library movies and the
+  per-break caps (2, 4 Movies; 3 a run, 4 Movies), video-themed limits (one a break, not two breaks running, 1 in 6 General / 1 in 3 Movies /
+  1 in 4 others; prints per channel ads per break, video shares and `retro_stats` fallbacks);
+  `lineup-retro.json` adds a kids-flavour channel; `lineup-names.json` is the same with long
+  names (The Exploration Channel with its logo, a 40-character name without one). The rig's `lineup` turns the test
+  commercials on: `setting commercials_path=` for house breaks.
+  `plan_check.sh ZIP LINEUP OUT [refresh]` (Git Bash; `SHORTS=2` for one short per slot) installs,
+  plans 24 h and runs retro_check, gaps, house_check and `guide_check.py` (every channel has a
+  guide row; no "tick failed" in kodi.log), then optionally Tools > Refresh schedules and
+  retro_check again on the files it left. `retro_check.py --data DIR --db FILE` reads a real
+  Kodi's schedules read-only (blocks planned by an earlier build set aside). `lineup-shorts.json`
+  adds Shorties TV (the rig's `shorts` command makes the 8-minute Shorties show) and All Movies
+  (the rig's 2-minute films air as *Short Subjects*); `lineup-upnext.json` adds a Boombox channel
+  on `/root/library/mv/` (the rig's `mvs` command makes 14 music videos). `SKIP=0..3` sets
+  *Skip episodes shorter than* for `plan_check.sh`.
+  Squeezed credits: `squeeze_check.py [HOURS] [-v]` (rig) checks every planned episode's squeeze start against the rules (chapters / final 30 s fallback / none for movies, under 15 min, a pinned-slot cut); `lineup-squeeze.json` has each case (set Sign-off TV's off-air window just ahead to check live that nothing squeezes before off-air). `lineup-bulk.json`: 12 channels over the 60 *Bulk Show* folders that `/mnt/g/CableBox42/rig/mkbig.sh` makes (4,200 episodes with act-break chapters; move them out of `/root/library/tv` and clean the library after).
+  `shadow_check.py` (Windows or rig) fails on a function whose local variable hides a module it
+  uses (the retro14 guide bug: `promos = []` in `fill_guide`).
 - **Fresh start without rebuilding:** `reset-profile` wipes only the Kodi profile and
   the test library (Kodi stays), then makes and scans a new library; install again.
 - **Snapshots:** `baseline.tar` is the clean rig (library, commercials, no CableBox).
@@ -256,8 +328,8 @@ A task often starts as "implement `briefs\<name>.md`".
    (≤1500 chars total) and of `changelog.txt`.
 2. Update README/HOWTO if behaviour or menus changed.
 3. Build the zip from a clean tree, top folder `script.cablebox42/`, excluding
-   dot-folders and caches:
-   `zip -qr -X script.cablebox42-X.Y.Z.zip script.cablebox42 -x "*/.*" "*/__pycache__/*" "*.pyc"`
+   dot-folders, caches and `tools/` (the retro-ad art scripts):
+   `zip -qr -X script.cablebox42-X.Y.Z.zip script.cablebox42 -x "*/.*" "*/__pycache__/*" "*.pyc" "script.cablebox42/tools/*"`
 4. Run `kodi-addon-checker --branch omega` on the unzipped build (`kodi21-test-vm.sh check ZIP`):
    0 problems; the only warning allowed is the forum link's 403 (see Test rig).
 5. Install the zip in Kodi 21 and smoke-test (TV on, flip channels, turn off).

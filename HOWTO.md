@@ -79,8 +79,8 @@ in Kodi → *Information*. To fix one: *Information → Refresh*, or edit its
 **Optional extras to gather** (any time later is fine):
 
 - A folder of **old commercials** (15/30/60-second clips work best). Without
-  one, channels get *house breaks*: short breaks of promos for your own shows and
-  ads for the guide and weather channels, made from your library
+  one, channels get *house breaks*: short breaks of promos for your own shows,
+  ads for the guide and weather channels and made-up retro commercials
 - A folder of **bumps** ("We'll be right back") and **station IDs**
 - A folder of **background music** for the guide and weather channels
   (smooth jazz and elevator music are the classics)
@@ -373,6 +373,7 @@ Main menu → **Channel manager**.
 | **What's on this channel** | Checklist of every show it airs — untick to hide |
 | Commercials / Bumps on/off | Per channel |
 | Break into shows for commercials | Mid-show breaks (off for movie channels by default) |
+| Ad flavour | Which retro ads its house breaks run: *Auto*, *General*, *Kids*, *Sports*, *Movies*, *Late night* |
 | Lineup style | *Same show same time every day*, or *Shuffle* |
 | Programs start on | :00 and :30, the hour, every 15 minutes, or no clock |
 | Channel commercials / bumps folder, Station ID clips | Folders for this channel only (station folders are usually easier) |
@@ -733,8 +734,9 @@ Run the same tool again to remove it.
 - **Subtitle files next to the video** (`Show S01E01.en.srt`) are preferred over
   the file's own tracks. `.forced.` files are treated as forced, as in Kodi.
 - Until you pick a language, CableBox uses Kodi's *Preferred subtitle language*.
-- **Forced subtitles** (foreign-language scenes in Blu-ray rips) stay on even
-  with captions off — like subtitles burned into a broadcast.
+- **Captions off means no subtitles at all** — forced subtitles and subtitle
+  files next to the video too, even when Kodi remembers subtitles as on for
+  that file. Switch captions on to see them.
 - **Broadcast (CEA-608) captions** are picked up when they appear a few seconds in.
 - The banner shows **CC** when a programme has real captions.
 
@@ -816,6 +818,47 @@ with a channel: channel numbers start at 1, and 007 still tunes channel 7. With
 Developer tools off, 0 0 0 says *Channel 0 not available*, as always.
 
 ---
+
+
+### Retro ads: made-up commercials when you have none
+
+With no commercials folder, house breaks also run made-up retro commercials:
+pitch cards with a jingle, local businesses, public service announcements and
+*Now on videocassette* cards for movies in your library. Nothing to set up.
+
+- **Turn them off:** *Settings → Programming → House breaks → Retro ads*. Breaks
+  go back to promos, guide and weather ads and station IDs.
+- **A kids' channel that gets grown-up ads:** *Channel manager → the channel →
+  Ad flavour → Kids*. It then gets only toys, cereal and kid-safe announcements.
+  *Auto* already does this for channels of children's genres.
+- **More "now on video" on a movie channel:** *Ad flavour → Movies* (Auto does
+  it for movie channels): up to 1 in 3 of its retro ads (General channels 1 in 6,
+  the others 1 in 4), never more than one a break or in two breaks in a row.
+- **Squeezed credits** need nothing: episodes whose chapters mark the end credits
+  shrink into a window at the credits while *Up next* shows what's coming. To see
+  which episodes do, *Tools → Check chapters* lists "credits at ..." for them.
+- **Breaks in the middle of a scene:** with *Commercial breaks at chapter marks*
+  on (the default), episodes with act-break chapters (most disc rips in MKV) get
+  their breaks on the act breaks. *Tools → Check chapters* shows which episodes
+  have them; a show can be set to *Always* or *Never* use chapters there. A
+  new library takes a while to read in the background; *Read now* there does
+  it all at once.
+- **An odd short file airs as an episode** (an intro or trailer in a show's
+  folder): *Settings → Programming → Skip episodes shorter than* (5 min by
+  default) passes over it; *Tools → Check skipped episodes* lists what's skipped.
+- **The Up next card** shows the next programme's picture, title, episode, synopsis
+  and a live countdown; preview it with `RunScript(script.cablebox42,preview_ad,upnext:4)`
+  (channel 4's next programme; `upnext:4:2` the one after).
+- **The station ID card** at the end of a break uses the channel's logo (the same
+  one as the corner bug) and the built-in station's tagline. No logo: the name
+  takes the logo's place. Long names shrink, then wrap; they are never cut off.
+- **How many:** two retro ads a break (four on movie channels), three at most in
+  the run of breaks at the end of a show (four on movie channels). Promos and system ads fill the rest.
+- Changes apply from each channel's next programme once you close the menu.
+- **See one card now** (from a keymap or a favourite, with the TV off):
+  `RunScript(script.cablebox42,preview_ad,P01)`; ids are in
+  `resources/ads/ads.json`, or `video` for a videocassette card;
+  `preview_ad,station:4` shows channel 4's station ID card for 20 seconds.
 
 ## 15. The guide channel and the weather channel
 
@@ -988,8 +1031,11 @@ Very likely AV1 on a box without AV1 hardware decoding. *Settings → Programmin
 
 **"Technical difficulties, please stand by."**
 A file wouldn't open (missing, damaged, or an offline share). CableBox fills
-the time with another show and keeps that file off the air for 3 days; *Check
-my videos* lists such files and can put them back once fixed.
+the time with another show from the same channel and keeps that file off the
+air for 3 days; *Check my videos* lists such files and can put them back once
+fixed. If you renamed or deleted files, run Kodi's *Clean library* (Settings →
+Media → Library): until then the library lists the old names, and CableBox
+skips them when planning.
 
 **The guide says "Updating listings…"**
 Normal right after installing or a big change — listings appear within a minute

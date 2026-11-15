@@ -27,7 +27,7 @@ for cid, d in sched.items():
     def check(brk):
         if not brk:
             return
-        house = [e for e in brk if e.get("h")]
+        house = [e for e in brk if e.get("h") or e["k"] == "retro"]     # retro ads count as house ads
         ads = [e for e in brk if e["k"] == "ad"]
         nxt = [e for e in brk if e["k"] == "card" and e.get("sub") == "next"]
         if nxt and nxt[-1]["e"] - nxt[-1]["s"] > 95:

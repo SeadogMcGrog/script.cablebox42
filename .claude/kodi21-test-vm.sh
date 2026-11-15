@@ -306,6 +306,35 @@ make_library() {
   make_ads
 }
 
+make_shorts() {
+  # a show of 8-minute episodes (Shorties, Animation): in 30-minute slots it leaves 22-minute
+  # gaps at every programme's end (lineup-shorts.json, retro_check.py's gap figures)
+  in_root 'set -e; d=/root/library/tv/Shorties; mkdir -p "$d"
+    printf "<tvshow><title>Shorties</title><genre>Animation</genre><studio>Test</studio><plot>Short cartoons.</plot></tvshow>\n" > "$d/tvshow.nfo"
+    ffmpeg -loglevel error -y -f lavfi -i "color=c=teal:s=1280x720,drawtext=text=Shorties:fontsize=90:fontcolor=white:x=(w-tw)/2:y=(h-th)/2" -frames:v 1 "$d/fanart.jpg"
+    for e in 1 2 3 4; do
+      f="$d/Shorties S01E0$e"
+      [ -f "$f.mp4" ] || ffmpeg -loglevel error -y -f lavfi -i "testsrc=s=320x240:r=10:d=480" -f lavfi -i "sine=frequency=$(( 300 + e * 50 )):duration=480" \
+        -c:v libx264 -preset ultrafast -crf 40 -c:a aac -b:a 32k "$f.mp4"
+      printf "<episodedetails><title>Shorties episode %d</title><season>1</season><episode>%d</episode><plot>A short one, number %d.</plot></episodedetails>\n" $e $e $e > "$f.nfo"
+    done
+    echo "Shorties: $(ls $d/*.mp4 | wc -l) episodes"'
+}
+
+make_mvs() {
+  # 14 short music videos in a folder ("Artist - Title (Year).mp4", 25 fps) for a Boombox
+  # channel (lineup-upnext.json: {"type": "musicvideos", "paths": ["/root/library/mv/"]})
+  in_root 'set -e; M=/root/library/mv; mkdir -p "$M"; i=0
+    for a in "Josh Groban|Believe" "Savage Garden|Truly" "98°|Invisible Man" "Ace of Base|Signs" "Hanson|Weird" \
+             "Natalie Imbruglia|Torn Paper" "The Cardigans|Lovefool Two" "Chumbawamba|Up Again" "Third Eye Blind|Jumper Cables" \
+             "Semisonic|Closing" "Sixpence None the Richer|Kiss" "Lou Bega|Mambo" "Shania Twain|Still" "Everclear|Wonderful Day"; do
+      i=$((i + 1)); f="$M/${a%%|*} - ${a#*|} (199$((i % 10))).mp4"
+      [ -f "$f" ] || ffmpeg -loglevel error -y -f lavfi -i "testsrc2=s=320x240:r=25:d=90" -f lavfi -i "sine=frequency=$(( 300 + i * 30 )):duration=90" \
+        -c:v libx264 -preset ultrafast -crf 40 -c:a aac -b:a 32k "$f"
+    done
+    echo "music videos: $(ls "$M" | wc -l)"'
+}
+
 make_ads() {
   # commercials (15 and 30 s): without them breaks have no room and programmes no mid-show breaks
   in_root 'set -e; A=/root/library/ads; rm -rf $A; mkdir -p $A
@@ -479,6 +508,8 @@ case "${1:-}" in
   ads) make_ads ;;
   scan) scan ;;
   library) make_library; scan ;;
+  mvs) make_mvs ;;
+  shorts) make_shorts; in_root "kodi-send --action='UpdateLibrary(video,/root/library/tv/)' >/dev/null"; sleep 15; status ;;
   zap) zap "${2:-30}" "${3:-3}" ;;
   shot) shot "${2:-shot.png}" ;;
   rec) shift; rec "$@" ;;

@@ -1,0 +1,13 @@
+{
+ "version": 2,
+ "channels": [
+  {"id": "guide002", "number": 2, "name": "TV Guide", "type": "guide", "sources": [], "dayparts": [], "offair": [],
+   "slots": [], "commercials": false, "midroll": false, "bumps": false, "lineup": "shuffle", "slot": 30, "callsign": "TG"},
+  {"id": "comd0003", "number": 3, "name": "Comedy Corner", "type": "network",
+   "sources": [{"type": "tvgenre", "value": "Comedy"}],
+   "dayparts": [], "offair": [], "slots": [], "commercials": true, "callsign": "LOL", "exclude": ["Cheers"]},
+  {"id": "west0004", "number": 4, "name": "Frontier", "type": "network",
+   "sources": [{"type": "tvgenre", "value": "Western"}, {"type": "tvgenre", "value": "Drama"}],
+   "dayparts": [], "offair": [], "slots": [], "commercials": true, "callsign": "FRT"}
+ ]
+}

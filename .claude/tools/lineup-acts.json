@@ -1,0 +1,38 @@
+{
+ "version": 2,
+ "channels": [
+  {
+   "id": "guide002",
+   "number": 2,
+   "name": "TV Guide",
+   "type": "guide",
+   "sources": [],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": false,
+   "midroll": false,
+   "bumps": false,
+   "lineup": "shuffle",
+   "slot": 30,
+   "callsign": "TG"
+  },
+  {
+   "id": "acts0050",
+   "number": 50,
+   "name": "Act TV",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvshow",
+     "value": "Act Show"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "callsign": "ACT"
+  }
+ ]
+}
