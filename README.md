@@ -95,7 +95,8 @@ hardware video decoding works exactly as it does for the rest of your library.
   episode's still, the show's logo and its theme music, made from your own
   library (opt-in).
 - **Guide channel.** A Prevue-style grid that crawls up without stopping: call
-  letters, titles with year, rating, *(CC)* and *(Stereo)*, and cable-company ads.
+  letters, titles with year, rating, *(CC)* and *(Stereo)*, colour-coded movies,
+  sports and kids' shows, and cable-company ads.
 - **Weather channel.** Current conditions, a text forecast, a 4-day outlook and
   the next few hours, with a ticker and optional background music.
 - **The look of a CRT.** Static and a static sound between channels, a glowing
@@ -923,6 +924,11 @@ speed* sets the pace (Slow, Normal or Fast: about 3, 2.5 or 1.7 seconds a row).
   it's never cut off. The details are read from the library in the background just
   after the TV turns on, so they can appear a few seconds after the titles. Files
   are never opened for this.
+- **Colours:** movies have a red cell, sports a green one and kids' programmes an
+  amber one; everything else stays on the guide's blue. Sports and kids come from
+  the library's genres (*Sport*, *Football*...; *Animation*, *Family*, *Children*,
+  *Kids*); everything on a kids' channel (Ad flavour *Kids*, Chameleon, Animation
+  Station) counts as kids.
 - **Your own ads:** put a `guide.txt` in the guide channel's station folder, one ad
   per line (lines starting with `#` are skipped). They're used before the built-in
   ones. CableBox only reads the file.

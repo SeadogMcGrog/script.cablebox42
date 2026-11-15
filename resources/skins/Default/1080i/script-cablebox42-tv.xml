@@ -1455,13 +1455,58 @@
                         <visible>String.IsEqual(ListItem.Property(rt),ch)</visible>
                     </control>
                     <control type="image">
+                        <left>412</left><top>6</top><width>472</width><height>76</height>
+                        <texture colordiffuse="FF6A2A2A">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c1k),movie)</visible>
+                    </control>
+                    <control type="image">
+                        <left>412</left><top>6</top><width>472</width><height>76</height>
+                        <texture colordiffuse="FF1F5A34">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c1k),sports)</visible>
+                    </control>
+                    <control type="image">
+                        <left>412</left><top>6</top><width>472</width><height>76</height>
+                        <texture colordiffuse="FF6B4A10">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c1k),kids)</visible>
+                    </control>
+                    <control type="image">
+                        <left>892</left><top>6</top><width>472</width><height>76</height>
+                        <texture colordiffuse="FF6A2A2A">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c2k),movie)</visible>
+                    </control>
+                    <control type="image">
+                        <left>892</left><top>6</top><width>472</width><height>76</height>
+                        <texture colordiffuse="FF1F5A34">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c2k),sports)</visible>
+                    </control>
+                    <control type="image">
+                        <left>892</left><top>6</top><width>472</width><height>76</height>
+                        <texture colordiffuse="FF6B4A10">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c2k),kids)</visible>
+                    </control>
+                    <control type="image">
+                        <left>1372</left><top>6</top><width>452</width><height>76</height>
+                        <texture colordiffuse="FF6A2A2A">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c3k),movie)</visible>
+                    </control>
+                    <control type="image">
+                        <left>1372</left><top>6</top><width>452</width><height>76</height>
+                        <texture colordiffuse="FF1F5A34">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c3k),sports)</visible>
+                    </control>
+                    <control type="image">
+                        <left>1372</left><top>6</top><width>452</width><height>76</height>
+                        <texture colordiffuse="FF6B4A10">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c3k),kids)</visible>
+                    </control>
+                    <control type="image">
                         <left>0</left><top>2</top><width>1840</width><height>84</height>
                         <texture colordiffuse="FF101A52">white.png</texture>
                         <visible>String.IsEqual(ListItem.Property(rt),hdr)</visible>
                     </control>
                     <control type="image">
                         <left>0</left><top>2</top><width>1840</width><height>84</height>
-                        <texture colordiffuse="FF5E1734">white.png</texture>
+                        <texture colordiffuse="FF46226E">white.png</texture>
                         <visible>String.IsEqual(ListItem.Property(rt),ad)</visible>
                     </control>
                     <control type="label">
@@ -1592,13 +1637,58 @@
                         <visible>String.IsEqual(ListItem.Property(rt),ch)</visible>
                     </control>
                     <control type="image">
+                        <left>412</left><top>6</top><width>472</width><height>76</height>
+                        <texture colordiffuse="FF6A2A2A">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c1k),movie)</visible>
+                    </control>
+                    <control type="image">
+                        <left>412</left><top>6</top><width>472</width><height>76</height>
+                        <texture colordiffuse="FF1F5A34">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c1k),sports)</visible>
+                    </control>
+                    <control type="image">
+                        <left>412</left><top>6</top><width>472</width><height>76</height>
+                        <texture colordiffuse="FF6B4A10">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c1k),kids)</visible>
+                    </control>
+                    <control type="image">
+                        <left>892</left><top>6</top><width>472</width><height>76</height>
+                        <texture colordiffuse="FF6A2A2A">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c2k),movie)</visible>
+                    </control>
+                    <control type="image">
+                        <left>892</left><top>6</top><width>472</width><height>76</height>
+                        <texture colordiffuse="FF1F5A34">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c2k),sports)</visible>
+                    </control>
+                    <control type="image">
+                        <left>892</left><top>6</top><width>472</width><height>76</height>
+                        <texture colordiffuse="FF6B4A10">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c2k),kids)</visible>
+                    </control>
+                    <control type="image">
+                        <left>1372</left><top>6</top><width>452</width><height>76</height>
+                        <texture colordiffuse="FF6A2A2A">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c3k),movie)</visible>
+                    </control>
+                    <control type="image">
+                        <left>1372</left><top>6</top><width>452</width><height>76</height>
+                        <texture colordiffuse="FF1F5A34">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c3k),sports)</visible>
+                    </control>
+                    <control type="image">
+                        <left>1372</left><top>6</top><width>452</width><height>76</height>
+                        <texture colordiffuse="FF6B4A10">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c3k),kids)</visible>
+                    </control>
+                    <control type="image">
                         <left>0</left><top>2</top><width>1840</width><height>84</height>
                         <texture colordiffuse="FF101A52">white.png</texture>
                         <visible>String.IsEqual(ListItem.Property(rt),hdr)</visible>
                     </control>
                     <control type="image">
                         <left>0</left><top>2</top><width>1840</width><height>84</height>
-                        <texture colordiffuse="FF5E1734">white.png</texture>
+                        <texture colordiffuse="FF46226E">white.png</texture>
                         <visible>String.IsEqual(ListItem.Property(rt),ad)</visible>
                     </control>
                     <control type="label">

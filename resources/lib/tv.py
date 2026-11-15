@@ -2446,19 +2446,22 @@ class TVWindow(xbmcgui.WindowXML):
             t = e["e"] + 0.001
         return ""
 
-    def listing(self, sched, b, prefix, width):
-        """(text, font, two-line text) of one listing cell: title and details."""
+    def listing(self, sched, b, prefix, width, kids_ch=False):
+        """(text, font, two-line text, colour category) of one listing cell."""
         title = prefix + library.on_air(b["t"])
-        extra = []
+        extra, cat = [], ""
         if b.get("k") == "show":
             info = library.listing_info(self.block_file(sched, b))
             if info and info.get("kind") == "movie" and info.get("year") and \
                     title.endswith("(%s)" % info["year"]):
                 info = dict(info, year=0)             # a shared name keeps its year in the title
             extra = guide.details(info)
-        return guide.fit_cell(title, extra, width)
+            cat = guide.category(info, kids_ch)
+        return guide.fit_cell(title, extra, width) + (cat,)
 
-    ROW_KEYS = ("nfit", "name2", "rowbg", "ad", "c1", "c1f", "c12", "c2", "c2f", "c22", "c3", "c3f", "c32")
+    GUIDE_MIN_ROWS = 10       # the list shows 8 rows; fewer items and Kodi adds copies of its own
+    ROW_KEYS = ("nfit", "name2", "rowbg", "ad", "c1", "c1f", "c12", "c1k", "c2", "c2f", "c22", "c2k",
+                "c3", "c3f", "c32", "c3k")
 
     def fill_guide(self, now):
         t0 = scheduler.floor_slot(now, 1800)
@@ -2486,6 +2489,7 @@ class TVWindow(xbmcgui.WindowXML):
                 props["c1"] = _("Updating listings...")
                 props["c1f"] = "font27"
             else:
+                kids_ch = guide.kids_channel(ch)
                 for i, c in enumerate(cols):
                     b = sched.block_at(c + 1)
                     if not b:
@@ -2493,8 +2497,9 @@ class TVWindow(xbmcgui.WindowXML):
                     prefix = ""
                     if b["s"] < c - 60:
                         prefix = _("(cont.) ") if i == 0 else ">>> "
-                    txt, font, two = self.listing(sched, b, prefix, guide.CELL_W[i])
-                    props.update({"c%d" % (i + 1): txt, "c%df" % (i + 1): font, "c%d2" % (i + 1): two})
+                    txt, font, two, cat = self.listing(sched, b, prefix, guide.CELL_W[i], kids_ch)
+                    props.update({"c%d" % (i + 1): txt, "c%df" % (i + 1): font, "c%d2" % (i + 1): two,
+                                  "c%dk" % (i + 1): cat})
                 for b in sched.blocks_between(now, now + 4 * 3600):
                     if b["s"] > now and b.get("k") == "show" and b["e"] - b["s"] >= 3600:
                         guide_promos.append(_("Coming up at %s on %s %s:  %s") % (
@@ -2513,6 +2518,9 @@ class TVWindow(xbmcgui.WindowXML):
         for _k, _l, _l2, p in rows:
             for k in self.ROW_KEYS:
                 p.setdefault(k, "")
+        # a wraplist shorter than the screen pads itself with copies that an in-place
+        # refresh doesn't reach: repeat the cycle ourselves instead
+        rows = rows * int(math.ceil(float(self.GUIDE_MIN_ROWS) / len(rows)))
         shape = [r[0] for r in rows]
         try:
             lst = self.getControl(50)

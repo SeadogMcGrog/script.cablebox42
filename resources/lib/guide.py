@@ -16,7 +16,7 @@ CALL_W = 270
 LADDER_CALL = (("font37", 37), ("font27", 27), ("font12", 25), ("font10", 23))
 LADDER_CELL = (("font27", 27), ("font12", 25))
 SPEEDS = (3.0, 2.5, 1.7)            # seconds per row: Slow / Normal / Fast
-_SKIP_WORDS = ("the", "and", "of", "&", "a")
+_SKIP_WORDS = ("the", "and", "of", "&", "a", "channel", "network")
 _OWN_ADS = {}                       # folder -> (read at, lines)
 _OWN_TTL = 600
 
@@ -31,7 +31,7 @@ def speed(index):
 def short_call(name, call):
     """The channel cell's label: the station's call letters, else a short
     uppercase abbreviation of the name (at most 5 letters): 'Shorties TV' -> 'STV',
-    'Chameleon' -> 'CHAM', 'Red Thread TV' -> 'RTTV'."""
+    'Chameleon' -> 'CHAM', 'Red Thread TV' -> 'RTTV', 'The Exploration Channel' -> 'EXPL'."""
     call = (call or "").strip()
     if call:
         return call.upper()
@@ -116,6 +116,32 @@ def own_ads(folder):
             break
     _OWN_ADS[folder] = (time.time(), lines)
     return lines
+
+
+KIDS_GENRES = ("animation", "family", "children", "children's", "kids")
+SPORTS_GENRES = ("sport", "sports", "football", "soccer", "basketball", "baseball", "hockey", "boxing",
+                 "wrestling", "motorsport", "golf", "tennis")
+KIDS_STATIONS = ("chameleon", "animation_station")
+
+
+def kids_channel(ch):
+    """A kids' channel for the guide's colours: Ad flavour Kids (set or automatic),
+    or a built-in kids' station (Chameleon with its CAM Jr. block, Animation Station)."""
+    from . import ads
+    return ch.get("station") in KIDS_STATIONS or ads.flavour(ch) == "K"
+
+
+def category(info, kids_ch=False):
+    """The listing cell's colour: 'movie' (any movie), 'sports', 'kids' or '' (the row's blue).
+    From the library's genres; on a kids' channel every programme counts as kids."""
+    if info and info.get("kind") == "movie":
+        return "movie"
+    genres = [g.lower() for g in (info or {}).get("genre") or []]
+    if any(g in SPORTS_GENRES for g in genres):
+        return "sports"
+    if kids_ch or any(g in KIDS_GENRES for g in genres):
+        return "kids"
+    return ""
 
 
 def ad_count(channels):
