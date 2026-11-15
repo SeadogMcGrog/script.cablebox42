@@ -6335,3 +6335,23 @@ msgstr ""
 msgctxt "#34209"
 msgid "Run the TV music test first"
 msgstr ""
+
+msgctxt "#34210"
+msgid "Music test (Step 0)"
+msgstr ""
+
+msgctxt "#34211"
+msgid "Temporary: tunes from a video channel to test songs and back, and logs it"
+msgstr ""
+
+msgctxt "#34212"
+msgid "Start on this channel; pick one showing a film"
+msgstr ""
+
+msgctxt "#34213"
+msgid "Kodi's own music player"
+msgstr ""
+
+msgctxt "#34214"
+msgid "The same songs without CableBox, for comparison (after the TV test)"
+msgstr ""

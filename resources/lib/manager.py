@@ -2861,6 +2861,26 @@ def watch_from_menu(channel=None):
     return tv.run(channel) in ("back", "menu")
 
 
+def music_test_menu():
+    """Music channels Step 0 (musictest.py), temporary: pick the video channel to
+    start on, or the same songs in Kodi's own player.  False: go to Kodi."""
+    chans = [c for c in C.load() if c.get("type") not in ("guide", "weather")]
+    rows = [xbmcgui.ListItem("%d  %s" % (c["number"], c["name"]),
+                             _("Start on this channel; pick one showing a film")) for c in chans]
+    rows.append(xbmcgui.ListItem(_("Kodi's own music player"),
+                                 _("The same songs without CableBox, for comparison (after the TV test)")))
+    rows.append(xbmcgui.ListItem(_("Cancel"), ""))
+    i = D.select(_("Music test (Step 0)"), rows, useDetails=True)
+    if i < 0 or i == len(rows) - 1:
+        return True
+    if i == len(chans):
+        from . import musictest
+        musictest.run_kodi_player()
+        return True
+    from . import tv
+    return tv.run(chans[i]["number"], music_test=True) in ("back", "menu")
+
+
 def main_menu():
     home = xbmcgui.Window(10000)
     home.setProperty(MENU_OPEN, "1")
@@ -2934,6 +2954,8 @@ def _main_menu():
                     ("planner", _("Weekly planner"), _("Pin shows to days and times")),
                     ("settings", _("Settings and tools"),
                      _("Commercials, music, weather, picture - plus lineup tools and maintenance")),
+                    ("musictest", _("Music test (Step 0)"),
+                     _("Temporary: tunes from a video channel to test songs and back, and logs it")),
                     ("help", _("Help"), _("How everything works"))]
         else:
             opts = [("wizard", _("[B]Set up my channels[/B]"), _("Builds a lineup from your Kodi library in a minute")),
@@ -2967,5 +2989,8 @@ def _main_menu():
             refresh_if_changed()
         elif k == "settings":
             open_settings()
+        elif k == "musictest":
+            if not music_test_menu():
+                return
         elif k == "help":
             D.textviewer(TITLE, help_text())
