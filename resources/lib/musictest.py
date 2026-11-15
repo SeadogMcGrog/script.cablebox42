@@ -269,8 +269,7 @@ class Watcher(xbmc.Player):
                     res = r
                 sv = xbmc.getCondVisibility("System.ScreenSaverActive")
                 if sv != saver:
-                    self.say("screensaver %s (idle %s s)" % ("ON" if sv else "off",
-                                                              xbmc.getInfoLabel("System.IdleTime")))
+                    self.say("screensaver %s" % ("ON" if sv else "off"))
                     if sv:
                         self.stats["saver"] += 1
                     saver = sv
@@ -319,13 +318,10 @@ class Watcher(xbmc.Player):
         xbmc.sleep(1500)
         info = {k: xbmc.getInfoLabel(v) for k, v in (
             ("rate", "MusicPlayer.SampleRate"), ("codec", "MusicPlayer.Codec"),
-            ("ch", "MusicPlayer.Channels"), ("bits", "MusicPlayer.BitsPerSample"),
-            ("prate", "Player.Process(audiosamplerate)"), ("pch", "Player.Process(audiochannels)"),
-            ("pdec", "Player.Process(audiodecoder)"))}
+            ("ch", "MusicPlayer.Channels"), ("bits", "MusicPlayer.BitsPerSample"))}
         self.stats["changes"].append((prev, f, gap, info))
-        self.say("SONG %s  rate=%s kHz codec=%s ch=%s bits=%s | process: rate=%s ch=%s dec=%s | %s" % (
+        self.say("SONG %s  rate=%s kHz codec=%s ch=%s bits=%s | %s" % (
             os.path.basename(f), info["rate"], info["codec"], info["ch"], info["bits"],
-            info["prate"], info["pch"], info["pdec"],
             ("est. silence %.2f s after %s" % (gap, os.path.basename(prev))) if gap is not None and prev
             else "first song"))
 
