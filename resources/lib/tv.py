@@ -245,6 +245,8 @@ class TVWindow(xbmcgui.WindowXML):
                 return ch
         state = K.load_json(K.STATE_FILE, {})
         fixed = K.setting_int("start_channel", 0)
+        if fixed and not self.lineup.by_number(fixed):
+            fixed = 0                    # no such channel (any more): the last one watched
         want = fixed or state.get("last_channel")
         ch = self.lineup.by_number(int(want)) if want else None
         if not fixed and state.get("last_channel_id"):
@@ -784,8 +786,8 @@ class TVWindow(xbmcgui.WindowXML):
         self.setProperty("ch_name_foa", promos.fit_font(br["name"], 1000, promos.LADDER_45, promos.TWO_27))
         self.setProperty("ch_name2", promos.two_lines(br["name"]))
         self.setProperty("ch_call", br["call"] or "")
-        path = br["logo"] or logos.logo_for(ch)
-        bug = (br.get("bug") if br["logo"] else "") or path      # a station kit may have a simpler corner bug
+        path = br["logo"]
+        bug = br.get("bug") or path      # a station kit may have a simpler corner bug
         on, corner, opacity = logos.bug_settings()
         was_on = self.getProperty("bug") == "1"
         self.bug_on = bool(bug) and on
@@ -2304,7 +2306,7 @@ class TVWindow(xbmcgui.WindowXML):
             sched = self.lineup.schedule(self.ch, ensure=False)
             first = sched.entry_at(nb["s"] + 0.5) or {}
             br = stations.brand(self.ch, nb["s"])
-            chlogo = br["logo"] or logos.logo_for(self.ch)
+            chlogo = br["logo"]
             if not ads.logo_usable(chlogo):
                 chlogo = ""
             c = ads.upnext_card(self.ch, self.ch["number"], br["name"], nb, nb["s"], fmt_time(nb["s"]),
@@ -2394,7 +2396,7 @@ class TVWindow(xbmcgui.WindowXML):
         False if it couldn't be made (the plain card then)."""
         try:
             br = stations.brand(self.ch, now)
-            logo = br["logo"] or logos.logo_for(self.ch)
+            logo = br["logo"]
             if not ads.logo_usable(logo):
                 logo = ""                       # missing, or web art not cached: the no-logo layout
             c = ads.station_card(br["name"], self.ch["number"], logo, stations.tagline(self.ch, now),
@@ -2420,7 +2422,7 @@ class TVWindow(xbmcgui.WindowXML):
         when = fmt_time(resume) if resume else ""
         try:
             br = stations.brand(self.ch, now)
-            logo = br["logo"] or logos.logo_for(self.ch)
+            logo = br["logo"]
             if not ads.logo_usable(logo):
                 logo = ""
             c = ads.signoff_card(br["name"], self.ch["number"], logo, stations.tagline(self.ch, now),

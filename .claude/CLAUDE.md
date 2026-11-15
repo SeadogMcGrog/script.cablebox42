@@ -21,7 +21,7 @@ The repository root **is** the add-on folder.
 | `service.py` → `resources/lib/service_main.py` | Background service |
 | `resources/lib/tv.py` | The TV window: playback, channel changes, banner, static, turn-on/off, `GuiSounds` |
 | `resources/lib/scheduler.py` | Real-time rolling schedules, slot filling, breaks, pinned shows |
-| `resources/lib/manager.py` | Channel manager, lineup wizard, menus, Help text, Branding & clips, folder tools |
+| `resources/lib/manager.py` | Channel manager, lineup wizard, menus, Help text, channel editor (`_editor_rows` / `_edit_group`: Identity, Programming, Breaks & clips, Schedule), folder tools |
 | `resources/lib/channels.py` | Channel model and `channels.json` persistence, automatic lineup |
 | `resources/lib/assign.py` | Home-channel assignment and scoring (`compute(..., explain=True)` for the Finder) |
 | `resources/lib/finder.py` | "Shows without a good channel" |

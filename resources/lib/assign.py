@@ -173,7 +173,7 @@ def _core_match(src, genres):
     """Does this source match the title's network or its first genre?  (A
     station's studios count as its network: Disney for The Dexter Channel.)"""
     t = src.get("type")
-    if t in ("network", "origtitle") or (t == "studio" and src.get("station_extra")):
+    if t in ("network", "origtitle") or (t == "studio" and (src.get("station_extra") or src.get("core"))):
         return True
     g = src.get("value") if t == "tvgenre" else src.get("genre") if t == "movies" else None
     return bool(g and genres and genres[0] == g.lower())

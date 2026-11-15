@@ -31,6 +31,9 @@ PROGRAM_TYPES = ("network", "movies", "loop")
 AIR_TYPES = PROGRAM_TYPES + ("musicvideos",)    # channels whose programming comes from sources
 CLIP_TYPES = AIR_TYPES + ("extras",)            # channels with breaks: station folders, clips
 ALL_TYPES = ["network", "movies", "loop", "musicvideos", "guide", "weather", "extras"]
+# a channel's type in a word or two (Channel manager rows)
+TYPE_SHORT = {"network": _("Network"), "movies": _("Movies"), "loop": _("Loop"), "guide": _("Guide"),
+              "weather": _("Weather"), "extras": _("Behind the scenes"), "musicvideos": _("Music videos")}
 # channel editor rows that mean nothing on a Behind the scenes channel
 EXTRAS_HIDDEN = ("sources", "planner", "dayparts", "shows", "lineup", "slot")
 # ... or on a music video channel (Boombox)
@@ -108,7 +111,7 @@ def describe_source(s):
         if s.get("paths"):
             return _("Music videos: %s") % ", ".join(s["paths"])
         return _("Music videos: Kodi's library and the folders they're in")
-    what = {"both": _("movies + shows"), "tv": "shows", "movies": "movies"}.get(s.get("what", "both"), "")
+    what = {"both": _("movies + shows"), "tv": _("shows"), "movies": _("movies")}.get(s.get("what", "both"), "")
     v = s.get("value")
     v = ", ".join(v[:4]) + (_(" +%d more") % (len(v) - 4) if len(v) > 4 else "") if isinstance(v, list) else v
     if t == "network":
@@ -159,7 +162,7 @@ def search_pick(heading, items, multi=False, preselected=None, details=None, que
     while True:
         matches = _matches(items, query)
         rows, actions = [], []
-        rows.append(xbmcgui.ListItem("[B]Search...[/B]" if not query else _("[B]Search: %s[/B]") % query,
+        rows.append(xbmcgui.ListItem(_("[B]Search...[/B]") if not query else _("[B]Search: %s[/B]") % query,
                                     _("Type part of a name  -  %d of %d shown") % (len(matches), len(items))))
         actions.append("search")
         if query:
@@ -517,7 +520,7 @@ def _confirm_setup(plan):
     if plan["mode"] == "add":
         question = _("Add %d channels (%s) after your current ones?") % (len(new), _span(new))
     elif old:
-        question = _("Replace your %d channels with these %d (%s)?") % (len(old), len(chans), _span(chans))
+        question = _("Replace your %d channels with these %d?") % (len(old), len(chans))
     else:
         question = _("Set up these %d channels (%s)?") % (len(chans), _span(chans))
     lines = [_("Overnight sign-off: %s  ·  Prime time: %s") % (
@@ -538,50 +541,119 @@ def _confirm_setup(plan):
     return confirm("[CR]".join(lines), _("OK"), heading=question)
 
 
-def _wizard_plan():
+def _plain_name(c):
+    """A channel's name without its built-in station's brand: the plain name it
+    had before (Family Channel), else one after the station's first genre."""
+    from . import stations
+    st = stations.BY_ID.get(c.get("station") or "")
+    if not st:
+        return c["name"]
+    plain = c.get("generic_name")
+    if plain and plain != st["name"]:
+        return plain
+    genres = st["match"].get("genres")
+    if genres:
+        return C.GENRE_RENAMES.get(genres[0], _("%s TV") % genres[0])
+    return _("Channel %d") % c["number"]
+
+
+def _plain_names(added, chans):
+    """Build my lineup > Plain names: the new channels keep everything a built-in
+    station gave them to air (its networks and studios still match) but not its
+    brand - no stock name, call letters, logo or time-of-day names."""
+    from . import stations
+    taken = set(c["name"] for c in chans if not any(c is a for a in added))
+    for c in added:
+        if c.get("station"):
+            name = _plain_name(c)
+            stations.drop(c)
+            base, n = name, 2
+            while name in taken:
+                name, n = "%s %d" % (base, n), n + 1
+            c["name"], c["callsign"] = name, C.callsign(name)
+        taken.add(c["name"])
+
+
+def _ask_names():
+    """Customise: stock stations or plain names.  True = plain."""
+    rows = [_menu_row(_("CableBox's stations"),
+                      _("Comedy Corner, Orbit TV, Chameleon... each with its name, logo and call letters.")),
+            _menu_row(_("Plain names, I'll brand them myself"),
+                      _("Comedy Channel, Sci-Fi Channel, Kids TV... the same shows on each, no logos. "
+                        "Rename them and add your own logos in the Channel manager.")),
+            _menu_row(_("Cancel setup"), _("Leave without changing anything."))]
+    j = D.select(_("Channel names"), rows, useDetails=True)
+    if j in (-1, 2):
+        raise _Cancelled()
+    return j == 1
+
+
+def _wizard_plan(express=False):
     """Every question of Build my lineup; nothing is written.  Returns the plan,
-    None if there's nothing to set up, or raises _Cancelled."""
+    None if there's nothing to set up, or raises _Cancelled.
+
+    The library is looked through first, so an empty one says so before any
+    question.  express (a first setup): one screen - Start watching / Customise
+    / Cancel; the folders (commercials, bumps, music...) wait for the main
+    menu's Finish setting up.  Customise, and Build my lineup on a lineup that
+    exists, ask everything."""
     old = C.load()
     mode = "replace"
     if old:
+        express = False
         i = D.select(_("You already have %d channels") % len(old),
                      [_("Replace my lineup"), _("Add the auto channels after my current ones"), _("Cancel")])
         if i in (-1, 2):
             raise _Cancelled()
         mode = "add" if i == 1 else "replace"
-    pending = {}
-    ask_commercials(pending)
-    per_channel = ask_bumpers(pending)
-    ask_music(pending)
-    mv_paths = ask_musicvideos(old, mode)
-    if not K.setting("weather_location") and not xbmc.getCondVisibility("Weather.IsFetched"):
-        city = D.input(_("Your city for the Weather Channel (optional, e.g. Springfield, IL)"), "")
-        if city:                           # Back on the keyboard = skip
-            pending["weather_location"] = city
 
-    new = _scan_library(mv_paths)
-    if mv_paths and not any(c["type"] == "musicvideos" for c in new):
-        from . import musicvideos
-        D.notification(TITLE, _("Boombox needs at least %d music videos - that folder has fewer")
-                       % musicvideos.MIN_VIDEOS, time=4000)
+    new = _scan_library()
     if not [c for c in new if c["type"] in AIR_TYPES]:
         D.ok(TITLE, _("I couldn't find any TV shows or movies in your Kodi library.[CR]"
                     "Scan your media into the library first, or add folder channels "
                     "in the Channel Manager."))
         return None
-    if len(new) > 2:
-        labels = [_mv_line(c) if c["type"] == "musicvideos" and c.get("_survey") else
-                  _("%3d  %s   [COLOR grey]%s[/COLOR]") % (c["number"], c["name"],
-                                                         ", ".join(describe_source(x) for x in c["sources"])[:80])
-                  for c in new]
-        keep = D.multiselect(_("Keep which channels? (you can fine-tune shows afterwards)"), labels,
-                             preselect=list(range(len(new))))
-        if not keep:
+
+    custom = not express
+    if express:
+        r = ask(_("With overnight sign-off (12 AM - 5 AM) and prime-time lineups.[CR]Commercials, bumps and music "
+                  "can wait: the menu shows what's left to set up."),
+                _("Start watching"), _("Customise"), cancel=_("Cancel"), focus_yes=True,
+                heading=_("%d channels found in your library") % len(new))
+        if r is None:
             raise _Cancelled()
-        new = [new[j] for j in keep]
-        if not [c for c in new if c["type"] in AIR_TYPES]:
-            raise _Cancelled()
-        C.renumber(new)
+        custom = r == "no"
+
+    pending, per_channel, plain, overnight, prime = {}, False, False, True, True
+    if custom:
+        ask_commercials(pending)
+        per_channel = ask_bumpers(pending)
+        ask_music(pending)
+        mv_paths = ask_musicvideos(old, mode)
+        if not K.setting("weather_location") and not xbmc.getCondVisibility("Weather.IsFetched"):
+            city = D.input(_("Your city for the Weather Channel (optional, e.g. Springfield, IL)"), "")
+            if city:                           # Back on the keyboard = skip
+                pending["weather_location"] = city
+        if mv_paths:
+            new = _scan_library(mv_paths)       # again, with the music videos folder
+            if not any(c["type"] == "musicvideos" for c in new):
+                from . import musicvideos
+                D.notification(TITLE, _("Boombox needs at least %d music videos - that folder has fewer")
+                               % musicvideos.MIN_VIDEOS, time=4000)
+        plain = _ask_names()
+        if len(new) > 2:
+            labels = [_mv_line(c) if c["type"] == "musicvideos" and c.get("_survey") else
+                      _("%3d  %s   [COLOR grey]%s[/COLOR]") % (c["number"], _plain_name(c) if plain else c["name"],
+                                                             ", ".join(describe_source(x) for x in c["sources"])[:80])
+                      for c in new]
+            keep = D.multiselect(_("Keep which channels? (you can fine-tune shows afterwards)"), labels,
+                                 preselect=list(range(len(new))))
+            if not keep:
+                raise _Cancelled()
+            new = [new[j] for j in keep]
+            if not [c for c in new if c["type"] in AIR_TYPES]:
+                raise _Cancelled()
+            C.renumber(new)
 
     if mode == "add":
         from . import stations
@@ -597,7 +669,9 @@ def _wizard_plan():
             if c.get("broadcast") and any(x.get("broadcast") == c["broadcast"] for x in chans):
                 continue                   # you already have that network
             if c.get("station") in used_stations:
-                stations.drop(c)           # that station is already one of your channels
+                stations.drop(c, keep_shows=False)     # that station (and its shows) is already one of your channels
+                if not c.get("sources"):
+                    continue               # nothing left to air: it was that station's channel only
             fixed = C.fixed_number(c)
             if fixed is not None and fixed not in used:
                 c["number"] = fixed
@@ -613,13 +687,16 @@ def _wizard_plan():
             return None
     else:
         chans = added = new
+    if plain:
+        _plain_names(added, chans)
     for c in chans:
         c.setdefault("callsign", C.callsign(c["name"]))
 
-    overnight, prime = _ask_extras()
+    if custom:
+        overnight, prime = _ask_extras()
     plan = {"mode": mode, "old": old, "chans": chans, "added": added, "pending": pending,
-            "per_channel": per_channel, "overnight": overnight, "prime": prime}
-    if not _confirm_setup(plan):
+            "per_channel": per_channel, "overnight": overnight, "prime": prime, "express": not custom}
+    if custom and not _confirm_setup(plan):
         raise _Cancelled()
     return plan
 
@@ -631,7 +708,7 @@ def _apply_setup(plan):
         K.set_setting(key, value)
     chans = plan["chans"]
     if plan["overnight"]:
-        presets.set_overnight(chans)
+        presets.set_overnight(plan["added"])    # only the new channels: the others keep their hours
     C.save(chans)
     if plan["prime"]:
         pd = xbmcgui.DialogProgress()
@@ -660,17 +737,22 @@ def _lineup_ready():
         return False
 
 
-def wizard():
+def wizard(express=False):
     """Build my lineup (Welcome, main menu, Settings > Tools).  Returns True if the
-    viewer went on to watch TV."""
+    viewer went on to watch TV.  express: a first setup's short way (see
+    _wizard_plan); its Start watching goes straight to the TV."""
     try:
-        plan = _wizard_plan()
+        plan = _wizard_plan(express)
     except _Cancelled:
         D.notification(TITLE, _("Setup cancelled - nothing changed"), time=3000)
         return False
     if plan is None:
         return False
     _apply_setup(plan)
+    if plan.get("express"):
+        from . import tv
+        tv.run()
+        return True
     return _lineup_ready()
 
 
@@ -691,7 +773,7 @@ def setup_summary(chans):
             lines.append(_("        Program guide for every channel"))
             continue
         if c["type"] == "weather":
-            lines.append(_("        Local forecast (Settings > Weather)"))
+            lines.append(_("        Local forecast (Settings > Guide & Weather)"))
             continue
         srcs = [describe_source(s) for s in c.get("sources", []) if not s.get("orphans")]
         if c["type"] == "extras":
@@ -720,10 +802,10 @@ def setup_summary(chans):
             if c["type"] in CLIP_TYPES:
                 lines += folder_lines(c)
     else:
-        lines.append(_("[B]Station folders[/B]  not set up - Settings > Tools > 'Station folders' gives "
-                       "each channel a folder for its own logo, bumps, IDs and commercials."))
+        lines.append(_("[B]Station folders[/B]  not set up - Channel manager > Lineup tools > Station folders "
+                       "gives each channel a folder for its own logo, bumps, IDs and commercials."))
     lines += ["", _("[B]Next steps[/B]"),
-              _("  Channel manager > a channel > Branding & clips: logo, bumps, IDs, commercials in use"),
+              _("  Channel manager > a channel > Breaks & clips: the commercials, bumps and IDs in use"),
               _("  Channel manager > Shows without a good channel: shows nothing picks up, or that only "
                 "just fit"),
               _("  Closed captions: main menu, or the Menu button while watching"),
@@ -916,13 +998,14 @@ def manager():
     while True:
         chans = C.load()
         top = [_("[B]+ Add a channel[/B]"), _("[B]Rearrange channel numbers[/B]"),
-               _("[B]Shows without a good channel[/B]  [COLOR grey]unplaced or weakly matched[/COLOR]"),
-               _("[B]Lineup summary[/B]  [COLOR grey]what's set up, and where[/COLOR]")]
+               _("[B]Lineup tools[/B]  [COLOR grey]build a lineup, move shows, sign-off, station folders[/COLOR]")]
         rows = list(top)
         for c in chans:
-            rows.append(_("%3d   %s   [COLOR grey](%s, %d source%s)[/COLOR]") % (
-                c["number"], c["name"], c["type"], len(c["sources"]),
-                "" if len(c["sources"]) == 1 else "s"))
+            what = TYPE_SHORT.get(c["type"], c["type"])
+            if c["type"] in AIR_TYPES:
+                what = (_("%s, 1 source") % what) if len(c["sources"]) == 1 else \
+                    (_("%s, %d sources") % (what, len(c["sources"])))
+            rows.append("%3d   %s   [COLOR grey](%s)[/COLOR]" % (c["number"], c["name"], what))
         i = done_select(_("Channel manager"), rows)
         if i < 0:
             refresh_assignments()
@@ -932,12 +1015,32 @@ def manager():
         elif i == 1:
             rearrange()
         elif i == 2:
-            from . import finder
-            finder.run()
-        elif i == 3:
-            D.textviewer(_("Lineup summary"), setup_summary(chans))
+            lineup_tools()
         else:
             edit_channel(chans[i - len(top)]["id"])
+
+
+def lineup_tools():
+    """Channel manager > Lineup tools: everything that works on the whole lineup."""
+    while True:
+        rows = [(wizard, _("Build my lineup"),
+                 _("Builds channels from your Kodi library: replace your lineup, or add to it.")),
+                (shows_and_channels, _("Move shows between channels"),
+                 _("Pick a show and tick the channels it airs on.")),
+                (run_finder, _("Shows without a good channel"),
+                 _("Shows no channel picks up, or that only just fit where they are.")),
+                (quick_setup, _("Sign-off and prime time for all channels"),
+                 _("Overnight sign-off hours and prime-time lineups, for every channel at once.")),
+                (make_station_folders, _("Station folders"),
+                 _("A folder per channel for its logo, bumps, IDs and commercials: create, repair, see what's used.")),
+                (None, _("Lineup summary"), _("What's set up, and where."))]
+        i = done_select(_("Lineup tools"), [_menu_row(r[1], r[2]) for r in rows], useDetails=True)
+        if i < 0:
+            return
+        if rows[i][0] is None:
+            D.textviewer(_("Lineup summary"), setup_summary(C.load()))
+        elif rows[i][0]():
+            return                          # Build my lineup went on to the TV
 
 
 def move_channel(chans, ch, new):
@@ -976,17 +1079,18 @@ def rearrange():
     """Pick a channel, type where it goes; repeat.  Plus 'close the gaps'."""
     while True:
         chans = C.load()
-        rows = [_("[B]Close the gaps (renumber 2, 3, 4...)[/B]")] + \
+        rows = [_("[B]Close the gaps[/B] (renumber in order)")] + \
                ["%3d   %s" % (c["number"], c["name"]) for c in chans]
         i = done_select(_("Pick a channel to move"), rows)
         if i < 0:
             return
         if i == 0:
             first = D.numeric(0, _("Start numbering at"), str(chans[0]["number"] if chans else 2))
-            if first:
-                for n, c in enumerate(chans):
-                    c["number"] = int(first) + n
+            if first and int(first) > 0:
+                C.renumber(chans, int(first))    # Weather stays on 25, News on 42
                 C.save(chans)
+            elif first:
+                D.notification(TITLE, _("Channel numbers start at 1"), time=2500)
             continue
         ch = chans[i - 1]
         v = D.numeric(0, _("Move %s to channel") % ch["name"], str(ch["number"]))
@@ -1048,51 +1152,135 @@ def _extras_air():
     return int(sum(s["dur"] for f in films for s in f["segs"])), len(films)
 
 
-def add_channel(chans, kind=None):
-    """Step by step: type, name, number, programming.  Back on any step adds nothing.
-    `kind` preselects the type (Check extras offers a Behind the scenes channel)."""
-    import copy
-    chans = copy.deepcopy(chans)            # a number swap only counts if the channel is added
-    types = ALL_TYPES
-    t = types.index(kind) if kind in types else D.select(_("Channel type"), [TYPE_LABELS[x] for x in types])
-    if t < 0:
-        return
-    extras = types[t] == "extras"
-    if extras and not _another_extras_ok(chans):
-        return
-    name = D.input(_("Channel name"), {"guide": _("TV Guide"), "weather": _("Weather Channel"),
-                                       "extras": "BACKLOT"}.get(types[t], ""))
-    if not name:
-        return
-    backlot_look = False
-    if extras:
-        backlot_look = name.strip().upper() == "BACKLOT" or ask(
-            _("Otherwise %s has no logo until you give it one.") % name, _("Use them"), _("No logo"),
-            heading=_("Use the BACKLOT logo and corner bug?")) == "yes"
-    num = _new_number(chans)
-    if num is None:
-        return
-    ch = C.new_channel(num, name, types[t], callsign=C.callsign(name))
-    if types[t] == "musicvideos":
-        src = pick_musicvideos()
-        if not src:
-            return
-        ch["sources"].append(src)
-    elif types[t] in PROGRAM_TYPES:
-        while True:
+def _pick_kind(chans):
+    """First step of Add a channel: what kind of channel.  Returns "station",
+    "own", "musicvideos", "guide", "weather" or "extras" (None for Back).  The
+    Guide and the Weather channel are only offered while the lineup has none."""
+    have = set(c["type"] for c in chans)
+    rows = [("station", _("A built-in station"),
+             _("Comedy Corner, Orbit TV, Chameleon... with its name, logo and shows")),
+            ("own", _("My own channel"), _("Your name, your programming, your logo")),
+            ("musicvideos", _("Music videos"), _("Music videos on the real clock, breaks between videos")),
+            ("guide", _("TV Guide"), _("What's on every channel, scrolling")),
+            ("weather", _("Weather"), _("Your local forecast")),
+            ("extras", _("Behind the scenes"), _("Making-of pieces and interviews from your movies' Extras folders"))]
+    rows = [r for r in rows if not (r[0] in ("guide", "weather") and r[0] in have)]
+    i = D.select(_("What kind of channel?"), [_menu_row(r[1], r[2]) for r in rows], useDetails=True)
+    return rows[i][0] if i >= 0 else None
+
+
+def _pick_new_station(chans):
+    """Add a channel > A built-in station: one that isn't in the lineup yet."""
+    from . import stations
+    used = dict((c.get("station"), c["number"]) for c in chans if c.get("station"))
+    sts = stations.addable()
+    while True:
+        rows = []
+        for s in sts:
+            if s["id"] in used:
+                rows.append("[COLOR grey]%s   %s[/COLOR]" % (s["name"], _("already on channel %d") % used[s["id"]]))
+            else:
+                rows.append("%s   [COLOR grey]%s[/COLOR]" % (s["name"], stations.tagline({"station": s["id"]})))
+        i = D.select(_("Which station?"), rows)
+        if i < 0:
+            return None
+        if sts[i]["id"] not in used:
+            return sts[i]
+        D.notification(TITLE, _("%s is already on channel %d") % (sts[i]["name"], used[sts[i]["id"]]), time=2500)
+
+
+def _programming_step(ch, listed=False):
+    """Step of Add a channel: its programming.  listed: the channel already has
+    some (a built-in station's), so show it and offer more.  False = cancelled."""
+    first = listed and bool(ch["sources"])
+    while True:
+        if not first:
             src = pick_source()
             if src:
                 ch["sources"].append(src)
             elif not ch["sources"]:
-                return                      # Back before any programming: nothing added
-            r = ask(_("%s has %d source(s) of programming.[CR]Add more?") % (name, len(ch["sources"])),
+                return False                # Back before any programming: nothing added
+        first = False
+        if listed:
+            lines = [describe_source(x)[:70] for x in ch["sources"]]
+            if len(lines) > 4:
+                lines = lines[:3] + [_(" +%d more") % (len(lines) - 3)]
+            r = ask("[CR]".join(lines), _("Add more"), _("Done"), cancel=_("Cancel"),
+                    heading=_("%s airs these. Add more?") % ch["name"])
+        else:
+            r = ask(_("%s has %d source(s) of programming.[CR]Add more?") % (ch["name"], len(ch["sources"])),
                     _("Add more"), _("Done"), cancel=_("Cancel"))
-            if r is None:
+        if r is None:
+            return False
+        if r == "no":
+            return True
+
+
+def add_channel(chans, kind=None):
+    """Step by step: what kind of channel, then only what that kind needs.
+        A built-in station: which one, number, its shows (add more / done)
+        My own channel: type, name, number, programming, logo (now / later)
+        Music videos, TV Guide, Weather, Behind the scenes: name, number
+    Back on any step adds nothing.  `kind` preselects the kind (Check extras
+    offers a Behind the scenes channel)."""
+    import copy
+    from . import stations
+    chans = copy.deepcopy(chans)            # a number swap only counts if the channel is added
+    kind = kind if kind in ("extras", "musicvideos", "guide", "weather", "own", "station") else _pick_kind(chans)
+    if not kind:
+        return
+    extras = kind == "extras"
+    if extras and not _another_extras_ok(chans):
+        return
+    backlot_look = False
+    if kind == "station":
+        st = _pick_new_station(chans)
+        if not st:
+            return
+        ctype, sources = stations.starter(st)
+        name = st["name"]
+    else:
+        st = None
+        ctype = kind
+        if kind == "own":
+            t = D.select(_("Channel type"), [TYPE_LABELS[x] for x in PROGRAM_TYPES])
+            if t < 0:
                 return
-            if r == "no":
-                break
+            ctype = PROGRAM_TYPES[t]
+        name = D.input(_("Channel name"), {"guide": _("TV Guide"), "weather": _("Weather Channel"),
+                                           "extras": "BACKLOT"}.get(kind, ""))
+        if not name:
+            return
+        if extras:
+            backlot_look = name.strip().upper() == "BACKLOT" or ask(
+                _("Otherwise %s has no logo until you give it one.") % name, _("Use them"), _("No logo"),
+                heading=_("Use the BACKLOT logo and corner bug?")) == "yes"
+        sources = []
+    num = _new_number(chans)
+    if num is None:
+        return
+    ch = C.new_channel(num, name, ctype, sources, callsign=C.callsign(name))
+    if st:
+        stations.apply(ch, st)
+        if ctype in ("network", "movies"):
+            ch["home_guard"] = True         # as on a channel Build my lineup makes
+        if not ch["sources"]:
+            D.ok(TITLE, _("Nothing in your library matches %s yet. Choose its programming yourself.") % name)
+        if not _programming_step(ch, listed=True):
+            return
+    elif ctype == "musicvideos":
+        src = pick_musicvideos()
+        if not src:
+            return
+        ch["sources"].append(src)
+    elif ctype in PROGRAM_TYPES:
+        if not _programming_step(ch):
+            return
+        if ask(_("A logo shows in the corner and on the channel banner. You can add one later in the "
+                 "channel editor."), _("Choose an image"), _("Later"),
+               heading=_("Give %s a logo now?") % name) == "yes":
+            _browse_logo(ch)
     if backlot_look:
-        from . import stations
         stations.apply(ch, stations.BY_ID["backlot"])     # the built-in station: logo, corner bug, call letters
         if name.strip().upper() != "BACKLOT":             # renamed: only the look, the name stays the viewer's
             ch["name"], ch["callsign"] = name, C.callsign(name)
@@ -1115,154 +1303,127 @@ def _find(cid):
     return chans, None
 
 
+# The channel editor: four groups, each a short menu of its own.
+EDIT_GROUPS = ("identity", "programming", "breaks", "schedule")
+
+
+def _editor_rows(ch, chans):
+    """Every row of the channel editor for this channel: [(key, group, label,
+    detail)].  Rows that mean nothing for the channel's type are left out."""
+    from . import stations
+    onoff = lambda b: _("On") if b else _("Off")
+    rows = []
+
+    def add(group, key, label, detail=""):
+        rows.append((key, group, label, detail))
+
+    # -- identity: who the channel is
+    add("identity", "name", _("Name: %s") % ch["name"])
+    add("identity", "number", _("Number: %d") % ch["number"])
+    add("identity", "callsign", _("Call letters: %s") % ch.get("callsign", ""))
+    add("identity", "logo", *_logo_row(ch))
+    add("identity", "blocks", _("Names by time of day: %s") % _blocks_label(ch),
+        _("Times when the channel goes by another name and logo (CAM Jr. in the morning)."))
+    root, folder = K.setting("stations_folder"), stations.channel_folder(ch)
+    add("identity", "folder",
+        _("Station folder: %s") % _folder_name(folder) if folder else
+        _("Station folder: none yet") if root else _("Station folder: not set up"),
+        _("The channel's own folder for a logo, bumps, station IDs and commercials."))
+    if ch.get("station"):
+        add("identity", "station", _("Built-in station: %s") % _station_label(ch),
+            _("Use another built-in station, or make this channel your own."))
+    else:
+        add("identity", "station", _("Use a built-in station..."),
+            _("Gives the channel a built-in station's name, call letters, logo and shows."))
+
+    # -- programming: what it airs
+    add("programming", "type", _("Type: %s") % TYPE_LABELS.get(ch["type"], ch["type"]))
+    if ch["type"] == "extras":
+        secs, n = _extras_air()
+        add("programming", "extras",
+            _("Movie extras: %d h %02d min to air from %d films") % (secs // 3600, secs % 3600 // 60, n)
+            if secs else _("Movie extras: none to air yet"))
+    if ch["type"] == "musicvideos":
+        add("programming", "mvcheck", _("[B]Check music videos[/B] (what airs, what's skipped)"))
+        add("programming", "mvcaps", _("Video captions: %s") % onoff(ch.get("mv_captions", True)))
+    add("programming", "sources", _("Programming: %d source(s)") % len(ch["sources"]))
+    add("programming", "shows", _("[B]What's on this channel[/B] (%d hidden)") % len(ch.get("exclude", [])))
+
+    # -- breaks & clips: what the channel really uses, and its switches
+    folder = stations.channel_folder(ch)
+    for kind in ("commercials", "bumps", "ids"):
+        label, detail, on = _clip_row(ch, kind, folder)
+        if kind == "ids":
+            detail += " " + _("Select to choose this channel's own folder of station ID clips.")
+        elif on:
+            detail += " " + _("Select to switch them off.")
+        add("breaks", "clip:" + kind, label, detail)
+    add("breaks", "midroll", _("Break into shows for commercials: %s") % onoff(ch.get("midroll", ch["type"] != "movies")))
+    add("breaks", "adflavour", _("Ad flavour: %s") % _ad_flavour_label(ch),
+        _("Which retro ads its house breaks run."))
+    add("breaks", "cpath", _("Channel commercials folder: %s") % (ch.get("commercials_path") or _("global")),
+        _("This channel's own commercials, instead of the shared folder in Settings."))
+    add("breaks", "bpath", _("Channel bumps folder: %s") % (ch.get("bumps_path") or _("global")),
+        _("This channel's own bumps, instead of the shared folder in Settings."))
+
+    # -- schedule: when things air
+    add("schedule", "planner", _("[B]Weekly planner[/B] (%d pinned shows)") % len(ch.get("slots", [])))
+    add("schedule", "dayparts", _("Time blocks (prime time, Saturday mornings...): %d") % len(ch["dayparts"]))
+    add("schedule", "offair", _("Off-air hours: %s") % (", ".join("%s-%s" % (w["start"], w["end"])
+                                                               for w in ch["offair"]) or _("never")))
+    add("schedule", "lineup", _("Lineup style: %s") % (_("Same show same time every day") if ch.get("lineup") == "strip"
+                                                     else _("Shuffle")))
+    add("schedule", "slot", _("Programs start on: %s") % ({0: _("no clock (back to back)"), 15: ":00 :15 :30 :45",
+                                                         30: _(":00 and :30"), 60: _("the hour")}.get(ch.get("slot"),
+                                                                                               str(ch.get("slot")))))
+    hidden = set()
+    if ch["type"] not in AIR_TYPES:
+        hidden.add("adflavour")                 # retro ads run in house breaks only
+    if ch["type"] == "extras":
+        hidden.update(EXTRAS_HIDDEN)
+    if ch["type"] == "musicvideos":
+        hidden.update(MV_HIDDEN)
+    return [r for r in rows if r[0] not in hidden]
+
+
+def _group_rows(ch, chans):
+    """The editor's top level: one row per group, saying what's in it now."""
+    rows = _editor_rows(ch, chans)
+    label = dict((r[0], r[2]) for r in rows)
+    dot = u"  \u00b7  "
+    out = [("identity", _("[B]Identity[/B]"),
+            dot.join(x for x in (ch["name"], ch.get("callsign", ""), label["logo"]) if x)),
+           ("programming", _("[B]Programming[/B]"),
+            dot.join(label[k] for k in ("type", "sources") if k in label)),
+           ("breaks", _("[B]Breaks & clips[/B]"),
+            dot.join(label[k] for k in ("clip:commercials", "clip:bumps"))),
+           ("schedule", _("[B]Schedule[/B]"),
+            dot.join(label[k] for k in ("offair", "lineup") if k in label)),
+           ("preview", _("[B]Preview today's schedule[/B]"), ""),
+           ("delete", _("[COLOR red]Delete channel[/COLOR]"), _("Your videos and its station folder are not touched."))]
+    return out
+
+
 def edit_channel(cid):
+    """The channel editor: Identity, Programming, Breaks & clips, Schedule (each
+    a menu of its own, changes save as you go), Preview and Delete."""
     changed = False
     while True:
         chans, ch = _find(cid)
         if not ch:
             return
-        before = json.dumps(chans, sort_keys=True)
-        onoff = lambda b: _("On") if b else _("Off")
-        items = [
-            ("name", _("Name: %s") % ch["name"]),
-            ("number", _("Number: %d") % ch["number"]),
-            ("callsign", _("Call letters: %s") % ch.get("callsign", "")),
-            ("station", _("Station: %s") % _station_label(ch)),
-            ("blocks", _("Branding by time of day: %s") % _blocks_label(ch)),
-            ("logo", _("Station logo: %s") % _logo_label(ch)),
-            ("branding", _("[B]Branding & clips[/B] (logo, bumps, IDs, commercials in use)")),
-            ("type", _("Type: %s") % TYPE_LABELS.get(ch["type"], ch["type"])),
-            ("sources", _("Programming: %d source(s)") % len(ch["sources"])),
-            ("planner", _("[B]Weekly planner[/B] (%d pinned shows)") % len(ch.get("slots", []))),
-            ("dayparts", _("Time blocks (prime time, Saturday mornings...): %d") % len(ch["dayparts"])),
-            ("offair", _("Off-air hours: %s") % (", ".join("%s-%s" % (w["start"], w["end"])
-                                                       for w in ch["offair"]) or _("never"))),
-            ("shows", _("[B]What's on this channel[/B] (%d hidden)") % len(ch.get("exclude", []))),
-            ("commercials", _("Commercials: %s") % onoff(ch.get("commercials"))),
-            ("midroll", _("Break into shows for commercials: %s") % onoff(ch.get("midroll", ch["type"] != "movies"))),
-            ("bumps", _("Bumps: %s") % onoff(ch.get("bumps"))),
-            ("adflavour", _("Ad flavour: %s") % _ad_flavour_label(ch)),
-            ("lineup", _("Lineup style: %s") % (_("Same show same time every day") if ch.get("lineup") == "strip"
-                                             else _("Shuffle"))),
-            ("slot", _("Programs start on: %s") % ({0: _("no clock (back to back)"), 15: ":00 :15 :30 :45",
-                                                 30: _(":00 and :30"), 60: _("the hour")}.get(ch.get("slot"),
-                                                                                       str(ch.get("slot"))))),
-            ("cpath", _("Channel commercials folder: %s") % (ch.get("commercials_path") or _("global"))),
-            ("bpath", _("Channel bumps folder: %s") % (ch.get("bumps_path") or _("global"))),
-            ("ids", _("Station ID clips (between programs): %s") % (
-                os.path.basename(ch.get("ids_path", "").rstrip("/\\")) or _("none"))),
-            ("preview", _("[B]Preview today's schedule[/B]")),
-            ("delete", _("[COLOR red]Delete channel[/COLOR]")),
-        ]
-        if ch["type"] not in AIR_TYPES:
-            items = [x for x in items if x[0] != "adflavour"]     # retro ads run in house breaks only
-        if ch["type"] == "extras":
-            items = [x for x in items if x[0] not in EXTRAS_HIDDEN]
-            secs, n = _extras_air()
-            row = (_("Movie extras: %d h %02d min to air from %d films") % (secs // 3600, secs % 3600 // 60, n)
-                   if secs else _("Movie extras: none to air yet"))
-            items.insert([x[0] for x in items].index("type") + 1, ("extras", row))
-        if ch["type"] == "musicvideos":
-            items = [x for x in items if x[0] not in MV_HIDDEN]
-            at = [x[0] for x in items].index("type") + 1
-            items[at:at] = [("mvcheck", _("[B]Check music videos[/B] (what airs, what's skipped)")),
-                            ("mvcaps", _("Video captions: %s") % onoff(ch.get("mv_captions", True)))]
-        i = done_select("%d  %s" % (ch["number"], ch["name"]), [x[1] for x in items])
+        rows = _group_rows(ch, chans)
+        i = done_select("%d  %s" % (ch["number"], ch["name"]), [_menu_row(r[1], r[2]) for r in rows],
+                        useDetails=True)
         if i < 0:
             if changed:
                 D.notification(TITLE, _("%s saved") % ch["name"], time=2000)
             return
-        key = items[i][0]
-        if key == "name":
-            v = D.input(_("Name"), ch["name"])
-            if v and v != ch["name"]:
-                from . import stations
-                old_folder = stations.channel_folder(ch)
-                ch["name"] = v
-                _folder_follows(ch, old_folder)
-        elif key == "number":
-            v = D.numeric(0, _("Move %s to channel") % ch["name"], str(ch["number"]))
-            if v and int(v) > 0:
-                move_channel(chans, ch, int(v))
-        elif key == "callsign":
-            v = D.input(_("Call letters"), ch.get("callsign", ""))
-            if v and v.upper()[:6] != ch.get("callsign"):     # Back leaves them as they are
-                from . import stations
-                old_folder = stations.channel_folder(ch)
-                ch["callsign"] = v.upper()[:6]
-                _folder_follows(ch, old_folder)
-        elif key == "logo":
-            pick_logo(ch)
-        elif key == "station":
-            from . import stations
-            old_folder = stations.channel_folder(ch)
-            pick_station(ch)
-            _folder_follows(ch, old_folder)
-        elif key == "branding":
-            C.save(chans)
-            branding(ch, chans)
-        elif key == "blocks":
-            edit_brand_blocks(ch)
-        elif key == "type":
-            change_type(ch, chans)
-        elif key == "extras":
-            C.save(chans)
-            check_extras()
-            continue
-        elif key == "mvcheck":
-            C.save(chans)
-            check_musicvideos(ch)
-            continue
-        elif key == "mvcaps":
-            ch["mv_captions"] = not ch.get("mv_captions", True)
-        elif key == "sources":
-            edit_sources(ch["sources"], ch["name"])
-        elif key == "dayparts":
-            edit_dayparts(ch)
-        elif key == "offair":
-            edit_offair(ch)
-        elif key in ("commercials", "bumps"):
-            ch[key] = not ch.get(key)
-        elif key == "midroll":
-            ch["midroll"] = not ch.get("midroll", ch["type"] != "movies")
-        elif key == "adflavour":
-            pick_ad_flavour(ch)
-        elif key == "shows":
-            whats_on(ch)
-        elif key == "lineup":
-            ch["lineup"] = "shuffle" if ch.get("lineup") == "strip" else "strip"
-        elif key == "slot":
-            opts = [30, 60, 15, 0]
-            j = D.select(_("Programs start on"), [_(":00 and :30 (classic TV)"), _("the hour"),
-                                               _("every 15 minutes"), _("no clock - back to back")])
-            if j >= 0:
-                ch["slot"] = opts[j]
-        elif key in ("cpath", "bpath"):
-            field = "commercials_path" if key == "cpath" else "bumps_path"
-            j = D.select(_("Folder"), [_("Use global setting"), _("Choose folder...")])
-            if j == 0:
-                ch.pop(field, None)
-            elif j == 1:
-                p = D.browse(0, _("Folder"), "video")
-                if p:
-                    ch[field] = p
-        elif key == "ids":
-            j = D.select(_("Station ID clips"), [_("None"), _("Choose folder...")])
-            if j == 0:
-                ch.pop("ids_path", None)
-            elif j == 1:
-                p = D.browse(0, _("Station ID clips"), "video")
-                if p:
-                    ch["ids_path"] = p
-        elif key == "planner":
-            C.save(chans)
-            from . import planner
-            planner.open_planner(cid)
-            continue
+        key = rows[i][0]
+        if key in EDIT_GROUPS:
+            changed = _edit_group(cid, key) or changed
         elif key == "preview":
-            C.save(chans)
             preview(ch)
-            continue
         elif key == "delete":
             if confirm_remove(_("Delete %d %s?[CR][CR]Its schedule and pinned shows go with it. Your videos "
                                 "and its station folder are not touched.") % (ch["number"], ch["name"]),
@@ -1273,10 +1434,118 @@ def edit_channel(cid):
                 # back to what it aired)
                 scheduler.Lineup(K.schedule_cfg()).drop_removed()
                 return
-            continue
+
+
+def _edit_group(cid, group):
+    """One group of the channel editor.  True if anything changed (it's saved)."""
+    titles = {"identity": _("%s - identity"), "programming": _("%s - programming"),
+              "breaks": _("%s - breaks & clips"), "schedule": _("%s - schedule")}
+    changed = False
+    while True:
+        chans, ch = _find(cid)
+        if not ch:
+            return changed
+        before = json.dumps(chans, sort_keys=True)
+        rows = [r for r in _editor_rows(ch, chans) if r[1] == group]
+        details = any(r[3] for r in rows)
+        i = done_select(titles[group] % ch["name"],
+                        [_menu_row(r[2], r[3]) for r in rows] if details else [r[2] for r in rows],
+                        useDetails=details)
+        if i < 0:
+            return changed
+        _edit_row(rows[i][0], ch, chans, cid)
+        chans2, _ch = _find(cid)
         if json.dumps(chans, sort_keys=True) != before:
             changed = True
             C.save(chans)
+        elif json.dumps(chans2, sort_keys=True) != before:
+            changed = True                  # a screen of its own saved it (the planner, the station folder)
+
+
+def _edit_row(key, ch, chans, cid):
+    """Act on one editor row.  Changes `ch` in memory; _edit_group saves."""
+    from . import stations
+    if key == "name":
+        v = D.input(_("Name"), ch["name"])
+        if v and v != ch["name"]:
+            old_folder = stations.channel_folder(ch)
+            _rename(ch, v)
+            _folder_follows(ch, old_folder)
+    elif key == "number":
+        v = D.numeric(0, _("Move %s to channel") % ch["name"], str(ch["number"]))
+        if v and int(v) > 0:
+            move_channel(chans, ch, int(v))
+    elif key == "callsign":
+        v = D.input(_("Call letters"), ch.get("callsign", ""))
+        if v and v.upper()[:6] != ch.get("callsign"):     # Back leaves them as they are
+            old_folder = stations.channel_folder(ch)
+            ch["callsign"] = v.upper()[:6]
+            _folder_follows(ch, old_folder)
+    elif key == "logo":
+        pick_logo(ch)
+    elif key == "station":
+        old_folder = stations.channel_folder(ch)
+        pick_station(ch, chans)
+        _folder_follows(ch, old_folder)
+    elif key == "folder":
+        C.save(chans)
+        station_folder(ch, chans)
+    elif key == "blocks":
+        edit_brand_blocks(ch)
+    elif key == "type":
+        change_type(ch, chans)
+    elif key == "extras":
+        C.save(chans)
+        check_extras()
+    elif key == "mvcheck":
+        C.save(chans)
+        check_musicvideos(ch)
+    elif key == "mvcaps":
+        ch["mv_captions"] = not ch.get("mv_captions", True)
+    elif key == "sources":
+        edit_sources(ch["sources"], ch["name"])
+    elif key == "dayparts":
+        edit_dayparts(ch)
+    elif key == "offair":
+        edit_offair(ch)
+    elif key in ("clip:commercials", "clip:bumps"):
+        kind = key[5:]
+        ch[kind] = not ch.get(kind)
+    elif key == "midroll":
+        ch["midroll"] = not ch.get("midroll", ch["type"] != "movies")
+    elif key == "adflavour":
+        pick_ad_flavour(ch)
+    elif key == "shows":
+        whats_on(ch)
+    elif key == "lineup":
+        ch["lineup"] = "shuffle" if ch.get("lineup") == "strip" else "strip"
+    elif key == "slot":
+        opts = [30, 60, 15, 0]
+        j = D.select(_("Programs start on"), [_(":00 and :30 (classic TV)"), _("the hour"),
+                                           _("every 15 minutes"), _("no clock - back to back")])
+        if j >= 0:
+            ch["slot"] = opts[j]
+    elif key in ("cpath", "bpath"):
+        field = "commercials_path" if key == "cpath" else "bumps_path"
+        j = D.select(_("Folder"), [_("Use global setting"), _("Choose folder...")])
+        if j == 0:
+            ch.pop(field, None)
+        elif j == 1:
+            p = D.browse(0, _("Folder"), "video")
+            if p:
+                ch[field] = p
+    elif key == "clip:ids":
+        j = D.select(_("Station ID clips"), [_("None"), _("Choose folder...")])
+        if j == 0:
+            ch.pop("ids_path", None)
+        elif j == 1:
+            p = D.browse(0, _("Station ID clips"), "video")
+            if p:
+                ch["ids_path"] = p
+    elif key == "planner":
+        C.save(chans)
+        from . import planner
+        planner.open_planner(cid)
 
 
 def _ad_flavour_label(ch):
@@ -1305,7 +1574,9 @@ def pick_ad_flavour(ch):
 
 def change_type(ch, chans=()):
     """Change a channel's type; ask before its settings go back to that type's defaults."""
-    types = ALL_TYPES
+    # one TV Guide and one Weather channel: not offered while another channel is one
+    taken = set(c["type"] for c in chans if c.get("id") != ch.get("id")) & set(("guide", "weather"))
+    types = [x for x in ALL_TYPES if x not in taken]
     j = D.select(_("Type"), [TYPE_LABELS[x] for x in types], preselect=types.index(ch["type"])
                  if ch["type"] in types else -1)
     if j < 0 or types[j] == ch["type"]:
@@ -1403,7 +1674,29 @@ def check_musicvideos(ch):
 def _station_label(ch):
     from . import stations
     st = stations.BY_ID.get(ch.get("station") or "")
+    if st and ch.get("name") != st["name"]:
+        return _("%s (renamed; its logo and shows)") % st["name"]
     return st["name"] if st else _("none (your own)")
+
+
+def _rename(ch, new):
+    """A new name, followed through: call letters that were still the automatic
+    ones follow the name, and a built-in station's time-of-day names (CAM Jr.)
+    are kept only if the viewer says so."""
+    from . import stations
+    st = stations.BY_ID.get(ch.get("station") or "")
+    old = ch["name"]
+    auto = set([C.callsign(old)] + ([st["call"]] if st else []))
+    ch["name"] = new
+    if not ch.get("callsign") or ch["callsign"] in auto:
+        ch["callsign"] = C.callsign(new)
+        D.notification(TITLE, _("Call letters are now %s") % ch["callsign"], time=2500)
+    kit = [b for b in ch.get("brand_blocks") or [] if stations.is_kit_block(b)]
+    if st and kit:
+        names = ", ".join(b.get("name", "") for b in kit)
+        if ask(_("At those times %s would still go by %s, with their logos.") % (new, names),
+               _("Remove them"), _("Keep them"), heading=_("Keep the names %s?") % names) == "yes":
+            ch["brand_blocks"] = [b for b in ch["brand_blocks"] if not stations.is_kit_block(b)]
 
 
 def _blocks_label(ch):
@@ -1411,34 +1704,66 @@ def _blocks_label(ch):
     return ", ".join("%s %s-%s" % (b.get("name", ""), b.get("start", ""), b.get("end", "")) for b in bl) or _("none")
 
 
-def pick_station(ch):
+def pick_station(ch, chans=()):
     """Give the channel one of the built-in stations (name, call letters, logo,
-    time-of-day branding), or go back to its own identity."""
+    time-of-day names and its shows), or make it the viewer's own again: the
+    station's logo and names go, the name and all the programming stay."""
     from . import stations
-    opts = [_("None - use the channel's own name and logo")] + \
-        ["%s   [COLOR grey]%s[/COLOR]" % (s["name"], ", ".join(b["name"] for b in s.get("blocks", [])))
-         for s in stations.STATIONS]
-    j = D.select(_("Station for channel %d") % ch["number"], opts)
-    if j == 0:
-        stations.drop(ch)
-    elif j > 0:
-        st = stations.STATIONS[j - 1]
-        if confirm(_("Rename this channel to %s and use its logo and call letters?") % st["name"],
-                   _("Use this station")):
-            stations.apply(ch, st)
+    cur = stations.BY_ID.get(ch.get("station") or "")
+    used = dict((c.get("station"), c["number"]) for c in chans if c.get("station") and c.get("id") != ch.get("id"))
+    rows, keys = [], []
+    if cur:
+        rows.append(_("[B]Make this channel my own[/B]"))
+        keys.append(None)
+    for s in stations.STATIONS:
+        note = ", ".join(b["name"] for b in s.get("blocks", []))
+        if s["id"] in used:
+            note = _("already on channel %d") % used[s["id"]]
+        elif cur and s["id"] == cur["id"]:
+            note = _("this channel's station")
+        rows.append("%s   [COLOR grey]%s[/COLOR]" % (s["name"], note))
+        keys.append(s)
+    j = D.select(_("Station for channel %d") % ch["number"], rows + [_("Cancel")])
+    if j < 0 or j >= len(keys):
+        return
+    st = keys[j]
+    if st is None:
+        lines = [_("Name: %s  ·  Call letters: %s") % (stations.own_name(ch), stations.own_callsign(ch)),
+                 _("All of its programming stays."),
+                 _("%s's logo goes. Choose your own under Logo.") % cur["name"]]
+        kit = [b.get("name", "") for b in ch.get("brand_blocks") or [] if stations.is_kit_block(b)]
+        if kit:
+            lines.append(_("It no longer goes by %s.") % ", ".join(kit))
+        if confirm("[CR]".join(lines), _("Make it my own"), heading=_("Make channel %d your own?") % ch["number"]):
+            stations.drop(ch)
+        return
+    if cur and st["id"] == cur["id"] and ch["name"] == st["name"]:
+        return
+    what = stations.changes(ch, st)
+    own_logo = ch.get("logo") and ch["logo"] != "none"
+    lines = [_("Name: %s  ·  Call letters: %s") % (what["name"], what["call"]),
+             _("Logo: your own image stays") if own_logo else _("Logo: its built-in logo")]
+    if what["blocks"]:
+        lines[-1] += "  ·  " + _("goes by %s at times") % ", ".join(what["blocks"])
+    lines.append(_("Adds: %s") % (", ".join(describe_source(s) for s in what["adds"])[:150]
+                                  or _("no programming")))
+    if what["removes"]:
+        lines.append(_("Removes %s's: %s") % (cur["name"], ", ".join(describe_source(s) for s in what["removes"])[:120]))
+    if confirm("[CR]".join(lines), _("Use this station"), heading=_("Use %s on channel %d?") % (st["name"], ch["number"])):
+        stations.apply(ch, st)
 
 
 def edit_brand_blocks(ch):
     """Times of day when the channel goes by another name and logo (CAM Jr. 6 AM-noon)."""
     while True:
         blocks = ch.setdefault("brand_blocks", [])
-        rows = [_("[B]+ Add a time block[/B]")] + ["%s   %s - %s" % (b.get("name", ""), b.get("start", ""), b.get("end", ""))
-                                                   for b in blocks]
-        i = done_select(_("Branding by time of day"), rows)
+        rows = [_("[B]+ Add a name[/B]")] + ["%s   %s - %s" % (b.get("name", ""), b.get("start", ""), b.get("end", ""))
+                                             for b in blocks]
+        i = done_select(_("Names by time of day"), rows)
         if i < 0:
             return
         if i == 0:
-            name = D.input(_("Name during this block (e.g. CAM Jr.)"), "")
+            name = D.input(_("Name at this time of day (e.g. CAM Jr.)"), "")
             if not name:
                 continue
             a = ask_time(_("Starts at"), "06:00")
@@ -1462,7 +1787,7 @@ def edit_brand_blocks(ch):
             p = D.browse(2, _("Logo for %s") % bl.get("name", ""), "pictures", ".png|.jpg|.jpeg|.gif|.webp")
             if p:
                 bl["logo_path"] = p
-        elif j == 3 and confirm_remove(_("Remove the time block %s?") % bl.get("name", "")):
+        elif j == 3 and confirm_remove(_("Remove the name %s?") % bl.get("name", "")):
             blocks.pop(i - 1)
 
 
@@ -1473,22 +1798,20 @@ def _folder_name(path):
 
 def _logo_row(ch, ts=None):
     """(label, detail) for the logo the channel shows (at ts: a time block's own)."""
-    from . import stations, logos
+    from . import stations
     br = stations.brand(ch, ts) if ts else stations.brand(dict(ch, brand_blocks=[]))
     path, src = br["logo"], br["logo_from"]
-    if not path and src != "none":
-        path = logos.logo_for(ch)
-        src = "logofolder" if path else ""
     name = os.path.basename(path) if path else _("none")
     detail = {
-        "picked": _("The image you chose in the channel editor (Station logo)."),
-        "block_picked": _("The image you chose for this time block."),
+        "picked": _("The image you chose for this channel."),
+        "block_picked": _("The image you chose for this time-of-day name."),
         "folder": _("From the channel's station folder."),
-        "block_folder": _("From this time block's own folder."),
-        "builtin": _("CableBox's built-in station logo. Put a logo.png in the channel's folder to use your own."),
-        "logofolder": _("Matched by name in the logo folder (Settings > Viewing)."),
-        "none": _("Switched off in the channel editor (Station logo)."),
-    }.get(src, _("No logo found. Put a logo.png in the channel's folder, or choose one under Station logo."))
+        "block_folder": _("From this time-of-day name's own folder."),
+        "builtin": _("CableBox's built-in logo. Any logo of your own replaces it."),
+        "logofolder": _("Matched by name in the logo folder (Settings > Channels)."),
+        "block_logofolder": _("Matched by this time-of-day name in the logo folder (Settings > Channels)."),
+        "none": _("Switched off for this channel. Select to choose a logo."),
+    }.get(src, _("No logo found. Select to choose an image, or put a logo.png in the channel's folder."))
     if src in ("folder", "block_folder") and os.path.splitext(name)[0].lower() != "logo":
         detail += _(" There's no logo.png, so the first image in the folder is used.")
     return _("Logo: %s") % name, detail
@@ -1520,9 +1843,10 @@ def _clip_row(ch, kind, folder):
     return _("%s: none") % label, _("Add clips to the channel's %s folder.") % kind + note, True
 
 
-def branding(ch, chans):
-    """Channel editor > Branding & clips: what the channel really uses for its logo,
-    bumps, station IDs and commercials, where each comes from, and its folders."""
+def station_folder(ch, chans):
+    """Channel editor > Identity > Station folder: the channel's own folder (logo,
+    bumps, IDs, commercials, one folder per time-of-day name), what's in it, and
+    making or repairing it.  Never deletes anything."""
     from . import stations
     while True:
         stations.clear_cache()
@@ -1533,10 +1857,9 @@ def branding(ch, chans):
         def add(key, label, detail=""):
             keys.append(key)
             rows.append(_menu_row(label, detail))
-        add("logo", *_logo_row(ch))
         if not root:
             add("root", _("Station folder: not set up"),
-                _("Select to choose where channel folders go (Settings > Viewing > Stations folder)."))
+                _("Select to choose where channel folders go (Settings > Channels > Stations folder)."))
         elif folder:
             add("browse", _("Station folder: %s") % _folder_name(folder), _("Select to look inside. ") + folder)
         else:
@@ -1544,8 +1867,8 @@ def branding(ch, chans):
                 _("Looking for a folder named %s in %s. Select to make it.") % (
                     " / ".join("'%s'" % n for n in stations.folder_names(ch)[:3]), root))
         for kind in ("bumps", "ids", "commercials"):
-            label, detail, on = _clip_row(ch, kind, folder)
-            add("" if on else "on:" + kind, label, detail)
+            label, detail, _on = _clip_row(ch, kind, folder)
+            add("", label, detail)
         for b in ch.get("brand_blocks") or []:
             ts = _block_time(b)
             bf = stations.brand(ch, ts)["block_folder"] if ts is not None else ""
@@ -1556,18 +1879,16 @@ def branding(ch, chans):
                 _("No folder of its own - the channel's clips are used. Repair folders to make one."))
         if root:
             add("repair", _("[B]Create or repair this channel's folders[/B]"),
-                _("Adds what's missing (bumps, ids, commercials, time blocks). Never deletes anything."))
+                _("Adds what's missing (bumps, ids, commercials, names by time of day). Never deletes anything."))
             orphans = stations.orphan_folders(chans)
             if orphans and not folder:
                 add("adopt", _("Use an existing folder for this channel..."),
                     _("%d folders match no channel - e.g. one made before a rename.") % len(orphans))
-        i = done_select(_("%s - branding & clips") % ch["name"], rows, useDetails=True)
+        i = done_select(_("%s - station folder") % ch["name"], rows, useDetails=True)
         if i < 0:
             return
         key = keys[i]
-        if key == "logo":
-            pick_logo(ch)
-        elif key == "root":
+        if key == "root":
             _choose_root()
         elif key == "browse":
             D.browse(1, ch["name"], "files", "", False, False, folder)
@@ -1582,11 +1903,6 @@ def branding(ch, chans):
                     D.notification(TITLE, _("Renamed to %s") % _safe_name(ch["name"]), time=2500)
                 else:
                     D.ok(TITLE, _("Couldn't rename the folder (a folder with that name may already exist)."))
-        elif key.startswith("on:"):
-            kind = key[3:]
-            if confirm(_("Switch %s on for %s?") % (kind, ch["name"]), _("Switch on")):
-                ch[kind] = True
-                C.save(chans)
 
 
 def _choose_root():
@@ -1623,17 +1939,31 @@ def _folder_follows(ch, old_folder):
 
 
 def _logo_label(ch):
-    from . import logos
     if ch.get("logo") == "none":
         return _("none")
     if ch.get("logo"):
         return os.path.basename(ch["logo"])
     from . import stations
-    st = stations.brand(dict(ch, brand_blocks=[]))["logo"]
-    if st:
-        return _("%s (station)") % os.path.basename(st)
-    found = logos.logo_for(ch)
-    return (_("%s (from the logo folder)") % os.path.basename(found)) if found else _("none")
+    br = stations.brand(dict(ch, brand_blocks=[]))
+    if not br["logo"]:
+        return _("none")
+    how = {"folder": _("%s (station folder)"), "logofolder": _("%s (from the logo folder)"),
+           "builtin": _("%s (built-in)")}.get(br["logo_from"], "%s")
+    return how % os.path.basename(br["logo"])
+
+
+def _browse_logo(ch):
+    """Choose an image file as the channel's logo (Kodi can't show SVG)."""
+    from . import logos
+    p = D.browse(2, _("Station logo (PNG with a transparent background looks best)"), "pictures",
+                 "|".join(logos.IMAGE_EXT + (".svg",)))
+    if not p:
+        return
+    if p.lower().endswith(".svg"):
+        D.ok(TITLE, _("Kodi can't show SVG images.  Convert the logo to PNG (keeping the transparent "
+                      "background) and choose that instead."))
+        return
+    ch["logo"] = p
 
 
 def pick_logo(ch):
@@ -1642,19 +1972,12 @@ def pick_logo(ch):
                  [_("Choose an image..."), _("Use the logo folder (matched by name, call letters or number)"),
                   _("No logo")])
     if j == 0:
-        p = D.browse(2, _("Station logo (PNG with a transparent background looks best)"), "pictures",
-                     "|".join(logos.IMAGE_EXT + (".svg",)))
-        if p:
-            if p.lower().endswith(".svg"):
-                D.ok(TITLE, _("Kodi can't show SVG images.  Convert the logo to PNG (keeping the transparent "
-                              "background) and choose that instead."))
-                return
-            ch["logo"] = p
+        _browse_logo(ch)
     elif j == 1:
         ch.pop("logo", None)
         logos.clear_cache()
         if not K.setting("logo_folder"):
-            D.ok(TITLE, _("Set the logo folder first: Settings > Viewing > Logo folder."))
+            D.ok(TITLE, _("Set the logo folder first: Settings > Channels > Logo folder."))
     elif j == 2:
         ch["logo"] = "none"
 
@@ -2004,6 +2327,12 @@ def clean_in_progress():
     D.notification(TITLE, _("Cleared %d items") % len(clear), time=3000)
 
 
+def _names(chans, most=3):
+    """'Keystone, Beacon +4 more' for a question about several channels."""
+    names = [c["name"] for c in chans]
+    return ", ".join(names[:most]) + (_(" +%d more") % (len(names) - most) if len(names) > most else "")
+
+
 def quick_setup():
     """One-step changes for every channel at once."""
     from . import presets
@@ -2012,7 +2341,7 @@ def quick_setup():
                 _("Never sign off (remove off-air hours from all channels)"),
                 _("Build prime-time lineups on all channels (choose hours)"),
                 _("Remove the automatic prime-time lineups")]
-        i = done_select(_("Quick setup"), opts)
+        i = done_select(_("Sign-off and prime time for all channels"), opts)
         if i < 0:
             return
         chans = C.load()
@@ -2021,10 +2350,25 @@ def quick_setup():
             b = ask_time(_("Back on the air at"), presets.OFF_END)
             if not (a and b):
                 continue
-            presets.set_overnight(chans, a, b)
+            only_empty = False
+            have = presets.with_hours(chans)
+            if have:                             # never over a channel's own hours unasked
+                r = ask(_("%s already sign off at times of their own.") % _names(have),
+                        _("Replace theirs"), _("Only the others"), cancel=_("Cancel"),
+                        heading=_("Replace the off-air hours on %d channels?") % len(have))
+                if r is None:
+                    continue
+                only_empty = r == "no"
+            n = presets.set_overnight(chans, a, b, only_empty=only_empty)
             C.save(chans)
-            D.notification(TITLE, _("Channels now sign off %s - %s") % (a, b), time=3000)
+            D.notification(TITLE, _("Channels signing off %s - %s: %d") % (a, b, n), time=3000)
         elif i == 1:
+            have = presets.with_hours(chans)
+            if not have:
+                D.notification(TITLE, _("No channel signs off"), time=2500)
+                continue
+            if not confirm_remove(_("%s would stay on the air around the clock.") % _names(have)):
+                continue
             presets.clear_overnight(chans)
             C.save(chans)
         elif i == 2:
@@ -2311,12 +2655,19 @@ menu picks a track or loads a subtitle file.  To use the remote's subtitle butto
 run Settings > Tools > Remote CC button once.
 
 [B]Station folders[/B]
-Set a Stations folder (Settings > Viewing) and CableBox keeps one folder per channel,
+Set a Stations folder (Settings > Channels) and CableBox keeps one folder per channel,
 named after the channel (or its call letters, or 'Channel 7'): logo.png, bumps/,
-ids/ and commercials/, plus a folder per time block such as CAM Jr.  Channel
-manager > channel > Branding & clips shows what the channel really uses and where
-it comes from, and makes or repairs its folders.  Renaming a channel offers to
-rename its folder too.
+ids/ and commercials/, plus a folder per time-of-day name such as CAM Jr.  Channel
+manager > channel > Breaks & clips shows the clips the channel really uses and where
+they come from; Identity > Station folder makes or repairs its folders.  Renaming a
+channel offers to rename its folder too.
+
+[B]Stations and your own channels[/B]
+A built-in station (Comedy Corner, Chameleon...) is a brand - name, call letters,
+logo, names by time of day - plus its shows.  Channel manager > channel > Identity:
+'Make this channel my own' takes the brand away and keeps the name and all the
+programming; rename it and give it your own logo.  Any logo of yours (the image you
+picked, the station folder's, the logo folder's) beats a built-in one.
 
 [B]How the schedule works[/B]
 Nothing to compile.  Each channel pulls from your Kodi library (shows, genres,
@@ -2331,20 +2682,21 @@ Edit a channel and the change applies from its next programme - every show keeps
 Each TV show has one home channel - the one it fits best (your own picks first,
 then folders/tags/studios, then its main genre).  A show whose genres are too
 small for a channel of their own goes on the biggest genre network.  And the same show is never on two channels at the same time.
-Settings > Programming > 'Shows on more than one channel' changes this.
+Settings > Channels > 'Shows on more than one channel' changes this.
 
 [B]Menu and tools[/B]
 The menu keeps to the everyday things: Watch TV, What's on now (tune straight to a
 show), the Channel manager, the Weekly planner, Settings and Help.  Lineup tools
-(build a new lineup, quick setup, move shows) and maintenance (check my videos,
-clean up In progress, refresh schedules, start series over, start over) are on the
-Tools page in Settings.  Changes to settings, channels and station clips apply from
+(build my lineup, move shows, sign-off and prime time, station folders) are in the
+Channel manager; maintenance (check my videos, clean up In progress, refresh
+schedules, start series over, start over) is on the Tools page in Settings.
+Changes to settings, channels and station clips apply from
 each channel's next programme on their own: what's on stays on, and every show keeps
 its next episode.  Only Tools > Start series over sends shows back to episode one.
 
 [B]Fine-tuning[/B]
-Settings > Tools > 'Move shows between channels': pick a show (say, Good Eats) and tick the channels it
-should air on.
+Channel manager > Lineup tools > 'Move shows between channels': pick a show (say, Good Eats)
+and tick the channels it should air on.
 Unticking hides it there even if the channel's genre includes it.
 Each channel also has 'What's on this channel' - a checklist of everything it airs.
 Channel manager > 'Shows without a good channel' lists shows no channel picks up
@@ -2365,11 +2717,12 @@ hours, copy a day to other days, or clear a day (Menu button).
 [B]Your watch progress[/B]
 CableBox puts back resume points, watched status and last-played dates after it
 airs something, so surfing doesn't fill your 'In progress' list (Settings >
-Viewing).  Settings > Tools > 'Clean up my In progress list' tidies up an older list.
+Start-up & library).  Settings > Tools > 'Clean up my In progress list' tidies up an older list.
 
-[B]Quick setup[/B]
-Settings > Tools > Quick setup: overnight sign-off (default 12 AM - 5 AM) and automatic
-prime-time lineups (default 8 - 11 PM) for every channel at once.  Prime-time
+[B]Sign-off and prime time for all channels[/B]
+Channel manager > Lineup tools: overnight sign-off (default 12 AM - 5 AM) and automatic
+prime-time lineups (default 8 - 11 PM) for every channel at once.  Channels that
+already have off-air hours keep them unless you say otherwise.  Prime-time
 slots appear in the weekly planner; edit any of them and it becomes yours.
 
 [B]Holidays[/B]
@@ -2392,10 +2745,10 @@ between programs, right before the next show starts.
 Point Settings at a folder of commercials and (optionally) bumps.  Breaks are cut
 into shows to fill each half hour, like real cable.  Movie channels play commercials
 between films.  Without commercials the gap is filled with an 'Up next' card.
-'Check my commercials & bumps' shows which clips can't be used.
+Settings > Tools > 'Check my videos' shows which clips can't be used.
 
 [B]Promos[/B]
-Settings > Programming > Promos: breaks now and then include a short promo for
+Settings > Breaks > Promos: breaks now and then include a short promo for
 what this channel airs next - the episode's still, the show's logo, the episode
 title, a short synopsis when one fits, 'Up next' or the day and time, and the show's
 theme.mp3, all from your own library (nothing in it is changed).  Your own promo
@@ -2513,7 +2866,7 @@ def check_chapters():
     Always use chapters / Never use chapters (its own choice wins), or its episodes
     with where their breaks and credits go.  A menu: changes save as you go."""
     if not K.setting_bool("chapter_breaks", True):
-        D.ok(_("Check chapters"), _("Commercial breaks at chapter marks is off (Settings > Programming)."))
+        D.ok(_("Check chapters"), _("Commercial breaks at chapter marks is off (Settings > Breaks)."))
         return
     shows = sorted(library.all_tvshows(), key=lambda s: library.natural_key(s["title"]))
     if not shows:
@@ -2591,7 +2944,7 @@ def check_skipped():
         xbmcgui.Dialog().ok(_("Check skipped episodes"), _("No episodes are skipped.") + "[CR]" +
                             _("Episodes are only listed after a refresh: Tools > Refresh schedules."))
         return
-    lines = [_("Shorter than %d min (Settings > Programming > Skip episodes shorter than). "
+    lines = [_("Shorter than %d min (Settings > Channels > Skip episodes shorter than). "
                "Their series go on to the next real episode; the files stay where they are.") % limit, ""]
     for path, series, label, secs in sorted(eps, key=lambda e: (e[1].lower(), e[2], e[0])):
         lines.append(_("%s  %s  (%d:%02d)") % (series, label or os.path.basename(path), int(secs) // 60, int(secs) % 60))
@@ -2727,7 +3080,7 @@ STATION_FOLDER_GUIDE = _("[B]What goes where[/B]  (in each channel's folder)[CR]
                          "  bumps/ .............. short clips before the show comes back[CR]"
                          "  ids/ .................. station IDs, between programmes[CR]"
                          "  commercials/ ...... this channel's own commercials[CR]"
-                         "  promos/ ............ your own promos for its shows (Settings > Programming > Promos)[CR]"
+                         "  promos/ ............ your own promos for its shows (Settings > Breaks > Promos)[CR]"
                          "  <time block>/ ...... the same again, used only in that block (e.g. CAM Jr.)[CR]"
                          "A folder is matched by the channel's name, call letters or number ('Channel 7'). "
                          "A new logo shows within a couple of minutes; new clips are used from each channel's "
@@ -2833,7 +3186,7 @@ def _settings_and_tools():
 
 def welcome():
     """First start on a new install.  Returns True if the viewer went on to watch TV."""
-    rows = [_menu_row(_("[B]Set it all up for me[/B]"),
+    rows = [_menu_row(_("[B]Build my lineup[/B]"),
                       _("Reads your Kodi library and builds a full lineup - channels, guide, weather, "
                         "overnight sign-off, prime time. About a minute.")),
             _menu_row(_("I'll set it up myself"),
@@ -2842,20 +3195,111 @@ def welcome():
             _menu_row(_("Not now"), _("Go to the menu. You'll be asked again next time."))]
     i = D.select(_("Welcome to CableBox 42"), rows, useDetails=True)
     if i == 0:
-        return bool(wizard())
+        return bool(wizard(express=True))
     if i == 1:
-        from . import stations
+        # plain channels: the viewer brands them (a built-in station is one row away in the editor)
         chans = [C.new_channel(2, _("TV Guide"), "guide"), C.new_channel(C.WEATHER_NUMBER, _("Weather Channel"), "weather")]
-        stations.assign(chans)
         for c in chans:
             c["callsign"] = C.callsign(c["name"])
         C.save(chans)
-        D.ok(TITLE, _("You have a TV Guide on 2 and Retrocast Weather on 25.[CR][CR]"
-                      "Next: Channel manager > Add a channel.  Commercials, bumps and music folders are "
-                      "in Settings, and Settings > Tools > 'Build my lineup automatically' can still build "
-                      "channels for you any time."))
+        D.ok(TITLE, _("You have a TV Guide on 2 and a Weather Channel on 25.[CR][CR]"
+                      "Next: Channel manager > Add a channel.  The main menu's Finish setting up has the "
+                      "commercials, bumps and music folders, and the Channel manager's Build my lineup can "
+                      "still build channels for you any time."))
         manager()
     return False
+
+
+# ------------------------------------------------------------------ finish setting up
+# What a first setup leaves for later.  Each stays on the main menu's Finish
+# setting up until it is chosen or the viewer says they don't need it
+# (state.json "setup_skipped").
+SETUP_ITEMS = ("commercials", "bumps", "music", "musicvideos", "city")
+
+
+def setup_todo(chans):
+    """[(key, label, detail)] of what's still not set (and not dismissed)."""
+    skipped = set(K.load_json(K.STATE_FILE, {}).get("setup_skipped") or [])
+    todo = []
+
+    def add(key, unset, label, detail):
+        if unset and key not in skipped:
+            todo.append((key, label, detail))
+    add("commercials", not K.setting("commercials_path"), _("Commercials: not set"),
+        _("A folder of old commercials fills the breaks like real cable TV."))
+    add("bumps", not (K.setting("bumps_path") or K.setting("stations_folder")), _("Bumps and station IDs: not set"),
+        _("Short clips right before the show comes back: one shared folder, or a folder per channel."))
+    add("music", not K.setting("guide_music_path"), _("Guide and weather music: not set"),
+        _("Background music for the TV Guide and the Weather Channel."))
+    add("musicvideos", chans and not any(c["type"] == "musicvideos" for c in chans), _("Music videos: no channel"),
+        _("A folder of music videos makes a music video channel."))
+    add("city", any(c["type"] == "weather" for c in chans) and not K.setting("weather_location")
+        and not xbmc.getCondVisibility("Weather.IsFetched"), _("Weather city: not set"),
+        _("Your city for the Weather Channel's forecast."))
+    return todo
+
+
+def _setup_skip(key):
+    st = K.load_json(K.STATE_FILE, {})
+    st["setup_skipped"] = sorted(set(st.get("setup_skipped") or []) | set([key]))
+    K.save_json(K.STATE_FILE, st)
+
+
+def _setup_choose(key, chans):
+    """Set one item now.  Nothing is written when the viewer backs out."""
+    pending = {}
+    try:
+        if key == "commercials":
+            p = D.browse(0, _("Commercials folder"), "video")
+            if p:
+                pending["commercials_path"] = p
+        elif key == "bumps":
+            if ask_bumpers(pending):
+                K.set_setting("stations_folder", pending.pop("stations_folder"))
+                make_station_folders(ask=False, report=False)
+        elif key == "music":
+            ask_music(pending)
+        elif key == "city":
+            city = D.input(_("Your city for the Weather Channel (optional, e.g. Springfield, IL)"), "")
+            if city:
+                pending["weather_location"] = city
+        elif key == "musicvideos":
+            from . import musicvideos
+            p = D.browse(0, _("Music videos folder"), "video")
+            if p:
+                mv = C.music_channel(C.next_free_number(chans), [p])
+                if mv is None:
+                    D.notification(TITLE, _("Boombox needs at least %d music videos - that folder has fewer")
+                                   % musicvideos.MIN_VIDEOS, time=4000)
+                else:
+                    mv.setdefault("callsign", C.callsign(mv["name"]))
+                    chans.append(mv)
+                    C.save(chans)
+                    D.notification(TITLE, _("Channel %d %s added") % (mv["number"], mv["name"]), time=2500)
+    except _Cancelled:
+        return
+    for k, v in pending.items():
+        K.set_setting(k, v)
+
+
+def finish_setup():
+    """Main menu > Finish setting up: the folders and the city a first setup
+    didn't ask for.  A menu: each row leaves once it's set or dismissed."""
+    while True:
+        chans = C.load()
+        todo = setup_todo(chans)
+        if not todo:
+            D.notification(TITLE, _("Everything is set up"), time=2500)
+            return
+        i = done_select(_("Finish setting up"), [_menu_row(t[1], t[2]) for t in todo], useDetails=True)
+        if i < 0:
+            return
+        key, label = todo[i][0], todo[i][1]
+        j = D.select(label, [_("Choose now"), _("I don't need this (stop showing it)"), _("Cancel")])
+        if j == 0:
+            _setup_choose(key, chans)
+        elif j == 1:
+            _setup_skip(key)
 
 
 def captions_on():
@@ -2947,17 +3391,24 @@ def _main_menu():
             opts = [("watch", _("[B]Watch TV[/B]"),
                      (_("Start on channel %d") % start) if start else _("Pick up where you left off")),
                     ("now", _("What's on now"), _("See every channel's current show and tune straight to it")),
+                    ("finish", _("Finish setting up"), ""),
                     ("cc", _("Closed captions: %s") % (_("On") if captions_on() else _("Off")),
                      _("On or off for every programme. While watching: the Menu button")),
-                    ("manager", _("Channel manager"), _("Add, edit, rename and renumber channels")),
+                    ("manager", _("Channel manager"), _("Add, edit and renumber channels - plus the lineup tools")),
                     ("planner", _("Weekly planner"), _("Pin shows to days and times")),
                     ("settings", _("Settings and tools"),
-                     _("Commercials, music, weather, picture - plus lineup tools and maintenance")),
+                     _("Commercials, music, weather, picture - plus maintenance tools")),
                     ("help", _("Help"), _("How everything works"))]
         else:
-            opts = [("wizard", _("[B]Set up my channels[/B]"), _("Builds a lineup from your Kodi library in a minute")),
+            opts = [("wizard", _("[B]Build my lineup[/B]"), _("Builds a lineup from your Kodi library in a minute")),
                     ("settings", _("Settings and tools"), _("Commercials, music, weather, picture")),
                     ("help", _("Help"), _("How everything works"))]
+        todo = setup_todo(chans) if chans else []
+        if todo:                                # what a first setup left for later
+            opts = [(k, label, _("%d left: %s") % (len(todo), ", ".join(t[1].split(":")[0] for t in todo)))
+                    if k == "finish" else (k, label, d) for k, label, d in opts]
+        else:
+            opts = [o for o in opts if o[0] != "finish"]
         i = done_select(TITLE, [_menu_row(o[1], o[2]) for o in opts], useDetails=True, done_label=_("[B]Close[/B]"))
         if i < 0:
             return
@@ -2970,8 +3421,11 @@ def _main_menu():
             if n is not None and not watch_from_menu(n):
                 return
         elif k == "wizard":
-            if wizard() and not tv_wants_menu():
+            if wizard(express=True) and not tv_wants_menu():
                 return  # watched TV straight after the wizard - Back goes to Kodi
+        elif k == "finish":
+            finish_setup()
+            refresh_if_changed()             # new clip folders, a new channel
         elif k == "cc":
             on = not captions_on()
             st = K.load_json(K.STATE_FILE, {})

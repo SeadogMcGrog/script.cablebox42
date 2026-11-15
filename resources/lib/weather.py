@@ -474,7 +474,7 @@ class WeatherScreen(object):
             P("wx_page", "nodata")
             P("wx_location", "")
             P("wx_ticker", _("Weather is not set up yet.   Choose a weather service in Kodi (Settings > "
-                           "Services > Weather) or type your city in CableBox 42 > Settings > Weather."))
+                           "Services > Weather) or type your city in CableBox 42 > Settings > Guide & Weather."))
             return
         page = PAGES[self.page]
         P("wx_page", page)

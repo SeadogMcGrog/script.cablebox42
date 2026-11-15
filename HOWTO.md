@@ -115,7 +115,7 @@ Movies\2001 A Space Odyssey (1968)\
 - Names like `title_t03.mkv` or "Bonus 2" are skipped. To keep one, rename it,
   or put it in a subfolder of `Extras` named **Behind the scenes**, **Making of**,
   **Interviews**, **Featurettes** or **Documentaries**: everything in those
-  always counts. (*Settings → Programming → Also air extras with unrecognised
+  always counts. (*Settings → Advanced → Also air extras with unrecognised
   names* counts them all.)
 - Give each movie its own folder. An `Extras` folder shared by several movies
   isn't used.
@@ -166,12 +166,23 @@ pinned shows, folders and settings are all kept.
 
 Open **CableBox 42**. The first time, a welcome screen asks how to start.
 
-### Option A — "Set it all up for me" (recommended)
+### Option A — "Build my lineup" (recommended)
 
-The lineup builder asks a few questions. Every answer can be changed later in
-Settings, so don't overthink it. Nothing is saved until the last screen's
-**OK**: press **Back** (or **Cancel**) on any screen and everything stays as it
-was.
+1. CableBox reads your library first (about a minute; *Cancel* stops it). If
+   it finds no TV shows or movies it says so straight away.
+2. One screen: ***N channels found in your library***, with overnight sign-off
+   (12 AM–5 AM) and prime-time lineups. Choose:
+   - **Start watching** — everything is set up and the TV comes on.
+   - **Customise** — the questions below, then the same lineup your way.
+   - **Cancel** — nothing changes.
+
+After *Start watching*, the main menu has **Finish setting up**: commercials,
+bumps and station IDs, guide and weather music, music videos and your weather
+city. Each says *not set* until you choose it or pick *I don't need this*.
+
+**Customise** asks, in order (every answer can be changed later; nothing is
+saved until the last screen's **OK**, and **Back** or **Cancel** on any screen
+leaves everything as it was):
 
 1. **"Do you have a folder of old commercials?"** — *Choose folder* and pick it,
    or *Skip*.
@@ -188,29 +199,36 @@ was.
      music videos?"** — *Choose folder* for a Boombox TV channel, or *Skip*.
 4. **Your city** for the weather channel (e.g. `Springfield, IL`). Skip it if
    Kodi's own weather is already set up.
-5. CableBox reads your library (about a minute; *Cancel* stops it) and
-   proposes channels. **Untick any you don't want** and confirm. With 30 or more
+5. **Channel names**:
+   - **CableBox's stations** — Comedy Corner, Orbit TV, Chameleon... each with
+     its name, logo and call letters.
+   - **Plain names, I'll brand them myself** — Comedy Channel, Sci-Fi Channel,
+     Kids TV... The same shows land on each channel; there are just no stock
+     names or logos. Rename them and add your own logos afterwards
+     ([section 7](#7-give-each-channel-its-own-logo-bumps-ids-and-commercials)).
+6. **Untick any channels you don't want** and confirm. With 30 or more
    music videos, **Boombox TV** is on the list, e.g. *Boombox TV — 210 music
    videos (136 from your library, 74 more in E:\Kodi\Music Videos)*.
-6. **Extras** — both ticked; untick what you don't want:
+7. **Extras** — both ticked; untick what you don't want:
    - **Sign off overnight** — a *Please Stand By* card from 12 AM to 5 AM, like
-     real TV. The guide and weather stay on.
+     real TV. The guide and weather stay on. Channels you already had keep
+     their own off-air hours.
    - **Prime-time lineup** — fills 8–11 PM with fixed weekly slots of each
      channel's best shows (movie channels: a movie at 8).
-7. **The last check** — e.g. *Replace your 12 channels with these 9 (2-25)?*,
+8. **The last check** — e.g. *Replace your 12 channels with these 9 (2-25)?*,
    with the extras and folders you chose. **OK** saves it all; **Cancel** leaves
    your old lineup and settings untouched.
-8. CableBox programmes every channel, then asks **Start watching**, **Not now**
+9. CableBox programmes every channel, then asks **Start watching**, **Not now**
    or **What I set up** — every channel, where its shows come from, and its
-   folders. Read it once; it's the map of your new lineup. (You can see it again
-   any time: *Channel manager → Lineup summary*.)
+   folders. (You can see it again any time: *Channel manager → Lineup tools →
+   Lineup summary*.)
 
 ### Option B — "I'll set it up myself"
 
-You get just the **TV Guide on 2** and the **Weather Channel on 25**, and the
+You get just the **TV Guide on 2** and a plain **Weather Channel on 25**, and the
 Channel manager opens so you can add channels by hand
 ([section 6](#6-add-edit-rename-and-renumber-channels)). You can still run the
-builder later: *Settings → Tools → Build my lineup automatically* (it can
+builder later: *Channel manager → Lineup tools → Build my lineup* (it can
 replace your lineup or add its channels after yours).
 
 ### What a typical automatic lineup looks like
@@ -279,7 +297,7 @@ progress* list or mark episodes watched — CableBox puts back resume points,
 watched status and last-played dates after it airs something.
 
 **Sleep timer:** Menu → *Sleep timer* (15 minutes to 2 hours). Optionally it
-also puts the TV in standby over HDMI-CEC (*Settings → Viewing*). When it runs
+also puts the TV in standby over HDMI-CEC (*Settings → Start-up & library*). When it runs
 out you're left in Kodi, not in a menu.
 
 **"I don't want this show on this channel":** while it's on, Menu → *Don't air
@@ -300,7 +318,7 @@ Three places answer "what did CableBox just do?":
    station folder and what's in it, and where to go next.
 2. **Channel manager → a channel → What's on this channel** — the complete
    checklist of shows that channel airs. Untick to hide.
-3. **Channel manager → Shows without a good channel** — the shows that *don't*
+3. **Channel manager → Lineup tools → Shows without a good channel** — the shows that *don't*
    have an obvious home ([section 9](#9-put-every-show-on-the-right-channel)).
 
 ---
@@ -312,14 +330,19 @@ Main menu → **Channel manager**.
 ### Add a channel
 
 1. **+ Add a channel**
-2. **Type**:
-   - *Network* — series with commercial breaks (most channels)
-   - *Movie channel* — films, commercials between them
-   - *Loop* — back to back, no clock (good for shorts)
-   - *Music videos* — Boombox: music videos on the clock with breaks between them
+2. **What kind of channel?**
+   - **A built-in station** — pick one (Comedy Corner, Orbit TV, Chameleon...).
+     Stations already in your lineup are greyed out with their channel number.
+     No name to type: it gets the station's name, logo, call letters and
+     shows. Choose a number, see what it airs, and **Add more** or **Done**.
+   - **My own channel** — choose the type (*Network*: series with commercial
+     breaks; *Movie channel*: films, commercials between them; *Loop*: back to
+     back, no clock), then name, number and programming, and finally
+     **Give it a logo now?** (*Choose an image* / *Later*).
+   - **Music videos** — Boombox: music videos on the clock with breaks between them
      ([Boombox TV](#boombox-tv-a-music-video-channel))
-   - *Guide channel* / *Weather channel*
-   - *Behind the scenes (movie extras)* — making-of pieces and interviews
+   - **TV Guide** / **Weather** — only offered while your lineup has none
+   - **Behind the scenes** — making-of pieces and interviews
      from your movies' `Extras` folders ([section 1](#1-before-you-start-get-your-library-ready)).
      The suggested name is **BACKLOT**; give it another name and CableBox
      asks whether to use the BACKLOT logo and corner bug anyway (*Use them* /
@@ -335,10 +358,10 @@ Main menu → **Channel manager**.
      (*Look now* / *Cancel*), and so does *Look for movie extras* in the
      TV's menu. If it has looked and found nothing to air, the screen says so
      and points to *Check extras*.
-3. **Name** and **number**. If the number is taken you can move that channel
+3. The **number**. If it's taken you can move that channel
    to the next free number, slide the channels from there up by one, or pick
    another number.
-4. **Add programming** (not for Guide, Weather or Behind the scenes) — pick a source, then **Add more** as many times as you
+4. **Add programming** (*My own channel*, or *Add more* on a built-in station) — pick a source, then **Add more** as many times as you
    like, and **Done** when finished. **Back** (or **Cancel**) on any step adds
    nothing.
 
@@ -359,27 +382,53 @@ Main menu → **Channel manager**.
 
 ### The channel editor (pick a channel in the Channel manager)
 
+Four groups, then *Preview today's schedule* and *Delete channel*. Changes save
+as you go.
+
+**Identity**
+
 | Row | What it's for |
 |---|---|
-| Name / Number / Call letters | Identity. Renaming offers to rename its station folder too |
-| Station | Give it a built-in station (name, call letters, logo, time blocks) or go back to its own |
-| Branding by time of day | Another name and logo for part of the day ([section 8](#8-time-of-day-branding-cam-jr-in-the-morning)) |
-| Station logo | Choose an image, use the logo folder, or no logo |
-| **Branding & clips** | What the channel *really* uses for its logo, bumps, IDs and commercials ([section 7](#7-give-each-channel-its-own-logo-bumps-ids-and-commercials)) |
+| Name / Number / Call letters | Renaming updates the call letters (unless you typed your own), asks about a station's time-of-day names (*Keep them* / *Remove them*), and offers to rename its station folder too |
+| Logo | Shows the logo in use and where it comes from. Select to choose an image, use the logo folder, or no logo |
+| Names by time of day | Another name and logo for part of the day ([section 8](#8-time-of-day-branding-cam-jr-in-the-morning)) |
+| Station folder | The channel's own folder: look inside, create or repair it, adopt an existing folder ([section 7](#7-give-each-channel-its-own-logo-bumps-ids-and-commercials)) |
+| Built-in station / Use a built-in station... | Give it a built-in station (the question lists what changes: name, call letters, logo, time-of-day names, the shows it adds), or **Make this channel my own**: the station's logo and time-of-day names go, the channel's name and all its programming stay |
+
+**Programming**
+
+| Row | What it's for |
+|---|---|
+| Type | Asks whether to use the new type's usual settings (commercials, breaks, bumps, lineup style, start times) or keep the channel's own. For Behind the scenes, Guide and Weather it says the programming sources aren't used (they're kept). A second Guide or Weather isn't offered |
 | Programming | Add or remove sources (removing asks first) |
+| **What's on this channel** | Checklist of every show it airs — untick to hide |
+
+**Breaks & clips**
+
+| Row | What it's for |
+|---|---|
+| Commercials / Bumps | What the channel *really* uses and where it comes from. Select to switch them on or off |
+| Station IDs | The same for station ID clips. Select to choose a folder for this channel only |
+| Break into shows for commercials | Mid-show breaks (off for movie channels by default) |
+| Ad flavour | Which retro ads its house breaks run: *Auto*, *General*, *Kids*, *Sports*, *Movies*, *Late night* |
+| Channel commercials / bumps folder | Folders for this channel only (station folders are usually easier) |
+
+**Schedule**
+
+| Row | What it's for |
+|---|---|
 | Weekly planner | Pin shows to times ([section 10](#10-pin-shows-to-fixed-times-with-the-weekly-planner)) |
 | Time blocks | Saturday mornings, movie nights ([section 11](#11-time-blocks-saturday-morning-cartoons-movie-nights)) |
 | Off-air hours | When this channel signs off |
-| **What's on this channel** | Checklist of every show it airs — untick to hide |
-| Commercials / Bumps on/off | Per channel |
-| Break into shows for commercials | Mid-show breaks (off for movie channels by default) |
-| Ad flavour | Which retro ads its house breaks run: *Auto*, *General*, *Kids*, *Sports*, *Movies*, *Late night* |
 | Lineup style | *Same show same time every day*, or *Shuffle* |
 | Programs start on | :00 and :30, the hour, every 15 minutes, or no clock |
-| Channel commercials / bumps folder, Station ID clips | Folders for this channel only (station folders are usually easier) |
+
+**Also**
+
+| Row | What it's for |
+|---|---|
 | Preview today's schedule | The next 12 hours |
 | Movie extras (Behind the scenes channels only) | How much there is to air; opens *Check extras*. Programming, planner, time blocks, What's on, lineup style and start times aren't shown for this type |
-| Type | Asks whether to use the new type's usual settings (commercials, breaks, bumps, lineup style, start times) or keep the channel's own. For Behind the scenes, Guide and Weather it says the programming sources aren't used (they're kept) |
 | Delete channel | Asks first: *Cancel* / *Delete* |
 
 Changes apply from the channel's next programme when you close the Channel
@@ -389,7 +438,7 @@ manager: what's on air keeps playing, and every show keeps its next episode.
 
 *Channel manager → Rearrange channel numbers*: pick a channel and type its new
 number. If the number is taken you can **swap** the two or **slide** the
-channels in between over by one. *Close the gaps* renumbers 2, 3, 4… in order.
+channels in between over by one. *Close the gaps* renumbers them in order from a number you choose.
 Schedules belong to the channel, not the number, so nothing is rebuilt.
 
 ---
@@ -401,7 +450,7 @@ no menus needed once they're set up.
 
 ### Step 1 — Choose a stations folder (once)
 
-*Settings → Viewing → Stations folder*. Pick (or create) a folder on your media
+*Settings → Channels → Stations folder*. Pick (or create) a folder on your media
 drive, e.g. `/storage/media/Stations/` or `D:\Stations\`. If you chose *A
 folder for each channel* during setup, this is already done.
 
@@ -442,7 +491,7 @@ Stations/
 
 **When do new files show up?** A new or changed **logo** appears within a couple
 of minutes. **Clips** go into the breaks CableBox plans from then on — it plans
-each channel several hours ahead (*Settings → Programming → Schedule ahead*),
+each channel several hours ahead (*Settings → Advanced → Schedule ahead*),
 so the programme on air keeps its breaks. Closing the Channel manager (or
 *Settings → Tools → Refresh schedules*) puts new clips into breaks from each
 channel's next programme.
@@ -466,7 +515,7 @@ Inside a channel folder, `bumps` may also be called `bumpers`, `ids` may be
 
 | | First choice | Then | Then | Then |
 |---|---|---|---|---|
-| **Logo** | Time block's folder | Image you picked in the channel editor | Station folder's `logo.png` | Built-in station logo, then the logo folder |
+| **Logo** | Time block's own (its folder, its picked image, an image named after it in the logo folder, its built-in logo) | Image you picked in the channel editor | Station folder's `logo.png` | The logo folder, then the built-in station logo |
 | **Bumps / commercials** | Time block's folder | Channel's station folder | Channel's own folder (editor) | Shared folder in Settings |
 | **Station IDs** | Time block's folder | Channel's station folder | Channel's *Station ID clips* folder | — |
 
@@ -475,27 +524,32 @@ later.
 
 > **Important:** a channel's *Commercials* and *Bumps* switches (in the channel
 > editor) still apply. Clips in `Comedy Corner/commercials/` are ignored if
-> Comedy Corner has commercials switched off. *Branding & clips* warns you about
+> Comedy Corner has commercials switched off. *Breaks & clips* warns you about
 > exactly this.
 
-### Step 4 — Check it with Branding & clips
+### Step 4 — Check it in the channel editor
 
-*Channel manager → a channel → **Branding & clips***. One screen shows what the
-channel really uses, and where each thing comes from:
+*Channel manager → a channel → **Breaks & clips*** shows the clips the channel
+really uses, and where each comes from:
 
 ```
-Logo: logo.png                     From the channel's station folder.
-Station folder: Comedy Corner      Select to look inside.
+Commercials: off for this channel  Select to switch them on.
 Bumps: 2 clips from the station folder
 Station IDs: none                  Add clips to the channel's ids folder.
-Commercials: off for this channel  Select to switch them on.
-CAM Jr. (06:00-12:00): ...         (one row per time block)
+```
+
+*Identity* shows the logo (*Logo: logo.png — From the channel's station
+folder.*), and *Identity → **Station folder*** the folder itself:
+
+```
+Station folder: Comedy Corner      Select to look inside.
+CAM Jr. (06:00-12:00): ...         (one row per time-of-day name)
 Create or repair this channel's folders
 ```
 
 From here you can:
 
-- **Change the logo** (select the logo row)
+- **Change the logo** (*Identity → Logo*)
 - **Look inside** the channel's folder
 - **Switch on** bumps or commercials that are off but have clips waiting
 - **Create or repair** the channel's folders (adds what's missing, never deletes)
@@ -515,13 +569,13 @@ leaves both alone.
 
 ### Logos without station folders
 
-If you'd rather keep all logos in one place: *Settings → Viewing → Logo folder*,
+If you'd rather keep all logos in one place: *Settings → Channels → Logo folder*,
 and name each image after the channel's name, call letters or number
 (`Comedy Corner.png`, `LOL.png`, `3.png`). Or pick an image directly in the
-channel editor (*Station logo → Choose an image*). Kodi can't show SVG — convert
+channel editor (*Identity → Logo → Choose an image*). Kodi can't show SVG — convert
 to PNG.
 
-The corner logo ("bug") is set in *Settings → Viewing*: on or off, which corner,
+The corner logo ("bug") is set in *Settings → Channels*: on or off, which corner,
 and opacity (30–100%).
 
 ---
@@ -532,15 +586,17 @@ A channel can go by another name, call letters and logo for part of the day —
 like a kids' channel that's *CAM Jr.* from 6 AM to noon and *Cam O Nite* after
 8 PM. The banner, the corner logo and the guide switch over by themselves.
 
-1. *Channel manager → channel → **Branding by time of day***
-2. **+ Add a time block** → name (e.g. *CAM Jr.*), start, end. Blocks may cross
+1. *Channel manager → channel → Identity → **Names by time of day***
+2. **+ Add a name** → name (e.g. *CAM Jr.*), start, end. Times may cross
    midnight (20:00–06:00).
-3. Optional: pick a block → *Choose logo…*
-4. Optional: give the block its own clips — *Branding & clips → Create or repair
+3. Optional: pick a name → *Choose logo…* (or put `CAM Jr.png` in the logo folder)
+4. Optional: give it its own clips — *Identity → Station folder → Create or repair
    this channel's folders* makes `Stations/<channel>/<block>/bumps/`, `ids/`
    and `commercials/`. Drop a `logo.png` in the block's folder too.
 
-Built-in stations like Chameleon come with their blocks already set.
+Built-in stations like Chameleon come with theirs already set. Rename the
+channel and CableBox asks whether to keep them; *Make this channel my own*
+removes them and keeps the ones you made.
 
 ---
 
@@ -572,7 +628,7 @@ channel is short. Your own picks and hidden shows always win.
 The automatic sort only changes when you run *Build my lineup* again; your
 current channels keep their shows until then.
 
-*Settings → Programming → Shows on more than one channel* changes the rule:
+*Settings → Channels → Shows on more than one channel* changes the rule:
 TV shows on one channel each (movies can repeat — the default), everything on
 one channel each, or allow repeats anywhere.
 
@@ -621,7 +677,7 @@ matches*, *Marked as fine*.
 
 ### Move a show by hand
 
-*Settings → Tools → Move shows between channels*: pick a show, tick every
+*Channel manager → Lineup tools → Move shows between channels*: pick a show, tick every
 channel it should air on. It airs **exactly** there. Unticking hides it even
 where its genre would include it.
 
@@ -682,14 +738,16 @@ networks (3–5) come with a full network day of blocks already.
 
 ## 12. Sign-off hours and prime time for every channel at once
 
-*Settings → Tools → Quick setup*:
+*Channel manager → Lineup tools → Sign-off and prime time for all channels*:
 
 - **Sign off overnight on all channels** — choose the hours (default 12 AM–5 AM).
+  If some channels already sign off at times of their own, it asks first:
+  *Replace theirs*, *Only the others* or *Cancel*.
   Off-air shows a 1950s *Please Stand By* card or colour bars (silent or with
   tone), after a built-in "This concludes our broadcast day" card; the
   planner's Menu changes the screen and sets a sign-off clip of your own
   (anthem) instead of the card, or none, and a sign-on clip.
-- **Never sign off** — removes off-air hours everywhere.
+- **Never sign off** — removes off-air hours everywhere (asks first).
 - **Build prime-time lineups** — fills 8–11 PM (or your hours) with fixed weekly
   slots of each channel's best-rated shows; movie channels get a *Movie at 8*.
   These appear in the planner as *(automatic prime time)*; edit one and it
@@ -754,7 +812,7 @@ appear* (*Automatic*) works around a Kodi 21 quirk.
 
 ## 14. Commercials and bumps that fill the breaks properly
 
-1. *Settings → Programming → Commercials folder* (shared by every channel), and
+1. *Settings → Breaks → Commercials folder* (shared by every channel), and
    optionally *Bumps / station ID folder*.
 2. Per-channel clips go in station folders ([section 7](#7-give-each-channel-its-own-logo-bumps-ids-and-commercials)).
 3. *Commercial breaks per half hour*: 0–4 (default 2).
@@ -774,7 +832,7 @@ next* card. Station IDs play between programmes, right before the next show.
 
 No commercials, or want more variety? Promos are made from your own library.
 
-1. *Settings → Programming → **Promos for what's coming up, in breaks*** → On.
+1. *Settings → Breaks → **Promos for what's coming up, in breaks*** → On.
 2. *How often*: every break, about half of them, or now and then.
 3. *Promote*: *Up next and later today* (like a real station: breaks during a
    show tease the evening, the last one says what's up next), only what's on
@@ -815,7 +873,7 @@ Advanced*, turn on *Developer tools* (off by default). Then, while watching a
 channel, press **0 0 0** on the remote (within 2 seconds, as for a channel
 number). The promo that channel's next break would air plays at once, then the
 channel comes back at the live point, as after a break. Promos must be on
-(*Settings → Programming*); nothing in the schedule changes. 0 0 0 can't clash
+(*Settings → Breaks*); nothing in the schedule changes. 0 0 0 can't clash
 with a channel: channel numbers start at 1, and 007 still tunes channel 7. With
 Developer tools off, 0 0 0 says *Channel 0 not available*, as always.
 
@@ -828,7 +886,7 @@ With no commercials folder, house breaks also run made-up retro commercials:
 pitch cards with a jingle, local businesses, public service announcements and
 *Now on videocassette* cards for movies in your library. Nothing to set up.
 
-- **Turn them off:** *Settings → Programming → House breaks → Retro ads*. Breaks
+- **Turn them off:** *Settings → Breaks → House breaks → Retro ads*. Breaks
   go back to promos, guide and weather ads and station IDs.
 - **A kids' channel that gets grown-up ads:** *Channel manager → the channel →
   Ad flavour → Kids*. It then gets only toys, cereal and kid-safe announcements.
@@ -846,7 +904,7 @@ pitch cards with a jingle, local businesses, public service announcements and
   new library takes a while to read in the background; *Read now* there does
   it all at once.
 - **An odd short file airs as an episode** (an intro or trailer in a show's
-  folder): *Settings → Programming → Skip episodes shorter than* (5 min by
+  folder): *Settings → Channels → Skip episodes shorter than* (5 min by
   default) passes over it; *Tools → Check skipped episodes* lists what's skipped.
 - **The Up next card** shows the next programme's picture, title, episode, synopsis
   and a live countdown; preview it with `RunScript(script.cablebox42,preview_ad,upnext:4)`
@@ -865,12 +923,12 @@ pitch cards with a jingle, local businesses, public service announcements and
 ## 15. The guide channel and the weather channel
 
 **TV Guide (channel 2):** scrolling listings for every channel with background
-music. Press **OK** on it to pick a channel. Title: *Settings → Programming →
+music. Press **OK** on it to pick a channel. Title: *Settings → Guide & Weather →
 Guide title*; music: *Guide channel music folder*.
 
 **Weather channel (25):**
 
-1. *Settings → Weather → Your city or lat,lon* (e.g. `Springfield, IL` or
+1. *Settings → Guide & Weather → Your city or lat,lon* (e.g. `Springfield, IL` or
    `39.8,-89.6`). Leave it empty to use Kodi's weather location.
 2. *Weather data from*: Automatic, Kodi's weather service only, or Open-Meteo only.
 3. *Units*, *title* (*Your Local Forecast*) and *music* (smooth jazz!).
@@ -938,7 +996,7 @@ episodes and movies for their season* keeps Christmas specials out of July.
 |---|---|
 | TV turn-on and turn-off effect (with sound) | The picture blooms on, and shrinks to a dot on the way off |
 | Static between channels | On/off, with or without sound |
-| Static mode | **Automatic**; **Quick** (an interface sound over the picture); **Video clip** (most reliable sound — use it on Windows if the static is silent) |
+| Static plays as | **Automatic**; **Quick** (an interface sound over the picture); **Video clip** (most reliable sound — use it on Windows if the static is silent) |
 | CRT effect | Off, Subtle (scanlines, dark corners), Full (curved glass, phosphor mask, rolling hum bar) |
 | Show channel banner for | 3, 6 or 10 seconds |
 
@@ -950,8 +1008,8 @@ episodes and movies for their season* keeps Christmas specials out of July.
 
 ## 18. Start CableBox from the home screen, a favourite or Kodi's start-up
 
-- **Straight to TV:** *Settings → Viewing → Go straight to TV when opened*.
-- **TV on when Kodi starts:** *Settings → Viewing → Turn the TV on when Kodi
+- **Straight to TV:** *Settings → Start-up & library → Go straight to TV when opened*.
+- **TV on when Kodi starts:** *Settings → Start-up & library → Turn the TV on when Kodi
   starts* — the box boots straight into live TV.
 - **Start on a fixed channel:** *Start on channel* (0 = the last one watched).
 - **Home-screen widget:** many skins can show add-on content on the home
@@ -979,14 +1037,17 @@ show's genre is missing or unusual — fix it in Kodi, or put the show on a
 channel right there.
 
 **My logo / bumps / commercials aren't showing.**
-*Channel manager → channel → Branding & clips*, then check, in order:
-1. *Station folder: none yet* → the folder's name doesn't match the channel's
+*Channel manager → channel*, then check, in order:
+1. *Identity → Station folder: none yet* → the folder's name doesn't match the channel's
    name, call letters or number. Select *Use an existing folder…* or *Create or
    repair*.
-2. *Bumps: off for this channel – 3 clips in its folder aren't used* → select
-   the row to switch them on.
-3. *Logo: … (built-in station logo)* → there's no `logo.png` in the folder; a
-   different image name works, but `logo.png` is the sure thing.
+2. *Breaks & clips → Bumps: off for this channel – 3 clips in its folder aren't
+   used* → select the row to switch them on.
+3. *Identity → Logo: … CableBox's built-in station logo* → nothing of yours was
+   found: no image picked, no `logo.png` in the channel's folder (a different
+   image name works, but `logo.png` is the sure thing), and no image named
+   after the channel, its call letters or its number in the logo folder. A
+   renamed channel needs the logo folder's file renamed too.
 4. Clips listed but not playing → *Settings → Tools → Check my videos* (unreadable
    or too-long clips are skipped).
 5. Just added clips? Breaks are planned hours ahead. Close the Channel manager or
@@ -994,15 +1055,16 @@ channel right there.
    channel's next programme.
 
 **I renamed a channel and lost its logo and clips.**
-*Branding & clips → Use an existing folder…* → pick the old folder; it's renamed
-to match. *Settings → Tools → Station folders* lists folders no channel uses.
+*Identity → Station folder → Use an existing folder…* → pick the old folder; it's
+renamed to match. *Channel manager → Lineup tools → Station folders* lists folders
+no channel uses.
 
 **Breaks show "Up next" cards instead of commercials.**
 No commercials folder is set for that channel, its commercials are switched off,
-or none of its clips can be read. *Branding & clips* and *Check my videos*.
+or none of its clips can be read. *Breaks & clips* and *Check my videos*.
 
 **No static sound when changing channel (or only the first time).**
-*Settings → Viewing → Static between channels → Video clip* (common on Windows).
+*Settings → Viewing → Static plays as → Video clip* (common on Windows).
 
 **The sound sputters, freezes or stops after a few channel changes.**
 Update to 1.1.1 or later, then restart Kodi (on CoreELEC: `systemctl restart kodi`).
@@ -1028,7 +1090,7 @@ programme actually has a subtitle track or a sidecar `.srt` (*Menu → Caption
 options*).
 
 **A video plays sound but no picture, or Kodi freezes on certain videos.**
-Very likely AV1 on a box without AV1 hardware decoding. *Settings → Programming
+Very likely AV1 on a box without AV1 hardware decoding. *Settings → Advanced
 → AV1 videos → Automatic* skips them; *Check my videos* lists them.
 
 **"Technical difficulties, please stand by."**

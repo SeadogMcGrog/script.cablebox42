@@ -4,6 +4,8 @@ logo in the channel banner.
 A channel's logo is the image picked for it in the channel editor, or else a
 file in the logo folder (Settings > Viewing) named after the channel's name,
 call letters or number - 'Comedy Channel.png', 'CC.png' or '5.png'.
+stations.brand() decides which logo a channel shows at a moment (and says where
+it came from); everything on screen asks it, never this module directly.
 CableBox ships no logos (real network logos are trademarks); they're the
 viewer's own images.  Kodi can't show SVG, so PNG (with transparency) is best.
 """
@@ -19,7 +21,7 @@ IMAGE_EXT = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp")
 CORNERS = ("tl", "tr", "bl", "br")
 OPACITY = (30, 50, 70, 100)
 _FOLDER_CACHE = {}
-_CACHE_TTL = 300
+_CACHE_TTL = 120
 
 
 def _key(text):
@@ -54,11 +56,16 @@ def logo_for(ch):
         return ""
     if own:
         return own
+    return folder_logo(ch.get("name"), ch.get("callsign"), str(ch.get("number", "")))
+
+
+def folder_logo(*names):
+    """The logo folder's image named like the first of `names` that has one, or ''."""
     folder = K.setting("logo_folder", "")
     if not folder:
         return ""
     idx = _folder_index(folder)
-    for cand in (ch.get("name"), ch.get("callsign"), str(ch.get("number", ""))):
+    for cand in names:
         k = _key(cand)
         if k and k in idx:
             return idx[k]

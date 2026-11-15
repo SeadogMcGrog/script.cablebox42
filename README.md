@@ -145,36 +145,38 @@ settings are kept.
 ## Quick start
 
 1. Open **CableBox 42**. The first time, a welcome screen asks how to start:
-   **Set it all up for me** (the steps below) or **I'll set it up myself**
-   (you get just the TV Guide on 2 and Retrocast Weather on 25, and the
-   Channel manager opens so you can add your own channels).
-2. If you have a folder of old commercials, point it at it. Then choose how
-   **bumpers and station IDs** work: **one folder for every channel**, **a
-   folder for each channel** (it asks where, your media drive is best, and
-   makes a folder per channel with `bumps`, `ids` and `commercials` inside),
-   or **skip for now**. All of this can be changed later in Settings.
-3. If you have a folder of background music (smooth jazz, elevator music),
-   choose it for the guide and weather channels: the same folder for both, or
-   one each.
-4. Type your city for the weather channel, or skip it if Kodi's own weather
-   service is already set up.
-5. Untick any suggested channels you don't want.
-6. **Extras**: both are ticked; untick one if you don't want it.
-   - **Sign off overnight:** channels go off the air from 12 AM to 5 AM with a
-     *Please Stand By* card. The guide and weather channels stay on.
-   - **Prime-time lineup:** from 8 to 11 PM, each channel airs its best shows in
-     fixed weekly slots, and movie channels show a movie at 8.
-7. Check the last screen (which channels, the extras, the folders you chose)
-   and press **OK**. Nothing is saved before this OK: **Back** or **Cancel** on
-   any screen leaves everything as it was.
-8. Choose **Start watching**, or **What I set up** first: every channel, where
-   its shows come from, and its station folders (*Channel manager → Lineup
-   summary* shows it again later).
+   **Build my lineup** (the steps below) or **I'll set it up myself** (you get
+   just the TV Guide on 2 and a Weather Channel on 25, and the Channel manager
+   opens so you can add your own channels).
+2. CableBox looks through your Kodi library (about a minute) and says how many
+   channels it found. If the library is empty it says so here, before asking
+   anything.
+3. Choose **Start watching**: the channels are set up with overnight sign-off
+   (12 AM to 5 AM) and prime-time lineups, and the TV comes on. That's it.
 
-That's it. To fine-tune, use the **Channel manager** (start with **Shows
-without a good channel**), the **Weekly planner** and *Settings → Tools →*
-**Move shows between channels**. The [How-To Guide](HOWTO.md) walks through
-each of these.
+The folders CableBox can use (commercials, bumps and station IDs, guide and
+weather music, music videos) and your weather city are not asked for now. The
+main menu shows **Finish setting up** until each is chosen or you say you
+don't need it.
+
+**Customise** instead of *Start watching* asks everything first:
+
+- your commercials folder, how **bumpers and station IDs** work (**one folder
+  for every channel**, **a folder for each channel**, or skip), music for the
+  guide and weather channels, a music videos folder, your city;
+- **Channel names**: **CableBox's stations** (Comedy Corner, Orbit TV... with
+  their logos) or **Plain names, I'll brand them myself** (Comedy Channel,
+  Sci-Fi Channel... the same shows on each, no logos; rename them and add
+  your own logos in the Channel manager);
+- which of the suggested channels to keep;
+- **Extras**: *Sign off overnight* and *Prime-time lineup*, both ticked;
+- a last screen with everything you chose. Nothing is saved before its **OK**:
+  **Back** or **Cancel** on any screen leaves everything as it was. Then
+  **Start watching**, or **What I set up** first.
+
+To fine-tune, use the **Channel manager** (its **Lineup tools** have **Shows
+without a good channel** and **Move shows between channels**) and the
+**Weekly planner**. The [How-To Guide](HOWTO.md) walks through each of these.
 
 ---
 
@@ -211,7 +213,7 @@ and can mark an episode as watched whenever *anything* plays it, so channel
 surfing would fill your "In progress" list. CableBox notes each show's
 resume point, watched status and last-played date before airing it, and puts
 them back afterwards (even after a crash or power cut). Turn this off in
-*Settings → Viewing → Keep my watch progress untouched*. To tidy a list that
+*Settings → Start-up & library → Keep my watch progress untouched*. To tidy a list that
 filled up before this protection existed, use **Clean up my 'In progress'
 list** (*Settings → Tools*): tick what you're really watching and the rest is
 cleared.
@@ -310,7 +312,7 @@ allowed), CableBox checks what every other channel is airing, including their
 pinned slots, before it picks. Flipping from channel to channel, you won't land
 on the same episode twice.
 
-*Settings → Programming → Shows on more than one channel*:
+*Settings → Channels → Shows on more than one channel*:
 
 | Option | Behaviour |
 |---|---|
@@ -329,25 +331,34 @@ on the same episode twice.
 | **Watch TV** | Turn the TV on |
 | **What's on now** | Every channel with the show airing right now. Pick one to tune straight to it |
 | **Closed captions** | On or off for every programme - the same setting as Menu → Closed captions while watching |
-| **Channel manager** | Add, edit, delete and renumber channels. Also **Shows without a good channel** and **Lineup summary** (below) |
+| **Finish setting up** | Only while something a first setup left for later isn't set: commercials, bumps and station IDs, guide and weather music, music videos, weather city. Each row leaves once it's chosen or you pick *I don't need this* |
+| **Channel manager** | Add, edit, delete and renumber channels. Its **Lineup tools** work on the whole lineup (below) |
 | **Weekly planner** | Open a channel's 7-day grid |
-| **Settings and tools** | All settings, plus the **Tools** page below |
+| **Settings and tools** | All settings, plus the maintenance **Tools** page below |
 | **Help** | |
 
-On first run, before you have channels, the menu offers **Set up my channels** instead.
+On first run, before you have channels, the menu offers **Build my lineup** instead.
+
+### Channel manager → Lineup tools
+
+Everything that works on the whole lineup rather than one channel.
+
+| Tool | What it's for |
+|---|---|
+| **Build my lineup** | Create a lineup from your library: replace yours, or add to it. Channels it adds get overnight sign-off; channels you already have keep their own off-air hours |
+| **Move shows between channels** | Pick a show or movie, then tick the channels it should air on. It airs exactly there |
+| **Shows without a good channel** | See below |
+| **Sign-off and prime time for all channels** | Overnight sign-off hours on or off, and prime-time lineups built or removed, with your choice of hours. If some channels already sign off at times of their own it asks: *Replace their hours* / *Only the others* / *Cancel* |
+| **Station folders** | Makes what's missing of each channel's folder (bumps, ids, commercials, time blocks) - an existing folder is reused, never copied - then shows which folder every channel uses, what's in it, and folders no channel uses |
+| **Lineup summary** | Every channel, where its shows come from, and its station folders |
 
 ### Settings → Tools
 
-Less-used jobs live on their own page in Settings, so the menu stays short.
+Maintenance jobs live on their own page in Settings, so the menu stays short.
 Each button closes Settings and opens the tool.
 
 | Tool | What it's for |
 |---|---|
-| **Build my lineup automatically** | Create a lineup from your library: replace yours, or add to it |
-| **Quick setup** | For every channel at once: overnight sign-off hours on or off, and prime-time lineups built or removed, with your choice of hours |
-| **Station folders** | Makes what's missing of each channel's folder (bumps, ids, commercials, time blocks) - an existing folder is reused, never copied - then shows which folder every channel uses, what's in it, and folders no channel uses |
-| **Shows without a good channel** | Same as in the Channel manager: see below |
-| **Move shows between channels** | Pick a show or movie, then tick the channels it should air on. It airs exactly there |
 | **Check my videos** | Lists commercials, bumps and videos that can't be used, and why |
 | **Check extras** | Every movie's `Extras` folder (next to the movie's file, or in `VIDEO_TS` / `BDMV`): each video's cleaned-up title, length and *Air* or *Skipped* with the reason, plus totals at the top. Making-of pieces, documentaries, featurettes, interviews and other readably named videos air; deleted/extended/alternate scenes, bloopers, trailers and promos, galleries, music videos, short films, commentaries, anything under a minute and names like `title_t03` are skipped. Everything in an `Extras` subfolder named *Behind the scenes*, *Making of*, *Interviews*, *Featurettes* or *Documentaries* airs. CableBox lists and measures these folders in the background while the TV is off and never changes them. The summary shows *Lengths measured: X of Y*; while some are still to do, **Look now** (*Look for movie extras*) does the rest straight away (progress bar, *Cancel* keeps what's found so far) and says how much there is to air when it finishes. After the list it offers to look for the rest, or to add a Behind the scenes channel when there's enough and you have none. Videos whose length can't be read don't air |
 | **Check skipped episodes** | The TV episodes the last refresh left out for being shorter than *Skip episodes shorter than*, by series, with their length and file. Nothing is moved or hidden in Kodi |
@@ -359,7 +370,7 @@ Each button closes Settings and opens the tool.
 
 ### Shows without a good channel
 
-*Channel manager → Shows without a good channel* (also on the Tools page)
+*Channel manager → Lineup tools → Shows without a good channel*
 lists TV shows that no channel's programming picks up, and shows whose home
 channel is only a weak fit - a minor genre, a decade or catch-all channel, the
 automatic list of shows whose genres were too small for a channel, or a show
@@ -367,13 +378,13 @@ moved so a small channel has enough to air. Each comes with its reason, for
 example *Western (main genre) → Tumbleweed TV* or *No channel's programming
 includes it*. Pick a show to put it on a channel (best fits listed first),
 mark it as fine, or keep it off a channel or off the air. Your own picks are
-never listed. (Movies are included when Settings → Programming gives every
+never listed. (Movies are included when Settings → Channels gives every
 movie one channel.)
 
 ### Lineup summary
 
-Shown at the end of the lineup builder and any time from the Channel
-manager: every channel with its station identity and where its programmes come
+Shown at the end of the lineup builder (*What I set up*) and any time from
+*Channel manager → Lineup tools*: every channel with its station identity and where its programmes come
 from, the station folders and what's in them, and where to go next.
 
 ### What the lineup builder creates
@@ -452,34 +463,27 @@ several items keep your ticks across searches; press **Done** when finished
 
 ### Channel options
 
-Open a channel in the **Channel manager**:
+Open a channel in the **Channel manager**. The editor has four groups, plus
+*Preview today's schedule* (the next 12 hours) and *Delete channel*:
 
-| Option | Notes |
+| Group | What's in it |
 |---|---|
-| Name, number, call letters, type | Numbers can be **swapped** or **slid** (see below) |
-| Programming | The channel's sources |
-| **Weekly planner** | Pinned shows and painted off-air hours |
-| Time blocks | Different programming at certain times, e.g. *Prime Time 8–11 PM: movies* |
-| Off-air hours | Sign-off times, the off-air screen, sign-off and sign-on clips |
-| **What's on this channel** | A checklist of every show and movie the channel airs. Untick what doesn't belong |
-| Commercials / Break into shows / Bumps | On or off for this channel |
-| Ad flavour | Which retro ads its house breaks run: *Auto* (default: from its type and genres), *General*, *Kids*, *Sports*, *Movies*, *Late night* |
-| Lineup style | Same show same time every day, or shuffle |
-| Programs start on | :00 and :30, the hour, every 15 minutes, or no clock |
-| Channel commercials / bumps folder | Override the global folders for this channel |
-| Station ID clips | "You're watching…" clips played between programs |
-| Preview today's schedule | The next 12 hours as a list |
+| **Identity** | Name, number (numbers can be **swapped** or **slid**, see below), call letters, logo (the row says where the logo comes from), **names by time of day**, its station folder, and *Use a built-in station...* / *Make this channel my own* |
+| **Programming** | Type, the channel's sources, and **What's on this channel**: a checklist of every show and movie it airs. Untick what doesn't belong |
+| **Breaks & clips** | The commercials, bumps and station IDs the channel really uses and where they come from (select *Commercials* or *Bumps* to switch them on or off; *Station IDs* to choose its own folder of "You're watching…" clips), *Break into shows for commercials*, **Ad flavour** (which retro ads its house breaks run: *Auto*, *General*, *Kids*, *Sports*, *Movies*, *Late night*), and the channel's own commercials and bumps folders |
+| **Schedule** | **Weekly planner** (pinned shows, painted off-air hours), time blocks (different programming at certain times, e.g. *Prime Time 8–11 PM: movies*), off-air hours (sign-off times, the off-air screen, sign-off and sign-on clips), lineup style (same show same time every day, or shuffle) and *Programs start on* (:00 and :30, the hour, every 15 minutes, or no clock) |
 
 **Fine-tuning tips:**
 
-- *Good Eats* landing on the Comedy Channel? Use **Move shows between
-  channels**, pick *Good Eats* and tick only the channels it belongs on.
+- *Good Eats* landing on the Comedy Channel? Use *Lineup tools →* **Move shows
+  between channels**, pick *Good Eats* and tick only the channels it belongs on.
 - While watching: **Menu → Don't air '…' on this channel**.
 
 **Renumbering:** give a channel a number that's already taken, and CableBox
 offers to **swap** the two or **slide** the channels in between along by one.
 For example, moving Weather from 24 to 3 pushes the old 3–23 up to 4–24.
-*Channel manager → Rearrange channel numbers* can also close gaps (2, 3, 4…).
+*Channel manager → Rearrange channel numbers* can also close the gaps: channels
+are numbered in order from a number you choose, and Weather stays on 25.
 Renumbering never interrupts what's airing.
 
 ---
@@ -531,7 +535,7 @@ automatically.
 If a new pin overlaps an existing one, CableBox asks before replacing it on
 the overlapping days.
 
-**Automatic prime time.** *Settings → Tools → Quick setup → Build prime-time lineups* (also
+**Automatic prime time.** *Channel manager → Lineup tools → Sign-off and prime time for all channels → Build prime-time lineups* (also
 offered when you first build your lineup) fills 8–11 PM, or hours you choose,
 with pins:
 - **Network channels:** their best shows by your library's ratings, then the
@@ -556,8 +560,8 @@ USB disks or network shares.
 
 | Kind | Where to set it | When it plays |
 |---|---|---|
-| **Commercials** | Settings → Programming (global), or per channel | In breaks during and between programs |
-| **Bumps** | Settings → Programming (global), or per channel | At the end of each break ("…and now back to") |
+| **Commercials** | Settings → Breaks (global), or per channel | In breaks during and between programs |
+| **Bumps** | Settings → Breaks (global), or per channel | At the end of each break ("…and now back to") |
 | **Station IDs** | Per channel | Right before each new program ("You're watching…") |
 | **Sign-off clips** | Per channel → Off-air hours | When the channel signs off (anthem, farewell), instead of the built-in sign-off card |
 | **Sign-on clips** | Per channel → Off-air hours | When the channel comes back on the air |
@@ -576,7 +580,7 @@ Tips:
 
 ### Promos
 
-With *Settings → Programming → Promos* on, a break can include a 15-second promo
+With *Settings → Breaks → Promos* on, a break can include a 15-second promo
 for what this channel airs next (*Channel 7 — Seinfeld: "The Contest" — Up next*)
 or later today (*Tonight at 8:00*).
 Everything comes from your own
@@ -608,7 +612,7 @@ loudness and fades out by itself.)
 
 ### House breaks
 
-*Settings → Programming → House breaks* fills breaks with the cable system's own
+*Settings → Breaks → House breaks* fills breaks with the cable system's own
 spots, the way cable did, when you have no commercials. Nothing new to download:
 everything comes from your library and CableBox's cards (same look as promos,
 *Promo style* and *Promo music* apply).
@@ -667,7 +671,7 @@ that never existed, as cards with a short jingle. Pitch cards (*Crisp-O-Matic*,
 *only $19.99, order now!*), kids' toys and cereal, local businesses (*Big Earl's
 Furniture Barn*), public service announcements (*Sit up straight*) and **Now on
 videocassette** for a movie that really is in your library (its poster, title,
-year and rating). *Settings → Programming → House breaks → Retro ads*: on by
+year and rating). *Settings → Breaks → House breaks → Retro ads*: on by
 default; only used when house breaks are.
 
 - They fit the **time of day** (breakfast cereal in the morning, pizza and cars
@@ -855,17 +859,26 @@ A Kodi tag still outranks all of this: tag a show **educational** and it airs
 on PES.
 
 Channels without a station keep their plain names. Change any of it in
-*Channel manager → channel*:
+*Channel manager → channel → Identity*:
 
-- **Station:** pick a built-in station or *None*.
-- **Branding by time of day:** times when the channel goes by another name
+- **Station:** pick a built-in station, or **Make this channel my own**.
+  A station is a brand (name, call letters, logo, time-of-day names) plus its
+  shows. *Make this channel my own* takes only the brand away: the channel
+  keeps its name (your rename, if you renamed it) and all of its programming.
+  Choosing another station swaps the old station's brand and shows for the new
+  one's; the question lists everything that changes. Programming and
+  time-of-day names you added yourself always stay.
+- **Name:** renaming a channel gives it new call letters (unless you typed
+  your own) and, on a station with time-of-day names, asks whether to keep
+  them (*CAM Jr.*, *Cam O Nite*) or remove them.
+- **Names by time of day:** times when the channel goes by another name
   and logo, like CAM Jr. in the mornings. The banner, the corner logo and the
   guide switch over on their own.
-- **Station logo:** your own image.
+- **Logo:** your own image.
 
 ### Your own stations folder
 
-*Settings → Viewing → Stations folder*: one folder per channel, named after
+*Settings → Channels → Stations folder*: one folder per channel, named after
 the channel's name, call letters or number. Everything inside is optional:
 
 ```
@@ -877,7 +890,7 @@ Stations/
       logo.png   bumps/   ids/   commercials/
 ```
 
-**Settings → Tools → Station folders** makes this for every channel in one go,
+**Channel manager → Lineup tools → Station folders** makes this for every channel in one go,
 with empty `bumps`, `ids` and `commercials` folders and a folder for each time
 block, then lists which folder each channel uses and any folders no channel
 uses (often a channel renamed since). Then just drop clips in.
@@ -887,7 +900,7 @@ letters, or its number written as `7`, `Channel 7` or `CH 7` - exactly, ignoring
 case and punctuation. A time block's folder may have more in front
 (`Morning - CAM Jr.`). Renaming a channel offers to rename its folder too.
 
-**Channel manager → a channel → Branding & clips** shows what that channel
+**Channel manager → a channel → Breaks & clips** shows what that channel
 really uses right now - its logo, bumps, station IDs and commercials, each with
 where it comes from (station folder, the channel's own folder, the shared one in
 Settings, or the built-in station) and a warning when clips sit in a folder that
@@ -905,11 +918,13 @@ with *Settings → Tools → Refresh schedules*).
   show starts. It stays off commercials, bumps, station IDs and the guide,
   like the real networks.
 - Choose the corner (bottom right by default) and the opacity (50% by
-  default) in *Settings → Viewing*.
+  default) in *Settings → Channels*.
 - In the channel banner, the logo replaces the call letters under the
   channel number.
 - A plain **Logo folder** also works: images named after each channel's name,
-  call letters or number.
+  call letters or number (or after a time-of-day name, like `CAM Jr.png`).
+  Any logo of your own beats a built-in station logo: the image you picked,
+  then the station folder's, then the logo folder's.
 
 Use PNG with a transparent background. Kodi can't show SVG, so convert SVG
 logos to PNG first. Real network logos are trademarks, so use your own images.
@@ -918,7 +933,7 @@ logos to PNG first. Real network logos are trademarks, so use your own images.
 
 A scrolling grid of every channel with what's on now, in 30 minutes and in an
 hour, and promos for upcoming movies and long programs. Press **OK** on the
-guide to pick a channel. Add music under *Settings → Programming → Guide channel
+guide to pick a channel. Add music under *Settings → Guide & Weather → Guide channel
 music folder*, and change the title with *Guide title*.
 
 Listings appear immediately. A channel whose listings are still being prepared
@@ -939,7 +954,7 @@ Pages rotate every 10 seconds:
 
 A conditions ticker scrolls along the bottom.
 
-**Where the weather comes from** (*Settings → Weather*):
+**Where the weather comes from** (*Settings → Guide & Weather*):
 
 - **Automatic** (default): Kodi's own weather service if one is set up
   (*Settings → Services → Weather*), otherwise Open-Meteo.
@@ -988,7 +1003,7 @@ colour fringing, scanlines and a faint flicker.
 | `RunScript(script.cablebox42,watch,5)` | The TV, on channel 5 |
 | `RunScript(script.cablebox42,wizard)` | The lineup builder |
 
-- **Appliance mode:** *Settings → Viewing → Turn the TV on when Kodi starts*.
+- **Appliance mode:** *Settings → Start-up & library → Turn the TV on when Kodi starts*.
   Combine it with *Go straight to TV when opened*.
 
 **Home-screen widgets.** If your skin lets you put CableBox 42 on the home
@@ -1005,53 +1020,55 @@ tap to tune. Yatse custom commands can call the `RunScript` actions above.
 
 ## Settings reference
 
-**Programming**
+**Breaks**
 
 | Setting | Default | |
 |---|---|---|
 | Commercials folder | – | Global commercials |
 | Bumps / station ID folder | – | Global bumps |
 | Commercial breaks per half hour | 2 | 0–4 |
+| Commercial breaks at chapter marks | On | An episode with good chapter marks gets its commercial breaks where the original broadcast's act breaks were (Seinfeld's "The Opposite": after the cold open, at 13:27 and before the end tag). Chapters are read once per file, in the background: whenever Kodi is idle, as fast as the drive answers quickly (it slows down at once for a busy or waking drive, and pauses on a busy CPU); with the TV on, the episodes airing in the next 6 hours first, gently; never while you watch something else in Kodi. The episodes they change are planned again. *Chapters read* below the setting shows how far it is; until then, and for files without usable chapters (none, one, evenly spaced automatic ones), breaks are evenly spaced as before. Scene chapters every couple of minutes keep the usual number of breaks, each moved to the nearest mark. The leftover time decides how many breaks there are (at least a minute each). *Tools → Check chapters* shows each show's episodes and lets you set a show to *Always* or *Never* use chapters. Files are only read, never changed |
+| House breaks | Automatic | See [House breaks](#house-breaks) |
+| Retro ads | On | Period ads in house breaks ([Retro ads](#retro-ads)) |
+| Promo style | Early-90s cable | Or Modern. Used by promos and by house breaks |
+| Promo music | The show's theme music | Or none (silent) |
 | Promos for what's coming up, in breaks | Off | At most one per break ([Promos](#promos)) |
 | How often | About half the breaks | Every break / About half the breaks / Now and then |
 | Promote | Up next and later today | Or only what's on next, or only something later today |
-| Promo style | Early-90s cable | Or Modern |
-| Promo music | The show's theme music | Or none (silent) |
 | Also use short promo clips from a show's Extras folder | Off | *Promo* / *Trailer* videos up to 2 minutes |
-| Guide channel music folder | – | Music behind the guide |
-| Guide title | *CableBox 42 Program Guide* | |
+
+**Channels**
+
+| Setting | Default | |
+|---|---|---|
 | Shows on more than one channel | TV shows on one channel each | Or everything on one channel each, or allow repeats |
 | Short programmes (under 12 min) | Pack several into one time slot | Back-to-back like a cartoon block (next episodes of the same series, or several short films), a break after each. Or *only where I pinned them* (skipped by the automatic schedule while anything longer is available), or *one per time slot* |
-| Commercial breaks at chapter marks | On | An episode with good chapter marks gets its commercial breaks where the original broadcast's act breaks were (Seinfeld's "The Opposite": after the cold open, at 13:27 and before the end tag). Chapters are read once per file, in the background: whenever Kodi is idle, as fast as the drive answers quickly (it slows down at once for a busy or waking drive, and pauses on a busy CPU); with the TV on, the episodes airing in the next 6 hours first, gently; never while you watch something else in Kodi. The episodes they change are planned again. *Chapters read* below the setting shows how far it is; until then, and for files without usable chapters (none, one, evenly spaced automatic ones), breaks are evenly spaced as before. Scene chapters every couple of minutes keep the usual number of breaks, each moved to the nearest mark. The leftover time decides how many breaks there are (at least a minute each). *Tools → Check chapters* shows each show's episodes and lets you set a show to *Always* or *Never* use chapters. Files are only read, never changed |
 | Skip episodes shorter than | 5 min | Off, 2, 5 or 10 min. A TV episode shorter than this (an intro, trailer or recap filed as an episode) is passed over and its series goes on to the next real episode. Not for series whose usual episode is that short (7-minute cartoons still air, packed), not for episodes of unknown length, never movies, short films, music videos or extras, and a pinned slot airs what you pinned. Files are never moved or hidden. *Tools → Check skipped episodes* lists them |
-| AV1 videos | Automatic | Automatic / Always skip / Always play (see below) |
-| Schedule ahead (hours) | 12 | 6, 12 or 24 |
-| Also air extras with unrecognised names | Off | Movie extras named like `title_t03.mkv` or "Bonus 2" count too (see *Check extras*) |
+| Stations folder | – | One folder per channel: logo, bumps, ids, commercials, and time-block subfolders (see [Stations and logos](#stations-and-logos)) |
+| Logo folder | – | Images named after each channel's name, call letters or number. Beats a built-in station logo |
+| Station logo in the corner | On | Only shows when a channel has a logo |
+| Corner / Logo opacity | Bottom right / 50% | |
+| Show the logo in the channel banner | On | Replaces the call letters |
 
 **Viewing**
 
 | Setting | Default | |
 |---|---|---|
-| Start on channel | 0 | 0 means the last channel watched |
+| Start on channel | 0 | 0 means the last channel watched (so does a number no channel has) |
 | Show channel banner for | 6 s | 3, 6 or 10 seconds |
 | TV turn-on and turn-off effect | On | Switching on: the picture warms up from a bright line, the CableBox 42 title card, then your channel - press any button to skip it. Switching off (Back, *Turn off* or the sleep timer): the picture shrinks to a dot - as a short clip on Windows, drawn over the picture elsewhere (a new video would make a TV that switches refresh rate blank out). Both with sound |
 | Static between channels / Static sound | On / On | |
-| Static between channels (how) | Automatic | *Quick*: Kodi interface sound over the picture, the fastest. *Video clip*: a short static clip with its own sound, slightly slower but picture and sound always match. *Automatic* uses the clip on Windows, which drops interface sounds between videos, unless *Adjust display refresh rate* is on. |
-| Stations folder | – | One folder per channel: logo, bumps, ids, commercials, and time-block subfolders (see [Stations and logos](#stations-and-logos)) |
-| Logo folder | – | Images named after each channel's name, call letters or number |
-| Station logo in the corner | On | Only shows when a channel has a logo |
-| Corner / Logo opacity | Bottom right / 50% | |
-| Show the logo in the channel banner | On | Replaces the call letters |
+| Static plays as | Automatic | *Quick*: Kodi interface sound over the picture, the fastest. *Video clip*: a short static clip with its own sound, slightly slower but picture and sound always match. *Automatic* uses the clip on Windows, which drops interface sounds between videos, unless *Adjust display refresh rate* is on. |
 | CRT effect | Off | Off / Subtle / Full |
-| Keep my watch progress untouched | On | Puts back resume points, watched status and last-played dates after CableBox plays something |
-| Go straight to TV when opened | Off | Skip the CableBox menu |
-| Turn the TV on when Kodi starts | Off | Only right after Kodi starts, and never if you've already started watching something else |
-| Sleep timer also puts the TV in standby (CEC) | Off | |
+| Captions: show programmes in Kodi's full-screen player | On | Needed on most TV boxes |
+| Captions: rewind 1 second so embedded subtitles appear | Automatic | |
 
-**Weather**
+**Guide & Weather**
 
 | Setting | Default | |
 |---|---|---|
+| Guide title | *CableBox 42 Program Guide* | |
+| Guide channel music folder | – | Music behind the guide |
 | Weather data from | Automatic | Automatic / Kodi weather service only / Open-Meteo only |
 | City or lat,lon | – | For Open-Meteo |
 | Units | Automatic | Automatic / Fahrenheit / Celsius |
@@ -1073,12 +1090,25 @@ tap to tune. Yatse custom commands can call the `RunScript` actions above.
 | Genres | *Horror, Mystery* · – · *Christmas, Holiday* | Empty = don't use genres |
 | Save holiday episodes and movies for their season | On | Keeps Christmas episodes out of July |
 
-**Tools**: see [Settings → Tools](#settings--tools).
+**Start-up & library**
+
+| Setting | Default | |
+|---|---|---|
+| Go straight to TV when opened | Off | Skip the CableBox menu |
+| Turn the TV on when Kodi starts | Off | Only right after Kodi starts, and never if you've already started watching something else |
+| Keep my watch progress untouched | On | Puts back resume points, watched status and last-played dates after CableBox plays something |
+| Sleep timer also puts the TV in standby (CEC) | Off | |
+
+**Tools**: maintenance only, see [Settings → Tools](#settings--tools). Lineup tools are in the
+[Channel manager](#channel-manager--lineup-tools).
 
 **Advanced**
 
 | Setting | |
 |---|---|
+| AV1 videos | Automatic / Always skip / Always play (see below). Default: Automatic |
+| Schedule ahead (hours) | 6, 12 or 24. Default: 12 |
+| Also air extras with unrecognised names | Movie extras named like `title_t03.mkv` or "Bonus 2" count too (see *Check extras*). Default: off |
 | Preview promo | Pick a channel, then *Up next* or *Later today* (its programmes in the next 6 hours): about 2 s of black, the promo exactly as in a break, 1 s of black, then Settings again. Changes nothing (schedules, breaks, series, *How often*). Back ends it. Also `RunScript(script.cablebox42,preview_promo,<tvshowid>)` for a skin button or a favourite. Not while the TV is on |
 
 ## Video formats and AV1
@@ -1195,7 +1225,7 @@ that some skins make for add-ons placed on their home menu.
 
 **No static sound when changing channel, or only the first time.** Some
 systems, Windows especially, reset their audio output between videos and drop
-Kodi's interface sounds. Set *Settings → Viewing → Static between channels* to
+Kodi's interface sounds. Set *Settings → Viewing → Static plays as* to
 **Video clip**. With *Quick*, CableBox handles Kodi's *Play GUI sounds* setting
 itself while the TV is on: button clicks stay silent during shows, the static
 still plays, and your own setting comes back when you turn the TV off. Avoid *Video clip* if your TV switches refresh rate

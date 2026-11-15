@@ -20,6 +20,7 @@ import time
 import xbmcvfs
 
 from . import kodiutil as K
+from . import logos
 
 STATION_DIR = os.path.join(K.ADDON_PATH, "resources", "stations")
 IMAGE_EXT = (".png", ".jpg", ".jpeg", ".gif", ".webp")
@@ -201,29 +202,78 @@ def _fits(station, ch):
     return False
 
 
-def apply(ch, station):
-    """Give a channel a built-in station's identity (name, call letters, blocks)."""
-    ch.setdefault("generic_name", ch["name"])
-    ch["station"] = station["id"]
-    ch["name"] = station["name"]
-    ch["callsign"] = station["call"]
-    ch["brand_blocks"] = [dict(b) for b in station.get("blocks", [])]
+def is_kit_block(b):
+    """A time-of-day name that came with a built-in station (CAM Jr.), not one the
+    viewer made.  Kits mark theirs "kit"; ones saved before that carry the kit's
+    logo file name ("logo"), which the viewer's own never have (theirs is "logo_path")."""
+    return bool(b.get("kit") or b.get("logo"))
+
+
+def _plain(src):
+    """A source without the notes a station leaves on it (to compare two)."""
+    return dict((k, v) for k, v in src.items() if k not in ("station_extra", "core"))
+
+
+def _has_source(sources, src):
+    want = _plain(src)
+    return any(_plain(s) == want for s in sources or [])
+
+
+def _brings(station):
+    """The sources a station adds to a channel's programming (its tags first)."""
+    out = []
     if station.get("add_tags"):
         tags = _library_tags(station["add_tags"])
         if tags:
-            ch.setdefault("sources", []).append({"type": "tag", "value": tags, "what": "both", "station_extra": True})
-    extra = station_sources(station)
-    if extra:
-        src = extra[0]
-        if ch.get("broadcast"):
+            out.append({"type": "tag", "value": tags, "what": "both", "station_extra": True})
+    return out + station_sources(station)
+
+
+def changes(ch, station):
+    """What choosing this station would change on the channel, for the question:
+    {name, call, blocks: [names], adds: [sources], removes: [sources]}."""
+    old = BY_ID.get(ch.get("station") or "")
+    removes = []
+    if old and old["id"] != station["id"]:
+        removes = [s for s in ch.get("sources", []) if s.get("station_extra")] + list(ch.get("own") or [])
+    kept = [s for s in ch.get("sources", []) if not s.get("station_extra")]
+    if ch.get("broadcast"):         # a network's own shows air in full; they aren't a source
+        adds = station_sources(station)[:1]
+    else:
+        adds = [s for s in _brings(station) if not _has_source(kept, s)]
+    return {"name": station["name"], "call": station["call"],
+            "blocks": [b["name"] for b in station.get("blocks", [])], "adds": adds, "removes": removes}
+
+
+def apply(ch, station):
+    """Give a channel a built-in station: its brand (name, call letters, logo,
+    time-of-day names) and its shows.  A station the channel already had goes
+    first, brand and shows, so switching never piles up; time-of-day names the
+    viewer made and programming the viewer added stay."""
+    generic = ch.get("generic_name")
+    if ch.get("station"):
+        drop(ch, keep_shows=False)
+    ch["generic_name"] = generic or ch["name"]
+    ch["station"] = station["id"]
+    ch["name"] = station["name"]
+    ch["callsign"] = station["call"]
+    mine = [b for b in ch.get("brand_blocks") or [] if not is_kit_block(b)]
+    ch["brand_blocks"] = mine + [dict(b, kit=True) for b in station.get("blocks", [])]
+    brings = _brings(station)
+    if ch.get("broadcast"):
+        extra = station_sources(station)
+        if extra:
             # a broadcast network's own shows (Keystone <- NBC): in full in its
             # prime time and its general programming, not dealt out like the rest
+            src = extra[0]
             ch["own"] = [src]
             for dp in ch.get("dayparts", []):
                 if dp.get("prime"):
                     dp["own"] = [dict(src)]
-        else:
-            ch.setdefault("sources", []).extend(extra)
+        brings = [s for s in brings if s.get("type") == "tag"]
+    for src in brings:
+        if not _has_source(ch.setdefault("sources", []), src):      # never the same source twice
+            ch["sources"].append(src)
 
 
 def station_sources(station):
@@ -334,6 +384,32 @@ def _separate_networks(chans):
             c["exclude"] = sorted(set(c.get("exclude", [])) | others)
 
 
+def addable():
+    """Built-in stations Add a channel offers: the ones that air shows or movies
+    (the Guide, Weather, Boombox and BACKLOT are channel kinds of their own)."""
+    return [s for s in STATIONS if not s["match"].get("type")]
+
+
+def starter(station):
+    """(channel type, sources) a channel starts with before the station brings
+    its own: the genres it stands for that the library has, or its movies."""
+    m = station["match"]
+    if m.get("all_movies"):
+        return "movies", [{"type": "movies"}]
+    if m.get("classic_movies"):
+        return "movies", [{"type": "movies", "years": [1900, 1989]}]
+    if m.get("movie_genres"):
+        return "movies", [{"type": "movies", "genre": g} for g in m["movie_genres"]]
+    have = set()
+    if m.get("genres"):
+        try:
+            from . import library
+            have = set(g for s in library.all_tvshows() for g in s.get("genre", []))
+        except Exception:
+            have = set()
+    return "network", [{"type": "tvgenre", "value": g} for g in m.get("genres", []) if g in have]
+
+
 def extra_channels(chans, min_shows=5):
     """A station whose real networks you have plenty of shows from gets its own
     channel even when no genre channel suited it (6 Nickelodeon shows, no
@@ -353,13 +429,52 @@ def extra_channels(chans, min_shows=5):
     return made
 
 
-def drop(ch):
-    """Back to the channel's plain name (e.g. the station is already used elsewhere)."""
-    if ch.get("station"):
-        ch["name"] = ch.pop("generic_name", ch["name"])
-        for k in ("station", "brand_blocks", "callsign", "own"):
-            ch.pop(k, None)
+def own_name(ch):
+    """The name the channel has once its built-in station's brand is gone: the
+    viewer's rename if there is one, otherwise the plain name from before."""
+    st = BY_ID.get(ch.get("station") or "")
+    if st and ch.get("name") == st["name"]:
+        return ch.get("generic_name") or ch["name"]
+    return ch.get("name", "")
+
+
+def own_callsign(ch):
+    """Its call letters then: the ones the viewer typed, otherwise made from the name."""
+    from . import channels as C
+    st = BY_ID.get(ch.get("station") or "")
+    cs = ch.get("callsign") or ""
+    kit = set([st["call"]] + [b.get("call") for b in st.get("blocks", [])]) if st else set()
+    return cs if cs and cs not in kit else C.callsign(own_name(ch))
+
+
+def drop(ch, keep_shows=True):
+    """Take the built-in station's brand off the channel: its logo, its
+    time-of-day names and (unless the viewer renamed the channel or typed call
+    letters) its name and call letters.  The viewer's rename, own time-of-day
+    names and own programming always stay.
+
+    keep_shows=True (Make this channel my own): the station's shows stay as
+    ordinary programming.  False (another station takes over, or the station is
+    already on another channel): they go with it."""
+    if not ch.get("station"):
+        return
+    name, call = own_name(ch), own_callsign(ch)
+    ch["name"], ch["callsign"] = name, call
+    for k in ("station", "generic_name"):
+        ch.pop(k, None)
+    blocks = [b for b in ch.get("brand_blocks") or [] if not is_kit_block(b)]
+    if blocks:
+        ch["brand_blocks"] = blocks
+    else:
+        ch.pop("brand_blocks", None)
+    if keep_shows:
+        for src in list(ch.get("sources", [])) + list(ch.get("own") or []) + \
+                [s for dp in ch.get("dayparts", []) for s in dp.get("own") or []]:
+            if src.pop("station_extra", None) and src.get("type") == "studio":
+                src["core"] = True          # still counts like a network when shows find their home
+    else:
         ch["sources"] = [x for x in ch.get("sources", []) if not x.get("station_extra")]
+        ch.pop("own", None)
         for dp in ch.get("dayparts", []):
             dp.pop("own", None)
 
@@ -466,8 +581,15 @@ def block_at(ch, ts):
 
 
 def brand(ch, ts=None):
-    """{name, call, logo, folder} for the channel at ts.  The viewer's own folder
-    beats the built-in kit; a block's own folder beats the channel's."""
+    """{name, call, logo, bug, logo_from, folder...} for the channel at ts: the one
+    place that decides which logo shows.  Anything the viewer supplies beats a
+    built-in logo:
+        a time block's folder image > its picked image > its logo-folder match
+        > its built-in logo
+        > the image picked in the editor > the station folder's logo
+        > the logo folder (name, call letters, number) > the built-in station logo
+    logo_from says which: block_folder, block_picked, block_logofolder, builtin,
+    picked, folder, logofolder, none, or '' (no logo)."""
     ts = time.time() if ts is None else ts
     base = BY_ID.get((ch or {}).get("station") or "")
     folder = channel_folder(ch)
@@ -483,6 +605,8 @@ def brand(ch, ts=None):
         call = b.get("call") or call
         bfolder = _subfolder(folder, b.get("name"), b.get("call"), loose=True) if folder else ""
         for path, where in ((_image_in(bfolder), "block_folder"), (b.get("logo_path") or "", "block_picked"),
+                            (logos.folder_logo(b.get("name"), b.get("call")) if logo_own != "none" else "",
+                             "block_logofolder"),
                             (builtin_logo(b.get("logo")) if base and b.get("logo") else "", "builtin")):
             if path:
                 logo, src = path, where
@@ -494,6 +618,9 @@ def brand(ch, ts=None):
         elif logo_own != "none":
             logo = _image_in(folder)
             src = "folder" if logo else ""
+            if not logo:
+                logo = logos.folder_logo(ch.get("name"), ch.get("callsign"), str(ch.get("number", "")))
+                src = "logofolder" if logo else ""
             if not logo and base:
                 logo, src, kit = builtin_logo(base["logo"]), "builtin", base
         else:

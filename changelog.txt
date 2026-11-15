@@ -1,4 +1,38 @@
 v1.2.0 (2026-11-12)
+- Changed: a built-in station is a brand (name, call letters, logo, time-of-day
+  names) plus its shows, and the two now come apart. Channel editor > Identity >
+  'Make this channel my own' removes the brand and keeps the channel's name and
+  all its programming (it used to undo a rename and remove the shows, without
+  asking). Choosing another station swaps the old station's brand and shows
+  for the new one's; the question lists everything that changes. Names by time
+  of day and programming you added yourself always stay
+- Changed: any logo of your own beats a built-in station logo: the image you
+  picked, then the station folder's, then the logo folder's (it used to lose
+  to the built-in logo). Renaming a channel updates its call letters unless you
+  typed your own, and asks whether to keep a station's time-of-day names
+- Changed: Add a channel starts with 'What kind of channel?': a built-in
+  station (no name to type; stations you already have are greyed out), my own
+  channel (ends with 'Give it a logo now?'), music videos, TV Guide, Weather
+  (those two only while you have none) or Behind the scenes
+- Changed: the channel editor has four groups: Identity, Programming, Breaks &
+  clips, Schedule. 'Branding by time of day' is now 'Names by time of day'
+- Changed: first setup looks through the library first, then one screen: Start
+  watching / Customise / Cancel. Folders and the weather city wait under
+  'Finish setting up' in the main menu. Customise can give channels plain names
+  (same shows, no stock brands). 'I'll set it up myself' starts with a plain
+  Weather Channel
+- Changed: Settings is regrouped (Breaks, Channels, Viewing, Guide & Weather,
+  Seasons, Start-up & library, Tools, Advanced); no setting loses its value.
+  Lineup tools (Build my lineup, Move shows, Shows without a good channel,
+  Sign-off and prime time for all channels, Station folders) moved from
+  Settings > Tools to Channel manager > Lineup tools
+- Fixed: sign-off tools replaced channels' own off-air hours: Build my lineup
+  now only sets hours on the channels it adds, and 'Sign off overnight on all
+  channels' asks before replacing any
+- Fixed: Rearrange > Close the gaps moved Weather off 25 and News off 42 and
+  accepted 0; the wizard shortcut did nothing with 'Go straight to TV' on;
+  'Start on channel' with a number no channel has started on the first channel
+  instead of the last watched; a second TV Guide or Weather could be added
 - New: retro ads in house breaks: made-up commercials as cards with a short
   jingle - pitch cards ('Crisp-O-Matic, only $19.99!'), kids' toys and cereal,
   local businesses (Big Earl's Furniture Barn), public service announcements and

@@ -730,7 +730,7 @@ def house_card(kind, line, target, now, rows=None):
     """Window properties of a system ad: 'guide' or 'weather' (target: that
     channel) or 'lineup' (rows: [(time, title, channel number)] of what's coming
     up on the lineup).  Same window and style as a promo card."""
-    from . import logos, stations
+    from . import stations
     if kind == "lineup":
         evening = time.localtime(now).tm_hour >= 17
         title = _("Tonight's lineup") if evening else _("Coming up")
@@ -742,7 +742,7 @@ def house_card(kind, line, target, now, rows=None):
         title, plot = _(t), _(plot)
         kicker = stations.brand(target, now)["name"]
         when = _("Channel %d") % target["number"]
-        logo = logos.logo_for(target) or ""
+        logo = stations.brand(target, now)["logo"]      # its station logo too, as on its banner
         if logo and not logo_ready(logo):
             logo = ""
     return {

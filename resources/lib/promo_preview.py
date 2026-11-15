@@ -21,7 +21,6 @@ from . import kodiutil as K
 from . import promos
 from . import scheduler
 from . import stations
-from . import logos
 from .kodiutil import _
 
 LEAD_IN = 2.0           # seconds of black before the card (time to start recording)
@@ -81,7 +80,7 @@ def _window_props(ch, now):
     card shows, and the CRT look."""
     logo = ""
     if ch and K.setting_bool("logo_banner", True):
-        logo = stations.brand(ch, now)["logo"] or logos.logo_for(ch) or ""
+        logo = stations.brand(ch, now)["logo"]
     crt = K.setting_int("crt_mode", 0)
     return {"banner_logo": logo, "crt": str(crt) if crt in (1, 2) else ""}
 
@@ -123,7 +122,7 @@ def pick_channel(lineup, now, last=None):
         li = xbmcgui.ListItem("%d  %s" % (c["number"], stations.brand(c, now)["name"]),
                               _("Up next: %s") % up[0]["t"] if up else
                               _("Nothing in the next 6 hours"))
-        logo = stations.brand(c, now)["logo"] or logos.logo_for(c) or ""
+        logo = stations.brand(c, now)["logo"]
         li.setArt({"thumb": logo, "icon": logo})
         rows.append(li)
         chans.append((c, sc))
@@ -357,7 +356,7 @@ class AdPreviewWindow(xbmcgui.WindowXML):
             self.close()
 
     def _upnext(self):
-        from . import ads, logos, stations
+        from . import ads, stations
         from .tv import fmt_time
         mon = xbmc.Monitor()
         lineup = scheduler.Lineup(K.schedule_cfg())
@@ -372,7 +371,7 @@ class AdPreviewWindow(xbmcgui.WindowXML):
             return
         first = sched.entry_at(nb["s"] + 0.5) or {}
         br = stations.brand(ch, nb["s"])
-        chlogo = br["logo"] or logos.logo_for(ch)
+        chlogo = br["logo"]
         c = ads.upnext_card(ch, ch["number"], br["name"], nb, nb["s"], fmt_time(nb["s"]),
                             first.get("p") if first.get("k") == "show" else "",
                             chlogo if ads.logo_usable(chlogo) else "")
@@ -392,13 +391,13 @@ class AdPreviewWindow(xbmcgui.WindowXML):
         self.setProperty("mode", "")
 
     def _station(self):
-        from . import ads, logos, stations
+        from . import ads, stations
         mon = xbmc.Monitor()
         chans = scheduler.Lineup(K.schedule_cfg()).channels
         ch = next((c for c in chans if c["number"] == self.entry.get("num")), None) or chans[0]
         now = time.time()
         br = stations.brand(ch, now)
-        logo = br["logo"] or logos.logo_for(ch)
+        logo = br["logo"]
         logo = logo if ads.logo_usable(logo) else ""
         if self.entry.get("k") == "signoff":
             # when this channel's next off-air hours end (else 6:00 AM, for the look)

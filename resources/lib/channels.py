@@ -366,16 +366,17 @@ def music_channel(number, paths=None):
     return ch
 
 
-def renumber(chans):
-    """Number channels 2, 3, 4... in order, keeping weather on 25 and news on 42
-    (and never giving those numbers to anything else while they're there)."""
+def renumber(chans, start=2):
+    """Number channels 2, 3, 4... (or from `start`) in order, keeping weather on
+    25 and news on 42 (and never giving those numbers to anything else while
+    they're there)."""
     fixed = {}
     for c in chans:
         n = fixed_number(c)
         if n is not None and n not in fixed:
             fixed[n] = c
     taken = set(fixed)
-    num = 2
+    num = max(1, int(start))
     for c in chans:
         if any(c is f for f in fixed.values()):
             c["number"] = fixed_number(c)
