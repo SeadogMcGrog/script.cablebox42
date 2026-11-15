@@ -867,6 +867,11 @@ background music. Press **OK** on it to pick a channel. Title: *Settings →
 Programming → Guide title*; music: *Guide channel music folder*; pace: *Guide
 scroll speed*.
 
+The top half plays trailers of movies coming up (from your library's trailers),
+show promos from Extras folders and commercials, with the time and channel beside
+them. It needs a few minutes after installing to measure the clips; *Settings →
+Programming → Guide top half → Text only* turns it off.
+
 Your own "cable company" ads in the crawl: make a text file `guide.txt` in the
 guide channel's station folder (e.g. `Stations/TV Guide/guide.txt`) with one ad
 per line, such as `Call 555-0123 for Pay-Per-View`. Lines starting with `#` are

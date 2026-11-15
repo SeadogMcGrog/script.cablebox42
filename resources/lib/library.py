@@ -160,6 +160,20 @@ class Durations(object):
             self.dirty = True
         return d
 
+    # Frame rates of the guide's top-half clips (trailers, Extras promos, commercials),
+    # measured by the service's background reader: "fps|<path>" -> fps (0: unreadable).
+    # Same file, so every value stays a number for the tools that read durations.json.
+    FPS = "fps|"
+
+    def fps(self, path):
+        """The measured frame rate, 0 if the file couldn't be read, None if not measured yet."""
+        v = self.data.get(self.FPS + path)
+        return None if v is None else float(v)
+
+    def set_fps(self, path, fps):
+        self.data[self.FPS + path] = round(float(fps or 0), 3)
+        self.dirty = True
+
     def learn(self, path, seconds):
         if seconds and seconds > 0 and abs(self.data.get(path, 0) - seconds) > 1:
             self.data[path] = round(seconds, 2)
@@ -1990,3 +2004,26 @@ def rating_for(path):
     except Exception as exc:
         log("rating: %s" % exc)
     return ""
+
+
+# ------------------------------------------------------------- the guide's trailers
+_TRAILERS = [0, None]       # (when, {movie file: local trailer file})
+
+
+def movie_trailers():
+    """{movie file: trailer file} for library movies whose trailer is a local file
+    (Kodi's 'trailer' field; plugin:// and web trailers are left out: network, ads,
+    failures).  Cached like the pools."""
+    _check_gen()
+    if _TRAILERS[1] is not None and time.time() - _TRAILERS[0] < _POOL_TTL:
+        return _TRAILERS[1]
+    out = {}
+    try:
+        for m in all_movies(["file", "trailer"]):
+            t = (m.get("trailer") or "").strip()
+            if m.get("file") and t and not t.lower().startswith(_NO_FS):
+                out[m["file"]] = t
+    except Exception as exc:
+        log("trailers: %s" % exc)
+    _TRAILERS[0], _TRAILERS[1] = time.time(), out
+    return out

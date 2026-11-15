@@ -6390,3 +6390,23 @@ msgstr ""
 msgctxt "#34059"
 msgid "Today's high %s, low %s"
 msgstr ""
+
+msgctxt "#34060"
+msgid "Guide top half"
+msgstr ""
+
+msgctxt "#34061"
+msgid "Text only"
+msgstr ""
+
+msgctxt "#34062"
+msgid "Tonight %s"
+msgstr ""
+
+msgctxt "#34063"
+msgid "Today %s"
+msgstr ""
+
+msgctxt "#34064"
+msgid "Tomorrow %s"
+msgstr ""

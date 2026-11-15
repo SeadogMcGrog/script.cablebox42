@@ -971,6 +971,17 @@ speed* sets the pace (Slow, Normal or Fast: about 3, 2.5 or 1.7 seconds a row).
   the library's genres (*Sport*, *Football*...; *Animation*, *Family*, *Children*,
   *Kids*); everything on a kids' channel (Ad flavour *Kids*, Chameleon, Animation
   Station) counts as kids.
+- **Video in the top half** (*Guide top half: Video*, the default): trailers of movies
+  airing in the next 4 hours on any channel (the library's trailer, local files only),
+  short *Promo* / *Trailer* clips from a show's Extras folder, and commercials (the guide
+  channel's own `commercials` folder if it has one, else the usual commercials) play in a
+  small picture top left, with *Tonight 8:00 PM · 12 PIX* and the title beside it. Between
+  runs of 2-4 minutes come 1-2 minutes of text and guide music. Each run uses clips of one
+  frame rate only, played as one list, so a TV that switches refresh rate blanks only
+  between runs. CableBox measures each clip's frame rate in the background first (MP4 and
+  MKV; other files aren't used), so on a new install the top half stays text until clips
+  are measured. Like every channel it runs on the clock: flip away and back and it's
+  further on, not starting over. *Text only* gives the guide as it was.
 - **Your own ads:** put a `guide.txt` in the guide channel's station folder, one ad
   per line (lines starting with `#` are skipped). They're used before the built-in
   ones. CableBox only reads the file.
@@ -1092,6 +1103,7 @@ tap to tune. Yatse custom commands can call the `RunScript` actions above.
 | Guide channel music folder | – | Music behind the guide |
 | Guide title | *CableBox 42 Program Guide* | |
 | Guide scroll speed | Normal | Slow / Normal / Fast ([The guide channel](#the-guide-channel)) |
+| Guide top half | Video | Trailers, promos and commercials in the guide's top half, or *Text only* ([The guide channel](#the-guide-channel)) |
 | Shows on more than one channel | TV shows on one channel each | Or everything on one channel each, or allow repeats |
 | Short programmes (under 12 min) | Pack several into one time slot | Back-to-back like a cartoon block (next episodes of the same series, or several short films), a break after each. Or *only where I pinned them* (skipped by the automatic schedule while anything longer is available), or *one per time slot* |
 | Commercial breaks at chapter marks | On | An episode with good chapter marks gets its commercial breaks where the original broadcast's act breaks were (Seinfeld's "The Opposite": after the cold open, at 13:27 and before the end tag). Chapters are read once per file, in the background: whenever Kodi is idle, as fast as the drive answers quickly (it slows down at once for a busy or waking drive, and pauses on a busy CPU); with the TV on, the episodes airing in the next 6 hours first, gently; never while you watch something else in Kodi. The episodes they change are planned again. *Chapters read* below the setting shows how far it is; until then, and for files without usable chapters (none, one, evenly spaced automatic ones), breaks are evenly spaced as before. Scene chapters every couple of minutes keep the usual number of breaks, each moved to the nearest mark. The leftover time decides how many breaks there are (at least a minute each). *Tools → Check chapters* shows each show's episodes and lets you set a show to *Always* or *Never* use chapters. Files are only read, never changed |
