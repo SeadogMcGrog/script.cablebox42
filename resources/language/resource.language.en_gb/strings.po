@@ -6362,3 +6362,19 @@ msgstr ""
 msgctxt "#34052"
 msgid "Show rating at start of programmes"
 msgstr ""
+
+msgctxt "#34053"
+msgid "Summer reruns"
+msgstr ""
+
+msgctxt "#34054"
+msgid "Network channels"
+msgstr ""
+
+msgctxt "#34055"
+msgid "(R)"
+msgstr ""
+
+msgctxt "#34056"
+msgid "Summer reruns (June to August)"
+msgstr ""

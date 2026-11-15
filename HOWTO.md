@@ -932,6 +932,12 @@ tag your holiday episodes in Kodi (*Information → Manage → Manage tags*).
 Each holiday can have its own commercials and bumps folders. *Save holiday
 episodes and movies for their season* keeps Christmas specials out of July.
 
+**Summer reruns:** *Settings → Seasons → Summer reruns* → *Network channels* (the
+broadcast networks) or *All channels*. From June to August each series reruns the
+episodes of its current season it has already shown, marked *(R)* in the guide and
+banner; in September it picks up with the next new episode. Your pinned slots are
+never changed.
+
 ---
 
 ## 17. The look: static, CRT effect, turn-on and turn-off

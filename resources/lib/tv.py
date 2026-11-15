@@ -2408,6 +2408,8 @@ class TVWindow(xbmcgui.WindowXML):
         b = sched.block_at(now)
         if b:
             title = library.on_air(b["t"])
+            if b.get("rr"):
+                title += " " + _("(R)")           # a summer rerun
             self.setProperty("now_title", title)
             if b.get("sub"):
                 sub = " ".join(x for x in (b.get("lb", ""), b["sub"]) if x)
@@ -2506,7 +2508,7 @@ class TVWindow(xbmcgui.WindowXML):
             if info and info.get("kind") == "movie" and info.get("year") and \
                     title.endswith("(%s)" % info["year"]):
                 info = dict(info, year=0)             # a shared name keeps its year in the title
-            extra = guide.details(info)
+            extra = guide.details(info, rerun=bool(b.get("rr")))
             cat = guide.category(info, kids_ch)
         return guide.fit_cell(title, extra, width) + (cat,)
 

@@ -77,6 +77,9 @@
         <setting id="christmas_bumps" type="folder" label="32068" source="video" default="" enable="eq(-19,true)+eq(-4,true)"/>
         <setting label="32070" type="lsep"/>
         <setting id="season_hold" type="bool" label="32069" default="true" enable="eq(-21,true)"/>
+        <setting label="34056" type="lsep"/>
+        <setting id="summer_reruns" type="enum" label="34053" lvalues="33454|34054|33471" default="0"/>
+        <setting id="rerun_today" type="text" label="34053" default="" visible="false"/>
     </category>
     <category label="32048">
         <setting label="32049" type="lsep"/>

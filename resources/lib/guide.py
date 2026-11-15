@@ -49,11 +49,11 @@ def short_call(name, call):
     return out[:5]
 
 
-def details(info):
+def details(info, rerun=False):
     """The listing's details in the order they're dropped last to first:
-    movies '(1990)' and 'PG-13'; then '(CC)' and '(Stereo)'."""
+    '(R)' for a summer rerun, movies '(1990)' and 'PG-13'; then '(CC)' and '(Stereo)'."""
     from . import library
-    out = []
+    out = [_("(R)")] if rerun else []
     if info:
         if info.get("kind") == "movie":
             if info.get("year"):

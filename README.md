@@ -783,6 +783,31 @@ season):
    and movie titles such as *Treehouse of Horror* or *A Charlie Brown
    Christmas* count too.
 
+### Summer reruns
+
+The 90s TV year had a shape: new episodes in the fall, then a summer of reruns.
+With *Settings → Seasons → Summer reruns* on, from **1 June to 31 August** the
+channels air episodes of each series they've already shown instead of moving it on:
+
+- A series reruns its current season in order, from its first episode up to the
+  last one that aired, then round again. If fewer than three episodes of the
+  current season have aired (say the next new one is an episode 1), it reruns the
+  season before. A series with fewer than three episodes aired in all keeps airing
+  new ones: there isn't enough to rerun.
+- **In September each series carries on** with its next new episode, exactly where
+  it stopped in May: the summer never moves a series on. Turning the setting off
+  does the same at once.
+- The guide and the banner show *(R)* after a rerun's title.
+- *Network channels*: the broadcast networks (Keystone, Beacon,
+  Horizon). *All channels*: every show channel. Movie channels, Boombox, *Behind the
+  scenes*, the guide and weather never rerun.
+- Only the automatic schedule reruns. Slots you pinned in the weekly planner air as
+  you set them, and pinned *in order* slots keep moving forward all summer.
+- Holiday rules still apply to reruns (no Christmas episode in July).
+- Schedules are planned hours ahead, so the switch shows in programmes planned after
+  midnight on 1 June and 1 September; changing the setting replans from each
+  channel's next programme.
+
 Tagging a whole show (an anthology of Halloween specials, say) or a movie in
 Kodi is the surest way to get it into the holiday lineup. Out of season, items
 tagged with the holiday's own name (*halloween*, *thanksgiving*,
@@ -1103,6 +1128,7 @@ tap to tune. Yatse custom commands can call the `RunScript` actions above.
 | Tags | *halloween, spooky, horror* · *thanksgiving* · *christmas, xmas, holiday* | Any Kodi tag containing one of these words |
 | Genres | *Horror, Mystery* · – · *Christmas, Holiday* | Empty = don't use genres |
 | Save holiday episodes and movies for their season | On | Keeps Christmas episodes out of July |
+| Summer reruns | Off | *Network channels* or *All channels*: June to August, series rerun episodes already shown ([Summer reruns](#summer-reruns)) |
 
 **Tools**: see [Settings → Tools](#settings--tools).
 
