@@ -25,6 +25,7 @@ from . import captions
 from . import promos
 from . import musicvideos
 from . import ads
+from . import musictest
 from .kodiutil import _
 
 
@@ -184,6 +185,8 @@ class TVWindow(xbmcgui.WindowXML):
         self.fs_state = "off"        # off / entering / on
         self.fs_at = 0
         self.fs_retry_at = 0
+        self.mtest = None            # Step 0 music test (musictest.py), only when asked for
+        self.music_test_wanted = False
 
     _props = None
 
@@ -236,6 +239,9 @@ class TVWindow(xbmcgui.WindowXML):
             t = threading.Thread(target=target, name=name)
             t.start()
             self.threads.append(t)
+        if self.music_test_wanted:
+            self.mtest = musictest.MusicTest(self)
+            self.threads.append(self.mtest.start())
 
     def start_channel(self):
         if getattr(self, "wanted_channel", None):
@@ -405,7 +411,8 @@ class TVWindow(xbmcgui.WindowXML):
                 self.static_until = time.time() + 0.45
                 if self.static_sound:
                     xbmc.playSFX(K.media("static.wav"), False)
-            self.lineup.schedule(ch)
+            if ch.get("type") != "musictest":
+                self.lineup.schedule(ch)
             self.tick()
             self.update_banner()
             if not self.power_on:            # after the turn-on clip instead
@@ -723,6 +730,10 @@ class TVWindow(xbmcgui.WindowXML):
             self.end_dev_promo()
         if self.power_on:
             self.end_power_on()
+        if self.ch.get("type") == "musictest":
+            if self.mtest:
+                self.mtest.tick(now)
+            return
         sched = self.lineup.schedule(self.ch)
         e = sched.entry_at(now)
         if self.early_to:
@@ -2355,6 +2366,11 @@ class TVWindow(xbmcgui.WindowXML):
     def update_banner(self):
         if not self.ch:
             return
+        if self.ch.get("type") == "musictest":
+            self.setProperty("now_title", _("Music test"))
+            for k in ("now_sub", "now_time", "next_line"):
+                self.setProperty(k, "")
+            return
         now = time.time()
         sched = self.lineup.schedule(self.ch, ensure=False)
         b = sched.block_at(now)
@@ -2723,7 +2739,7 @@ class GuiSounds(object):
 last_exit = None     # how the last TV session ended (see run())
 
 
-def run(channel=None):
+def run(channel=None, music_test=False):
     """Turn the TV on until the viewer turns it off.  Returns how it ended:
     "back" (Back / Stop / Turn off TV: return to where it was started from),
     "menu" (Menu > CableBox menu: open the main menu), "sleep" (the sleep
@@ -2732,6 +2748,7 @@ def run(channel=None):
     K.ensure_dirs()
     win = TVWindow("script-cablebox42-tv.xml", K.ADDON_PATH, "Default", "1080i")
     win.wanted_channel = channel
+    win.music_test_wanted = music_test
     win.doModal()
     win.shutdown()
     # a turn-off from the TV's own thread (sleep timer) may still be tidying up:

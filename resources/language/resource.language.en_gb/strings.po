@@ -6295,3 +6295,43 @@ msgctxt "#34035"
 msgid "Chapters read: %d of %d - schedules updated"
 msgstr ""
 
+
+msgctxt "#34200"
+msgid "Music test"
+msgstr ""
+
+msgctxt "#34201"
+msgid "Music test: on video channel %s (%s fps)"
+msgstr ""
+
+msgctxt "#34202"
+msgid "Music test: tuning from video to music"
+msgstr ""
+
+msgctxt "#34203"
+msgid "Music test: song changes (each song skipped to its last 20 seconds)"
+msgstr ""
+
+msgctxt "#34204"
+msgid "Music test: full songs for %d minutes - press nothing"
+msgstr ""
+
+msgctxt "#34205"
+msgid "Music test: tuning from music to video channel %s"
+msgstr ""
+
+msgctxt "#34206"
+msgid "Music test: tuning from video to music, joining mid-song"
+msgstr ""
+
+msgctxt "#34207"
+msgid "Music test done. Previous channel flips between music and video."
+msgstr ""
+
+msgctxt "#34208"
+msgid "Music test: not enough songs in the music library"
+msgstr ""
+
+msgctxt "#34209"
+msgid "Run the TV music test first"
+msgstr ""
