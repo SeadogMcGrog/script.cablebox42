@@ -6368,7 +6368,7 @@ msgid "Summer reruns"
 msgstr ""
 
 msgctxt "#34054"
-msgid "Network channels"
+msgid "Broadcast networks"
 msgstr ""
 
 msgctxt "#34055"

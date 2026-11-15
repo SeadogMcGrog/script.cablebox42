@@ -798,7 +798,7 @@ channels air episodes of each series they've already shown instead of moving it 
   it stopped in May: the summer never moves a series on. Turning the setting off
   does the same at once.
 - The guide and the banner show *(R)* after a rerun's title.
-- *Network channels*: the broadcast networks (Keystone, Beacon,
+- *Broadcast networks*: Keystone, Beacon,
   Horizon). *All channels*: every show channel. Movie channels, Boombox, *Behind the
   scenes*, the guide and weather never rerun.
 - Only the automatic schedule reruns. Slots you pinned in the weekly planner air as
@@ -1142,7 +1142,7 @@ tap to tune. Yatse custom commands can call the `RunScript` actions above.
 | Tags | *halloween, spooky, horror* · *thanksgiving* · *christmas, xmas, holiday* | Any Kodi tag containing one of these words |
 | Genres | *Horror, Mystery* · – · *Christmas, Holiday* | Empty = don't use genres |
 | Save holiday episodes and movies for their season | On | Keeps Christmas episodes out of July |
-| Summer reruns | Off | *Network channels* or *All channels*: June to August, series rerun episodes already shown ([Summer reruns](#summer-reruns)) |
+| Summer reruns | Off | *Broadcast networks* or *All channels*: June to August, series rerun episodes already shown ([Summer reruns](#summer-reruns)) |
 
 **Tools**: see [Settings → Tools](#settings--tools).
 

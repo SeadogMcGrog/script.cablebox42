@@ -157,7 +157,7 @@ def rerun_season(ts, cfg):
 
 
 def rerun_channel(ch, cfg):
-    """Does this channel rerun in the summer?  'Network channels': the broadcast
+    """Does this channel rerun in the summer?  'Broadcast networks': the broadcast
     networks (Keystone, Beacon, Horizon and channels set up as one); 'All channels':
     every show channel.  Movie, loop, Boombox, extras, guide and weather: never."""
     mode = (cfg or {}).get("reruns", RERUN_OFF)
