@@ -998,6 +998,9 @@ Pages rotate every 10 seconds:
 - **The next few hours:** hourly temperatures and conditions, plus sunrise and
   sunset.
 
+Times on the weather pages (sunrise, sunset, the hours, the day names) are the
+forecast place's own local time; the clock at the top is your box's.
+
 A ticker scrolls along the bottom of every page: current conditions, today's high
 and low, and the forecast.
 

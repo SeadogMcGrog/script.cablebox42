@@ -88,17 +88,25 @@ def icon(value, cond=""):
 COMPASS = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
 
 
-def _clock(ts):
+def _local(ts, off=None):
+    """The time tuple of ts at the forecast's place: off = its UTC offset in seconds
+    (Open-Meteo's utc_offset_seconds); None (Kodi's weather, an old cache): this box's."""
+    if off is None:
+        return time.localtime(ts)
+    return time.gmtime(ts + off)
+
+
+def _clock(ts, off=None):
     try:
         f = xbmc.getRegion("time").replace(":%S", "")
     except Exception:
         f = "%I:%M %p"
-    s = time.strftime(f, time.localtime(ts))
+    s = time.strftime(f, _local(ts, off))
     return s[1:] if s.startswith("0") else s
 
 
-def _hour(ts):
-    s = time.strftime("%I %p", time.localtime(ts))
+def _hour(ts, off=None):
+    s = time.strftime("%I %p", _local(ts, off))
     return s[1:] if s.startswith("0") else s
 
 
@@ -308,12 +316,16 @@ def parse_open_meteo(raw, name, f):
         pres = _("%.2f in") % (pres * 0.02953)
     elif pres:
         pres = _("%d hPa") % round(pres)
+    # the place's own time: times come as Unix timestamps (timeformat=unixtime), so they're
+    # formatted with its UTC offset, not this box's zone (Leeds watched from Chicago)
+    off = raw.get("utc_offset_seconds")
+    off = int(off) if isinstance(off, (int, float)) else None
     dly = raw.get("daily", {})
     daily = []
     for i, ts in enumerate(dly.get("time", [])):
         dc = int(dly["weather_code"][i] or 3)
         dt, di, _night = WMO.get(dc, ("", "cloudy", "cloudy"))
-        daily.append({"name": time.strftime("%a", time.localtime(ts + 43200)), "ts": ts,
+        daily.append({"name": time.strftime("%a", _local(ts + 43200, off)), "ts": ts,
                       "hi": "%d%s" % (round(dly["temperature_2m_max"][i]), deg),
                       "lo": "%d%s" % (round(dly["temperature_2m_min"][i]), deg),
                       "cond": dt, "icon": ICON % di,
@@ -329,7 +341,7 @@ def parse_open_meteo(raw, name, f):
         if len(hours) >= 6:
             break
         hc = int(hrs["weather_code"][i] or 3)
-        hours.append({"time": _hour(ts), "temp": "%d%s" % (round(hrs["temperature_2m"][i]), deg),
+        hours.append({"time": _hour(ts, off), "temp": "%d%s" % (round(hrs["temperature_2m"][i]), deg),
                       "cond": WMO.get(hc, ("",))[0],
                       "pop": "%d%%" % (hrs.get("precipitation_probability", [0] * 999)[i] or 0)})
     unit = deg + ("F" if f else "C")
@@ -343,8 +355,9 @@ def parse_open_meteo(raw, name, f):
                  "pressure": pres or ""},
          "days": daily[1:6] if len(daily) > 1 else daily, "today": daily[0] if daily else None,
          "hours": hours,
-         "sunrise": _clock(daily[0]["rise"]) if daily and daily[0].get("rise") else "",
-         "sunset": _clock(daily[0]["set"]) if daily and daily[0].get("set") else ""}
+         "sunrise": _clock(daily[0]["rise"], off) if daily and daily[0].get("rise") else "",
+         "sunset": _clock(daily[0]["set"], off) if daily and daily[0].get("set") else "",
+         "utc_offset": off}
     return d
 
 
@@ -353,7 +366,8 @@ def narrative(d):
     out = []
     today = d.get("today") or (d["days"][0] if d.get("days") else None)
     nxt = d["days"][0] if d.get("today") and d.get("days") else (d["days"][1] if len(d.get("days", [])) > 1 else None)
-    hour = time.localtime().tm_hour
+    off = d.get("utc_offset")                # missing in Kodi's data and old caches: this box's time
+    hour = _local(time.time(), off if isinstance(off, (int, float)) else None).tm_hour
     if today:
         cond = (today.get("cond") or d["now"].get("cond") or "").lower()
         pop = today.get("pop", "")
