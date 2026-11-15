@@ -23,7 +23,7 @@ def fixed_number(c):
         return NEWS_NUMBER
     return None
 
-TYPES = ("network", "movies", "loop", "guide", "weather", "extras", "musicvideos")
+TYPES = ("network", "movies", "loop", "guide", "weather", "extras", "musicvideos", "music")
 
 DEFAULTS = {
     "network": {"commercials": True, "midroll": True, "bumps": True, "lineup": "strip", "slot": 30},
@@ -36,6 +36,8 @@ DEFAULTS = {
     # Boombox: music videos on the real clock, breaks only between videos, video captions on
     "musicvideos": {"commercials": True, "midroll": True, "bumps": True, "lineup": "shuffle", "slot": 30,
                     "mv_captions": True},
+    # Music channels (DMX-style): songs around the clock, no breaks of any kind; never in the wizard
+    "music": {"commercials": False, "midroll": False, "bumps": False, "lineup": "shuffle", "slot": 60},
 }
 
 

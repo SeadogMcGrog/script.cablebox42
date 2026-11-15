@@ -26,6 +26,7 @@ from . import promos
 from . import musicvideos
 from . import ads
 from . import musictest
+from . import musictv
 from .kodiutil import _
 
 
@@ -185,6 +186,7 @@ class TVWindow(xbmcgui.WindowXML):
         self.fs_state = "off"        # off / entering / on
         self.fs_at = 0
         self.fs_retry_at = 0
+        self.music = musictv.MusicScreen(self)   # music channels
         self.mtest = None            # Step 0 music test (musictest.py), only when asked for
         self.music_test_wanted = False
 
@@ -390,6 +392,7 @@ class TVWindow(xbmcgui.WindowXML):
             self.promo_stop()                # mid-promo: the theme off
             self.dev_promo_until = 0
             self.cc.leave()                  # before the static clip replaces the programme
+            self.music.leave()               # a music channel's screen and queue start afresh
             self.ch = ch
             self.cur_key = None
             self.failed_key = None
@@ -733,6 +736,11 @@ class TVWindow(xbmcgui.WindowXML):
         if self.ch.get("type") == "musictest":
             if self.mtest:
                 self.mtest.tick(now)
+            return
+        if self.ch.get("type") == "music":
+            self.music.tick(now)
+            if self.banner_until:
+                self.update_progress(now)
             return
         sched = self.lineup.schedule(self.ch)
         e = sched.entry_at(now)
@@ -2066,6 +2074,8 @@ class TVWindow(xbmcgui.WindowXML):
             self.adopt_playing()
         if self.closing or not self.playing_ours():
             return
+        if self.ch and self.ch.get("type") in ("music", "musictest"):
+            return                       # songs: no captions, resume points or learned lengths
         tok = self.play_token
         self.av_started_token = tok
         self.av_started_at = time.time()
@@ -2586,7 +2596,7 @@ class TVWindow(xbmcgui.WindowXML):
             opts.append(("measure", _("Look for movie extras")))
         opts += [("sleep", _("Sleep timer")), ("cablebox", _("CableBox menu")), ("off", _("Turn off TV"))]
         b = self.lineup.schedule(self.ch, ensure=False).block_at(time.time()) if self.ch else None
-        hide = b["t"] if b and b.get("k") == "show" and self.ch.get("type") not in ("extras", "musicvideos")             else None
+        hide = b["t"] if b and b.get("k") == "show" and self.ch.get("type") not in ("extras", "musicvideos", "music")             else None
         if hide:
             opts.append(("hide", _("Don't air '%s' on %s") % (hide, self.ch["name"])))
         i = xbmcgui.Dialog().contextmenu([o[1] for o in opts])

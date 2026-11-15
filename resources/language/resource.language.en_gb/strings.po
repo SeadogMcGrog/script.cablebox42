@@ -6337,21 +6337,209 @@ msgid "Run the TV music test first"
 msgstr ""
 
 msgctxt "#34210"
-msgid "Music test (Step 0)"
+msgid "Music channel (songs around the clock, no breaks)"
 msgstr ""
 
 msgctxt "#34211"
-msgid "Temporary: tunes from a video channel to test songs and back, and logs it"
+msgid "nothing yet"
 msgstr ""
 
 msgctxt "#34212"
-msgid "Start on this channel; pick one showing a film"
+msgid "A genre"
 msgstr ""
 
 msgctxt "#34213"
-msgid "Kodi's own music player"
+msgid "A decade"
 msgstr ""
 
 msgctxt "#34214"
-msgid "The same songs without CableBox, for comparison (after the TV test)"
+msgid "An artist"
+msgstr ""
+
+msgctxt "#34215"
+msgid "An album"
+msgstr ""
+
+msgctxt "#34216"
+msgid "A smart playlist"
+msgstr ""
+
+msgctxt "#34217"
+msgid "A music folder"
+msgstr ""
+
+msgctxt "#34218"
+msgid "Songs from"
+msgstr ""
+
+msgctxt "#34219"
+msgid "Your music library has no genres."
+msgstr ""
+
+msgctxt "#34220"
+msgid "%s  (%d songs)"
+msgstr ""
+
+msgctxt "#34221"
+msgid "None of your songs has a year."
+msgstr ""
+
+msgctxt "#34222"
+msgid "The %ss  (%d songs)"
+msgstr ""
+
+msgctxt "#34223"
+msgid "Artist"
+msgstr ""
+
+msgctxt "#34224"
+msgid "Album"
+msgstr ""
+
+msgctxt "#34225"
+msgid "Smart playlist"
+msgstr ""
+
+msgctxt "#34226"
+msgid "Music folder"
+msgstr ""
+
+msgctxt "#34227"
+msgid "Songs from: %s[CR]Add more?"
+msgstr ""
+
+msgctxt "#34228"
+msgid "Looking at the songs..."
+msgstr ""
+
+msgctxt "#34229"
+msgid "%s has only %d songs. A music channel needs at least %d."
+msgstr ""
+
+msgctxt "#34230"
+msgid "[B]+ Add songs[/B]"
+msgstr ""
+
+msgctxt "#34231"
+msgid "Songs on %s"
+msgstr ""
+
+msgctxt "#34232"
+msgid "A music channel needs at least one source of songs. Add another first."
+msgstr ""
+
+msgctxt "#34233"
+msgid "No songs found for %s. Check its sources, or scan your music into Kodi's library."
+msgstr ""
+
+msgctxt "#34234"
+msgid "%d songs: %.1f hours before a song comes round again."
+msgstr ""
+
+msgctxt "#34235"
+msgid "%d artists. Most songs: %s"
+msgstr ""
+
+msgctxt "#34236"
+msgid "%d songs have no artist tag: their file name is shown instead."
+msgstr ""
+
+msgctxt "#34237"
+msgid "Sample rates: %s"
+msgstr ""
+
+msgctxt "#34238"
+msgid "unknown"
+msgstr ""
+
+msgctxt "#34239"
+msgid "A music channel needs at least %d songs."
+msgstr ""
+
+msgctxt "#34240"
+msgid "Songs from: %s"
+msgstr ""
+
+msgctxt "#34241"
+msgid "[B]Check songs[/B] (how many, which artists)"
+msgstr ""
+
+msgctxt "#34242"
+msgid "Genre: %s"
+msgstr ""
+
+msgctxt "#34243"
+msgid "Songs from the %ss"
+msgstr ""
+
+msgctxt "#34244"
+msgid "Artist: %s"
+msgstr ""
+
+msgctxt "#34245"
+msgid "Album: %s"
+msgstr ""
+
+msgctxt "#34246"
+msgid "Music folder: %s"
+msgstr ""
+
+msgctxt "#34247"
+msgid "Track %d of %d"
+msgstr ""
+
+msgctxt "#34248"
+msgid "Track %d"
+msgstr ""
+
+msgctxt "#34249"
+msgid "From the album"
+msgstr ""
+
+msgctxt "#34250"
+msgid "Label"
+msgstr ""
+
+msgctxt "#34251"
+msgid "Written by"
+msgstr ""
+
+msgctxt "#34252"
+msgid "Also on this album"
+msgstr ""
+
+msgctxt "#34253"
+msgid "Formed %s"
+msgstr ""
+
+msgctxt "#34254"
+msgid "Born %s"
+msgstr ""
+
+msgctxt "#34255"
+msgid "Active %s"
+msgstr ""
+
+msgctxt "#34256"
+msgid "The artist"
+msgstr ""
+
+msgctxt "#34257"
+msgid "About %s"
+msgstr ""
+
+msgctxt "#34258"
+msgid "About the artist"
+msgstr ""
+
+msgctxt "#34259"
+msgid "No songs to play"
+msgstr ""
+
+msgctxt "#34260"
+msgid "Channel manager > this channel > Check songs"
+msgstr ""
+
+msgctxt "#34261"
+msgid "Coming up: %s"
 msgstr ""
