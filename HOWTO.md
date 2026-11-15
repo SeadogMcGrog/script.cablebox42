@@ -34,6 +34,7 @@ guide is the "how do I…?" companion.
 14. [Commercials and bumps that fill the breaks properly](#14-commercials-and-bumps-that-fill-the-breaks-properly)
 15. [The guide channel and the weather channel](#15-the-guide-channel-and-the-weather-channel)
     - [Boombox TV: a music video channel](#boombox-tv-a-music-video-channel)
+    - [Music channels: songs around the clock](#music-channels-songs-around-the-clock)
 16. [Holidays](#16-holidays)
 17. [The look: static, CRT effect, turn-on and turn-off](#17-the-look-static-crt-effect-turn-on-and-turn-off)
 18. [Start CableBox from the home screen, a favourite or Kodi's start-up](#18-start-cablebox-from-the-home-screen-a-favourite-or-kodis-start-up)
@@ -318,6 +319,8 @@ Main menu → **Channel manager**.
    - *Loop* — back to back, no clock (good for shorts)
    - *Music videos* — Boombox: music videos on the clock with breaks between them
      ([Boombox TV](#boombox-tv-a-music-video-channel))
+   - *Music channel* — songs from your own music around the clock, no breaks
+     ([Music channels](#music-channels-songs-around-the-clock))
    - *Guide channel* / *Weather channel*
    - *Behind the scenes (movie extras)* — making-of pieces and interviews
      from your movies' `Extras` folders ([section 1](#1-before-you-start-get-your-library-ready)).
@@ -909,6 +912,39 @@ break, not between every video.
 
 **Skipped:** trailers, samples, clips under 30 seconds and videos with no sound.
 CableBox never renames, moves or tags your files and writes no NFOs.
+
+### Music channels: songs around the clock
+
+The other half of cable music: audio-only genre channels like DMX, with songs
+playing all day, no breaks, and a mostly still screen saying what's on.
+
+1. **Channel manager → + Add a channel → Music channel.**
+2. Name it (*Hip-Hop & R&B*, *80s Hits*, *Quiet Storm*) and give it a number.
+3. **Songs from:** *A genre*, *A decade*, *An artist*, *An album*, *A smart
+   playlist* or *A music folder*. Pick one, then **Add more** for another or
+   **Done**. Back at any step adds nothing.
+4. Tune in. The channel joins a song in the middle, like any channel.
+
+In the channel's settings, **Check songs** says how many songs and hours it
+has, which artists have the most songs, how many songs have no artist tag, and
+their sample rates. **Songs from** adds or removes sources.
+
+**Tagging tips.** The screen is built from your tags, so tag before you scrape:
+
+- **Artist**, **Title**, **Album**, **Date/Year**, **Track number** and **Genre**
+  fill the bottom of the screen and most of the info panel.
+- **Label** (or *Publisher* / *Organization*) and **Composer** add a panel page
+  each for songs in Kodi's music library.
+- Embedded or folder cover art (`cover.jpg`, `folder.jpg`) shows next to the song.
+- Kodi's music scrapers are optional: when the library has an artist's
+  biography or an album review, its first sentence becomes a panel page, but
+  a well-tagged song looks complete without it.
+- Untagged files still air: `Artist - Title.flac` shows the artist and title
+  from the file name.
+
+Rescan your music library in Kodi after changing tags (or for a music folder,
+just wait: CableBox re-reads a file when its date or size changes). CableBox
+never writes tags, NFOs or artwork.
 
 ---
 
