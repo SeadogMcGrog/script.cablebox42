@@ -56,6 +56,7 @@ def _check_gen():
         if _GEN[0]:
             _POOL_CACHE.clear()
             _AIR_CACHE.clear()
+            _EXISTS.clear()
             _SHOWS[1] = None
         _GEN[0] = g
 
@@ -239,8 +240,67 @@ def episodes_for(tvshowid):
     return eps
 
 
+_EXISTS = {}               # path -> (checked at, exists); folders too.  Cleared with the pools
+_STALE_LOGGED = set()
+
+
+def _exists(path):
+    hit = _EXISTS.get(path)
+    if hit and time.time() - hit[0] < _POOL_TTL:
+        return hit[1]
+    try:
+        ok = bool(xbmcvfs.exists(path))
+    except Exception:
+        ok = True                 # can't tell: don't hide it
+    _EXISTS[path] = (time.time(), ok)
+    return ok
+
+
+def stale(path):
+    """The library lists this file but it isn't there (renamed or deleted, and
+    the library not cleaned since), while its folder is: never plan it.  A whole
+    folder gone (a drive or share offline) doesn't count - that is the TV's
+    missing-file case.  Cached per library generation (or 30 min); logs once."""
+    if not path or "://" in path and not path.startswith(("smb://", "nfs://")):
+        return False
+    if _exists(path):
+        return False
+    folder = path.replace("\\", "/").rsplit("/", 1)[0] + "/"
+    if not folder.strip("/") or not _exists(folder):
+        return False
+    if path not in _STALE_LOGGED:
+        _STALE_LOGGED.add(path)
+        log("Library lists a missing file (run Clean library): %s" % path, level=xbmc.LOGWARNING)
+    return True
+
+
+def _dedupe_episodes(eps):
+    """The same season + episode listed more than once (an old file name the
+    library still has next to the renamed file): keep the entry whose file is
+    there, so the episode airs once and never from the missing file.  Only these
+    duplicates are checked here; planning checks the episodes it picks (stale)."""
+    groups = {}
+    for e in eps:
+        if e.get("season", -1) >= 0 and e.get("episode", -1) >= 0:
+            groups.setdefault((e["season"], e["episode"]), []).append(e)
+    drop = set()
+    for grp in groups.values():
+        files = []
+        for e in grp:
+            if e["file"] not in files:
+                files.append(e["file"])
+        if len(files) < 2:
+            continue                       # one file listed twice: nothing to choose
+        there = [f for f in files if not stale(f)]
+        keep = there[0] if there else files[0]
+        drop.update(f for f in files if f != keep)
+    if not drop:
+        return eps
+    return [e for e in eps if e["file"] not in drop]
+
+
 def _series_from_show(show):
-    eps = episodes_for(show["tvshowid"])
+    eps = _dedupe_episodes(episodes_for(show["tvshowid"]))
     if not eps:
         return None
     return {"key": "tv:%s" % show["title"], "title": show["title"],
@@ -816,6 +876,7 @@ def forget_bad():
 def clear_cache():
     _POOL_CACHE.clear()
     _AIR_CACHE.clear()
+    _EXISTS.clear()
     from . import seasons          # holiday matches follow library changes too
     seasons.clear_cache()
 

@@ -1595,10 +1595,13 @@ class TVWindow(xbmcgui.WindowXML):
 
     def missing(self, e, key, now):
         """A planned file isn't there.  No black screen and no Kodi error box: a
-        programme goes straight to a stand-in, a spot to the next commercial.  A
-        programme's file is kept off the schedule (unplayable list, as for files
-        Kodi can't open) and the channel is planned again from its next programme
-        on, so the show goes on with the episode after it.  The menu says so once."""
+        spot goes to the next commercial; a programme's slot is planned again at
+        once (rescue_slot): the same episode from the file the library has for it,
+        else one stand-in for the rest of the slot, saved in the schedule so the
+        parts after each break and a later tune-in play the same thing.  The file
+        is kept off the schedule (unplayable list, as for files Kodi can't open)
+        and the channel is planned again from its next programme on.  The menu
+        says so once."""
         path = e.get("p") or ""
         K.log_err("Missing file, skipped: %s" % path)
         self.failed_at = time.time()
@@ -1607,23 +1610,108 @@ class TVWindow(xbmcgui.WindowXML):
             return
         if self.really_bad(path):            # the folder is there: the file is gone
             library.mark_bad(path, _("The file is missing"))
-        self.failed_key = key
-        self.sub_at = 0
-        self.play_substitute(e, now)
         st = K.load_json(K.STATE_FILE, {})
         st["missing_at"] = time.time()
         K.save_json(K.STATE_FILE, st)
         ch = self.ch
-        threading.Thread(target=self._replan_after_missing, args=(ch, e["s"], path),
+        ne, real = None, False
+        try:
+            ne, real = self.rescue_slot(ch, e)
+        except Exception as exc:
+            K.log_err("re-plan of the slot after a missing file: %s" % exc)
+        threading.Thread(target=self._replan_after_missing, args=(ch, e["s"], path, not real),
                          name="cablebox42-missing").start()
+        if ne is not None and not self.file_missing(ne.get("p")):
+            self.failed_key = None
+            self.sub = None
+            self.sub_at = 0
+            self.start_entry(ne, key, now)
+            return
+        self.failed_key = key                # nothing to air instead: the old stand-in way
+        self.sub_at = 0
+        self.play_substitute(e, now)
 
-    def _replan_after_missing(self, ch, ts, path):
+    def rescue_slot(self, ch, e):
+        """The rest of the on-air slot after a programme's file turned out missing:
+        its parts (this one and those after the breaks) point at the episode's real
+        file when the library lists the same show + season + episode from a file
+        that is there, else at one stand-in, played on from part to part.  Saved,
+        so the TV never meets the missing file again in this slot and tuning back
+        in plays the same stand-in.  Returns (the entry now at e's place or None,
+        True if it's the real episode)."""
+        path = e.get("p") or ""
+        with self.lineup.lock:
+            s = self.lineup.schedule(ch, ensure=False)
+            s.reload()
+            b = s.block_at(e["s"])
+            if b is None:
+                return None, False
+            parts = [x for x in s.data["entries"] if x.get("k") == "show" and x.get("p") == path
+                     and e["s"] - 0.01 <= x["s"] < b["e"]]
+            if not parts:
+                return None, False
+            real = self._same_episode(e, path)
+            if real is not None:
+                for x in parts:
+                    x["p"] = real["path"]
+                    x.pop("cr", None)        # credits were found in the other file
+                K.log("Missing file %s: the library's other file for %s %s airs instead: %s"
+                      % (path, e.get("t", ""), e.get("lb", ""), real["path"]), xbmc.LOGINFO)
+            else:
+                need = sum(x["e"] - x["s"] for x in parts)
+                it = self._substitute_pick({path}, need, e)
+                if it is None:
+                    return None, False
+                pos = 0.0
+                for x in parts:
+                    if pos >= it["dur"] - 5:
+                        break                # the stand-in ran out: the rest gets another
+                    x.update(p=it["path"], o=round(pos, 2), t=it.get("title") or "", si=path)
+                    for k, v in (("sub", it.get("sub")), ("lb", it.get("label"))):
+                        if v:
+                            x[k] = v
+                        else:
+                            x.pop(k, None)
+                    for k in ("cr", "cap"):
+                        x.pop(k, None)
+                    pos += x["e"] - x["s"]
+                b["t"] = it.get("title") or b.get("t", "")
+                for k, v in (("sub", it.get("sub")), ("lb", it.get("label"))):
+                    if v:
+                        b[k] = v
+                    else:
+                        b.pop(k, None)
+                K.log("Missing file %s: stand-in for the rest of the slot: %s" % (path, it["path"]),
+                      xbmc.LOGINFO)
+            s.save()
+            here = s.entry_at(e["s"] + 0.001)
+            return (here if here is not None and here.get("p") != path else None), real is not None
+
+    @staticmethod
+    def _same_episode(e, path):
+        """The library's other file for the same show + season + episode, if it is there."""
+        label, title = e.get("lb"), e.get("t")
+        if not label or not title:
+            return None
+        try:
+            pool = library.resolve([{"type": "tvshow", "value": title}])
+        except Exception:
+            return None
+        for ser in pool["series"]:
+            for ep in ser["episodes"]:
+                if ep.get("label") == label and ep["path"] != path and not library.is_bad(ep["path"]) \
+                        and not library.stale(ep["path"]) and not TVWindow.file_missing(ep["path"]):
+                    return ep
+        return None
+
+    def _replan_after_missing(self, ch, ts, path, unair=True):
         try:
             with self.lineup.lock:
                 s = self.lineup.schedule(ch, ensure=False)
                 s.reload()
                 s.cut()                      # from the next programme; ensure() plans on
-                s.unair(ts)                  # and this episode didn't air
+                if unair:
+                    s.unair(ts)              # and this episode didn't air
                 s.save()
                 names = [ch.get("name")]
                 now = time.time()
@@ -1680,27 +1768,60 @@ class TVWindow(xbmcgui.WindowXML):
         self.sub = dict(self.sub, p=None, pos=0.0, tried=self.sub.get("tried", []) + [self.sub["p"]])
         self.play_substitute(e, now)
 
-    def _substitute_pick(self, avoid, room):
+    def _substitute_pools(self, e=None):
+        """Where a stand-in may come from, best first: the shows this channel airs
+        (on its schedule), the rest of what it may air (its exclusions and other
+        channels' home shows left out), everything its sources give (exclusions
+        still out), then shows of the missing programme's own genre.  Never
+        anything else: a cooking show on a comedy channel is worse than the
+        'technical difficulties' card."""
+        ch = self.ch
+        if ch.get("type") == "extras":       # another extra that qualifies (cache only)
+            films = library.extras_programme(K.setting_bool("extras_unrecognised", False))
+            return [{"series": [], "singles": [dict(s, title=ch["name"], sub=s["title"])
+                                               for f in films for s in f["segs"]]}]
+        full = library.without(library.resolve(ch.get("sources") or []), ch.get("exclude"))
         try:
-            if self.ch.get("type") == "extras":       # another extra that qualifies (cache only)
-                films = library.extras_programme(K.setting_bool("extras_unrecognised", False))
-                pool = {"series": [], "singles": [dict(s, title=self.ch["name"], sub=s["title"])
-                                                  for f in films for s in f["segs"]]}
-            else:
-                pool = library.resolve(self.ch.get("sources") or [])
+            mine = library.keep_titles(full, scheduler.assign.allowed_fn(self.lineup.assignment, ch["id"]))
         except Exception:
+            mine = full
+        try:
+            airs = set(b.get("t", "").lower() for b in self.lineup.schedule(ch, ensure=False).data["blocks"]
+                       if b.get("k") == "show")
+        except Exception:
+            airs = set()
+        pools = [library.keep_titles(mine, lambda t, m: t in airs), mine, full]
+        title = ((e or {}).get("t") or "").lower()
+        genres = []
+        if title and (e or {}).get("lb"):
+            try:
+                genres = next((s.get("genre") or [] for s in library.all_tvshows()
+                               if s.get("title", "").lower() == title), [])
+            except Exception:
+                genres = []
+        if genres:
+            pools.append(library.without(library.resolve([{"type": "tvgenre", "value": g} for g in genres]),
+                                         ch.get("exclude")))
+        return pools
+
+    def _substitute_pick(self, avoid, room, e=None):
+        try:
+            pools = self._substitute_pools(e)
+        except Exception as exc:
+            K.log_err("stand-in pools: %s" % exc)
             return None
-        items = [ep for ser in pool["series"] for ep in ser["episodes"]] + pool["singles"]
-        items = [i for i in items if i["path"] not in avoid and not library.is_bad(i["path"])]
-        long_enough = [i for i in items if i["dur"] >= room * 0.8]
-        for _try in range(5):
-            if not items:
-                return None
-            it = random.choice(long_enough or items)
-            if not self.file_missing(it["path"]):
-                return it
-            items = [i for i in items if i is not it]
-            long_enough = [i for i in long_enough if i is not it]
+        for pool in pools:
+            items = [ep for ser in pool["series"] for ep in ser["episodes"]] + pool["singles"]
+            items = [i for i in items if i["path"] not in avoid and not library.is_bad(i["path"])]
+            long_enough = [i for i in items if i["dur"] >= room * 0.8]
+            for _try in range(5):
+                if not items:
+                    break
+                it = random.choice(long_enough or items)
+                if not self.file_missing(it["path"]) and not library.stale(it["path"]):
+                    return it
+                items = [i for i in items if i is not it]
+                long_enough = [i for i in long_enough if i is not it]
         return None
 
     def play_substitute(self, e, now):
@@ -1709,7 +1830,7 @@ class TVWindow(xbmcgui.WindowXML):
             b = self.lineup.schedule(self.ch, ensure=False).block_at(now)
             room = (b["e"] - now) if b else 1800
             avoid = {e["p"]} | ({sub["p"]} if sub and sub.get("p") else set()) | set((sub or {}).get("tried", []))
-            it = self._substitute_pick(avoid, room)
+            it = self._substitute_pick(avoid, room, e)
             if it is None:
                 self.sub = None
                 self.sub_at = 0

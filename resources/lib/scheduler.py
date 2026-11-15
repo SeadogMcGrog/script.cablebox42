@@ -673,7 +673,8 @@ class ChannelSchedule(object):
     def _pick_seasonal(self, sea, level, pool, t, room):
         """A holiday episode or movie from this channel's own programming that
         isn't on elsewhere right now and hasn't aired here lately."""
-        its = [i for i in seasons.items(pool, sea, self.cfg) if not library.is_bad(i["path"])]
+        its = [i for i in seasons.items(pool, sea, self.cfg)
+               if not library.is_bad(i["path"]) and not library.stale(i["path"])]
         if not its:
             return None
         st = self.data["state"]
@@ -1249,7 +1250,7 @@ class ChannelSchedule(object):
             room = end - t - total - reserve
             if kind == "series":
                 ep = self._next_episode(src, ptr)
-                if ep["path"] in used or ep["dur"] > room or ep["dur"] > self.short_limit():
+                if ep["path"] in used or ep["dur"] > room or ep["dur"] > self.short_limit()                         or library.stale(ep["path"]):
                     break
                 self._bm_set(ptr, ep["path"], ep.get("label"))
             else:
@@ -1258,6 +1259,9 @@ class ChannelSchedule(object):
                 if not fit:
                     break
                 ep = rng.choice(fit)
+                if library.stale(ep["path"]):
+                    used.add(ep["path"])         # not this one; try the others
+                    continue
                 if ptr == "season":
                     st.setdefault("srecent", {})[ep["path"]] = t
                 elif ptr:
@@ -2069,11 +2073,12 @@ class ChannelSchedule(object):
                     idx = next((i for i, e in enumerate(eps)
                                 if (_episode_order(e.get("label")) or k) > k), 0)
         when = getattr(self, "_season_t", None)
-        # skip files Kodi couldn't open lately, and (automatic programming only)
-        # holiday episodes outside their season
+        # skip files Kodi couldn't open lately, files the library lists that aren't
+        # there (renamed or deleted since the last Clean library), and (automatic
+        # programming only) holiday episodes outside their season
         for k in range(len(eps)):
             e = eps[(idx + k) % len(eps)]
-            if library.is_bad(e["path"]):
+            if library.is_bad(e["path"]) or library.stale(e["path"]):
                 continue
             if when is not None and seasons.out_of_season(e, when, self.cfg):
                 continue
@@ -2094,7 +2099,14 @@ class ChannelSchedule(object):
             every = [e for ser in series for e in ser["episodes"]] + singles
             every = [e for e in every if not library.is_bad(e["path"])] or every
             self._cont = ("singles", every, None)
-            return rng.choice(every)
+            it = rng.choice(every)
+            while library.stale(it["path"]):
+                every = [e for e in every if e is not it]
+                if not every:
+                    self._cont = None
+                    return None
+                it = rng.choice(every)
+            return it
         shows = [("s", ser) for ser in series] + ([("m", None)] if singles else [])
         rr = st.setdefault("rr", {})
         i = rr.get(rid, 0) % len(shows)
@@ -2103,11 +2115,15 @@ class ChannelSchedule(object):
         kind, ser = shows[i]
         if kind == "s":
             ep = self._next_episode(ser, rid + "|" + ser["key"])
+            if library.stale(ep["path"]):
+                return None                  # every episode's file is missing
             self._bm_set(rid + "|" + ser["key"], ep["path"], ep.get("label"))
             self._cont = ("series", ser, rid + "|" + ser["key"])
             return ep
         self._cont = ("singles", singles, None)
         ep = self._next_episode({"episodes": singles}, rid + "|movies")
+        if library.stale(ep["path"]):
+            return None
         self._bm_set(rid + "|movies", ep["path"])
         return ep
 
@@ -2149,6 +2165,10 @@ class ChannelSchedule(object):
         st = self.data["state"]
         if choice is not None:
             ep = self._next_episode(choice, choice["key"])
+            if library.stale(ep["path"]):
+                # every episode the library lists for it is a missing file: the others
+                rest = {"series": [s for s in series if s is not choice], "singles": singles}
+                return self._pick(rest, t, key, maxdur)
             self._bm_set(choice["key"], ep["path"], ep.get("label"))
             self._cont = ("series", choice, choice["key"])
             return ep
@@ -2163,6 +2183,12 @@ class ChannelSchedule(object):
         fresh = [s for s in singles if s["path"] not in avoid] or singles
         r2 = random.Random("%s|%.0f|single" % (self.ch["id"], t))
         it = r2.choice(fresh)
+        while library.stale(it["path"]):     # checked one pick at a time: a big movie list isn't stat'ed whole
+            fresh = [s for s in fresh if s is not it]
+            if not fresh:
+                self._cont = None
+                return self._pick({"series": series, "singles": []}, t, key, maxdur) if series else None
+            it = r2.choice(fresh)
         recent.append(it["path"])
         self._undo("ra", key, it["path"])
         del recent[:-max(keep, 1)]
