@@ -4,21 +4,28 @@
 - no house ad twice in one break (same system ad, same other channel, same show)
 - no show promoted twice in a row on a channel
 - system ads only for channels that exist (weather also needs a place)
-- mix mode: at most one house ad per commercial break"""
+- mix mode: at most one house ad per commercial break
+- a gap (the run of back-to-back breaks between two programmes): the same promo target
+  (show, own channel or another) not twice within 10 minutes nor more than 3 times; each
+  system ad and each retro ad at most once; before off-air, the promo for the channel's
+  first show after it ('tomorrow at 5:00') at most twice"""
 import glob
 import json
 import os
 import sys
 import time
 
-D = "/root/.kodi/userdata/addon_data/script.cablebox42"
+D = os.environ.get("CB_DATA", "/root/.kodi/userdata/addon_data/script.cablebox42")
 HOURS = float(sys.argv[1]) if len(sys.argv) > 1 else 6
 chans = {c["id"]: c for c in json.load(open(D + "/channels.json"))["channels"]}
 types = set(c["type"] for c in chans.values())
 sched = {os.path.basename(f)[:-5]: json.load(open(f)) for f in glob.glob(D + "/schedules/*.json")}
 now = time.time()
 bad = []
-stats = {"house breaks": 0, "cross promos": 0, "cross checked": 0, "system ads": 0, "own promos": 0,
+BREAK = ("retro", "promo", "house", "card", "bump", "ad")
+SPACING, MAX_GAP, OFFAIR_MAX = 600, 3, 2
+stats = {"gaps": 0, "long gaps": 0, "gaps before off-air": 0, "gap promos named": 0,
+         "most promos for one show in a gap": 0, "house breaks": 0, "cross promos": 0, "cross checked": 0, "system ads": 0, "own promos": 0,
          "mixed breaks": 0}
 for cid, d in sched.items():
     ents = [e for e in d["entries"] if now <= e["s"] < now + HOURS * 3600]
@@ -97,5 +104,62 @@ for cid, d in sched.items():
             if e["h"] in ("guide", "weather") and e["h"] not in types:
                 bad.append("%s: %s ad but no %s channel" % (cid, e["h"], e["h"]))
     check(brk)
+
+    # variety across each gap
+    allents = d["entries"]
+    i = 0
+    while i < len(allents):
+        if allents[i]["k"] not in BREAK:
+            i += 1
+            continue
+        j = i
+        while j + 1 < len(allents) and allents[j + 1]["k"] in BREAK:
+            j += 1
+        gap = allents[i:j + 1]
+        nxt = allents[j + 1] if j + 1 < len(allents) else None
+        i = j + 1
+        if not (now <= gap[0]["s"] < now + HOURS * 3600) or nxt is None:
+            continue
+        when = time.strftime("%T", time.localtime(gap[0]["s"]))
+        stats["gaps"] += 1
+        stats["long gaps"] += any(e.get("sep") for e in gap)
+        named = [(e["t"], e["s"]) for e in gap if e["k"] == "promo" and e.get("t")]
+        stats["gap promos named"] += len(named)
+        cnt = {}
+        for t, s in named:
+            cnt[t] = cnt.get(t, 0) + 1
+        if cnt:
+            stats["most promos for one show in a gap"] = max(stats["most promos for one show in a gap"],
+                                                            max(cnt.values()))
+        for t, c in cnt.items():
+            if c > MAX_GAP:
+                bad.append("%s gap %s: %s promoted %d times (max %d)" % (cid, when, t, c, MAX_GAP))
+        for k, (t, s) in enumerate(named):
+            for t2, s2 in named[k + 1:]:
+                if t2 == t and s2 - s < SPACING:
+                    bad.append("%s gap %s: %s promoted at %s and again %.0f s later" % (
+                        cid, when, t, time.strftime("%T", time.localtime(s)), s2 - s))
+        for kind, keyf in (("system ad", lambda e: e["h"] if e["k"] == "house" else None),
+                           ("retro ad", lambda e: (("V%s" % e.get("mv")) if e.get("ad") == "video" else e.get("ad"))
+                            if e["k"] == "retro" else None)):
+            keys = [keyf(e) for e in gap if keyf(e) is not None]
+            dup = sorted(set(x for x in keys if keys.count(x) > 1), key=str)
+            if dup:
+                bad.append("%s gap %s: %s twice in one gap %s" % (cid, when, kind, dup))
+        off = [b for b in d["blocks"] if b.get("k") == "offair" and b["s"] - 1 <= nxt["s"] < b["e"]]
+        if off:
+            stats["gaps before off-air"] += 1
+            after = sorted((b for b in d["blocks"] if b.get("k") == "show" and b["s"] >= off[0]["e"] - 1),
+                           key=lambda b: b["s"])
+            if after:
+                t = after[0]["t"]
+                c = sum(1 for e in gap if e["k"] == "promo" and e.get("t") == t and not e.get("xc"))
+                print("  %s off-air gap %s (%.0f min): '%s' after sign-on promoted %d times" % (
+                    cid, when, (gap[-1]["e"] - gap[0]["s"]) / 60, t, c))
+                if c > OFFAIR_MAX:
+                    bad.append("%s gap %s: %s (after off-air) promoted %d times before sign-off (max %d)" % (
+                        cid, when, t, c, OFFAIR_MAX))
+for b in bad:
+    print("  " + b)
 print(stats)
-print("PASS" if not bad else "FAIL:\n  " + "\n  ".join(bad))
+print("PASS" if not bad else "FAIL: %d problems (listed above)" % len(bad))

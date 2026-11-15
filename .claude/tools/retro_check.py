@@ -20,7 +20,8 @@ refresh until they've aired: they're set aside and counted, unless --all-builds.
   back-to-back breaks (the check's "break": everything between two programmes, or up
   to a station ID card marked "sep"; a house break inside it ends at its station ID card)
 - a long end gap (over 4 minutes) is a series of breaks ending on "sep" cards: each
-  of those breaks at most 2 retro ads (Movies 4) in all; prints retro ads per 10
+  of those breaks at most 10 retro ads in all (ads.per_gap_break; the per-break 2 / run 3 caps
+  are for other breaks); prints retro ads per 10
   minutes of long gap
 - prints per channel: retro ads per break, station ID seconds per break, the share of breaks with a video ad,
   the share of video ads among retro ads, and the scheduler's own count of retro
@@ -159,6 +160,7 @@ for f in sorted(glob.glob(D + "/schedules/*.json")):
     prev = [False]                 # did the last break have a video-themed ad?
     after_sep = [False]            # the break before this one ended on a long gap's "sep" card
     cap, run_cap = (4, 4) if flavour(c) == "M" else (2, 3)
+    gap_cap = max(10, cap)          # one of a long gap's breaks (ads.per_gap_break)
     hist = []                      # (start, video-themed?) of every retro ad
     brk = []
 
@@ -178,12 +180,12 @@ for f in sorted(glob.glob(D + "/schedules/*.json")):
             sub.append(n_sub)
             when = time.strftime("%H:%M", time.localtime(brk[0]["s"]))
             gap_brk = after_sep[0] or bool(brk[-1].get("sep"))
-            if gap_brk and sum(sub) > cap:
+            if gap_brk and sum(sub) > gap_cap:
                 bad.append("%s %s: %d retro ads in one of a long gap's breaks (cap %d) %s" % (
-                    cid, when, sum(sub), cap, sub))
-            if max(sub) > cap:
+                    cid, when, sum(sub), gap_cap, sub))
+            if not gap_brk and max(sub) > cap:
                 bad.append("%s %s: %d retro ads in one house break (cap %d) %s" % (cid, when, max(sub), cap, sub))
-            if sum(sub) > run_cap:
+            if not gap_brk and sum(sub) > run_cap:
                 bad.append("%s %s: %d retro ads in a run of back-to-back breaks (cap %d) %s" % (
                     cid, when, sum(sub), run_cap, sub))
         vid = any(is_video(e) for e in rs)

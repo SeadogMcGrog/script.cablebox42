@@ -680,6 +680,14 @@ default; only used when house breaks are.
   series of normal breaks of 2–3 minutes, the station ID card between them, and
   the *Up next* card at the end. Shorts packed into one slot get house breaks
   between them too.
+- **Variety across the whole gap** (every break between two programmes): the
+  same show is promoted at most once in 10 minutes and three times in all, and
+  each system ad (guide, weather, tonight's lineup) runs once. When there's
+  nothing fresh to promote, the slot gets a retro ad (up to ten in each of a long
+  gap's breaks; the two-hour rule still holds), then a system ad, then the
+  station ID card - never a repeated promo. Before off-air hours, the promo for
+  the first show after them ("tomorrow at 5:00") runs at most twice: early in
+  the gap and just before sign-off.
 - **Two retro ads a break** (four on a *Movies* channel), and three in all of
   the back-to-back breaks at the end of a show (four on *Movies*); the rest of the break is promos,
   system ads and the station ID card.

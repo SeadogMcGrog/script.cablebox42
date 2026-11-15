@@ -17,7 +17,12 @@ v1.2.0 (2026-11-12)
   at the end of a show (four on Movies); promos and system ads fill the rest.
   Nothing a kids' channel shows has a phone number. A long gap at a show's end
   (a short episode in a long slot) is a series of 2-3 minute breaks with the
-  station ID card between them, each its own break for these rules
+  station ID card between them, each its own break for these rules. Across
+  the whole gap the same show is promoted at most once in 10 minutes and three
+  times in all, each system ad runs once, and a slot with nothing fresh to
+  promote gets a retro ad (up to ten a break there), a system ad or the station
+  ID card instead; before off-air hours 'tomorrow at 5:00' runs at most twice
+  (early, and just before sign-off). retro26 repeated one promo every 1-2 minutes
 - Fixed: shorts packed into one slot got a bare station ID card between them on
   channels with house breaks; they now get house breaks like any programme
 - Fixed: the Program Guide channel showed no rows (retro10-14 test builds)

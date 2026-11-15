@@ -191,6 +191,9 @@ PER_BREAK = {"M": 4}
 PER_BREAK_OTHER = 2
 PER_RUN = {"M": 4}
 PER_RUN_OTHER = 3
+# One of a long end gap's ~150 s breaks (scheduler.GAP_SPLIT): retro ads fill what
+# fresh promos can't (each promo target once in 10 minutes), so up to this many.
+PER_GAP_BREAK = 10
 
 
 def per_break(flav):
@@ -199,6 +202,10 @@ def per_break(flav):
 
 def per_run(flav):
     return PER_RUN.get(flav, PER_RUN_OTHER)
+
+
+def per_gap_break(flav):
+    return max(PER_GAP_BREAK, per_break(flav))
 VIDEO_SHARE_OTHER = (1, 4)
 VIDEO_WINDOW = 6 * 3600
 
