@@ -230,6 +230,16 @@ A task often starts as "implement `briefs\<name>.md`".
   (in the rig) measures the grid's motion: a constant 35 px/s at 1080p (Normal), no still frames.
 - **Skin conditions group with `[ ]`, not `( )`**, and `String.EndsWith(...,2)` also matches
   `font12`: the guide's cells use the value `two` for their two-line variant.
+- **A `grouplist` clips its children to its own rectangle** (Kodi 21, verified in the rig): the weather
+  map's tiles (`media/wxmap`, slots 4101-4112) sit in a group inside a grouplist and are moved with
+  `setPosition` relative to it; a plain `group` would let them spill over the header and ticker.
+- **The skin folder is `resources/skins/Default`** (capital D): a path built as `.../default/...` works
+  on Windows and fails on Linux/CoreELEC (the weather map's `index.json` did).
+- **Weather map and cities** come from Natural Earth (public domain) via `G:\CableBox42ig\wx_prerender.py`
+  (not shipped; the GeoJSON sources are in `G:\CableBox42ig
+aturalearth\`): `resources/weather/places.json`
+  (places of 50,000+) and the 32768-px equirectangular world in 1024-px tiles (~1.9 MB, ocean-only
+  tiles left out). `.claude/tools/gen_weather_xml.py` writes the two pages into the TV skin.
 - `kodi-addon-checker` rejects `<news>` over 1500 characters. Keep the newest release
   notes there and the full history in `changelog.txt`.
 

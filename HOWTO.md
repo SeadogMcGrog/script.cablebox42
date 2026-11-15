@@ -879,6 +879,11 @@ skipped.
 2. *Weather data from*: Automatic, Kodi's weather service only, or Open-Meteo only.
 3. *Units*, *title* (*Your Local Forecast*) and *music* (smooth jazz!).
 
+With a city (or Kodi's weather location) set and *Automatic* or *Open-Meteo*, the
+channel adds **Latest Observations** (nearby cities) and a **Regional Map**. For
+background music, point *Weather channel music folder* at a folder of smooth jazz;
+CableBox doesn't ship any music.
+
 ### Boombox TV: a music video channel
 
 Music videos around the clock, the way music channels did it: half-hour blocks,

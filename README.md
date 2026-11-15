@@ -986,12 +986,26 @@ Pages rotate every 10 seconds:
 
 - **Current conditions:** temperature, conditions, humidity, dew point, feels
   like, wind, pressure, UV index.
+- **Latest observations:** the temperature and sky in 6-8 nearby cities of
+  50,000 people or more (within about 300 km, further in empty areas), like the
+  90s weather channel's "41 in Peoria, 38 in Springfield".
 - **Local forecast:** an old-style TODAY… TONIGHT… TOMORROW… text forecast.
+- **Regional map:** a drawn map around you (land, lakes, country and state
+  borders) with the bigger cities nearby, their temperatures and sky icons. The map
+  ships with CableBox (made from Natural Earth's public-domain maps) and works
+  offline; only the temperatures come from Open-Meteo.
 - **Extended forecast:** 4 days with icons, highs and lows.
 - **The next few hours:** hourly temperatures and conditions, plus sunrise and
   sunset.
 
-A conditions ticker scrolls along the bottom.
+A ticker scrolls along the bottom of every page: current conditions, today's high
+and low, and the forecast.
+
+The observations and the map need to know where you are: a city typed in, or
+(*Automatic*) the place Kodi's weather is set to. All the nearby cities come in one
+Open-Meteo request, refreshed every 15 minutes. If it fails, the last temperatures
+show (up to 6 hours old). With *Kodi weather service only*, or if there has never
+been any data, the two pages are left out, never shown blank.
 
 **Where the weather comes from** (*Settings → Weather*):
 

@@ -6378,3 +6378,15 @@ msgstr ""
 msgctxt "#34056"
 msgid "Summer reruns (June to August)"
 msgstr ""
+
+msgctxt "#34057"
+msgid "LATEST OBSERVATIONS"
+msgstr ""
+
+msgctxt "#34058"
+msgid "REGIONAL MAP"
+msgstr ""
+
+msgctxt "#34059"
+msgid "Today's high %s, low %s"
+msgstr ""

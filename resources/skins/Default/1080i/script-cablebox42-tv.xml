@@ -2036,6 +2036,589 @@
                 <label>$INFO[Window.Property(wx_d4_hi)]</label>
             </control>
         </control>
+        <!-- Latest Observations: nearby cities (weather.nearby), one request for all (from_open_meteo_many) -->
+        <control type="group">
+            <visible>String.IsEqual(Window.Property(mode),weather) + String.IsEqual(Window.Property(wx_page),observations)</visible>
+            <animation effect="fade" start="0" end="100" time="400">Visible</animation>
+            <control type="label">
+                    <left>150</left><top>190</top><width>900</width><height>60</height>
+                    <font>font30_title</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><align>left</align>
+                    <label>$ADDON[script.cablebox42 34057]</label>
+                </control>
+            <control type="group">
+                <top>280</top>
+                <visible>!String.IsEmpty(Window.Property(wx_o0_name))</visible>
+                <control type="label">
+                    <left>150</left><top>0</top><width>720</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o0_name)]</label>
+                </control>
+                <control type="image">
+                    <left>890</left><top>3</top><width>64</width><height>64</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_o0_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>980</left><top>0</top><width>170</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><align>right</align><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o0_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>1200</left><top>0</top><width>620</width><height>70</height>
+                    <font>font37</font><textcolor>FFE0E8FF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o0_cond)]</label>
+                </control>
+            </control>
+            <control type="group">
+                <top>356</top>
+                <visible>!String.IsEmpty(Window.Property(wx_o1_name))</visible>
+                <control type="label">
+                    <left>150</left><top>0</top><width>720</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o1_name)]</label>
+                </control>
+                <control type="image">
+                    <left>890</left><top>3</top><width>64</width><height>64</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_o1_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>980</left><top>0</top><width>170</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><align>right</align><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o1_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>1200</left><top>0</top><width>620</width><height>70</height>
+                    <font>font37</font><textcolor>FFE0E8FF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o1_cond)]</label>
+                </control>
+            </control>
+            <control type="group">
+                <top>432</top>
+                <visible>!String.IsEmpty(Window.Property(wx_o2_name))</visible>
+                <control type="label">
+                    <left>150</left><top>0</top><width>720</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o2_name)]</label>
+                </control>
+                <control type="image">
+                    <left>890</left><top>3</top><width>64</width><height>64</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_o2_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>980</left><top>0</top><width>170</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><align>right</align><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o2_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>1200</left><top>0</top><width>620</width><height>70</height>
+                    <font>font37</font><textcolor>FFE0E8FF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o2_cond)]</label>
+                </control>
+            </control>
+            <control type="group">
+                <top>508</top>
+                <visible>!String.IsEmpty(Window.Property(wx_o3_name))</visible>
+                <control type="label">
+                    <left>150</left><top>0</top><width>720</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o3_name)]</label>
+                </control>
+                <control type="image">
+                    <left>890</left><top>3</top><width>64</width><height>64</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_o3_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>980</left><top>0</top><width>170</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><align>right</align><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o3_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>1200</left><top>0</top><width>620</width><height>70</height>
+                    <font>font37</font><textcolor>FFE0E8FF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o3_cond)]</label>
+                </control>
+            </control>
+            <control type="group">
+                <top>584</top>
+                <visible>!String.IsEmpty(Window.Property(wx_o4_name))</visible>
+                <control type="label">
+                    <left>150</left><top>0</top><width>720</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o4_name)]</label>
+                </control>
+                <control type="image">
+                    <left>890</left><top>3</top><width>64</width><height>64</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_o4_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>980</left><top>0</top><width>170</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><align>right</align><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o4_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>1200</left><top>0</top><width>620</width><height>70</height>
+                    <font>font37</font><textcolor>FFE0E8FF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o4_cond)]</label>
+                </control>
+            </control>
+            <control type="group">
+                <top>660</top>
+                <visible>!String.IsEmpty(Window.Property(wx_o5_name))</visible>
+                <control type="label">
+                    <left>150</left><top>0</top><width>720</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o5_name)]</label>
+                </control>
+                <control type="image">
+                    <left>890</left><top>3</top><width>64</width><height>64</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_o5_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>980</left><top>0</top><width>170</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><align>right</align><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o5_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>1200</left><top>0</top><width>620</width><height>70</height>
+                    <font>font37</font><textcolor>FFE0E8FF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o5_cond)]</label>
+                </control>
+            </control>
+            <control type="group">
+                <top>736</top>
+                <visible>!String.IsEmpty(Window.Property(wx_o6_name))</visible>
+                <control type="label">
+                    <left>150</left><top>0</top><width>720</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o6_name)]</label>
+                </control>
+                <control type="image">
+                    <left>890</left><top>3</top><width>64</width><height>64</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_o6_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>980</left><top>0</top><width>170</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><align>right</align><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o6_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>1200</left><top>0</top><width>620</width><height>70</height>
+                    <font>font37</font><textcolor>FFE0E8FF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o6_cond)]</label>
+                </control>
+            </control>
+            <control type="group">
+                <top>812</top>
+                <visible>!String.IsEmpty(Window.Property(wx_o7_name))</visible>
+                <control type="label">
+                    <left>150</left><top>0</top><width>720</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o7_name)]</label>
+                </control>
+                <control type="image">
+                    <left>890</left><top>3</top><width>64</width><height>64</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_o7_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>980</left><top>0</top><width>170</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><align>right</align><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o7_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>1200</left><top>0</top><width>620</width><height>70</height>
+                    <font>font37</font><textcolor>FFE0E8FF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o7_cond)]</label>
+                </control>
+            </control>
+        </control>
+        <!-- Regional Map: Natural Earth tiles drawn by G:\CableBox42\rig\wx_prerender.py (media/wxmap),
+             placed by weather.map_layout into slots 4101-4112 inside a grouplist, which clips them
+             to the map's area; cities 4120-4128 (0 = your own) are moved to their places -->
+        <control type="group">
+            <visible>String.IsEqual(Window.Property(mode),weather) + String.IsEqual(Window.Property(wx_page),map)</visible>
+            <animation effect="fade" start="0" end="100" time="400">Visible</animation>
+            <control type="label">
+                    <left>150</left><top>190</top><width>900</width><height>60</height>
+                    <font>font30_title</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><align>left</align>
+                    <label>$ADDON[script.cablebox42 34058]</label>
+                </control>
+                <control type="image">
+                    <left>112</left><top>252</top><width>1696</width><height>680</height>
+                    <texture colordiffuse="FFD6C496">white.png</texture>
+                </control>
+                <control type="image">
+                    <left>116</left><top>256</top><width>1688</width><height>672</height>
+                    <texture colordiffuse="FF183480">white.png</texture>
+                </control>
+            <control type="grouplist">
+                <left>116</left><top>256</top><width>1688</width><height>672</height>
+                <orientation>vertical</orientation><itemgap>0</itemgap>
+                <control type="group">
+                    <width>1688</width><height>672</height>
+                    <control type="image" id="4101">
+                        <left>0</left><top>0</top><width>10</width><height>10</height>
+                        <texture></texture>
+                    </control>
+                    <control type="image" id="4102">
+                        <left>0</left><top>0</top><width>10</width><height>10</height>
+                        <texture></texture>
+                    </control>
+                    <control type="image" id="4103">
+                        <left>0</left><top>0</top><width>10</width><height>10</height>
+                        <texture></texture>
+                    </control>
+                    <control type="image" id="4104">
+                        <left>0</left><top>0</top><width>10</width><height>10</height>
+                        <texture></texture>
+                    </control>
+                    <control type="image" id="4105">
+                        <left>0</left><top>0</top><width>10</width><height>10</height>
+                        <texture></texture>
+                    </control>
+                    <control type="image" id="4106">
+                        <left>0</left><top>0</top><width>10</width><height>10</height>
+                        <texture></texture>
+                    </control>
+                    <control type="image" id="4107">
+                        <left>0</left><top>0</top><width>10</width><height>10</height>
+                        <texture></texture>
+                    </control>
+                    <control type="image" id="4108">
+                        <left>0</left><top>0</top><width>10</width><height>10</height>
+                        <texture></texture>
+                    </control>
+                    <control type="image" id="4109">
+                        <left>0</left><top>0</top><width>10</width><height>10</height>
+                        <texture></texture>
+                    </control>
+                    <control type="image" id="4110">
+                        <left>0</left><top>0</top><width>10</width><height>10</height>
+                        <texture></texture>
+                    </control>
+                    <control type="image" id="4111">
+                        <left>0</left><top>0</top><width>10</width><height>10</height>
+                        <texture></texture>
+                    </control>
+                    <control type="image" id="4112">
+                        <left>0</left><top>0</top><width>10</width><height>10</height>
+                        <texture></texture>
+                    </control>
+                </control>
+            </control>
+            <control type="group" id="4120">
+                <left>0</left><top>0</top>
+                <visible>String.IsEqual(Window.Property(wx_m0),1)</visible>
+                <control type="image">
+                    <left>-11</left><top>-11</top><width>22</width><height>22</height>
+                    <texture colordiffuse="FFFFFFFF">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m0_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-9</left><top>-9</top><width>18</width><height>18</height>
+                    <texture colordiffuse="FFD02020">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m0_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-15</left><top>-15</top><width>30</width><height>30</height>
+                    <texture colordiffuse="FFFFD24A">white.png</texture>
+                    <visible>String.IsEqual(Window.Property(wx_m0_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-80</left><top>-86</top><width>72</width><height>72</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_m0_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>0</left><top>-86</top><width>140</width><height>72</height>
+                    <font>font45</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_m0_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>-160</left><top>14</top><width>320</width><height>44</height>
+                    <font>font27</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><align>center</align>
+                    <label>$INFO[Window.Property(wx_m0_name)]</label>
+                </control>
+            </control>
+            <control type="group" id="4121">
+                <left>0</left><top>0</top>
+                <visible>String.IsEqual(Window.Property(wx_m1),1)</visible>
+                <control type="image">
+                    <left>-11</left><top>-11</top><width>22</width><height>22</height>
+                    <texture colordiffuse="FFFFFFFF">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m1_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-9</left><top>-9</top><width>18</width><height>18</height>
+                    <texture colordiffuse="FFD02020">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m1_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-15</left><top>-15</top><width>30</width><height>30</height>
+                    <texture colordiffuse="FFFFD24A">white.png</texture>
+                    <visible>String.IsEqual(Window.Property(wx_m1_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-80</left><top>-86</top><width>72</width><height>72</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_m1_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>0</left><top>-86</top><width>140</width><height>72</height>
+                    <font>font45</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_m1_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>-160</left><top>14</top><width>320</width><height>44</height>
+                    <font>font27</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><align>center</align>
+                    <label>$INFO[Window.Property(wx_m1_name)]</label>
+                </control>
+            </control>
+            <control type="group" id="4122">
+                <left>0</left><top>0</top>
+                <visible>String.IsEqual(Window.Property(wx_m2),1)</visible>
+                <control type="image">
+                    <left>-11</left><top>-11</top><width>22</width><height>22</height>
+                    <texture colordiffuse="FFFFFFFF">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m2_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-9</left><top>-9</top><width>18</width><height>18</height>
+                    <texture colordiffuse="FFD02020">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m2_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-15</left><top>-15</top><width>30</width><height>30</height>
+                    <texture colordiffuse="FFFFD24A">white.png</texture>
+                    <visible>String.IsEqual(Window.Property(wx_m2_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-80</left><top>-86</top><width>72</width><height>72</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_m2_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>0</left><top>-86</top><width>140</width><height>72</height>
+                    <font>font45</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_m2_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>-160</left><top>14</top><width>320</width><height>44</height>
+                    <font>font27</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><align>center</align>
+                    <label>$INFO[Window.Property(wx_m2_name)]</label>
+                </control>
+            </control>
+            <control type="group" id="4123">
+                <left>0</left><top>0</top>
+                <visible>String.IsEqual(Window.Property(wx_m3),1)</visible>
+                <control type="image">
+                    <left>-11</left><top>-11</top><width>22</width><height>22</height>
+                    <texture colordiffuse="FFFFFFFF">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m3_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-9</left><top>-9</top><width>18</width><height>18</height>
+                    <texture colordiffuse="FFD02020">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m3_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-15</left><top>-15</top><width>30</width><height>30</height>
+                    <texture colordiffuse="FFFFD24A">white.png</texture>
+                    <visible>String.IsEqual(Window.Property(wx_m3_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-80</left><top>-86</top><width>72</width><height>72</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_m3_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>0</left><top>-86</top><width>140</width><height>72</height>
+                    <font>font45</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_m3_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>-160</left><top>14</top><width>320</width><height>44</height>
+                    <font>font27</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><align>center</align>
+                    <label>$INFO[Window.Property(wx_m3_name)]</label>
+                </control>
+            </control>
+            <control type="group" id="4124">
+                <left>0</left><top>0</top>
+                <visible>String.IsEqual(Window.Property(wx_m4),1)</visible>
+                <control type="image">
+                    <left>-11</left><top>-11</top><width>22</width><height>22</height>
+                    <texture colordiffuse="FFFFFFFF">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m4_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-9</left><top>-9</top><width>18</width><height>18</height>
+                    <texture colordiffuse="FFD02020">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m4_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-15</left><top>-15</top><width>30</width><height>30</height>
+                    <texture colordiffuse="FFFFD24A">white.png</texture>
+                    <visible>String.IsEqual(Window.Property(wx_m4_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-80</left><top>-86</top><width>72</width><height>72</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_m4_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>0</left><top>-86</top><width>140</width><height>72</height>
+                    <font>font45</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_m4_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>-160</left><top>14</top><width>320</width><height>44</height>
+                    <font>font27</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><align>center</align>
+                    <label>$INFO[Window.Property(wx_m4_name)]</label>
+                </control>
+            </control>
+            <control type="group" id="4125">
+                <left>0</left><top>0</top>
+                <visible>String.IsEqual(Window.Property(wx_m5),1)</visible>
+                <control type="image">
+                    <left>-11</left><top>-11</top><width>22</width><height>22</height>
+                    <texture colordiffuse="FFFFFFFF">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m5_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-9</left><top>-9</top><width>18</width><height>18</height>
+                    <texture colordiffuse="FFD02020">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m5_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-15</left><top>-15</top><width>30</width><height>30</height>
+                    <texture colordiffuse="FFFFD24A">white.png</texture>
+                    <visible>String.IsEqual(Window.Property(wx_m5_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-80</left><top>-86</top><width>72</width><height>72</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_m5_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>0</left><top>-86</top><width>140</width><height>72</height>
+                    <font>font45</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_m5_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>-160</left><top>14</top><width>320</width><height>44</height>
+                    <font>font27</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><align>center</align>
+                    <label>$INFO[Window.Property(wx_m5_name)]</label>
+                </control>
+            </control>
+            <control type="group" id="4126">
+                <left>0</left><top>0</top>
+                <visible>String.IsEqual(Window.Property(wx_m6),1)</visible>
+                <control type="image">
+                    <left>-11</left><top>-11</top><width>22</width><height>22</height>
+                    <texture colordiffuse="FFFFFFFF">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m6_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-9</left><top>-9</top><width>18</width><height>18</height>
+                    <texture colordiffuse="FFD02020">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m6_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-15</left><top>-15</top><width>30</width><height>30</height>
+                    <texture colordiffuse="FFFFD24A">white.png</texture>
+                    <visible>String.IsEqual(Window.Property(wx_m6_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-80</left><top>-86</top><width>72</width><height>72</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_m6_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>0</left><top>-86</top><width>140</width><height>72</height>
+                    <font>font45</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_m6_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>-160</left><top>14</top><width>320</width><height>44</height>
+                    <font>font27</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><align>center</align>
+                    <label>$INFO[Window.Property(wx_m6_name)]</label>
+                </control>
+            </control>
+            <control type="group" id="4127">
+                <left>0</left><top>0</top>
+                <visible>String.IsEqual(Window.Property(wx_m7),1)</visible>
+                <control type="image">
+                    <left>-11</left><top>-11</top><width>22</width><height>22</height>
+                    <texture colordiffuse="FFFFFFFF">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m7_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-9</left><top>-9</top><width>18</width><height>18</height>
+                    <texture colordiffuse="FFD02020">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m7_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-15</left><top>-15</top><width>30</width><height>30</height>
+                    <texture colordiffuse="FFFFD24A">white.png</texture>
+                    <visible>String.IsEqual(Window.Property(wx_m7_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-80</left><top>-86</top><width>72</width><height>72</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_m7_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>0</left><top>-86</top><width>140</width><height>72</height>
+                    <font>font45</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_m7_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>-160</left><top>14</top><width>320</width><height>44</height>
+                    <font>font27</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><align>center</align>
+                    <label>$INFO[Window.Property(wx_m7_name)]</label>
+                </control>
+            </control>
+            <control type="group" id="4128">
+                <left>0</left><top>0</top>
+                <visible>String.IsEqual(Window.Property(wx_m8),1)</visible>
+                <control type="image">
+                    <left>-11</left><top>-11</top><width>22</width><height>22</height>
+                    <texture colordiffuse="FFFFFFFF">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m8_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-9</left><top>-9</top><width>18</width><height>18</height>
+                    <texture colordiffuse="FFD02020">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m8_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-15</left><top>-15</top><width>30</width><height>30</height>
+                    <texture colordiffuse="FFFFD24A">white.png</texture>
+                    <visible>String.IsEqual(Window.Property(wx_m8_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-80</left><top>-86</top><width>72</width><height>72</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_m8_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>0</left><top>-86</top><width>140</width><height>72</height>
+                    <font>font45</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_m8_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>-160</left><top>14</top><width>320</width><height>44</height>
+                    <font>font27</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><align>center</align>
+                    <label>$INFO[Window.Property(wx_m8_name)]</label>
+                </control>
+            </control>
+        </control>
         <control type="group">
             <visible>String.IsEqual(Window.Property(mode),weather) + String.IsEqual(Window.Property(wx_page),almanac)</visible>
             <animation effect="fade" start="0" end="100" time="400">Visible</animation>
