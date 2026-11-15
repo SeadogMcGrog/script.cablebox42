@@ -13,6 +13,9 @@ TOOL_BUSY = "script.cablebox42.tool"     # manager.TOOL_BUSY (the menus aren't i
 
 
 LIBRARY_SETTLE = 30         # s after the last library scan/clean before a refresh
+TUNE_QUIET = 4.0            # no chapter reading this soon after the TV opened a file (a channel change)
+REPLAN_EVERY = 600          # chapters read for planned episodes: re-plan once the next 6 hours are all
+                            # read, or 10 min after the first one not planned with yet
 
 
 class Monitor(xbmc.Monitor):
@@ -69,6 +72,101 @@ def run():
             K.log("Schedules: movie extras changed - refreshing", xbmc.LOGINFO)
             manager.refresh_now(quiet=True)
 
+    def playing_file():
+        try:
+            player = xbmc.Player()
+            if player.isPlaying():
+                return player.getPlayingFile()
+        except Exception:
+            pass
+        return ""
+
+    def chapters_replan():
+        # chapters read for planned episodes: their parts not on air yet are planned
+        # again (keep my place; what's on air stays) - at most every 10 minutes while
+        # the next 6 hours are still being read.  Main loop only (never alongside a top-up)
+        from . import library
+        new = library.CHAPTERS_NEW
+        if new["n"] <= 0 or home.getProperty(TOOL_BUSY):
+            return
+        if reader_left[0] and time.time() - new["first"] < REPLAN_EVERY:
+            return
+        n = new["n"]
+        new.update(n=0, first=0.0)
+        K.log("Schedules: chapters read for %d planned episodes - refreshing" % n, xbmc.LOGINFO)
+        from . import manager
+        manager.refresh_now(quiet=True)
+
+    reader_left = [0]
+    status_shown = [None]
+
+    def chapters_status_line(force=False):
+        # Settings > Programming: "Chapters read: X of Y" (read-only)
+        from . import library
+        try:
+            r, total = library.chapters_status()
+        except Exception:
+            return
+        text = K._("%d of %d") % (r, total) if total else ""
+        if force or text != status_shown[0]:
+            status_shown[0] = text
+            if K.ADDON.getSetting("chapters_status") != text:
+                K.ADDON.setSetting("chapters_status", text)
+
+    def chapter_reader():
+        # Commercial breaks at chapter marks: each episode file's chapters, read once
+        # (a thread of its own).  Kodi idle: as fast as reads stay quick.  The TV on:
+        # the planned episodes airing in the next 6 hours first, gently, never within a
+        # few seconds of the TV opening a file (a channel change).  Anything else
+        # playing, a tool open, a busy CPU (Linux): paused.
+        from . import library
+        reader = library.ChapterReader()
+        was_busy = False
+        chapters_status_line(force=True)
+        while not monitor.abortRequested():
+            wait = 5.0
+            try:
+                busy = bool(home.getProperty(TOOL_BUSY))
+                if busy:
+                    library.chapter_cache().save()
+                elif was_busy:
+                    library.chapter_reload()             # Read now may have added to it
+                    reader.queue = []
+                    chapters_status_line()
+                was_busy = busy
+                on = tv_running()
+                playing = playing_file()
+                if busy or not K.setting_bool("chapter_breaks", True) or (playing and not on):
+                    pass
+                elif library.load_too_high():
+                    wait = 10.0
+                else:
+                    try:
+                        since = time.time() - float(home.getProperty("cablebox42.play_at") or 0)
+                    except ValueError:
+                        since = TUNE_QUIET
+                    if on and since < TUNE_QUIET:
+                        wait = TUNE_QUIET - since + 0.1
+                    else:
+                        f = reader.next(on, playing)
+                        if f:
+                            wait = reader.read(f, on)
+                        else:
+                            wait = 30.0
+                            if reader.minute(force=True):
+                                chapters_status_line()
+                        reader_left[0] = reader.left
+                if reader.minute():
+                    chapters_status_line()
+            except Exception as exc:
+                K.log_err("chapters failed: %s" % exc)
+            if monitor.waitForAbort(wait):
+                break
+        try:
+            library.chapter_cache().save()
+        except Exception:
+            pass
+
     def music_videos():
         # Boombox: length, frame rate, audio and tags of music videos not read yet
         from . import library
@@ -112,6 +210,8 @@ def run():
                 break
     if monitor.waitForAbort(90):
         return
+    import threading
+    threading.Thread(target=chapter_reader, name="cablebox42-chapters").start()
     from . import progress
     was_on = tv_running()
     idle = 0
@@ -154,6 +254,10 @@ def run():
                 extras_after_scan()
             except Exception as exc:
                 K.log_err("extras after a library change failed: %s" % exc)
+        try:
+            chapters_replan()
+        except Exception as exc:
+            K.log_err("re-plan after chapters failed: %s" % exc)
         if not on and idle <= 0:
             try:
                 progress.repair_pending()

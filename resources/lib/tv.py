@@ -653,6 +653,10 @@ class TVWindow(xbmcgui.WindowXML):
         self.pull_back_from_fullscreen(now)
         self.gui_sounds.tick(now)
         self.promo_tick(now)
+        if self.prop_mode == "upnext":
+            self.upnext_tick(now)
+        elif self.prop_mode == "video":
+            self.squeeze_tick(now)
         if self.cc.nudge_at and self.fs_state != "off":
             self.fs_leave()                  # the 1 s rewind in the TV window: no seek bar
         self.cc.tick(now)

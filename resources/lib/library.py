@@ -94,6 +94,8 @@ def natural_key(s):
 
 
 CODECS_FILE = os.path.join(PROFILE, "codecs.json")
+CHAPTERS_FILE = os.path.join(PROFILE, "chapters.json")
+CHAPTER_MODES_FILE = os.path.join(PROFILE, "chapter_shows.json")
 _AV1_OK = None
 SKIPPED = {}        # resolve key -> titles skipped because the box can't decode them
 
@@ -1415,3 +1417,320 @@ def musicvideos_report(src):
     return {"airs": pool["singles"], "skipped": skipped, "waiting": len(waiting),
             "unreadable": [_pname(p) for p in paths if p in cache["unreadable"]],
             "lib": len(lib), "total": len(paths), "folders": folders}
+
+
+# ------------------------------------------------------------------ chapter marks
+# Commercial breaks at chapter marks (chapters.py): each episode file's chapters are
+# read once, in the background (chapters_refresh, service), and kept in
+# chapters.json - "no chapters" too, so nothing is read twice.  Planning only looks
+# here: a file not read yet gets today's timed breaks, the next planning the marks.
+class Chapters(object):
+    def __init__(self):
+        self.data = load_json(CHAPTERS_FILE, {}) or {}
+        self.dirty = False
+        self.lock = threading.Lock()
+        self._info = {}
+
+    def known(self, path):
+        return path in self.data
+
+    def raw(self, path):
+        return self.data.get(path)
+
+    def info(self, path):
+        """chapters.analyze() of a file already read (cached), else None."""
+        d = self.data.get(path)
+        if not d or not d.get("ch"):
+            return None if not d else {"v": "none", "m": [], "cr": None, "why": "no chapters"}
+        hit = self._info.get(path)
+        if hit is None:
+            from . import chapters as C
+            hit = C.analyze(d.get("d") or 0, d.get("ch"))
+            self._info[path] = hit
+        return hit
+
+    def read(self, path):
+        """Read one file's chapters now (background only).  False if unreadable."""
+        r = probe.chapters(path)
+        with self.lock:
+            # unreadable: noted with the time, tried again after a few days
+            self.data[path] = {"d": r["dur"], "ch": r["ch"]} if r else {"x": int(time.time())}
+            self._info.pop(path, None)
+            self.dirty = True
+        return r is not None
+
+    def save(self):
+        """Written merged with the file as it is now: the service's reader and Check
+        chapters' Read now (another Kodi process) both add to it."""
+        with self.lock:
+            if not self.dirty:
+                return
+            self.dirty = False
+            disk = load_json(CHAPTERS_FILE, {}) or {}
+            for k, v in disk.items():
+                self.data.setdefault(k, v)
+            data = dict(self.data)
+        save_json(CHAPTERS_FILE, data)
+
+
+CHAPTERS = None
+_CHAPTERS_SEEN = {"mtime": 0.0, "checked": 0.0}
+
+
+def chapter_cache():
+    """The chapters cache; reloaded when another Kodi process (the service's
+    background reader) has written chapters.json since (looked at once a minute)."""
+    global CHAPTERS
+    now = time.time()
+    if CHAPTERS is not None and now - _CHAPTERS_SEEN["checked"] > 60 and not CHAPTERS.dirty:
+        _CHAPTERS_SEEN["checked"] = now
+        try:
+            m = os.path.getmtime(CHAPTERS_FILE)
+        except OSError:
+            m = 0.0
+        if m != _CHAPTERS_SEEN["mtime"]:
+            CHAPTERS = None
+    if CHAPTERS is None:
+        CHAPTERS = Chapters()
+        _CHAPTERS_SEEN["checked"] = now
+        try:
+            _CHAPTERS_SEEN["mtime"] = os.path.getmtime(CHAPTERS_FILE)
+        except OSError:
+            _CHAPTERS_SEEN["mtime"] = 0.0
+    return CHAPTERS
+
+
+def chapter_reload():
+    """Saved, then read back from chapters.json (another process added to it)."""
+    global CHAPTERS
+    if CHAPTERS is not None:
+        CHAPTERS.save()
+    CHAPTERS = None
+
+
+def chapter_info(path):
+    """The file's chapter verdict if it has been read (planning never reads files)."""
+    try:
+        return chapter_cache().info(path)
+    except Exception as exc:
+        log("chapters %s: %s" % (path, exc))
+        return None
+
+
+def chapter_mode(title):
+    """A show's own choice in Tools > Check chapters: "auto" (default), "always", "never"."""
+    return (load_json(CHAPTER_MODES_FILE, {}) or {}).get(title, "auto")
+
+
+def set_chapter_mode(title, mode):
+    d = load_json(CHAPTER_MODES_FILE, {}) or {}
+    if mode == "auto":
+        d.pop(title, None)
+    else:
+        d[title] = mode
+    save_json(CHAPTER_MODES_FILE, d)
+
+
+def _share(path):
+    """The share or drive a file lives on (smb://host/share, E:, /mnt/disk)."""
+    p = (path or "").replace("\\", "/")
+    if "://" in p:
+        scheme, rest = p.split("://", 1)
+        return scheme + "://" + "/".join(rest.split("/")[:2]).lower()
+    if len(p) > 1 and p[1] == ":":
+        return p[:2].lower()
+    return "/".join(p.split("/")[:3])
+
+
+CHAPTER_RETRY = 3 * 86400
+CHAPTER_SOON = 6 * 3600                  # "airs soon": in the next 6 hours
+_EP_FILES = {"t": 0.0, "files": []}      # the library's episode files (10 min)
+_PLANNED = {"sig": None, "t": 0.0, "list": []}
+CHAPTERS_NEW = {"n": 0, "first": 0.0}   # planned files read since the last re-plan (service), the first's time
+
+
+def planned_files(now=None):
+    """[(airs at, file)] of every programme still to air in the planned schedules,
+    soonest first, each file once.  Re-read only when a schedule file changed
+    (looked at once a minute at most)."""
+    now = now or time.time()
+    if now - _PLANNED["t"] < 60 and _PLANNED["sig"] is not None:
+        return [x for x in _PLANNED["list"] if x[2] > now]
+    _PLANNED["t"] = now
+    from .kodiutil import SCHEDULE_DIR
+    try:
+        names = sorted(f for f in os.listdir(SCHEDULE_DIR) if f.endswith(".json"))
+    except OSError:
+        names = []
+    sig = []
+    for f in names:
+        try:
+            sig.append((f, os.path.getmtime(os.path.join(SCHEDULE_DIR, f))))
+        except OSError:
+            pass
+    if sig != _PLANNED["sig"]:
+        first = {}
+        for f, _m in sig:
+            for e in (load_json(os.path.join(SCHEDULE_DIR, f), {}) or {}).get("entries", []):
+                pth, end = e.get("p"), e.get("e", 0)
+                if e.get("k") != "show" or not pth or end <= now:
+                    continue
+                if pth not in first or e.get("s", 0) < first[pth][0]:
+                    first[pth] = (e.get("s", 0), pth, end)
+        _PLANNED.update(sig=sig, list=sorted(first.values()))
+    return [x for x in _PLANNED["list"] if x[2] > now]
+
+
+def chapters_todo(now=None):
+    """(planned, rest): the episode files whose chapters aren't read yet - the ones
+    in the planned schedules as [(airs at, file)] soonest first, then the rest of
+    the library in its own order."""
+    cache = chapter_cache()
+    now = now or time.time()
+    if now - _EP_FILES["t"] > 600:
+        res = rpc("VideoLibrary.GetEpisodes", {"properties": ["file"]})
+        _EP_FILES.update(t=now, files=[e.get("file") or "" for e in res.get("episodes", []) or []])
+
+    def need(f):
+        if not f or f.startswith(("stack://", "plugin://")):
+            return False
+        d = cache.raw(f)
+        return d is None or ("x" in d and now - d["x"] > CHAPTER_RETRY)
+    eps = set(_EP_FILES["files"])
+    planned = [(s, f) for s, f, _e in planned_files(now) if f in eps and need(f)]
+    seen = set(f for _s, f in planned)
+    return planned, [f for f in _EP_FILES["files"] if f not in seen and need(f)]
+
+
+def chapters_status():
+    """(read, total): the library's episode files whose chapters have been read."""
+    planned, rest = chapters_todo()
+    total = len([f for f in _EP_FILES["files"] if f and not f.startswith(("stack://", "plugin://"))])
+    return max(0, total - len(planned) - len(rest)), total
+
+
+def _readable_counts(cache, f):
+    """True when a planned file's chapters change its breaks (a re-plan is worth it)."""
+    info = cache.info(f)
+    return bool(info and (info.get("v") in ("act", "dense") or info.get("cr") is not None))
+
+
+class ChapterReader(object):
+    """The background chapter reader's queue and pace (the service's thread).
+
+    Pace from measured read times: about one file a second to start, faster while
+    reads stay fast (up to 5 a second idle), at once much slower when one is slow
+    (a busy disk, a drive waking up, a slow share), then creeping back.  The TV on:
+    the planned episodes airing in the next 6 hours, soonest first, at most one a
+    second; the rest of the library then too, never from the share that's playing."""
+    FAST = 0.15               # s: a read this quick lets the pace speed up
+    SLOW = 1.0                # s: a read this slow (or 5x the usual) backs off at once
+    MIN_IDLE, MIN_TV, MAX_WAIT = 0.2, 1.0, 60.0
+
+    def __init__(self):
+        self.wait = 1.0
+        self.avg = None
+        self.queue, self.soon, self.built = [], set(), 0.0
+        self.stats = {"n": 0, "secs": 0.0, "since": time.time()}
+        self.left = 0
+
+    def _build(self, now):
+        planned, rest = chapters_todo(now)
+        self.soon = set(f for s, f in planned if s <= now + CHAPTER_SOON)
+        self.queue = [f for _s, f in planned] + rest
+        self.left = len(self.soon)
+        self.built = now
+
+    def next(self, tv_on, playing=""):
+        """The next file to read, or None (nothing to read now)."""
+        now = time.time()
+        if not self.queue or now - self.built > 60:
+            self._build(now)
+        cache = chapter_cache()
+        busy = _share(playing) if playing else None
+        for i, f in enumerate(self.queue):
+            if cache.raw(f) is not None and "x" not in cache.raw(f):
+                continue                       # read meanwhile (Read now)
+            if tv_on and f not in self.soon and busy and _share(f) == busy:
+                continue
+            del self.queue[:i + 1]
+            return f
+        self.queue = []
+        return None
+
+    def read(self, f, tv_on):
+        """Read one file; returns how long to wait before the next."""
+        cache = chapter_cache()
+        t0 = time.time()
+        cache.read(f)
+        took = time.time() - t0
+        if f in self.soon:
+            self.soon.discard(f)
+            self.left = len(self.soon)
+            if _readable_counts(cache, f):
+                if not CHAPTERS_NEW["n"]:
+                    CHAPTERS_NEW["first"] = time.time()
+                CHAPTERS_NEW["n"] += 1
+        self.stats["n"] += 1
+        self.stats["secs"] += took
+        slow = took >= self.SLOW or (self.avg is not None and took > 5 * self.avg and took > 0.3)
+        if slow:
+            self.wait = min(self.MAX_WAIT, max(self.wait * 4, took * 10))
+        elif took < self.FAST:
+            self.wait *= 0.8
+        self.avg = took if self.avg is None else 0.8 * self.avg + 0.2 * took
+        self.wait = max(self.MIN_TV if tv_on else self.MIN_IDLE, min(self.MAX_WAIT, self.wait))
+        if self.stats["n"] % 50 == 0:
+            cache.save()
+        return self.wait
+
+    def minute(self, force=False):
+        """The once-a-minute summary line (and the cache saved).  True when logged."""
+        st, now = self.stats, time.time()
+        if not st["n"] or (now - st["since"] < 60 and not force):
+            return False
+        chapter_cache().save()
+        _r, total = chapters_status()
+        log("chapters: read %d files in the last %d s (%.3f s a file on average, pace now %.1f a second); "
+            "%d planned for the next 6 h and %d others still to read" % (
+                st["n"], now - st["since"], st["secs"] / st["n"], 1.0 / self.wait, self.left,
+                max(0, total - _r - self.left)), level=xbmc.LOGINFO)
+        self.stats = {"n": 0, "secs": 0.0, "since": now}
+        return True
+
+
+def load_too_high():
+    """Linux (CoreELEC, LibreELEC, a Pi): the 1-minute load over 0.9 per CPU."""
+    try:
+        with open("/proc/loadavg") as f:
+            load = float(f.read().split()[0])
+        return load > 0.9 * (os.cpu_count() or 1)
+    except (OSError, ValueError, IndexError):
+        return False
+
+
+def chapters_read_all(abort=lambda: False, progress=None):
+    """Check chapters' Read now: every episode file not read yet, the planned ones
+    first, as fast as the drive goes; saved as it goes (Cancel keeps what's read).
+    Returns (files read, planned files whose breaks change)."""
+    cache = chapter_cache()
+    planned, rest = chapters_todo()
+    todo = [f for _s, f in planned] + rest
+    first = set(f for _s, f in planned)
+    n = got = 0
+    last = time.time()
+    for i, f in enumerate(todo):
+        if abort():
+            break
+        cache.read(f)
+        n += 1
+        if f in first and _readable_counts(cache, f):
+            got += 1
+        if progress and time.time() - last > 0.2:
+            last = time.time()
+            progress(i + 1, len(todo))
+        if n % 50 == 0:
+            cache.save()
+    cache.save()
+    log("chapters: Read now read %d of %d files" % (n, len(todo)), level=xbmc.LOGINFO)
+    return n, got

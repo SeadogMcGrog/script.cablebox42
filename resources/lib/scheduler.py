@@ -23,7 +23,7 @@ import time
 
 import xbmc
 
-from .kodiutil import SCHEDULE_DIR, load_json, save_json, log, ensure_dirs, setting_bool
+from .kodiutil import SCHEDULE_DIR, PROFILE, load_json, save_json, log, ensure_dirs, setting_bool
 from . import library
 from . import channels as chmod
 from . import assign
@@ -32,10 +32,41 @@ from . import stations
 from . import promos
 from . import musicvideos
 from . import bookmarks
+from . import ads
+from . import chapters
 from .kodiutil import _
 
 DAY = 86400
 SHORTS_PACK, SHORTS_PINNED_ONLY, SHORTS_ONE_PER_SLOT = 0, 1, 2
+# Settings > Programming > Skip episodes shorter than: Off / 2 / 5 / 10 min
+SKIP_SHORT_MIN = (0, 2, 5, 10)
+SKIPPED_FILE = os.path.join(PROFILE, "skipped.json")
+_SKIPPED = {}            # path -> [series, label, seconds]: skipped since the last refresh
+_SKIP_LOGGED = set()     # files the log has named since the last refresh
+_SKIP_LOCK = threading.Lock()
+
+
+def skip_short_secs(cfg):
+    """The 'Skip episodes shorter than' limit in seconds (0: off)."""
+    i = int(cfg.get("skip_short", 2) or 0)
+    return SKIP_SHORT_MIN[i] * 60 if 0 <= i < len(SKIP_SHORT_MIN) else 0
+
+
+def skip_short_begin():
+    """A refresh starts: the log names each skipped file once again."""
+    with _SKIP_LOCK:
+        _SKIP_LOGGED.clear()
+        _SKIPPED.clear()
+
+
+def skip_short_save():
+    """What this refresh skipped, for Settings > Tools > Check skipped episodes."""
+    with _SKIP_LOCK:
+        data = {"t": time.time(), "episodes": [[p] + v for p, v in sorted(_SKIPPED.items())]}
+    try:
+        save_json(SKIPPED_FILE, data)
+    except Exception as exc:
+        log("skipped episodes: %s" % exc)
 PROMO_RATES = (1.0, 0.5, 0.25)      # every break, about half, now and then
 PROMO_LOOKAHEAD = 6 * 3600          # 'later today' looks this far ahead
 PROMO_TYPES = assign.PROGRAM_TYPES + ("musicvideos",)    # channels whose breaks carry promos
@@ -713,7 +744,7 @@ class ChannelSchedule(object):
                 min(0.9, level * (1.6 if ch["type"] == "movies" else 1.0))
             if random.Random("%s|%.0f|season" % (ch["id"], t)).random() < share:
                 self._cont = None
-                prog = self._pick_seasonal(sea, level, mine, t, room)
+                prog = self._pick_seasonal(sea, level, self._skip_short(mine), t, room)
                 if prog:
                     return self._program(t, prog, hard)
         # Never the same show on two channels at once.  Preference:
@@ -731,6 +762,44 @@ class ChannelSchedule(object):
             return self._program(t, prog, hard)
         return self._no_programme(t, hard, pool)
 
+    def _skip_short(self, pool):
+        """Automatic programming leaves out TV episodes shorter than the 'Skip episodes
+        shorter than' setting (intros, trailers, recaps filed as episodes): the series
+        goes on to its next real episode (its place moves on past them).  Not a series
+        whose usual episode is that short (median under the limit: short-form shows go
+        through shorts packing as before), not an episode of unknown length, never
+        movies or other singles, never a pinned slot's own pool (_pick_rule)."""
+        limit = skip_short_secs(self.cfg)
+        if not limit or not pool or not pool.get("series"):
+            return pool
+        out = []
+        changed = False
+        for ser in pool["series"]:
+            eps = ser.get("episodes") or []
+            if not str(ser.get("key", "")).startswith("tv:"):
+                out.append(ser)
+                continue
+            known = sorted(float(e.get("dur") or 0) for e in eps if float(e.get("dur") or 0) > 0)
+            if not known or known[len(known) // 2] < limit:
+                out.append(ser)                     # short-form series (or nothing measured)
+                continue
+            keep = [e for e in eps if not (0 < float(e.get("dur") or 0) < limit)]
+            if len(keep) == len(eps):
+                out.append(ser)
+                continue
+            changed = True
+            with _SKIP_LOCK:
+                for e in eps:
+                    d = float(e.get("dur") or 0)
+                    if 0 < d < limit and e["path"] not in _SKIP_LOGGED:
+                        _SKIP_LOGGED.add(e["path"])
+                        _SKIPPED[e["path"]] = [ser.get("title", ""), e.get("label") or "", round(d)]
+                        log("skipped (shorter than %d min, %d s): %s" % (limit // 60, d, e["path"]),
+                            level=xbmc.LOGINFO)
+            if keep:                                # nothing left to air: like a show with no episodes
+                out.append(dict(ser, episodes=keep))
+        return dict(pool, series=out) if changed else pool
+
     def _auto_pick(self, mine, full, t, key, room):
         prog = None
         fb, part = getattr(self, "_fallback", (None, None)) or (None, None)
@@ -740,6 +809,7 @@ class ChannelSchedule(object):
                 if i == 2:
                     continue
                 cand = library.resolve([{"type": "alltv"}])
+            cand = self._skip_short(cand)
             if i < 4:
                 cand = self._clash_free(cand, t)
             self._cont = None
@@ -822,17 +892,26 @@ class ChannelSchedule(object):
         if (ads or house) and gap >= 90:
             per = self.cfg.get("breaks_per_slot", 2)
             k = max(0, min(per * nslots * slot // 1800 if slot else per, int(gap // 75) - 1))
-        if not ch.get("midroll", ch["type"] != "movies"):
+        midroll = ch.get("midroll", ch["type"] != "movies")
+        if not midroll:
             k = 0
+        # breaks at the episode's chapter marks (act breaks) when its chapters have
+        # been read; else (and with the setting off) evenly spaced as always
+        marks = self._chapter_points(prog, dur, gap, k, midroll) if (ads or house) and gap >= 90 else None
+        if marks:
+            k = len(marks)
         brk = gap / (k + 1)
         if house:
             brk = min(brk, HOUSE_MAX)    # short house breaks inside; the rest at the end
-        points = [dur * i / (k + 1) for i in range(k + 2)]
+        points = [0.0] + marks + [dur] if marks else [dur * i / (k + 1) for i in range(k + 2)]
+        credits = self._credits_at(prog, dur, cut=dur < float(prog["dur"]) - 1)
         pos = t
         for i in range(k + 1):
             seg = points[i + 1] - points[i]
+            # the last part knows where its end credits start (file time): the squeeze
+            cr = credits if i == k and credits is not None and credits >= prog.get("o0", 0) + points[i] - 0.5 else None
             self._add(pos, pos + seg, "show", p=prog["path"], o=round(prog.get("o0", 0) + points[i], 2),
-                      t=prog["title"], sub=prog.get("sub"), lb=prog.get("label"))
+                      t=prog["title"], sub=prog.get("sub"), lb=prog.get("label"), cr=cr)
             pos += seg
             # to the break's planned end: a part that started early (absorbed seconds) gives them back here
             blen = (t + points[i + 1] + brk * (i + 1) - pos) if i < k else end - pos
@@ -840,6 +919,47 @@ class ChannelSchedule(object):
                        absorb=i < k)
         self._add_block(t, end, prog["title"], "show", prog.get("sub", ""), prog.get("label", ""))
         return end
+
+    def _chapter_points(self, prog, dur, gap, timed_k, midroll):
+        """Break points from the episode's chapters (chapters.points), or None for
+        today's evenly spaced breaks: the setting off, a movie, a file not read yet,
+        no / automatic chapters, the show set to Never.  One log line per episode."""
+        if not self.cfg.get("chapter_breaks", True) or not prog.get("path") or not prog.get("label"):
+            return None                  # TV episodes only (movies, clips: no label)
+        info = library.chapter_info(prog["path"])
+        if info is None:
+            return None
+        mode = library.chapter_mode(prog.get("title", ""))
+        pts = chapters.points(info, dur, float(prog.get("o0", 0) or 0), gap, timed_k, midroll, mode)
+        log("chapters: %s %s: %s%s -> %s" % (
+            prog.get("title", ""), prog.get("label", ""), info.get("v"),
+            (" (%s)" % info.get("why")) if info.get("why") else "", (mode + " ") if mode != "auto" else "") +
+            ("breaks at %s" % ", ".join("%d:%02d" % (t // 60, t % 60) for t in pts) if pts else "timed breaks"),
+            level=xbmc.LOGINFO)
+        return pts
+
+    SQUEEZE_TAIL = 30.0      # no chapters (or not read yet): the final 30 s
+    SQUEEZE_MIN = 15 * 60.0  # ...of a TV episode this long or longer
+
+    def _credits_at(self, prog, dur, cut=False):
+        """Where the squeeze starts (file time) on the episode's last part: its end
+        credits when its chapters show them, else - no chapters, or not read yet - the
+        final 30 s of a TV episode of 15 min or more that plays to its natural end.
+        None: no squeeze (movies, clips, shorts, a pinned slot cutting it off, a last
+        chapter over 3 min).  Not before off-air: tv.squeeze_tick looks at what's next."""
+        if not prog.get("path") or not prog.get("label"):
+            return None                  # TV episodes only (movies, clips: no label)
+        o0 = float(prog.get("o0", 0) or 0)
+        info = library.chapter_info(prog["path"]) if self.cfg.get("chapter_breaks", True) else None
+        if info is not None and info.get("why") not in ("no chapters", "one chapter"):
+            cr = info.get("cr")          # the chapter rules
+        elif cut or float(prog.get("dur") or 0) + o0 < self.SQUEEZE_MIN:
+            return None
+        else:
+            cr = o0 + dur - self.SQUEEZE_TAIL
+        if cr is None or not (o0 < cr < o0 + dur - 5):
+            return None
+        return round(cr, 2)
 
     # ------------------------------------------------- Behind the scenes (movie Extras)
     X_TURN = 3600          # at most an hour of one film's extras per turn; the rest airs on its next turn
@@ -2146,6 +2266,7 @@ class Lineup(object):
         now apply from the end of each channel's programme on air; what's on air and
         every show's next episode stay.  progress(i, n, channel) is called per
         channel.  Returns how long it took (s)."""
+        skip_short_begin()
         t0 = time.time()
         now = now or t0
         library.new_generation()             # the library and station clips as they are now,
@@ -2166,6 +2287,7 @@ class Lineup(object):
         took = time.time() - t0
         log("Refresh schedules: %d channels from the end of what's on air, %.1f s" % (n, took),
             level=xbmc.LOGINFO)
+        skip_short_save()
         return took
 
     def reset_progress(self, kind, value=None, progress=None):
@@ -2254,6 +2376,7 @@ class Lineup(object):
             if abort and abort():
                 return
             self.schedule(c, True, now)
+        skip_short_save()
 
     def neighbour(self, ch, step):
         if not self.channels:

@@ -644,3 +644,115 @@ def _mp4_info(r):
         elif kind == b"vide" and not fps:
             fps, codec = _mp4_video_track(r, mdia)
     return {"dur": _mp4(r), "fps": round(fps, 3), "audio": audio, "codec": codec, "tags": _mp4_tags(r, moov)}
+
+
+# ---------------------------------------------------------------- chapters
+# Chapter marks for commercial breaks at act breaks (chapters.py decides what they
+# mean).  Read-only, a few small reads: Matroska's Chapters element (found directly
+# or through the SeekHead) and MP4's Nero 'chpl' box.  Apple chapter text tracks,
+# AVI and TS (no chapters) give [].
+_MKV_CHAPTERS = 0x1043A770
+
+
+def chapters(path):
+    """{"dur": seconds, "ch": [[start s, name], ...]} ("ch" empty: no chapters), or
+    None when the file can't be read."""
+    try:
+        r, close = open_reader(path)
+    except Exception:
+        return None
+    try:
+        if r.size < 32:
+            return None
+        head = r.read_at(0, 16)
+        if head[4:8] in (b"ftyp", b"moov", b"mdat", b"free", b"wide", b"skip", b"pnot"):
+            return {"dur": round(_mp4(r), 2), "ch": _mp4_chapters(r)}
+        if head[:4] == b"\x1a\x45\xdf\xa3":
+            return {"dur": round(_mkv(r), 2), "ch": _mkv_chapters(r)}
+        return {"dur": round(duration(path), 2), "ch": []}
+    except Exception:
+        return None
+    finally:
+        try:
+            close()
+        except Exception:
+            pass
+
+
+def _mkv_chapters(r):
+    for eid, data, size in _ebml_elements(r, 0, r.size):
+        if eid != 0x18538067:          # Segment
+            continue
+        seg_start, seg_end = data, min(r.size, data + size)
+        found, seeks = [], {}
+        for cid, cdata, csize in _ebml_elements(r, seg_start, seg_end):
+            if cid == _MKV_CLUSTER:
+                break
+            if cid == _MKV_SEEKHEAD:
+                _mkv_seeks(r, cdata, csize, seg_start, seeks)
+            elif cid == _MKV_CHAPTERS:
+                found.append((cdata, csize))
+        for pos in seeks.get(_MKV_SEEKHEAD, []):
+            el = _mkv_element(r, pos, _MKV_SEEKHEAD, 16384)
+            if el:
+                _mkv_seeks(r, el[0], el[1], seg_start, seeks)
+        if not found:
+            for pos in seeks.get(_MKV_CHAPTERS, []):
+                el = _mkv_element(r, pos, _MKV_CHAPTERS, 1 << 20)
+                if el:
+                    found.append(el)
+                    break
+        if not found:
+            return []
+        cdata, csize = found[0]
+        editions = []
+        for e1, ed in _ebml_children(r.read_at(cdata, min(csize, 1 << 20))):
+            if e1 != 0x45B9:            # EditionEntry
+                continue
+            default, atoms = False, []
+            for e2, val in _ebml_children(ed):
+                if e2 == 0x45DB:        # EditionFlagDefault
+                    default = _uint(val) == 1
+                elif e2 == 0xB6:        # ChapterAtom
+                    start, name, show = None, "", True
+                    for e3, v3 in _ebml_children(val):
+                        if e3 == 0x91:                  # ChapterTimeStart (ns)
+                            start = _uint(v3) / 1e9
+                        elif e3 == 0x98 and _uint(v3):  # ChapterFlagHidden
+                            show = False
+                        elif e3 == 0x4598 and v3 and not _uint(v3):   # ChapterFlagEnabled = 0
+                            show = False
+                        elif e3 == 0x80 and not name:   # ChapterDisplay
+                            for e4, v4 in _ebml_children(v3):
+                                if e4 == 0x85:          # ChapString
+                                    name = v4.decode("utf-8", "replace").strip()
+                    if start is not None and show:
+                        atoms.append([round(start, 3), name])
+            editions.append((default, atoms))
+        if not editions:
+            return []
+        atoms = next((a for d, a in editions if d), editions[0][1])
+        return sorted(atoms, key=lambda c: c[0])
+    return []
+
+
+def _mp4_chapters(r):
+    chpl = _mp4_child(r, 0, r.size, [b"moov", b"udta", b"chpl"])
+    if not chpl:
+        return []
+    buf = r.read_at(chpl[0], min(chpl[1] - chpl[0], 65536))
+    if len(buf) < 5:
+        return []
+    i = 4 + (4 if buf[0] == 1 else 0)            # version, flags (version 1: 4 more bytes)
+    n = buf[i]
+    i += 1
+    out = []
+    for _k in range(n):
+        if i + 9 > len(buf):
+            break
+        start = struct.unpack(">Q", buf[i:i + 8])[0] / 1e7       # 100 ns units
+        ln = buf[i + 8]
+        name = buf[i + 9:i + 9 + ln].decode("utf-8", "replace").strip()
+        out.append([round(start, 3), name])
+        i += 9 + ln
+    return sorted(out, key=lambda c: c[0])

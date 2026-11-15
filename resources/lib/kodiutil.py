@@ -109,6 +109,8 @@ def schedule_cfg():
         "horizon": max(4, setting_int("horizon_hours", 12)) * 3600,
         "low_water": 3 * 3600,
         "shorts_mode": setting_int("shorts_mode", 0),
+        "skip_short": setting_int("skip_short", 2),
+        "chapter_breaks": setting_bool("chapter_breaks", True),
         "seasons": seasons_cfg(),
         "promos": setting_bool("promos_on", False),
         "promo_every": setting_int("promo_every", 1),

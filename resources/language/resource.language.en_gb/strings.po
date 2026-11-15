@@ -6142,3 +6142,156 @@ msgstr ""
 msgctxt "#33995"
 msgid "STARTING NOW"
 msgstr ""
+
+msgctxt "#33996"
+msgid "Skip episodes shorter than"
+msgstr ""
+
+msgctxt "#33997"
+msgid "2 min"
+msgstr ""
+
+msgctxt "#33998"
+msgid "5 min"
+msgstr ""
+
+msgctxt "#33999"
+msgid "10 min"
+msgstr ""
+
+msgctxt "#34000"
+msgid "Check skipped episodes"
+msgstr ""
+
+msgctxt "#34001"
+msgid "No episodes are skipped."
+msgstr ""
+
+msgctxt "#34002"
+msgid "Skipped episodes"
+msgstr ""
+
+msgctxt "#34003"
+msgid "Shorter than %d min (Settings > Programming > Skip episodes shorter than). Their series go on to the next real episode; the files stay where they are."
+msgstr ""
+
+msgctxt "#34004"
+msgid "%s  %s  (%d:%02d)"
+msgstr ""
+
+msgctxt "#34005"
+msgid "Episodes are only listed after a refresh: Tools > Refresh schedules."
+msgstr ""
+
+msgctxt "#34006"
+msgid "Commercial breaks at chapter marks"
+msgstr ""
+
+msgctxt "#34007"
+msgid "Check chapters"
+msgstr ""
+
+msgctxt "#34008"
+msgid "Always use chapters"
+msgstr ""
+
+msgctxt "#34009"
+msgid "Never use chapters"
+msgstr ""
+
+msgctxt "#34010"
+msgid "Episodes and their breaks"
+msgstr ""
+
+msgctxt "#34011"
+msgid "%s: commercial breaks"
+msgstr ""
+
+msgctxt "#34012"
+msgid "act breaks"
+msgstr ""
+
+msgctxt "#34013"
+msgid "scene chapters"
+msgstr ""
+
+msgctxt "#34014"
+msgid "automatic chapters"
+msgstr ""
+
+msgctxt "#34015"
+msgid "no chapters"
+msgstr ""
+
+msgctxt "#34016"
+msgid "not read yet"
+msgstr ""
+
+msgctxt "#34017"
+msgid "unreadable"
+msgstr ""
+
+msgctxt "#34018"
+msgid "%d act breaks, %d scene, %d automatic, %d none, %d not read yet"
+msgstr ""
+
+msgctxt "#34019"
+msgid "[%s]"
+msgstr ""
+
+msgctxt "#34020"
+msgid "Chapters are read in the background while the TV is off; episodes not read yet get evenly spaced breaks."
+msgstr ""
+
+msgctxt "#34021"
+msgid "No TV shows in the library."
+msgstr ""
+
+msgctxt "#34022"
+msgid "breaks at %s"
+msgstr ""
+
+msgctxt "#34023"
+msgid "credits at %s"
+msgstr ""
+
+msgctxt "#34024"
+msgid "Commercial breaks at chapter marks is off (Settings > Programming)."
+msgstr ""
+
+msgctxt "#34025"
+msgid "Next at %s"
+msgstr ""
+
+msgctxt "#34026"
+msgid "Chapters read"
+msgstr ""
+
+msgctxt "#34028"
+msgid "Chapters read: %d of %d"
+msgstr ""
+
+msgctxt "#34029"
+msgid "Read now"
+msgstr ""
+
+msgctxt "#34031"
+msgid "CableBox reads them in the background: whenever Kodi is idle, and while the TV is on the episodes airing in the next 6 hours first. Episodes not read yet get evenly spaced breaks."
+msgstr ""
+
+msgctxt "#34032"
+msgid "Reading chapters"
+msgstr ""
+
+msgctxt "#34033"
+msgid "Reading chapters: %d of %d"
+msgstr ""
+
+msgctxt "#34034"
+msgid "Stopped - the chapters read so far are kept"
+msgstr ""
+
+msgctxt "#34035"
+msgid "Chapters read: %d of %d - schedules updated"
+msgstr ""
+

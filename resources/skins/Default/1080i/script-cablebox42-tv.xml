@@ -5,6 +5,15 @@
     <defaultcontrol>9000</defaultcontrol>
     <backgroundcolor>FF000000</backgroundcolor>
     <controls>
+        <!-- Squeezed credits (tv.squeeze_tick): the background behind the video window, which
+             shrinks into its frame while the episode's end credits play with their own sound -->
+        <control type="image">
+            <left>0</left><top>0</top><width>1920</width><height>1080</height>
+            <texture>squeeze/sq_base.jpg</texture>
+            <visible>[String.IsEqual(Window.Property(mode),video) + String.IsEqual(Window.Property(squeeze),1)]</visible>
+            <animation effect="fade" start="0" end="100" time="300">Visible</animation>
+            <animation effect="fade" start="100" end="0" time="300">Hidden</animation>
+        </control>
         <!-- The picture.  Kodi's own player renders here (with the device's hardware decoding). -->
         <control type="videowindow" id="10">
             <left>0</left><top>0</top><width>1920</width><height>1080</height>

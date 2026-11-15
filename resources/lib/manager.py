@@ -767,6 +767,7 @@ def schedule_inputs(clips=True, lib=False):
     def md5(x):
         return hashlib.md5(json.dumps(x, sort_keys=True).encode("utf-8")).hexdigest()
     cfg = K.schedule_cfg()
+    cfg.update(chapter_shows=K.load_json(library.CHAPTER_MODES_FILE, {}) or {})   # Check chapters' choices
     cfg.update(stations_folder=K.setting("stations_folder"), share_mode=K.setting_int("share_mode", 0),
                extras_unrecognised=K.setting_bool("extras_unrecognised", False),
                av1_mode=K.setting_int("av1_mode", 0),
@@ -787,7 +788,7 @@ def code_fingerprint():
     version number) plans breaks differently, so the first run after one refreshes."""
     import hashlib
     h = hashlib.md5(K.ADDON.getAddonInfo("version").encode("utf-8"))
-    for name in ("scheduler.py", "promos.py"):
+    for name in ("scheduler.py", "promos.py", "ads.py", "chapters.py", os.path.join("..", "ads", "ads.json")):
         try:
             with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), name), "rb") as f:
                 h.update(f.read())
@@ -2451,7 +2452,132 @@ TOOLS = {
     "reset": lambda: factory_reset(),
     "cckeys": lambda: cc_button(),
     "finder": lambda: run_finder(),
+    "skipped": lambda: check_skipped(),
+    "chapters": lambda: check_chapters(),
 }
+
+
+def _chapter_word(info, raw):
+    if raw is None:
+        return _("not read yet")
+    if "x" in raw:
+        return _("unreadable")
+    return {"act": _("act breaks"), "dense": _("scene chapters"), "auto": _("automatic chapters")}.get(
+        (info or {}).get("v"), _("no chapters"))
+
+
+def read_chapters_now():
+    """Check chapters' Read now: every episode file not read yet, with a progress
+    dialog whose Cancel keeps what's read; planned episodes whose breaks change are
+    planned again (keep my place)."""
+    pd = xbmcgui.DialogProgress()
+    pd.create(_("Reading chapters"), _("Reading chapters: %d of %d") % (0, 0))
+    try:
+        n, got = library.chapters_read_all(abort=pd.iscanceled, progress=lambda i, t: pd.update(
+            int(100.0 * i / max(1, t)), _("Reading chapters: %d of %d") % (i, t)))
+        canceled = pd.iscanceled()
+    finally:
+        pd.close()
+    if got:
+        refresh_now()
+    r, total = library.chapters_status()
+    if canceled:
+        D.notification(TITLE, _("Stopped - the chapters read so far are kept"), time=3000)
+    else:
+        D.notification(TITLE, (_("Chapters read: %d of %d - schedules updated") if got else
+                               _("Chapters read: %d of %d")) % (r, total), time=4000)
+
+
+def check_chapters():
+    """Settings > Tools > Check chapters: each show's episodes by verdict (act breaks,
+    scene chapters, automatic, none, not read yet); pick a show for Automatic /
+    Always use chapters / Never use chapters (its own choice wins), or its episodes
+    with where their breaks and credits go.  A menu: changes save as you go."""
+    if not K.setting_bool("chapter_breaks", True):
+        D.ok(_("Check chapters"), _("Commercial breaks at chapter marks is off (Settings > Programming)."))
+        return
+    shows = sorted(library.all_tvshows(), key=lambda s: library.natural_key(s["title"]))
+    if not shows:
+        D.ok(_("Check chapters"), _("No TV shows in the library."))
+        return
+    library.chapter_reload()                 # what the service's reader has added
+    r, total = library.chapters_status()
+    if total and r < total:
+        a = ask((_("Chapters read: %d of %d") % (r, total)) + "[CR]" +
+                _("CableBox reads them in the background: whenever Kodi is idle, and while the TV is on the "
+                  "episodes airing in the next 6 hours first. Episodes not read yet get evenly spaced breaks."),
+                _("Read now"), _("Show the list"), cancel=_("Cancel"), heading=_("Check chapters"))
+        if a is None:
+            return
+        if a == "yes":
+            read_chapters_now()
+    cache = library.chapter_cache()
+    modes = {"auto": _("Automatic"), "always": _("Always use chapters"), "never": _("Never use chapters")}
+    eps_of = {}
+    while True:
+        rows = []
+        for s in shows:
+            if s["tvshowid"] not in eps_of:
+                eps_of[s["tvshowid"]] = library.episodes_for(s["tvshowid"])
+            counts = {"act": 0, "dense": 0, "auto": 0, "none": 0, "todo": 0}
+            for e in eps_of[s["tvshowid"]]:
+                raw = cache.raw(e["file"])
+                v = (cache.info(e["file"]) or {}).get("v") if raw else None
+                counts["todo" if raw is None else v if v in ("act", "dense", "auto") else "none"] += 1
+            mode = library.chapter_mode(s["title"])
+            li = xbmcgui.ListItem(s["title"] + (("  " + _("[%s]") % modes[mode]) if mode != "auto" else ""),
+                                  _("%d act breaks, %d scene, %d automatic, %d none, %d not read yet") % (
+                                      counts["act"], counts["dense"], counts["auto"], counts["none"], counts["todo"]))
+            rows.append(li)
+        i = done_select(_("Check chapters"), rows, useDetails=True)
+        if i < 0:
+            return
+        show = shows[i]
+        while True:
+            mode = library.chapter_mode(show["title"])
+            opts = [("auto", modes["auto"]), ("always", modes["always"]), ("never", modes["never"])]
+            labels = [("[B]%s[/B]" % lab) if key == mode else lab for key, lab in opts] + \
+                [_("Episodes and their breaks")]
+            j = done_select(_("%s: commercial breaks") % show["title"], labels)
+            if j < 0:
+                break
+            if j < 3:
+                library.set_chapter_mode(show["title"], opts[j][0])
+                continue
+            lines = [_("CableBox reads them in the background: whenever Kodi is idle, and while the TV is on the "
+                       "episodes airing in the next 6 hours first. Episodes not read yet get evenly spaced breaks."), ""]
+            fm = lambda t: "%d:%02d" % (int(t) // 60, int(t) % 60)
+            for e in eps_of[show["tvshowid"]]:
+                raw = cache.raw(e["file"])
+                info = cache.info(e["file"]) if raw else None
+                bits = [_chapter_word(info, raw)]
+                if info and info.get("m") and info.get("v") in ("act", "dense"):
+                    bits.append(_("breaks at %s") % ", ".join(fm(t) for t in info["m"]))
+                if info and info.get("cr") is not None:
+                    bits.append(_("credits at %s") % fm(info["cr"]))
+                label = "S%02dE%02d" % (e.get("season", 0), e.get("episode", 0))
+                lines.append("%s  %s  -  %s" % (label, e.get("title", ""), "; ".join(bits)))
+            D.textviewer(_("%s: commercial breaks") % show["title"], "[CR]".join(lines))
+
+
+def check_skipped():
+    """Settings > Tools > Check skipped episodes: the TV episodes the last refresh
+    left out for being shorter than Skip episodes shorter than (scheduler._skip_short),
+    by series.  Read-only; nothing is moved or hidden in Kodi."""
+    from . import scheduler
+    data = K.load_json(scheduler.SKIPPED_FILE, {}) or {}
+    eps = data.get("episodes") or []
+    limit = scheduler.skip_short_secs(K.schedule_cfg()) // 60
+    if not eps:
+        xbmcgui.Dialog().ok(_("Check skipped episodes"), _("No episodes are skipped.") + "[CR]" +
+                            _("Episodes are only listed after a refresh: Tools > Refresh schedules."))
+        return
+    lines = [_("Shorter than %d min (Settings > Programming > Skip episodes shorter than). "
+               "Their series go on to the next real episode; the files stay where they are.") % limit, ""]
+    for path, series, label, secs in sorted(eps, key=lambda e: (e[1].lower(), e[2], e[0])):
+        lines.append(_("%s  %s  (%d:%02d)") % (series, label or os.path.basename(path), int(secs) // 60, int(secs) % 60))
+        lines.append("    " + path)
+    xbmcgui.Dialog().textviewer(_("Skipped episodes"), "[CR]".join(lines))
 
 
 def run_finder():
@@ -2638,7 +2764,7 @@ def folder_lines(c):
     return out
 
 
-NO_REFRESH = ("refresh", "rebuild", "restart_series", "reset")
+NO_REFRESH = ("refresh", "rebuild", "restart_series", "reset", "skipped")   # "chapters" refreshes: a show's choice changes breaks
 
 
 def run_tool(name):
