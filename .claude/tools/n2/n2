@@ -1,0 +1,3 @@
+#!/bin/bash
+# N2 test tools (briefs/n2-remote-testing.md). See n2.py or `n2 help`.
+exec python "$(dirname "$0")/n2.py" "$@"
