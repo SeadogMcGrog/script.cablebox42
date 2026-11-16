@@ -6791,3 +6791,7 @@ msgstr ""
 msgctxt "#34214"
 msgid "Tomorrow %s"
 msgstr ""
+
+msgctxt "#34215"
+msgid "Holidays and specials"
+msgstr ""

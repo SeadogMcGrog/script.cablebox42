@@ -854,6 +854,9 @@ def schedule_inputs(clips=True, lib=False):
                extras_unrecognised=K.setting_bool("extras_unrecognised", False),
                av1_mode=K.setting_int("av1_mode", 0),
                weather_location=K.setting("weather_location"))   # house breaks: a weather ad needs a place
+    cal = scheduler.all_specials()
+    if cal:
+        cfg.update(specials=cal)             # Holidays and specials (calendar.json)
     chans = C.load()
     out = {"settings": md5(cfg),
            "channels": md5([{k: v for k, v in c.items() if k not in COSMETIC} for c in chans])}
@@ -870,7 +873,8 @@ def code_fingerprint():
     version number) plans breaks differently, so the first run after one refreshes."""
     import hashlib
     h = hashlib.md5(K.ADDON.getAddonInfo("version").encode("utf-8"))
-    for name in ("scheduler.py", "promos.py", "ads.py", "chapters.py", os.path.join("..", "ads", "ads.json")):
+    for name in ("scheduler.py", "promos.py", "ads.py", "chapters.py", "specials.py",
+                 os.path.join("..", "ads", "ads.json")):
         try:
             with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), name), "rb") as f:
                 h.update(f.read())
