@@ -18,9 +18,8 @@ Nothing is planned ahead: the scheduler asks at(specials, channel, t) while it p
 its usual hours, the way it asks for pinned slots.  No file = no specials.
 
 No Kodi imports at module level (the date rules are checked outside Kodi:
-.claude/tools/calendar_check.py); only load() / save() without a path reach for
-kodiutil.  Inside the add-on always import this as `from . import calendar`: a plain
-`import calendar` is Python's own module.
+.claude/tools/specials_check.py); only load() / save() without a path reach for
+kodiutil.
 """
 import datetime
 import json

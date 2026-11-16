@@ -1,7 +1,7 @@
-"""Holidays and specials: the date rules and hours of resources/lib/calendar.py,
+"""Holidays and specials: the date rules and hours of resources/lib/specials.py,
 checked outside Kodi against dates known from the calendar (2026-2030).
 
-    python .claude/tools/calendar_check.py [-v]
+    python .claude/tools/specials_check.py [-v]
 
 Ends PASS or FAIL (exit code 1)."""
 import datetime
@@ -12,9 +12,8 @@ import tempfile
 import time
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-# loaded by file name: resources/lib must not go on sys.path, where this calendar.py
-# would hide Python's own calendar module
-spec = importlib.util.spec_from_file_location("cb_calendar", os.path.join(REPO, "resources", "lib", "calendar.py"))
+# loaded by file name, so no Kodi stubs and no package import are needed
+spec = importlib.util.spec_from_file_location("cb_specials", os.path.join(REPO, "resources", "lib", "specials.py"))
 C = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(C)
 
@@ -194,9 +193,6 @@ os.utime(tmp, (time.time() + 10, time.time() + 10))
 check("An unreadable file: no specials", C.load(tmp), [])
 os.remove(tmp)
 os.rmdir(os.path.dirname(tmp))
-
-import calendar as _std  # noqa: E402
-check("Python's own calendar module is not hidden here", hasattr(_std, "timegm"), True)
 
 print("%d checks, %d failed" % (count, len(fails)))
 print("FAIL" if fails else "PASS")
