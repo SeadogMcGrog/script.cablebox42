@@ -375,6 +375,11 @@ _TAG_KEYS = {"artist": "artist", "performer": "artist", "title": "title",
              "date_released": "date", "date": "date", "year": "date"}
 
 
+# Which containers give a frame rate: 1 = MP4/MKV, 2 = also AVI and MPEG-1/2 in PS/TS.
+# Caches that saved "no frame rate" with an older reader read the file once more.
+FPS_READER = 2
+
+
 def media_info(path):
     """{"dur", "fps", "audio", "codec", "tags"} or None when unreadable.
     fps is 0 when unknown, audio None when unknown; tags hold artist, title,
@@ -392,6 +397,11 @@ def media_info(path):
             info = _mp4_info(r)
         elif head[:4] == b"\x1a\x45\xdf\xa3":
             info = _mkv_media(r)
+        elif head[:4] == b"RIFF" and head[8:12] == b"AVI ":
+            info = _avi_info(r)
+        elif head[:4] == b"\x00\x00\x01\xba" or head[0:1] == b"\x47" or \
+                path.lower().endswith((".mpg", ".mpeg", ".vob", ".m2v", ".ts", ".m2ts", ".mts")):
+            info = {"dur": 0, "fps": _mpeg_fps(r), "audio": None, "codec": "", "tags": {}}
     except Exception:
         info = None
     finally:
@@ -407,6 +417,54 @@ def media_info(path):
         info["dur"] = d
         info["codec"] = info.get("codec") or video_codec(path)
     return info
+
+
+def _avi_info(r):
+    """AVI: frame rate from the video stream header (strh rate / scale: exact,
+    24000/1001), else the main header's microseconds per frame; audio from an
+    'auds' stream header."""
+    head = r.read_at(0, 65536)
+    fps, audio = 0.0, False
+    i = head.find(b"strh")
+    while 0 <= i and i + 36 <= len(head):
+        kind = head[i + 8:i + 12]
+        if kind == b"vids" and not fps:
+            scale, rate = struct.unpack("<II", head[i + 28:i + 36])
+            if scale and rate:
+                fps = float(rate) / scale
+        elif kind == b"auds":
+            audio = True
+        i = head.find(b"strh", i + 4)
+    if not fps:
+        j = head.find(b"avih")
+        if j >= 0:
+            usec, = struct.unpack("<I", head[j + 8:j + 12])
+            fps = 1e6 / usec if usec else 0.0
+    if not 1 <= fps <= 300:
+        fps = 0.0
+    return {"dur": _avi(r), "fps": round(fps, 3), "audio": audio, "codec": "", "tags": {}}
+
+
+# MPEG-1/2 video sequence header frame_rate_code -> frames a second
+_MPEG_RATES = {1: 24000 / 1001.0, 2: 24.0, 3: 25.0, 4: 30000 / 1001.0, 5: 30.0, 6: 50.0,
+               7: 60000 / 1001.0, 8: 60.0}
+
+
+def _mpeg_fps(r):
+    """MPEG-PS / TS with MPEG-1/2 video: frame_rate_code from the first sequence
+    header (00 00 01 B3) in the first 2 MB.  0 for H.264 / HEVC in TS (no such header)."""
+    buf = r.read_at(0, 2 * 1024 * 1024)
+    i = buf.find(b"\x00\x00\x01\xb3")
+    while 0 <= i and i + 12 <= len(buf):
+        b = buf[i + 4:i + 12]
+        w = (b[0] << 4) | (b[1] >> 4)
+        h = ((b[1] & 0x0F) << 8) | b[2]
+        aspect, code = b[3] >> 4, b[3] & 0x0F
+        marker = (b[6] >> 5) & 1          # after the 18-bit bit_rate
+        if w and h and 1 <= aspect <= 4 and code in _MPEG_RATES and marker:
+            return round(_MPEG_RATES[code], 3)
+        i = buf.find(b"\x00\x00\x01\xb3", i + 4)
+    return 0.0
 
 
 def _tag(tags, name, value):

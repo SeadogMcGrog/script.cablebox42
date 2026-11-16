@@ -1007,10 +1007,11 @@ speed* sets the pace (Slow, Normal or Fast: about 3, 2.5 or 1.7 seconds a row).
   small picture top left, with *Tonight 8:00 PM · 12 PIX* and the title beside it. Between
   runs of 2-4 minutes come 1-2 minutes of text and guide music. Each run uses clips of one
   frame rate only, played as one list, so a TV that switches refresh rate blanks only
-  between runs. CableBox measures each clip's frame rate in the background first (MP4 and
-  MKV; other files aren't used), so on a new install the top half stays text until clips
-  are measured. Like every channel it runs on the clock: flip away and back and it's
-  further on, not starting over. *Text only* gives the guide as it was.
+  between runs. CableBox measures each clip's frame rate in the background first (MP4,
+  MKV, AVI, and MPEG-1/2 video in .mpg/.vob/.ts; H.264 in .ts and other files aren't used),
+  so on a new install the top half stays text until clips are measured. Like every
+  channel it runs on the clock: flip away and back and it's further on, not starting
+  over. *Text only* gives the guide as it was.
 - **Your own ads:** put a `guide.txt` in the guide channel's station folder, one ad
   per line (lines starting with `#` are skipped). They're used before the built-in
   ones. CableBox only reads the file.

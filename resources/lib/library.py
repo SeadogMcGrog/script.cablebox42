@@ -161,17 +161,26 @@ class Durations(object):
         return d
 
     # Frame rates of the guide's top-half clips (trailers, Extras promos, commercials),
-    # measured by the service's background reader: "fps|<path>" -> fps (0: unreadable).
+    # measured by the service's background reader: "fps|<path>" -> fps, or minus the
+    # reader version (probe.FPS_READER) when no frame rate could be read; a plain 0
+    # was saved before versions, so that file is read again by a newer reader.
     # Same file, so every value stays a number for the tools that read durations.json.
     FPS = "fps|"
 
     def fps(self, path):
-        """The measured frame rate, 0 if the file couldn't be read, None if not measured yet."""
+        """The measured frame rate, 0 if the file couldn't be read, None if not measured
+        yet (or only by a reader that didn't know its container)."""
         v = self.data.get(self.FPS + path)
-        return None if v is None else float(v)
+        if v is None:
+            return None
+        v = float(v)
+        if v <= 0:
+            return 0.0 if -v >= probe.FPS_READER else None
+        return v
 
     def set_fps(self, path, fps):
-        self.data[self.FPS + path] = round(float(fps or 0), 3)
+        fps = round(float(fps or 0), 3)
+        self.data[self.FPS + path] = fps if fps > 0 else -probe.FPS_READER
         self.dirty = True
 
     def learn(self, path, seconds):
@@ -1436,8 +1445,9 @@ def musicvideos_refresh(abort=lambda: False, pause=None, sources=None, recheck=F
                 continue
             present.add(p)
             c = files.get(p)
-            if c and (not recheck or c.get("s") == _size(p)):
-                continue
+            if c and (not recheck or c.get("s") == _size(p)) and \
+                    (c.get("f") or c.get("r", 1) >= probe.FPS_READER):
+                continue                 # (no frame rate from an older reader: read it again)
             if not c and t0 - bad.get(p, 0) < MV_UNREADABLE_RETRY:
                 continue
             todo.append(p)
@@ -1452,7 +1462,8 @@ def musicvideos_refresh(abort=lambda: False, pause=None, sources=None, recheck=F
             info = probe.media_info(p)
         if info and info.get("dur"):
             files[p] = {"s": _size(p), "d": round(info["dur"], 2), "f": info.get("fps") or 0,
-                        "a": info.get("audio"), "c": info.get("codec") or "", "t": info.get("tags") or {}}
+                        "a": info.get("audio"), "c": info.get("codec") or "", "t": info.get("tags") or {},
+                        "r": probe.FPS_READER}
             durs.learn(p, info["dur"])
             bad.pop(p, None)
         else:
