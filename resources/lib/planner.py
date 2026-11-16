@@ -3,6 +3,10 @@
 Pin shows to fixed times ("Seinfeld, Fridays 8:00 PM, in order"), paint
 off-air hours, copy or clear days.  Anything not pinned is filled by the
 automatic scheduler, which never runs into a pinned slot.
+
+The grid is any week, except for Holidays and specials: this week's specials on the
+channel show over it (a star in the day's header, their hours as a block; marks()).
+The pins underneath are not changed and the planner's own overlap check ignores them.
 """
 import json
 import uuid
@@ -166,6 +170,7 @@ class Planner(xbmcgui.WindowXMLDialog):
         self.setProperty("hint", _("OK: pin / edit    Menu: copy / clear day    Back: done"))
         for c, n in enumerate(day_names()):
             self.setProperty("D%d" % c, n)
+        self.load_marks()
         self.refresh()
 
     # ---------------------------------------------------------------- model
@@ -176,9 +181,50 @@ class Planner(xbmcgui.WindowXMLDialog):
                 chans[i] = self.ch
         C.save(chans)
 
-    def cell(self, day, minute):
+    def load_marks(self):
+        """This week's specials on the channel (most weeks: none, and nothing more is
+        loaded): marks = [(first minute of the week, end, special, block, date)],
+        cut to the week; stars = {day column: names} for the header."""
+        from . import specials
+        self.marks, stars = [], {}
+        try:
+            cal = specials.load()
+            if cal:
+                import datetime
+                import time
+                from . import scheduler
+                today = datetime.date.fromtimestamp(time.time() + scheduler.specials_shift(K.schedule_cfg()))
+                mon = today - datetime.timedelta(days=today.weekday())
+                t0 = time.mktime(mon.timetuple())
+                t1 = time.mktime((mon + datetime.timedelta(days=7)).timetuple())
+                for st, en, sp, blk in specials.between(cal, t0, t1, self.ch["id"]):
+                    a, b = [(d.date() - mon).days * 1440 + d.hour * 60 + d.minute
+                            for d in (datetime.datetime.fromtimestamp(st), datetime.datetime.fromtimestamp(en))]
+                    day = mon + datetime.timedelta(days=a // 1440)      # the special's date
+                    a, b = max(0, a), min(WEEK, b)
+                    if a < b:
+                        self.marks.append((a, b, sp, blk, day))
+                        names = stars.setdefault(a // 1440, [])
+                        if sp["name"] not in names:
+                            names.append(sp["name"])
+        except Exception as exc:                    # the planner opens without its marks
+            K.log("Weekly planner, specials: %s" % exc)
+        self.stars = dict((c, ", ".join(n)) for c, n in stars.items())
+
+    def mark_at(self, day, minute):
+        w = day * 1440 + minute
+        for mk in self.marks:
+            if mk[0] - mk[0] % STEP <= w < mk[1]:
+                return mk
+        return None
+
+    def cell(self, day, minute, marks=True):
         """(kind, index, text, first) for one grid cell."""
         w = day * 1440 + minute
+        mk = self.mark_at(day, minute) if marks and self.marks else None
+        if mk:
+            first = w - mk[0] < STEP or minute == 0
+            return "sp", self.marks.index(mk), mk[2]["name"] if first else "", first
         for i, r in enumerate(self.ch.get("slots", [])):
             for st, L in rule_spans(r):
                 if covers(st, L, w):
@@ -205,6 +251,10 @@ class Planner(xbmcgui.WindowXMLDialog):
                 kind, idx, text, _first = self.cell(c, m)
                 if kind == "pin":
                     tex = "planner_pin%d.png" % (idx % PIN_COLORS)
+                elif kind == "sp":
+                    tex = "planner_special.png"
+                    if r == 0:                      # a long block: its name at the top of the screen too
+                        text = self.marks[idx][2]["name"]
                 elif kind == "off":
                     tex = "planner_offair.png"
                 elif kind == "dp":
@@ -213,6 +263,11 @@ class Planner(xbmcgui.WindowXMLDialog):
                     tex = "planner_auto.png" if (m // 60) % 2 == 0 else "planner_auto_alt.png"
                 self.setProperty("B%d_%d" % (r, c), tex)
                 self.setProperty("L%d_%d" % (r, c), text)
+        for c in range(DAYS):                       # "Thu \u2605" over the special's name
+            name = self.stars.get(c)
+            color = "FFFFD24A" if c == self.col else "FFB8C4E0"
+            self.setProperty("S%d" % c, (u"[COLOR %s][B]%s  \u2605[/B][/COLOR]" % (color, day_names()[c])) if name else "")
+            self.setProperty("N%d" % c, ("[COLOR %s]%s[/COLOR]" % (color, name)) if name else "")
         self.setProperty("col", str(self.col))
         self.setProperty("cur", "%d_%d" % (self.row - self.top, self.col))
         self.setProperty("detail", self.detail())
@@ -222,6 +277,13 @@ class Planner(xbmcgui.WindowXMLDialog):
         day = day_names(False)[self.col]
         kind, idx, _t, _f = self.cell(self.col, m)
         where = "%s %s" % (day, clock(m))
+        if kind == "sp":
+            from . import specials_editor as E
+            _a, _b, sp, blk, date = self.marks[idx]
+            under = self.cell(self.col, m, marks=False)
+            return u"%s:  [B]\u2605 %s[/B]  -  %s, %s: %s" % (
+                where, sp["name"], E.date_text(date), E.hours_text(blk), E.source_text(blk)) + (
+                    _("  (instead of %s)") % self.ch["slots"][under[1]].get("label", "?") if under[0] == "pin" else "")
         if kind == "pin":
             r = self.ch["slots"][idx]
             order = _("in order") if r.get("order", "inorder") == "inorder" else _("random episodes")
@@ -273,6 +335,13 @@ class Planner(xbmcgui.WindowXMLDialog):
     def on_select(self):
         m = self.row * STEP
         kind, idx, _t, _f = self.cell(self.col, m)
+        if kind == "sp":
+            sp = self.marks[idx][2]
+            if M.D.select(sp["name"], [_("Edit this special"), _("Cancel")]) == 0:
+                from . import specials_editor
+                specials_editor.special_page(sp["id"])
+                self.load_marks()
+            return
         if kind == "pin":
             self.edit_rule(idx)
             return

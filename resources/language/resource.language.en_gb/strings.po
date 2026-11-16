@@ -7207,3 +7207,31 @@ msgstr ""
 msgctxt "#34318"
 msgid "Delete %d %s?"
 msgstr ""
+
+msgctxt "#34319"
+msgid "  (instead of %s)"
+msgstr ""
+
+msgctxt "#34320"
+msgid "Edit this special"
+msgstr ""
+
+msgctxt "#34321"
+msgid "Channel removed"
+msgstr ""
+
+msgctxt "#34322"
+msgid "channel removed"
+msgstr ""
+
+msgctxt "#34323"
+msgid "Choose a channel"
+msgstr ""
+
+msgctxt "#34324"
+msgid "Which channel for %s?"
+msgstr ""
+
+msgctxt "#34325"
+msgid "It doesn't air until a channel is chosen."
+msgstr ""

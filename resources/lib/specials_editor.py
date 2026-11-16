@@ -7,6 +7,10 @@ what airs on the day is scheduler.py.
 
 Saving replans the channels a special is on and the channels whose shows it now
 keeps off, each from the end of what is on air (replan); no other channel is touched.
+
+A block whose channel is no longer in the lineup (Build my lineup > Replace gives every
+channel a new id) is kept: it reads 'channel removed', airs nowhere, and selecting it
+offers Choose a channel / Remove.  Only deleting a channel by hand takes its blocks.
 """
 import datetime
 import json
@@ -127,22 +131,26 @@ def chan_name(ch):
     return "%d %s" % (ch["number"], ch["name"])
 
 
+def what_text(blk):
+    return "%s, %s" % (source_text(blk), hours_text(blk))
+
+
 def block_text(chans, blk):
     ch = chan(chans, blk.get("channel"))
-    return "%s: %s, %s" % (chan_name(ch) if ch else "?", source_text(blk), hours_text(blk))
+    return "%s: %s" % (chan_name(ch) if ch else _("Channel removed"), what_text(blk))
+
+
+def lost(chans, sp):
+    """The special's blocks whose channel is no longer in the lineup."""
+    ids = set(c["id"] for c in chans)
+    return [b for b in sp["blocks"] if b.get("channel") not in ids]
 
 
 # ------------------------------------------------------------------ calendar.json
 def load(chans=None):
     """A copy of the specials to change freely.  Blocks of channels that are gone
-    are left out, and specials with none left; 'this year only' ones that have
-    passed go when it is saved."""
+    stay (see lost); 'this year only' specials that have passed go when it is saved."""
     cal = json.loads(json.dumps(specials.load()))
-    if chans is not None:
-        ids = set(c["id"] for c in chans)
-        for sp in cal:
-            sp["blocks"] = [b for b in sp["blocks"] if b.get("channel") in ids]
-        cal = [sp for sp in cal if sp["blocks"]]
     return [sp for sp in cal if not specials.expired(sp, now())]
 
 
@@ -252,10 +260,19 @@ def open_list(cid=None):
                             _("A marathon or a holiday lineup on a date, back every year"))]
         for day, sp, skipped in ups:
             blocks = sp["blocks"]
+            gone = lost(chans, sp)
             detail = block_text(chans, blocks[0]) if len(blocks) == 1 else _("%d channels") % len(
                 set(b["channel"] for b in blocks))
             if today().year in skipped:
                 detail += DOT + _("skips this year")
+            if gone and len(gone) == len(blocks):       # airs nowhere until a channel is chosen
+                if len(blocks) == 1:
+                    detail = what_text(blocks[0])
+                rows.append(M._menu_row("%s%s%s" % (sp["name"], DOT, _("channel removed")),
+                                        "%s%s%s" % (date_text(day), DOT, detail)))
+                continue
+            if gone:
+                detail += DOT + _("channel removed")
             rows.append(M._menu_row("%s%s%s" % (sp["name"], DOT, date_text(day)), detail))
         head = (_("Holidays and specials - %s") % only["name"]) if only else _("Holidays and specials")
         i = M.done_select(head, rows, useDetails=True)
@@ -266,7 +283,9 @@ def open_list(cid=None):
             if sid:
                 special_page(sid)
         else:
-            special_page(ups[i - 1][1]["id"])
+            sp = ups[i - 1][1]
+            if len(lost(chans, sp)) < len(sp["blocks"]) or lost_special(cal, sp, chans):
+                special_page(sp["id"])
 
 
 # ------------------------------------------------------------------ adding: step by step
@@ -403,10 +422,9 @@ def ask_block(chans, sp, cid=None):
     air = [c for c in chans if c["type"] in M.AIR_TYPES]
     ch = chan(air, cid) if cid else None
     if ch is None:
-        j = D.select(_("Which channel?"), ["%3d  %s" % (c["number"], c["name"]) for c in air])
-        if j < 0:
+        ch = ask_channel(chans)
+        if not ch:
             return None
-        ch = air[j]
     hours = ask_hours()
     if not hours:
         return None
@@ -419,12 +437,13 @@ def ask_block(chans, sp, cid=None):
     return {"channel": ch["id"], "start": hours[0], "end": hours[1], "sources": [src], "order": order}
 
 
-def checks(cal, sp, blk, chans):
+def checks(cal, sp, blk, chans, kept=None):
     """The questions before a block is saved.  False: cancelled.  'Replace' takes the
-    blocks it replaces out of `cal` (and out of `sp`) here."""
+    blocks it replaces out of `cal` (and out of `sp`) here.  `kept`: a set shared by
+    the checks of several blocks, so Keep both is asked once for a pair of channels."""
     ch = chan(chans, blk["channel"])
     if not ch:
-        return False
+        return True                 # channel removed: it airs nowhere, nothing to ask
     lineup = scheduler.Lineup(K.schedule_cfg())
     sched = lineup.schedule(ch, ensure=False)
     season = sched._holiday_source(blk)
@@ -458,16 +477,20 @@ def checks(cal, sp, blk, chans):
         others = [o for o in cal if o["id"] != sp["id"]]
     titles = dict((t.lower(), t) for t in sched._special_titles(blk))
     if titles:
-        for _a, _b, o, ob in specials.between(others, st, en):
+        rest = dict(sp, blocks=[b for b in sp["blocks"] if b is not blk])     # its own other channels too
+        for _a, _b, o, ob in specials.between(others + [rest], st, en):
             och = chan(chans, ob["channel"])
             if not och or och["id"] == ch["id"]:
                 continue
             both = [titles[t.lower()] for t in lineup.schedule(och, ensure=False)._special_titles(ob)
                     if t.lower() in titles]
-            if both:
+            pair = frozenset((ch["id"], och["id"]))
+            if both and (kept is None or pair not in kept):
                 if not M.confirm(_("%s is also in %s on %s at the same time.") % (both[0], o["name"], och["name"]),
                                  _("Keep both")):
                     return False
+                if kept is not None:
+                    kept.add(pair)
                 break
     return True
 
@@ -539,7 +562,8 @@ def special_page(sid):
                 sp["when"] = r[0]
                 if sp.get("repeat") == "once":
                     sp["year"] = next_year(r[0])[0] or sp["year"]
-                if all(checks(cal, sp, b, chans) for b in list(sp["blocks"]) if b in sp["blocks"]):
+                kept = set()
+                if all(checks(cal, sp, b, chans, kept) for b in list(sp["blocks"]) if b in sp["blocks"]):
                     save(cal, mine, sp)
         elif key == "repeat":
             rep = ask_repeat(sp["when"])
@@ -550,7 +574,11 @@ def special_page(sid):
                     sp["year"] = rep[1]
                 save(cal, mine)
         elif key.startswith("block:"):
-            edit_block(cal, sp, sp["blocks"][int(key[6:])], chans)
+            blk = sp["blocks"][int(key[6:])]
+            if chan(chans, blk.get("channel")):
+                edit_block(cal, sp, blk, chans)
+            else:
+                lost_block(cal, sp, blk, chans)
         elif key == "add":
             blk = ask_block(chans, sp)
             if blk and checks(cal, sp, blk, chans):
@@ -590,14 +618,7 @@ def edit_block(cal, sp, blk, chans):
             return
         new["order"] = order
     elif i == 3:
-        last = len(sp["blocks"]) == 1
-        text = (_("Remove %s?[CR]It is the special's only channel: %s is removed too.") % (block_text(chans, blk), sp["name"])
-                if last else _("Remove %s from %s?") % (block_text(chans, blk), sp["name"]))
-        if M.confirm_remove(text):
-            sp["blocks"].remove(blk)
-            if last:
-                cal.remove(sp)
-            save(cal, [blk["channel"]])
+        remove_block(cal, sp, blk, chans)
         return
     if new == blk:
         return
@@ -605,6 +626,72 @@ def edit_block(cal, sp, blk, chans):
     sp["blocks"][k] = new
     if checks(cal, sp, new, chans):
         save(cal, [new["channel"]], sp)
+
+
+def remove_block(cal, sp, blk, chans):
+    """Cancel / Remove for one channel's programming; the special goes with its last."""
+    last = len(sp["blocks"]) == 1
+    what = block_text(chans, blk) if chan(chans, blk.get("channel")) else what_text(blk)
+    text = (_("Remove %s?[CR]It is the special's only channel: %s is removed too.") % (what, sp["name"])
+            if last else _("Remove %s from %s?") % (what, sp["name"]))
+    if not M.confirm_remove(text):
+        return False
+    sp["blocks"].remove(blk)
+    if last:
+        cal.remove(sp)
+    save(cal, [blk["channel"]])
+    return True
+
+
+# ------------------------------------------------------------------ channel removed
+def ask_channel(chans, heading=None):
+    air = [c for c in chans if c["type"] in M.AIR_TYPES]
+    j = D.select(heading or _("Which channel?"), ["%3d  %s" % (c["number"], c["name"]) for c in air])
+    return air[j] if j >= 0 else None
+
+
+def lost_block(cal, sp, blk, chans):
+    """A block whose channel is gone, on the special's page: Choose a channel / Remove."""
+    i = D.select(block_text(chans, blk), [_("Choose a channel"), _("Remove"), _("Cancel")])
+    if i == 1:
+        remove_block(cal, sp, blk, chans)
+    if i != 0:
+        return
+    ch = ask_channel(chans)
+    if not ch:
+        return
+    new = dict(blk, channel=ch["id"])
+    sp["blocks"][sp["blocks"].index(blk)] = new
+    if checks(cal, sp, new, chans):
+        save(cal, [ch["id"]], sp)
+
+
+def lost_special(cal, sp, chans):
+    """A special none of whose channels is left, in the list: Choose a channel / Remove.
+    True when it has a channel again (its page opens next)."""
+    i = D.select("%s%s%s" % (sp["name"], DOT, _("channel removed")),
+                 [_("Choose a channel"), _("Remove"), _("Cancel")])
+    if i == 1:
+        if M.confirm_remove(_("Remove %s?[CR]Its channels air their normal programming on the day.") % sp["name"]):
+            cal.remove(sp)
+            save(cal)
+    if i != 0:
+        return False
+    several = len(sp["blocks"]) > 1
+    picked = []
+    for blk in list(sp["blocks"]):                  # Back on any of them: nothing is changed
+        ch = ask_channel(chans, _("Which channel for %s?") % what_text(blk) if several else None)
+        if not ch:
+            return False
+        picked.append((blk, dict(blk, channel=ch["id"])))
+    for blk, new in picked:
+        sp["blocks"][sp["blocks"].index(blk)] = new
+    kept = set()
+    for _blk, new in picked:
+        if new in sp["blocks"] and not checks(cal, sp, new, chans, kept):
+            return False
+    save(cal, [b["channel"] for b in sp["blocks"]], sp)
+    return True
 
 
 # ------------------------------------------------------------------ preview the day
@@ -622,6 +709,8 @@ def preview(sp, chans):
     for blk in sp["blocks"]:
         ch = chan(chans, blk["channel"])
         if not ch:
+            lines += ["[B]%s[/B]" % block_text(chans, blk),
+                      "[COLOR grey]%s[/COLOR]" % _("It doesn't air until a channel is chosen."), ""]
             continue
         sched = lineup.schedule(ch, ensure=False)
         st, en = specials.window(blk, day)
