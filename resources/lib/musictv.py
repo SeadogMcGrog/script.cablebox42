@@ -135,6 +135,7 @@ class MusicScreen(object):
             tv.card(tv.ch["name"], _("No songs to play"), _("Channel manager > this channel > Check songs"), "")
             return
         offset = max(0.0, time.time() - e["s"] + START_LAG) if self.items[0] is e else 0.0
+        tv.tone_off()                  # from an off-air bars-and-tone channel: repeat-one off first
         pl = xbmc.PlayList(getattr(xbmc, "PLAYLIST_MUSIC", 0))
         pl.clear()
         for i, x in enumerate(self.items):
