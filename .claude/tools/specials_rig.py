@@ -1,7 +1,7 @@
 """Holidays and specials in the rig: write a test calendar.json, list what each
 channel has planned around its specials, and check the plan.  Inside the rig:
 
-    python3 /mnt/g/CableBox42/script.cablebox42-holidays/.claude/tools/specials_rig.py CMD
+    python3 /mnt/g/CableBox42/script.cablebox42/.claude/tools/specials_rig.py CMD
 
     case NAME     write calendar.json for a test case (see CASES; A+B for several);
                   'none' removes it

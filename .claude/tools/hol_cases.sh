@@ -1,8 +1,8 @@
 #!/bin/bash
-# Holidays and specials: the stage 2 rig cases, one after another (Git Bash, from the worktree).
+# Holidays and specials: the stage 2 rig cases, one after another (Git Bash, from script.cablebox42).
 #   bash .claude/tools/hol_cases.sh ZIP
 S=.claude/kodi21-test-vm.sh
-R='python3 /mnt/g/CableBox42/script.cablebox42-holidays/.claude/tools/specials_rig.py'
+R='python3 /mnt/g/CableBox42/script.cablebox42/.claude/tools/specials_rig.py'
 zip=${1:?zip}
 bash $S install "$zip" | tail -1
 
