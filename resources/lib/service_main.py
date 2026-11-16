@@ -10,6 +10,7 @@ from . import kodiutil as K
 
 
 TOOL_BUSY = "script.cablebox42.tool"     # manager.TOOL_BUSY (the menus aren't imported up front)
+SPECIALS_REPLAN = os.path.join(K.PROFILE, "specials_replan.json")   # specials_editor.REPLAN_FILE
 
 
 LIBRARY_SETTLE = 30         # s after the last library scan/clean before a refresh
@@ -172,6 +173,16 @@ def run():
         except Exception:
             pass
 
+    def specials_pending():
+        # Holidays and specials: the editor saved and asked for the affected channels
+        # to be planned again (it never waits for that itself): within a second
+        if os.path.exists(SPECIALS_REPLAN):
+            try:
+                from . import specials_editor
+                specials_editor.run_pending(home.getProperty(TOOL_BUSY))
+            except Exception as exc:
+                K.log_err("specials re-plan failed: %s" % exc)
+
     def music_videos():
         # Boombox: length, frame rate, audio and tags of music videos not read yet
         from . import library
@@ -213,8 +224,10 @@ def run():
                     not xbmc.getCondVisibility("System.HasModalDialog"):
                 xbmc.executebuiltin("RunScript(script.cablebox42,watch)")
                 break
-    if monitor.waitForAbort(90):
-        return
+    for _sec in range(90):
+        specials_pending()
+        if monitor.waitForAbort(1):
+            return
     import threading
     threading.Thread(target=chapter_reader, name="cablebox42-chapters").start()
     from . import progress
@@ -278,6 +291,8 @@ def run():
             except Exception as exc:
                 K.log_err("extras scan failed: %s" % exc)
             idle = 20 * 60
-        if monitor.waitForAbort(5):
-            break
+        for _sec in range(5):
+            specials_pending()
+            if monitor.waitForAbort(1):
+                return
         idle -= 5

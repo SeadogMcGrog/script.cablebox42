@@ -1082,7 +1082,9 @@ In the days before, breaks promote it (*Thursday, all day*).
   has its own hours and programming, so Christmas Day can be holiday episodes
   on one channel and a movie at 8 PM on another.
 - **Only the holiday episodes:** for Halloween, Thanksgiving and Christmas,
-  **What to air?** also offers *… episodes of this channel's shows*.
+  **What to air?** also offers *… episodes of this channel's shows*. Each airs
+  once on the day; if they don't fill the hours, saving tells you how much
+  they cover, and the rest of the day is the channel's normal programming.
 - **Part of a day:** **Which hours?** → *Choose hours…*. An end earlier than
   the start means the next morning: New Year's Eve from 6:00 PM to 6:00 AM
   runs through midnight, and through the channel's sign-off hours.

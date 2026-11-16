@@ -16,8 +16,15 @@ v1.2.0 (2026-11-12)
   on the days with a special; CH+ / CH- change month; OK on a day: its
   specials and 'Add a special on this day', which offers the weekday rule when
   the date fits one); Menu switches to the list, and it opens the way you
-  left it. Saving also asks when one of the special's shows is pinned on
-  another channel during its hours (Cancel / Keep both)
+  left it. Saving asks once about every show of the special pinned on another
+  channel during its hours (Cancel / Keep all) and opens the special's page at
+  once (the channels are planned again in the background). Holiday episodes
+  air once each on the day, then the channel's normal programming (saving says
+  how much they cover). Movies in a special are features; shorts only fill
+  time, unless picked by name. A This year only special offers no 'continue';
+  a single movie isn't asked for an order. Other channels promote a special
+  with or without house breaks. Holding CH+ / CH- in the calendar stops on
+  the month where you let go
 - New: the weekly planner steps through the weeks: Right past Sunday is the
   next week, Left past Monday the week before ('This week', 'Week of 23 Nov').
   Specials show in their own week: a star and the name in the day's heading,

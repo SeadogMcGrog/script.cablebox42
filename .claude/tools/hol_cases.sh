@@ -41,3 +41,13 @@ for n in 3 6 7; do awk "/^$n /{f=1;print} /^[0-9]+ /&&!/^$n /{f=0} f" ../rig/hol
 run "Thanksgiving episodes only (Kid Stuff has none)" holiday 2026-11-26 --none=kids0007 -- thanksgiving_genres=Western
 run "A June special on a channel with summer reruns" june 2026-06-15 -- summer_reruns=1 rerun_today=2026-06-15
 grep -c "(R)" ../rig/hol_case_june.txt
+
+run "Movie night: features in the main slots, a short by name airs" movies 2027-01-01
+echo "=================== Cross-channel promos for a special without House breaks (two days before)"
+bash $S lineup .claude/tools/lineup-specials.json | tail -1
+bash $S sh "$R case xpromo" | tail -1
+bash $S setting horizon_hours=24 specials_today=2026-12-30 rerun_today= summer_reruns=0 thanksgiving_genres= promos_on=true promo_every=1 house_breaks=2 | tail -1
+bash $S start | tail -1
+sleep 40
+bash $S sh "$R promos" > ../rig/hol_case_xpromo.txt 2>&1
+cat ../rig/hol_case_xpromo.txt | cut -c1-120

@@ -851,7 +851,7 @@ midnight marks its own date only.
 | Button | Action |
 |---|---|
 | Arrows | Move from day to day (past the edge: the next or previous month) |
-| CH+ / CH−, Page Up / Down | Next month, previous month. Any year can be looked at |
+| CH+ / CH−, Page Up / Down | Next month, previous month. Any year can be looked at. Holding the button never runs on: let go and it stops on that month |
 | **OK** on a day | That day's specials (pick one to open it) and *Add a special on this day* |
 | **Menu** | *Show as a list*: every special with its next date, soonest first. The list's last row, *Month calendar*, comes back. CableBox opens whichever you used last |
 | Back | Done |
@@ -874,9 +874,10 @@ on any of them adds nothing):
 | **Which channel?** | One channel. *Add another channel* on the special's page adds more |
 | **Which hours?** | *All day* (midnight to midnight) · *Broadcast day* (6 AM to 6 AM the next morning) · *Choose hours…* (an end earlier than the start means the next morning) |
 | **What to air?** | Any programming source, as in the weekly planner. For Halloween, Thanksgiving and Christmas also *… episodes of this channel's shows*: the channel's own holiday episodes |
-| **Episode order** | *Continue where last year's marathon stopped* · *From the first episode* · *Random* |
+| **Episode order** | *Continue where last year's marathon stopped* · *From the first episode* · *Random*. A *This year only* special has no last year: *From the first episode* · *Random*. A single movie isn't asked |
 
-The last screen sums it up: *Cancel* / *Add special*.
+The last screen sums it up: *Cancel* / *Add special*. The special's page opens
+at once; the channels are planned again in the background.
 
 A special's page has its name, date and repeat, each channel's programming
 (OK: change the hours, what airs or the order, or remove the channel), *Add
@@ -890,6 +891,12 @@ another channel*, **Preview the day** (what will air, channel by channel) and
   bumps and station IDs as usual. The guide shows its name after the title
   (*Seinfeld · Turkey Day Marathon*). A programme only starts if it ends by
   the special's end; a little time left over is a station break.
+- **Movies in a special** are feature films: shorts (12 minutes or less, the
+  ones a movie channel airs as *Short Subjects*) only fill time no feature
+  fits, as on a movie channel. A short you picked by name (*Specific movies*)
+  airs like any movie.
+- **Holiday episodes** air once each on the day. When they've all aired, the
+  rest of the special's hours are the channel's normal programming.
 - **A marathon keeps its own place.** The show's regular run doesn't move
   while the marathon airs, and next year's marathon continues where this
   year's stopped (*Continue…*).
@@ -898,17 +905,21 @@ another channel*, **Preview the day** (what will air, channel by channel) and
   channel still airs there: pins always win on their own channel.
 - **Saving asks when it matters:** another special on the same channel in
   those hours (*Cancel* / *Replace*); the same show in a special on another
-  channel at the same time (*Cancel* / *Keep both*); one of its shows pinned
-  on another channel during its hours (*Seinfeld is pinned on Beacon at 8:00 PM
-  on Thursdays and will air there too*: *Cancel* / *Keep both*); a channel
-  with no holiday episodes is told so, and airs its normal programming on the
-  day.
+  channel at the same time (*Cancel* / *Keep both*); its shows pinned on other
+  channels during its hours, all in one question (*These shows are pinned on
+  other channels during this special: Seinfeld on Beacon, Thu 8:00 PM; …*:
+  *Cancel* / *Keep all*); holiday episodes that don't fill its hours (*Comedy 24
+  has 3 Thanksgiving episodes (about 1½ hours) for 24 hours. The rest of the
+  day will be its normal programming.*: *Cancel* / *OK*); a channel with no
+  holiday episodes is told so, and airs its normal programming on the day.
 - **A special for today** starts after the programme that's on now. Nothing
   on air is cut off.
 - **Promos:** in the six days before, some of the channel's promos (and
   other channels' promos for it) name the special: *Thursday, all day*,
   *Tomorrow, all day*, *Tonight at 6:00 PM*. They follow the promo settings
-  under [Promos](#promos); house breaks carry them too.
+  under [Promos](#promos); house breaks carry them too. Channels without a
+  special of their own promote other channels' specials now and then, with or
+  without house breaks.
 - **This year only** specials leave the list once their date has passed.
 - **Deleting a channel** asks first when it has specials, and takes its part
   in them with it. If a channel disappears another way (*Build my lineup →

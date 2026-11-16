@@ -5,6 +5,8 @@ channel has planned around its specials, and check the plan.  Inside the rig:
 
     case NAME     write calendar.json for a test case (see CASES; A+B for several);
                   'none' removes it
+    promos        promos naming a special, by channel; PASS when other channels'
+                  plain promo slots (no house break) name one
     aired         forget the undo logs, as if everything planned had aired (a refresh
                   then keeps the bookmarks where the plan left them: "a year later")
     show [HOURS]  blocks from now on (default 30 h), with the special's name, (R),
@@ -13,6 +15,10 @@ channel has planned around its specials, and check the plan.  Inside the rig:
                     - no programme crosses a special's start or end
                     - a special's blocks move only event: bookmarks
                     - its shows are on no other channel at the same time
+                    - a holiday-episodes special airs none twice; once they have all
+                      aired, normal programming (and nothing of the special after it)
+                    - a movie special: no short in a main slot (a feature after it);
+                      a movie picked by name airs
                   --none=CHANNEL_ID: that channel has nothing for its special (no holiday
                   episodes): its normal programming is expected there
                   Ends PASS or FAIL.
@@ -80,6 +86,20 @@ CASES = {
         {"id": "leap01", "name": "Leap Day", "repeat": "yearly", "when": {"type": "date", "month": 2, "day": 29},
          "blocks": [{"channel": "keys0003", "start": "00:00", "end": "00:00", "sources": TV("Friends"),
                      "order": "random"}]}],
+    # movies (case movies TODAY): Drama Movies' movie night, features only in the main slots (the
+    # rig's two 45-second "short films" fill only what no feature fits); Kid Stuff: a short by name airs
+    "movies": [
+        {"id": "movie1", "name": "Movie Night", "repeat": "yearly", "when": {"type": "date", "month": 1, "day": 1},
+         "blocks": [{"channel": "film0006", "start": "18:00", "end": "23:00",
+                     "sources": [{"type": "movies", "genre": "Drama"}], "order": "random"},
+                    {"channel": "kids0007", "start": "18:00", "end": "19:00",
+                     "sources": [{"type": "movie", "value": ["Tiny Toon"]}], "order": "first"}]}],
+    # cross-channel promos (case xpromo DATE, two days after today; promos on, house breaks off):
+    # other channels' plain promo slots name Beacon's special too
+    "xpromo": [
+        {"id": "xpro01", "name": "Beacon Big Night", "repeat": "yearly", "when": {"type": "date", "month": 1, "day": 1},
+         "blocks": [{"channel": "beac0004", "start": "20:00", "end": "23:00", "sources": TV("Friends"),
+                     "order": "first"}]}],
     # this year only, on 1 July 2026
     "once": [
         {"id": "once01", "name": "One Time Only", "repeat": "once", "year": 2026,
@@ -126,6 +146,31 @@ def main():
             json.dump({"specials": todo}, f)
         print("calendar.json: %s" % ", ".join("%s (%d blocks)" % (sp["name"], len(sp["blocks"])) for sp in todo))
         return 0
+    if cmd == "promos":
+        # promos that name a special, by channel; FAIL if no other channel's plain promo
+        # slot (no house break) names one (cross-channel promos without House breaks)
+        cal = S.load(CAL)
+        ids = dict((sp["id"], sp) for sp in cal)
+        home = dict((sp["id"], set(b["channel"] for b in sp["blocks"])) for sp in cal)
+        chans = dict((c["id"], c) for c in json.load(open(os.path.join(D, "channels.json")))["channels"])
+        off, _fake = shift()
+        cross = 0
+        for f in sorted(glob.glob(os.path.join(D, "schedules", "*.json"))):
+            cid = os.path.basename(f)[:-5]
+            ents = [e for e in json.load(open(f)).get("entries", []) if e.get("k") == "promo"]
+            sp_ = [e for e in ents if e.get("sp") in ids]
+            if not ents or cid not in chans:
+                continue
+            print("%d %s: %d promos, %d name a special" % (chans[cid]["number"], chans[cid]["name"], len(ents), len(sp_)))
+            for e in sp_[:4]:
+                where = e.get("xc") or cid
+                print("   %s  %s on %s%s%s" % (clock(e["s"], off), e.get("t"), chans.get(where, {}).get("name"),
+                                              "  (house break)" if e.get("h") else "", "  (cross-channel)" if where != cid else ""))
+            cross += len([e for e in sp_ if not e.get("h") and cid not in home[e["sp"]] and e.get("xc") in home[e["sp"]]])
+        print()
+        print("cross-channel promos for a special in plain promo slots: %d" % cross)
+        print("PASS" if cross else "FAIL")
+        return 0 if cross else 1
     if cmd == "aired":
         for f in sorted(glob.glob(os.path.join(D, "schedules", "*.json"))):
             d = json.load(open(f))
@@ -154,6 +199,24 @@ def main():
         for st, en, sp in wins:
             print("   special: %s  %s - %s" % (sp["name"], clock(st, off), clock(en, off)))
         prev = None
+        # a holiday-episodes special: once its episodes have all aired, normal programming
+        hol = set(sp["name"] for _st, _en, sp in wins
+                  if any(b.get("channel") == cid and any(isinstance(x, dict) and x.get("type") == "holiday"
+                                                         for x in b.get("sources") or ()) for b in sp["blocks"]))
+        normal_since = {}
+        for st, en, sp in wins:
+            if sp["name"] in hol:
+                aired, seen = {}, set()
+                for e in d.get("entries", []):
+                    if e.get("k") == "show" and e.get("p") and st - 0.5 <= e["s"] and e["e"] <= en + 0.5 and                             any(b.get("sp") == sp["name"] and b["s"] <= e["s"] < b["e"] for b in blocks):
+                        blk = next(b["s"] for b in blocks if b["s"] <= e["s"] < b["e"])
+                        if (blk, e["p"]) in seen:
+                            continue             # the same programme's next part (act breaks)
+                        seen.add((blk, e["p"]))
+                        if e["p"] in aired:
+                            fails.append("%s: %s aired twice in %s (%s and %s)" % (
+                                ch["name"], os.path.basename(e["p"]), sp["name"], clock(aired[e["p"]], off), clock(e["s"], off)))
+                        aired.setdefault(e["p"], e["s"])
         for b in blocks:
             mark = ("  [%s]" % b["sp"]) if b.get("sp") else ""
             line = "%s  %-34s %-9s%s%s" % (clock(b["s"], off), b["t"][:34], b.get("lb", "") or
@@ -167,8 +230,13 @@ def main():
                 if b["s"] < st - 0.5 < b["e"] - 0.5 or b["s"] < en - 0.5 < b["e"] - 0.5:
                     fails.append("%s: %s at %s crosses the edge of %s" % (ch["name"], b["t"], clock(b["s"], off), sp["name"]))
                 inside = b["s"] >= st - 0.5 and b["e"] <= en + 0.5
-                if inside and b["s"] > now and not b.get("sp") and b.get("t") != "Station Break" and cid not in NONE:     # what is on air stays
+                if inside and b["s"] > now and not b.get("sp") and sp["name"] in hol:
+                    normal_since.setdefault(sp["name"], b["s"])     # its holiday episodes ran out
+                elif inside and b["s"] > now and not b.get("sp") and b.get("t") != "Station Break" and cid not in NONE:     # what is on air stays
                     fails.append("%s: %s at %s is not part of %s" % (ch["name"], b["t"], clock(b["s"], off), sp["name"]))
+                if inside and b.get("sp") == sp["name"] and sp["name"] in normal_since and b["s"] > normal_since[sp["name"]]:
+                    fails.append("%s: %s at %s is %s again after its episodes ran out" % (
+                        ch["name"], b["t"], clock(b["s"], off), sp["name"]))
                 if not inside and b.get("sp") == sp["name"] and not any(
                         b["s"] >= s2 - 0.5 and b["e"] <= e2 + 0.5 for s2, e2, _x in wins):
                     fails.append("%s: %s at %s is marked %s outside its hours" % (ch["name"], b["t"], clock(b["s"], off), sp["name"]))
@@ -179,7 +247,7 @@ def main():
                 if b.get("rr"):
                     fails.append("%s: %s at %s is a rerun inside a special" % (ch["name"], b["t"], clock(b["s"], off)))
                 for u in d.get("undo", []):
-                    if abs(u[0] - b["s"]) < 0.01 and not str(u[2]).startswith(("event:", "ev:")):
+                    if abs(u[0] - b["s"]) < 0.01 and not str(u[2]).startswith(("event:", "ev:", "hd:")):
                         fails.append("%s: the special's block at %s moved %s (%s)" % (ch["name"], clock(b["s"], off), u[2], u[1]))
                 for oid, od in plans.items():
                     if oid == cid:
@@ -188,6 +256,23 @@ def main():
                         if ob.get("k") == "show" and ob["t"].lower() == b["t"].lower() and ob["s"] < b["e"] and ob["e"] > b["s"]:
                             fails.append("%s airs %s at %s during %s on %s" % (
                                 chans[oid]["name"], ob["t"], clock(ob["s"], off), b["sp"], ch["name"]))
+        ents = d.get("entries", [])
+        for st, en, sp in wins:
+            if en > d.get("until", 0) or st < now:
+                continue                     # only a special planned whole
+            mine = [b for b in blocks if b.get("sp") == sp["name"] and st - 0.5 <= b["s"] < en]
+            shows = [e for e in ents if e.get("k") == "show" and st - 0.5 <= e["s"] < en and
+                     any(b["s"] <= e["s"] < b["e"] for b in mine)]
+            srcs = [x for b in sp["blocks"] if b.get("channel") == cid for x in b.get("sources") or ()]
+            named = [v.lower() for x in srcs if x.get("type") == "movie" for v in x.get("value") or ()]
+            for v in named:
+                if not any(v in (e.get("t") or "").lower() for e in shows):
+                    fails.append("%s: %s (picked by name) doesn't air in %s" % (ch["name"], v, sp["name"]))
+            if any(x.get("type") == "movies" for x in srcs):
+                for k, e in enumerate(shows):
+                    if float(e["e"] - e["s"]) <= 720 and any(float(f["e"] - f["s"]) > 720 for f in shows[k + 1:]):
+                        fails.append("%s: the short %s at %s took a main slot in %s (a feature aired after it)" % (
+                            ch["name"], e.get("t"), clock(e["s"], off), sp["name"]))
         st_ = d.get("state", {})
         marks = dict((k, os.path.basename(v or "-")) for k, v in st_.get("last", {}).items()
                      if k.startswith(("event:", "rule:")) or k.endswith(":rerun"))

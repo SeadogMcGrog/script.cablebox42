@@ -7336,14 +7336,6 @@ msgctxt "#34350"
 msgid "+ Add a special on this day"
 msgstr ""
 
-msgctxt "#34351"
-msgid "%s is pinned on %s at %s every day and will air there too."
-msgstr ""
-
-msgctxt "#34352"
-msgid "%s is pinned on %s at %s on %s and will air there too."
-msgstr ""
-
 msgctxt "#34353"
 msgid "Music test"
 msgstr ""
@@ -7598,4 +7590,56 @@ msgstr ""
 
 msgctxt "#34416"
 msgid "Songs around the clock, no breaks"
+msgstr ""
+
+msgctxt "#34417"
+msgid "1 minute"
+msgstr ""
+
+msgctxt "#34418"
+msgid "%s½ hours"
+msgstr ""
+
+msgctxt "#34419"
+msgid "½ hour"
+msgstr ""
+
+msgctxt "#34420"
+msgid "1 hour"
+msgstr ""
+
+msgctxt "#34421"
+msgid "%d hours"
+msgstr ""
+
+msgctxt "#34422"
+msgid "about %s"
+msgstr ""
+
+msgctxt "#34423"
+msgid "%s has 1 %s episode (%s) for %s."
+msgstr ""
+
+msgctxt "#34424"
+msgid "%s has %d %s episodes (%s) for %s."
+msgstr ""
+
+msgctxt "#34425"
+msgid "The rest of the day will be its normal programming."
+msgstr ""
+
+msgctxt "#34426"
+msgid "%s on %s, %s"
+msgstr ""
+
+msgctxt "#34427"
+msgid "This show is pinned on another channel during this special:"
+msgstr ""
+
+msgctxt "#34428"
+msgid "These shows are pinned on other channels during this special:"
+msgstr ""
+
+msgctxt "#34429"
+msgid "Keep all"
 msgstr ""

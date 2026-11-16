@@ -17,6 +17,8 @@ offers Choose a channel / Remove.  Only deleting a channel by hand takes its blo
 """
 import datetime
 import json
+import os
+import threading
 import time
 
 import xbmc
@@ -117,6 +119,8 @@ def source_text(blk):
 
 
 def order_text(blk, row=True):
+    if single_movie(blk):
+        return ""                    # one movie: no order to speak of
     for key, label, short in ORDERS:
         if key == blk.get("order"):
             return short if row else label
@@ -157,19 +161,50 @@ def load(chans=None):
     return [sp for sp in cal if not specials.expired(sp, now())]
 
 
+REPLAN_FILE = os.path.join(K.PROFILE, "specials_replan.json")
+REPLAN_BELL = "cablebox42.specials_replan"      # home property: the service looks at once
+
+
 def save(cal, cids=(), sp=None):
-    """Write calendar.json, then plan again - from the end of what is on air - the
-    channels in `cids` and the channels whose shows `sp` now keeps off."""
+    """Write calendar.json and ask the service to plan again - from the end of what
+    is on air - the channels in `cids` and the channels whose shows `sp` now keeps
+    off (run_pending).  Returns at once: the editor never waits for planning."""
     specials.save(cal, now=now())
     scheduler.forget_specials()
-    todo = set(cids)
+    try:
+        want = K.load_json(REPLAN_FILE, None) or {}
+        want["cids"] = sorted(set(want.get("cids") or []) | set(c for c in cids if c))
+        want["sps"] = sorted(set(want.get("sps") or []) | ({sp["id"]} if sp is not None else set()))
+        K.save_json(REPLAN_FILE, want)
+        xbmcgui.Window(10000).setProperty(REPLAN_BELL, str(time.time()))
+    except Exception as exc:
+        K.log_err("Holidays and specials, asking to plan again: %s" % exc)
+
+
+def run_pending(busy=""):
+    """In the service: the replanning the editor asked for (save).  Not while another
+    tool refreshes (busy: its TOOL_BUSY), which would plan the same channels.  True
+    if it planned."""
+    if busy and busy != "specials" or not os.path.exists(REPLAN_FILE):
+        return False
+    want = K.load_json(REPLAN_FILE, None) or {}
+    try:
+        os.remove(REPLAN_FILE)
+    except OSError:
+        pass
+    xbmcgui.Window(10000).clearProperty(REPLAN_BELL)
+    scheduler.forget_specials()
+    todo = set(want.get("cids") or [])
     try:
         lineup = scheduler.Lineup(K.schedule_cfg())
-        if sp is not None:
-            todo |= kept_off(lineup, sp)
+        for sid in want.get("sps") or []:
+            sp = specials.find(specials.load(), sid)
+            if sp is not None:
+                todo |= kept_off(lineup, sp)
         replan(lineup, todo)
     except Exception as exc:
         K.log_err("Holidays and specials, planning again: %s" % exc)
+    return True
 
 
 def kept_off(lineup, sp):
@@ -385,26 +420,62 @@ def ask_day_rule(day):
 
 class Calendar(xbmcgui.WindowXMLDialog):
     """The month on screen: 42 cells from the Monday on or before the 1st.  The
-    cursor is a date; a month's specials are worked out once (on_days)."""
+    cursor is a date; a month's specials are worked out once (on_days).
+
+    Keys never queue up: onAction only moves the cursor's target (want) and returns;
+    a drawing thread draws whatever the target is when it's ready, so presses that
+    come while a month draws collapse into one step, and when the key is let go the
+    screen stops on its target at once (no backlog of months still to draw)."""
     cid = None
     result = None
+    closing = False
+    drawer = None
 
     def onInit(self):
         self.chans = C.load()
         self.only = chan(self.chans, self.cid) if self.cid else None
         self.day = getattr(self, "day", None) or today()
+        self.want = getattr(self, "want", None) or self.day
         self.setProperty("hint", _("OK: open / add    Menu: list    CH+ / CH-: month    Back: done"))
         for c, n in enumerate(P.day_names()):
             self.setProperty("D%d" % c, n)
         self.shown = None
-        self.reload()
+        if self.drawer is None:
+            self.lock = threading.RLock()
+            self.wake = threading.Event()
+            self.reload()
+            self.drawer = threading.Thread(target=self._draw_loop, name="cablebox42-calendar")
+            self.drawer.start()
+        else:
+            self.reload()
+
+    def _draw_loop(self):
+        while not self.closing and not xbmc.Monitor().abortRequested():
+            self.wake.wait(0.5)
+            self.wake.clear()
+            self.settle()
+
+    def settle(self):
+        """Draw the target day if the screen isn't there yet (before OK opens it)."""
+        with self.lock:
+            while not self.closing and self.want != self.day:
+                self.day = self.want
+                self.refresh()
+
+    def close(self):
+        self.closing = True
+        if self.drawer is not None:
+            self.wake.set()
+        xbmcgui.WindowXMLDialog.close(self)
 
     def reload(self):
         """calendar.json again (something may have been added or changed)."""
-        self.chans = C.load()
-        self.cal = load(self.chans)
-        self.shown = None
-        self.refresh()
+        with self.lock:
+            self.chans = C.load()
+            self.cal = load(self.chans)
+            self.shown = None
+            self.day = self.want
+            self.refresh()
 
     def first(self):
         one = self.day.replace(day=1)
@@ -451,17 +522,18 @@ class Calendar(xbmcgui.WindowXMLDialog):
             return where
         return _("%s:  no special  -  press OK to add one") % where
 
-    def move(self, months):
-        """The same day in another month (the 31st becomes the month's last day)."""
-        m = self.day.year * 12 + self.day.month - 1 + months
+    @staticmethod
+    def moved(d, months):
+        """The same day in another month (the 31st becomes the month's last day);
+        d itself outside FIRST_YEAR..LAST_YEAR."""
+        m = d.year * 12 + d.month - 1 + months
         y, mo = divmod(m, 12)
         if not FIRST_YEAR <= y <= LAST_YEAR:
-            return
-        day = self.day.day
+            return d
+        day = d.day
         while True:
             try:
-                self.day = datetime.date(y, mo + 1, day)
-                return
+                return datetime.date(y, mo + 1, day)
             except ValueError:
                 day -= 1
 
@@ -471,15 +543,17 @@ class Calendar(xbmcgui.WindowXMLDialog):
             self.close()
             return
         step = {A_LEFT: -1, A_RIGHT: 1, A_UP: -7, A_DOWN: 7}.get(a)
+        want = self.want
         if step:
-            d = self.day + datetime.timedelta(days=step)
+            d = want + datetime.timedelta(days=step)
             if FIRST_YEAR <= d.year <= LAST_YEAR:
-                self.day = d
+                want = d
         elif a in (A_PGUP, A_CHUP):
-            self.move(1)
+            want = self.moved(want, 1)
         elif a in (A_PGDN, A_CHDN):
-            self.move(-1)
+            want = self.moved(want, -1)
         elif a == A_SELECT:
+            self.settle()
             self.on_select()
             return
         elif a in A_CONTEXT or a == A_INFO:
@@ -489,7 +563,8 @@ class Calendar(xbmcgui.WindowXMLDialog):
             return
         else:
             return
-        self.refresh()
+        self.want = want            # the drawing thread takes it from here
+        self.wake.set()
 
     def on_select(self):
         """That day's specials (open one) and Add a special on this day."""
@@ -523,6 +598,10 @@ def open_calendar(cid=None, day=None):
     win.day = day
     win.doModal()
     result = win.result
+    win.closing = True
+    if win.drawer is not None:
+        win.wake.set()
+        win.drawer.join(2)
     del win
     return result
 
@@ -650,9 +729,19 @@ def ask_source(sp):
     return M.pick_source()
 
 
-def ask_order(current=None):
-    keys = [o[0] for o in ORDERS]
-    j = D.select(_("Episode order"), [o[1] for o in ORDERS], preselect=keys.index(current) if current in keys else 0)
+def single_movie(blk_or_src):
+    """One movie picked by name: nothing to put in order (no order question, no order text)."""
+    srcs = blk_or_src.get("sources") if "sources" in blk_or_src else [blk_or_src]
+    return len(srcs or ()) == 1 and isinstance(srcs[0], dict) and srcs[0].get("type") == "movie" and \
+        len(srcs[0].get("value") or ()) == 1
+
+
+def ask_order(current=None, once=False):
+    """The order of a block's programmes.  once: a This year only special has no
+    'last year' to continue from: From the first episode / Random only."""
+    orders = [o for o in ORDERS if not (once and o[0] == "continue")]
+    keys = [o[0] for o in orders]
+    j = D.select(_("Episode order"), [o[1] for o in orders], preselect=keys.index(current) if current in keys else 0)
     return keys[j] if j >= 0 else None
 
 
@@ -670,28 +759,60 @@ def ask_block(chans, sp, cid=None):
     src = ask_source(sp)
     if not src:
         return None
-    order = ask_order()
+    order = "first" if single_movie(src) else ask_order(once=sp.get("repeat") == "once")
     if not order:
         return None
     return {"channel": ch["id"], "start": hours[0], "end": hours[1], "sources": [src], "order": order}
 
 
-def checks(cal, sp, blk, chans, kept=None):
+def length_text(secs, about=False):
+    """'2 hours', '1½ hours', '45 minutes' (to the half hour from an hour up)."""
+    if secs < 3600 - 900:
+        n = max(1, int(round(secs / 60.0)))
+        txt = _("1 minute") if n == 1 else _("%d minutes") % n
+    else:
+        halves = int(round(secs / 1800.0))
+        h, half = divmod(halves, 2)
+        if half:
+            txt = _("%s½ hours") % h if h else _("½ hour")
+        else:
+            txt = _("1 hour") if h == 1 else _("%d hours") % h
+    return (_("about %s") % txt) if about else txt
+
+
+def checks(cal, sp, blk, chans, kept=None, clashes=None):
     """The questions before a block is saved.  False: cancelled.  'Replace' takes the
     blocks it replaces out of `cal` (and out of `sp`) here.  `kept`: a set shared by
-    the checks of several blocks, so Keep both is asked once for a pair of channels."""
+    the checks of several blocks, so Keep both is asked once for a pair of channels.
+    clashes: a list to collect pinned-show clashes in instead of asking (checks_all
+    asks once for all the blocks of a save)."""
     ch = chan(chans, blk["channel"])
     if not ch:
         return True                 # channel removed: it airs nowhere, nothing to ask
     lineup = scheduler.Lineup(K.schedule_cfg())
     sched = lineup.schedule(ch, ensure=False)
+    day, _skipped = specials.next_date(dict(sp, blocks=[blk]), now())
     season = sched._holiday_source(blk)
     if season is not None:
         pool = sched._special_pool(blk)
-        if not pool["series"] and not pool["singles"]:
+        items = [e for ser in pool["series"] for e in ser["episodes"]] + pool["singles"]
+        if not items:
             D.ok(_("Holidays and specials"), _("%s has no %s episodes.[CR]It will air its normal programming "
                                                 "on the day.") % (ch["name"], SEASON.get(season, season)))
-    day, _skipped = specials.next_date(dict(sp, blocks=[blk]), now())
+        elif day:
+            # none of them twice in the day: when they run out, the channel's normal programming
+            st, en = specials.window(blk, day)
+            have = sum(float(e.get("dur") or 0) for e in items)
+            if have < en - st:
+                name, what = ch["name"], SEASON.get(season, season)
+                if len(items) == 1:
+                    text = _("%s has 1 %s episode (%s) for %s.") % (
+                        name, what, length_text(have, about=True), length_text(en - st))
+                else:
+                    text = _("%s has %d %s episodes (%s) for %s.") % (
+                        name, len(items), what, length_text(have, about=True), length_text(en - st))
+                if not M.confirm(text + "[CR]" + _("The rest of the day will be its normal programming."), _("OK")):
+                    return False
     if not day:
         return True
     st, en = specials.window(blk, day)
@@ -731,22 +852,36 @@ def checks(cal, sp, blk, chans, kept=None):
                 if kept is not None:
                     kept.add(pair)
                 break
-        if not pinned_elsewhere(titles, ch, chans, st, en, kept):
+        found = pinned_elsewhere(titles, ch, chans, st, en, kept)
+        if clashes is not None:
+            clashes.extend(found)
+        elif not ask_pinned(found):
             return False
     return True
 
 
+def checks_all(cal, sp, blocks, chans):
+    """checks() for several blocks saved at once: one pinned-show question for all."""
+    kept, clashes = set(), []
+    for b in blocks:
+        if b in sp["blocks"] and not checks(cal, sp, b, chans, kept, clashes):
+            return False
+    return ask_pinned(clashes)
+
+
 def pinned_elsewhere(titles, ch, chans, st, en, kept=None):
-    """A special's show that is pinned on another channel during its hours airs there
-    too (pins win on their own channel): say so, Cancel / Keep both, once for each
-    pinned slot.  False: cancelled."""
+    """A special's shows that are pinned on another channel during its hours (they
+    air there too: pins win on their own channel): [(text, key)], one per pinned
+    airing, 'Friends on Keystone, Thu 8:00 PM', in time order."""
     from . import library
     off = scheduler.specials_shift(K.schedule_cfg())
+    out = []
     for c in chans:
         if c["id"] == ch["id"] or c["type"] not in M.AIR_TYPES:
             continue
         for r in c.get("slots") or []:
-            if not scheduler.rule_occurrences(r, st - off, en - off):
+            occ = scheduler.rule_occurrences(r, st - off, en - off)
+            if not occ:
                 continue
             try:
                 both = [titles[t.lower()] for t in library.titles(library.resolve(r["sources"])) if t.lower() in titles]
@@ -756,17 +891,29 @@ def pinned_elsewhere(titles, ch, chans, st, en, kept=None):
             key = ("pin", c["id"], r.get("id"), r.get("start"))
             if not both or (kept is not None and key in kept):
                 continue
-            at = P.clock(P.mins(r.get("start")))
-            if P.norm_days(r.get("days")) == list(range(7)):
-                text = _("%s is pinned on %s at %s every day and will air there too.") % (both[0], c["name"], at)
-            else:
-                text = _("%s is pinned on %s at %s on %s and will air there too.") % (
-                    both[0], c["name"], at, P.days_text(r.get("days")))
-            if not M.confirm(text, _("Keep both")):
-                return False
             if kept is not None:
                 kept.add(key)
-    return True
+            a = occ[0][0] + off
+            lt = time.localtime(a)
+            at = "%s %s" % (P.day_names()[lt.tm_wday], P.clock(lt.tm_hour * 60 + lt.tm_min))
+            out.append((a, _("%s on %s, %s") % (both[0], c["name"], at)))
+    out.sort(key=lambda x: x[0])
+    seen, texts = set(), []
+    for _a, txt in out:
+        if txt not in seen:
+            seen.add(txt)
+            texts.append(txt)
+    return texts
+
+
+def ask_pinned(texts):
+    """One question for every pinned-show clash of a save: Cancel / Keep all.
+    True: keep them (or there were none)."""
+    if not texts:
+        return True
+    lead = (_("This show is pinned on another channel during this special:") if len(texts) == 1 else
+            _("These shows are pinned on other channels during this special:"))
+    return M.confirm("%s %s" % (lead, "; ".join(texts)), _("Keep all"))
 
 
 def add_special(cal, chans, cid=None, picked=None):
@@ -841,8 +988,7 @@ def special_page(sid):
                 sp["when"] = r[0]
                 if sp.get("repeat") == "once":
                     sp["year"] = next_year(r[0])[0] or sp["year"]
-                kept = set()
-                if all(checks(cal, sp, b, chans, kept) for b in list(sp["blocks"]) if b in sp["blocks"]):
+                if checks_all(cal, sp, list(sp["blocks"]), chans):
                     save(cal, mine, sp)
         elif key == "repeat":
             rep = ask_repeat(sp["when"])
@@ -851,6 +997,9 @@ def special_page(sid):
                 sp.pop("year", None)
                 if rep[0] == "once":
                     sp["year"] = rep[1]
+                    for b in sp["blocks"]:           # no last year to continue from
+                        if b.get("order") == "continue":
+                            b["order"] = "first"
                 save(cal, mine)
         elif key.startswith("block:"):
             blk = sp["blocks"][int(key[6:])]
@@ -875,28 +1024,39 @@ def special_page(sid):
 
 def edit_block(cal, sp, blk, chans):
     """One channel's programming in a special: hours, what airs, order, remove."""
-    rows = [_("Change the hours (%s)") % hours_text(blk), _("Change what airs (%s)") % source_text(blk),
-            _("Change the order (%s)") % order_text(blk), _("Remove this channel from the special"), _("Cancel")]
-    i = D.select(block_text(chans, blk), rows)
-    if i < 0 or i == 4:
+    acts = [("hours", _("Change the hours (%s)") % hours_text(blk)),
+            ("what", _("Change what airs (%s)") % source_text(blk))]
+    if not single_movie(blk):                    # one movie: nothing to put in order
+        acts.append(("order", _("Change the order (%s)") % order_text(blk)))
+    acts += [("remove", _("Remove this channel from the special")), ("cancel", _("Cancel"))]
+    i = D.select(block_text(chans, blk), [a[1] for a in acts])
+    act = acts[i][0] if i >= 0 else "cancel"
+    if act == "cancel":
         return
     new = dict(blk)
-    if i == 0:
+    if act == "hours":
         hours = ask_hours(blk)
         if not hours:
             return
         new["start"], new["end"] = hours
-    elif i == 1:
+    elif act == "what":
         src = ask_source(sp)
         if not src:
             return
         new["sources"] = [src]
-    elif i == 2:
-        order = ask_order(blk.get("order"))
+        if single_movie(src):
+            new["order"] = "first"
+        elif single_movie(blk):                  # was one movie: now there's an order to choose
+            order = ask_order(once=sp.get("repeat") == "once")
+            if not order:
+                return
+            new["order"] = order
+    elif act == "order":
+        order = ask_order(blk.get("order"), once=sp.get("repeat") == "once")
         if not order:
             return
         new["order"] = order
-    elif i == 3:
+    elif act == "remove":
         remove_block(cal, sp, blk, chans)
         return
     if new == blk:
@@ -965,10 +1125,8 @@ def lost_special(cal, sp, chans):
         picked.append((blk, dict(blk, channel=ch["id"])))
     for blk, new in picked:
         sp["blocks"][sp["blocks"].index(blk)] = new
-    kept = set()
-    for _blk, new in picked:
-        if new in sp["blocks"] and not checks(cal, sp, new, chans, kept):
-            return False
+    if not checks_all(cal, sp, [new for _blk, new in picked], chans):
+        return False
     save(cal, [b["channel"] for b in sp["blocks"]], sp)
     return True
 
