@@ -854,9 +854,6 @@ def schedule_inputs(clips=True, lib=False):
                extras_unrecognised=K.setting_bool("extras_unrecognised", False),
                av1_mode=K.setting_int("av1_mode", 0),
                weather_location=K.setting("weather_location"))   # house breaks: a weather ad needs a place
-    cal = scheduler.all_specials()
-    if cal:
-        cfg.update(specials=cal)             # Holidays and specials (calendar.json)
     chans = C.load()
     out = {"settings": md5(cfg),
            "channels": md5([{k: v for k, v in c.items() if k not in COSMETIC} for c in chans])}
@@ -1372,6 +1369,10 @@ def _editor_rows(ch, chans):
 
     # -- schedule: when things air
     add("schedule", "planner", _("[B]Weekly planner[/B] (%d pinned shows)") % len(ch.get("slots", [])))
+    if ch["type"] in AIR_TYPES:
+        from . import specials_editor
+        add("schedule", "specials", _("[B]Holidays and specials[/B] (%d)") % len(specials_editor.on_channel(ch["id"])),
+            _("Marathons and holiday programming on dates, back every year."))
     add("schedule", "dayparts", _("Time blocks (prime time, Saturday mornings...): %d") % len(ch["dayparts"]))
     add("schedule", "offair", _("Off-air hours: %s") % (", ".join("%s-%s" % (w["start"], w["end"])
                                                                for w in ch["offair"]) or _("never")))
@@ -1429,11 +1430,20 @@ def edit_channel(cid):
         elif key == "preview":
             preview(ch)
         elif key == "delete":
-            if confirm_remove(_("Delete %d %s?[CR][CR]Its schedule and pinned shows go with it. Your videos "
-                                "and its station folder are not touched.") % (ch["number"], ch["name"]),
-                              _("Delete")):
+            from . import specials_editor
+            names = specials_editor.on_channel(cid)
+            text = _("Delete %d %s?[CR][CR]Its schedule and pinned shows go with it. Your videos "
+                     "and its station folder are not touched.") % (ch["number"], ch["name"])
+            head = TITLE
+            if names:        # more to say: the question goes in the heading (the box shows 4 lines)
+                head = _("Delete %d %s?") % (ch["number"], ch["name"])
+                text = _("Its schedule, pinned shows and its part in these specials go with it: %s.[CR]"
+                         "Your videos and its station folder are not touched.") % (
+                             ", ".join(names[:3]) + (" ..." if len(names) > 3 else ""))
+            if confirm(text, _("Delete"), heading=head):
                 chans = [c for c in chans if c["id"] != cid]
                 C.save(chans)
+                specials_editor.drop_channel(cid)   # its blocks; a special left with none goes too
                 # its schedule goes; its shows keep their place (their bookmarks go
                 # back to what it aired)
                 scheduler.Lineup(K.schedule_cfg()).drop_removed()
@@ -1550,6 +1560,10 @@ def _edit_row(key, ch, chans, cid):
         C.save(chans)
         from . import planner
         planner.open_planner(cid)
+    elif key == "specials":
+        C.save(chans)
+        from . import specials_editor
+        specials_editor.open_list(cid)
 
 
 def _ad_flavour_label(ch):
@@ -2830,6 +2844,7 @@ TOOLS = {
     "finder": lambda: run_finder(),
     "skipped": lambda: check_skipped(),
     "chapters": lambda: check_chapters(),
+    "specials": lambda: open_specials(),
 }
 
 
@@ -2956,6 +2971,12 @@ def check_skipped():
     xbmcgui.Dialog().textviewer(_("Skipped episodes"), "[CR]".join(lines))
 
 
+def open_specials():
+    """Settings > Tools > Holidays and specials."""
+    from . import specials_editor
+    specials_editor.open_list()
+
+
 def run_finder():
     from . import finder
     finder.run()
@@ -2972,7 +2993,7 @@ CLIP_KINDS = ("bumps", "ids", "commercials")
 # CableBox's own data (in its profile folder).  durations.json / codecs.json are
 # only a cache of how long each video is and how it's encoded - kept, so a fresh
 # setup doesn't have to measure the whole library again.
-RESET_FILES = ("channels.json", "assign.json", "state.json", "unplayable.json", "weather_cache.json",
+RESET_FILES = ("channels.json", "assign.json", "state.json", "unplayable.json", "weather_cache.json", "calendar.json",
                "finder.json")
 
 
@@ -3140,7 +3161,7 @@ def folder_lines(c):
     return out
 
 
-NO_REFRESH = ("refresh", "rebuild", "restart_series", "reset", "skipped")   # "chapters" refreshes: a show's choice changes breaks
+NO_REFRESH = ("refresh", "rebuild", "restart_series", "reset", "skipped", "specials")   # "chapters" refreshes: a show's choice changes breaks
 
 
 def run_tool(name):

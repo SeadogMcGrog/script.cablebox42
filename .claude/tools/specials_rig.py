@@ -3,7 +3,8 @@ channel has planned around its specials, and check the plan.  Inside the rig:
 
     python3 /mnt/g/CableBox42/script.cablebox42-holidays/.claude/tools/specials_rig.py CMD
 
-    case NAME     write calendar.json for a test case (see CASES); 'none' removes it
+    case NAME     write calendar.json for a test case (see CASES; A+B for several);
+                  'none' removes it
     aired         forget the undo logs, as if everything planned had aired (a refresh
                   then keeps the bookmarks where the plan left them: "a year later")
     show [HOURS]  blocks from now on (default 30 h), with the special's name, (R),
@@ -74,6 +75,11 @@ CASES = {
         {"id": "tonite", "name": "Tonight Only", "repeat": "yearly", "when": {"type": "date", "month": 1, "day": 1},
          "blocks": [{"channel": "beac0004", "start": "00:00", "end": "22:50", "sources": TV("Taxi"),
                      "order": "continue"}]}],
+    # 29 February: the list says "skips this year" in a non-leap year
+    "leap": [
+        {"id": "leap01", "name": "Leap Day", "repeat": "yearly", "when": {"type": "date", "month": 2, "day": 29},
+         "blocks": [{"channel": "keys0003", "start": "00:00", "end": "00:00", "sources": TV("Friends"),
+                     "order": "random"}]}],
     # this year only, on 1 July 2026
     "once": [
         {"id": "once01", "name": "One Time Only", "repeat": "once", "year": 2026,
@@ -111,13 +117,14 @@ def main():
                 os.remove(CAL)
             print("calendar.json removed")
             return 0
+        todo = [sp for n in name.split("+") for sp in CASES[n]]      # case A+B: several at once
         if len(sys.argv) > 3:               # case NAME TODAY: the special's date is 'today' (YYYY-MM-DD)
             y, mo, d = [int(x) for x in sys.argv[3].split("-")]
-            for sp in CASES[name]:
+            for sp in todo:
                 sp["when"] = {"type": "date", "month": mo, "day": d}
         with open(CAL, "w", encoding="utf-8") as f:
-            json.dump({"specials": CASES[name]}, f)
-        print("calendar.json: %s" % ", ".join("%s (%d blocks)" % (sp["name"], len(sp["blocks"])) for sp in CASES[name]))
+            json.dump({"specials": todo}, f)
+        print("calendar.json: %s" % ", ".join("%s (%d blocks)" % (sp["name"], len(sp["blocks"])) for sp in todo))
         return 0
     if cmd == "aired":
         for f in sorted(glob.glob(os.path.join(D, "schedules", "*.json"))):

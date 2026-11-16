@@ -113,6 +113,18 @@ def date_for(when, year):
     return day + datetime.timedelta(days=when.get("shift", 0))
 
 
+def season_of(when):
+    """The holiday season (seasons.py) a rule is the big day of, for 'Holiday episodes
+    of this channel's shows': halloween, thanksgiving, christmas; or None."""
+    if not valid(when) or when.get("shift"):
+        return None
+    if when["type"] == "date":
+        return {(10, 31): "halloween", (12, 24): "christmas", (12, 25): "christmas"}.get((when["month"], when["day"]))
+    if when["type"] == "nth" and (when["n"], when["weekday"], when["month"]) == (4, 3, 11):
+        return "thanksgiving"
+    return None
+
+
 def _years(sp, around):
     """The rule years worth trying for dates near the year `around`."""
     if sp.get("repeat") == "once":

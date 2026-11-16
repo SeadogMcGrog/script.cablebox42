@@ -51,10 +51,10 @@ def short_call(name, call):
 
 def details(info, rerun=False, special=""):
     """The listing's details in the order they're dropped last to first: the name of
-    the special it airs in ('Turkey Day Marathon'), '(R)' for a summer rerun, movies
+    the special it airs in ('Taxi \u00b7 Turkey Day Marathon'), '(R)' for a summer rerun, movies
     '(1990)' and 'PG-13'; then '(CC)' and '(Stereo)'."""
     from . import library
-    out = ([special] if special else []) + ([_("(R)")] if rerun else [])
+    out = ([u"\u00b7 " + special] if special else []) + ([_("(R)")] if rerun else [])
     if info:
         if info.get("kind") == "movie":
             if info.get("year"):

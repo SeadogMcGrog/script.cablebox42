@@ -6795,3 +6795,415 @@ msgstr ""
 msgctxt "#34215"
 msgid "Holidays and specials"
 msgstr ""
+
+msgctxt "#34216"
+msgid "Marathons and holiday programming on dates, back every year."
+msgstr ""
+
+msgctxt "#34217"
+msgid "[B]Holidays and specials[/B] (%d)"
+msgstr ""
+
+msgctxt "#34218"
+msgid "Its schedule, pinned shows and its part in these specials go with it: %s.[CR]Your videos and its station folder are not touched."
+msgstr ""
+
+msgctxt "#34219"
+msgid "Halloween"
+msgstr ""
+
+msgctxt "#34220"
+msgid "Thanksgiving"
+msgstr ""
+
+msgctxt "#34221"
+msgid "Christmas"
+msgstr ""
+
+msgctxt "#34222"
+msgid "New Year's Day"
+msgstr ""
+
+msgctxt "#34223"
+msgid "Valentine's Day"
+msgstr ""
+
+msgctxt "#34224"
+msgid "Easter"
+msgstr ""
+
+msgctxt "#34225"
+msgid "Thanksgiving (US)"
+msgstr ""
+
+msgctxt "#34226"
+msgid "Christmas Eve"
+msgstr ""
+
+msgctxt "#34227"
+msgid "Christmas Day"
+msgstr ""
+
+msgctxt "#34228"
+msgid "New Year's Eve"
+msgstr ""
+
+msgctxt "#34229"
+msgid "Continue where last year's marathon stopped"
+msgstr ""
+
+msgctxt "#34230"
+msgid "in order, continuing each year"
+msgstr ""
+
+msgctxt "#34231"
+msgid "From the first episode"
+msgstr ""
+
+msgctxt "#34232"
+msgid "from the first episode"
+msgstr ""
+
+msgctxt "#34233"
+msgid "Random"
+msgstr ""
+
+msgctxt "#34234"
+msgid "1st"
+msgstr ""
+
+msgctxt "#34235"
+msgid "2nd"
+msgstr ""
+
+msgctxt "#34236"
+msgid "3rd"
+msgstr ""
+
+msgctxt "#34237"
+msgid "4th"
+msgstr ""
+
+msgctxt "#34238"
+msgid "Last"
+msgstr ""
+
+msgctxt "#34239"
+msgid "Every year"
+msgstr ""
+
+msgctxt "#34240"
+msgid "all day"
+msgstr ""
+
+msgctxt "#34241"
+msgid "broadcast day"
+msgstr ""
+
+msgctxt "#34242"
+msgid "When?"
+msgstr ""
+
+msgctxt "#34243"
+msgid "How often?"
+msgstr ""
+
+msgctxt "#34244"
+msgid "Which hours?"
+msgstr ""
+
+msgctxt "#34245"
+msgid "Ends at (earlier than the start: the next morning)"
+msgstr ""
+
+msgctxt "#34246"
+msgid "Remove this channel from the special"
+msgstr ""
+
+msgctxt "#34247"
+msgid "The day after %s"
+msgstr ""
+
+msgctxt "#34248"
+msgid "The day before %s"
+msgstr ""
+
+msgctxt "#34249"
+msgid "Only in %d"
+msgstr ""
+
+msgctxt "#34250"
+msgid "%s episodes"
+msgstr ""
+
+msgctxt "#34251"
+msgid "A date..."
+msgstr ""
+
+msgctxt "#34252"
+msgid "A weekday of a month..."
+msgstr ""
+
+msgctxt "#34253"
+msgid "Easter..."
+msgstr ""
+
+msgctxt "#34254"
+msgid "A ready-made holiday..."
+msgstr ""
+
+msgctxt "#34255"
+msgid "Month"
+msgstr ""
+
+msgctxt "#34256"
+msgid "On the day itself"
+msgstr ""
+
+msgctxt "#34257"
+msgid "The day after"
+msgstr ""
+
+msgctxt "#34258"
+msgid "The day before"
+msgstr ""
+
+msgctxt "#34259"
+msgid "Move by days..."
+msgstr ""
+
+msgctxt "#34260"
+msgid "This year only (%s)"
+msgstr ""
+
+msgctxt "#34261"
+msgid "Next time only (%s)"
+msgstr ""
+
+msgctxt "#34262"
+msgid "All day (midnight to midnight)"
+msgstr ""
+
+msgctxt "#34263"
+msgid "Choose hours..."
+msgstr ""
+
+msgctxt "#34264"
+msgid "What to air?"
+msgstr ""
+
+msgctxt "#34265"
+msgid "Which channel?"
+msgstr ""
+
+msgctxt "#34266"
+msgid "Add special"
+msgstr ""
+
+msgctxt "#34267"
+msgid "%s added"
+msgstr ""
+
+msgctxt "#34268"
+msgid "Change the hours (%s)"
+msgstr ""
+
+msgctxt "#34269"
+msgid "Change what airs (%s)"
+msgstr ""
+
+msgctxt "#34270"
+msgid "Change the order (%s)"
+msgstr ""
+
+msgctxt "#34271"
+msgid "%s %s of %s"
+msgstr ""
+
+msgctxt "#34272"
+msgid "%d days after %s"
+msgstr ""
+
+msgctxt "#34273"
+msgid "%d days before %s"
+msgstr ""
+
+msgctxt "#34274"
+msgid "[B]+ Add a special[/B]"
+msgstr ""
+
+msgctxt "#34275"
+msgid "A marathon or a holiday lineup on a date, back every year"
+msgstr ""
+
+msgctxt "#34276"
+msgid "Holidays and specials - %s"
+msgstr ""
+
+msgctxt "#34277"
+msgid "Which one in the month?"
+msgstr ""
+
+msgctxt "#34278"
+msgid "Weekday"
+msgstr ""
+
+msgctxt "#34279"
+msgid "How many days?"
+msgstr ""
+
+msgctxt "#34280"
+msgid "Broadcast day (%s to %s next morning)"
+msgstr ""
+
+msgctxt "#34281"
+msgid "Choose programming..."
+msgstr ""
+
+msgctxt "#34282"
+msgid "[B]+ Add another channel[/B]"
+msgstr ""
+
+msgctxt "#34283"
+msgid "More programming for this special, on any channel"
+msgstr ""
+
+msgctxt "#34284"
+msgid "[B]Preview the day[/B]"
+msgstr ""
+
+msgctxt "#34285"
+msgid "What will air, channel by channel"
+msgstr ""
+
+msgctxt "#34286"
+msgid "[COLOR red]Remove this special[/COLOR]"
+msgstr ""
+
+msgctxt "#34287"
+msgid "%s has no date coming up."
+msgstr ""
+
+msgctxt "#34288"
+msgid "Nothing to air: the channel's normal programming."
+msgstr ""
+
+msgctxt "#34289"
+msgid "Random picks from: %s"
+msgstr ""
+
+msgctxt "#34290"
+msgid "%d channels"
+msgstr ""
+
+msgctxt "#34291"
+msgid "skips this year"
+msgstr ""
+
+msgctxt "#34292"
+msgid "A ready-made holiday"
+msgstr ""
+
+msgctxt "#34293"
+msgid "%s episodes of this channel's shows"
+msgstr ""
+
+msgctxt "#34294"
+msgid "%s has no %s episodes.[CR]It will air its normal programming on the day."
+msgstr ""
+
+msgctxt "#34295"
+msgid "%s already has %s in those hours.[CR]Replace it?"
+msgstr ""
+
+msgctxt "#34296"
+msgid "When: %s"
+msgstr ""
+
+msgctxt "#34297"
+msgid "Repeats: %s"
+msgstr ""
+
+msgctxt "#34298"
+msgid "5th"
+msgstr ""
+
+msgctxt "#34299"
+msgid "%d days after Easter"
+msgstr ""
+
+msgctxt "#34300"
+msgid "%d days before Easter"
+msgstr ""
+
+msgctxt "#34301"
+msgid "Easter Sunday"
+msgstr ""
+
+msgctxt "#34302"
+msgid "Good Friday (2 days before)"
+msgstr ""
+
+msgctxt "#34303"
+msgid "Easter Monday (1 day after)"
+msgstr ""
+
+msgctxt "#34304"
+msgid "Days before Easter..."
+msgstr ""
+
+msgctxt "#34305"
+msgid "Days after Easter..."
+msgstr ""
+
+msgctxt "#34306"
+msgid "%d days later"
+msgstr ""
+
+msgctxt "#34307"
+msgid "%d days earlier"
+msgstr ""
+
+msgctxt "#34308"
+msgid "Keep both"
+msgstr ""
+
+msgctxt "#34309"
+msgid "The rest of the day isn't planned yet."
+msgstr ""
+
+msgctxt "#34310"
+msgid "%d movies"
+msgstr ""
+
+msgctxt "#34311"
+msgid "Good Friday"
+msgstr ""
+
+msgctxt "#34312"
+msgid "Easter Monday"
+msgstr ""
+
+msgctxt "#34313"
+msgid "%s is also in %s on %s at the same time."
+msgstr ""
+
+msgctxt "#34314"
+msgid "Next: %s"
+msgstr ""
+
+msgctxt "#34315"
+msgid "Remove %s?[CR]It is the special's only channel: %s is removed too."
+msgstr ""
+
+msgctxt "#34316"
+msgid "Remove %s from %s?"
+msgstr ""
+
+msgctxt "#34317"
+msgid "Remove %s?[CR]Its channels air their normal programming on the day."
+msgstr ""
+
+msgctxt "#34318"
+msgid "Delete %d %s?"
+msgstr ""

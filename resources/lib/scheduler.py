@@ -212,6 +212,11 @@ def all_specials():
     return _SPECIALS[1]
 
 
+def forget_specials():
+    """calendar.json was just written here: read it again at once."""
+    _SPECIALS[0] = 0.0
+
+
 def specials_shift(cfg):
     """Seconds from the real clock to the one specials go by: 0, or with the hidden
     test setting 'specials_today' (YYYY-MM-DD) today counts as that date, for the rig."""

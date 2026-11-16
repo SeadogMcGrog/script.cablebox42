@@ -93,6 +93,7 @@
     </category>
     <!-- Tools: maintenance (lineup tools are in the Channel manager) -->
     <category label="32048">
+        <setting id="tool_specials" type="action" label="34215" action="RunScript(script.cablebox42,tool,specials)" option="close"/>
         <setting id="tool_fillers" type="action" label="32054" action="RunScript(script.cablebox42,tool,fillers)" option="close"/>
         <setting id="tool_extras" type="action" label="33302" action="RunScript(script.cablebox42,tool,extras)" option="close"/>
         <setting id="tool_chapters" type="action" label="34007" action="RunScript(script.cablebox42,tool,chapters)" option="close"/>
