@@ -12,6 +12,7 @@ moves is written to the schedule's undo log with the start of the block that mov
 it, so the plan can be cut after any block and the bookmarks put back (cut()).
 """
 import bisect
+import datetime
 import hashlib
 import json
 import math
@@ -70,6 +71,8 @@ def skip_short_save():
         log("skipped episodes: %s" % exc)
 PROMO_RATES = (1.0, 0.5, 0.25)      # every break, about half, now and then
 PROMO_LOOKAHEAD = 6 * 3600          # 'later today' looks this far ahead
+SPECIAL_PROMO_DAYS = 6              # a special is promoted from this many days before ('Thursday')
+SPECIAL_PROMO_RATES = (0.5, 0.4, 0.25)   # of the promo slots: on the day, the day before, earlier
 PROMO_TYPES = assign.PROGRAM_TYPES + ("musicvideos",)    # channels whose breaks carry promos
 # House breaks (Settings > Programming > House breaks): the channel's own promos,
 # promos for other channels and ads for the guide / weather channels, in place of
@@ -452,7 +455,7 @@ class ChannelSchedule(object):
             if e["s"] <= now or (e.get("pt") or 0) < c:
                 continue
             if e.get("k") == "promo":
-                for k in ("pt", "t", "pp", "pw", "sub"):
+                for k in ("pt", "t", "pp", "pw", "sub", "sp", "pe"):
                     e.pop(k, None)
             elif e.get("pr") == "extras":    # a show's own promo clip: back to its card
                 ents[i] = {"s": e["s"], "e": e["e"], "k": "promo"}
@@ -2320,9 +2323,12 @@ class ChannelSchedule(object):
                 if e.get("h"):
                     avoid |= self._gap_avoid(i, ga, gb)
                 signon = self._signon_slot(i, ga, gb, avoid) if e.get("h") else None
+                special = None if signon else self._special_promo(e, avoid)
                 if signon:
                     e.pop("xc", None)            # the last promo before sign-off: tomorrow's first show
                     tgt = signon
+                elif special:
+                    tgt = special                # a special in the days ahead: 'Thursday, all day'
                 elif e.get("xc"):
                     tgt = self._cross_target(e, avoid | self._own_titles_after(i))
                     if tgt is not None and tgt[0] is None and e.get("h"):
@@ -2356,13 +2362,16 @@ class ChannelSchedule(object):
                         e["pt"] = 0          # nothing to promote: the station ID card
                     continue
                 e.update(pt=b["s"], t=b["t"])
+                if b.get("sp"):
+                    e.update(sp=b["sp"], pe=b["e"])
                 if path:
                     e["pp"] = path
                 if b.get("sub"):
                     e["sub"] = b["sub"]
                 if e.get("xc") or b is not self.next_block(e["s"]):
                     e["pw"] = "later"
-                if self.cfg.get("promo_extras") and path and e["s"] > now + 30 and not e.get("xc"):
+                if self.cfg.get("promo_extras") and path and e["s"] > now + 30 and not e.get("xc") \
+                        and not b.get("sp"):
                     extras.append((i, path, b))
             if e.get("t"):
                 prev = (e["t"], e["s"])
@@ -2374,6 +2383,50 @@ class ChannelSchedule(object):
         if touched:
             self._index()
         return touched
+
+    def _special_promo(self, e, avoid):
+        """(block-like, path) when the promo slot e names a special instead of a
+        programme: one on this channel (or on the channel a cross-channel promo is
+        for) that starts within SPECIAL_PROMO_DAYS and hasn't begun; a share of the
+        slots (SPECIAL_PROMO_RATES), never the break before the next programme
+        ('Up next' stays), never a name in `avoid`.  The block-like has the
+        special's start, end, name, id and what it airs; path: one of its
+        programmes, for the card's picture.  None otherwise (always, without
+        calendar.json)."""
+        every = all_specials()
+        if not every or self.lineup is None:
+            return None
+        cid = e.get("xc") or self.ch["id"]
+        ch = next((c for c in self.lineup.channels if c["id"] == cid), None)
+        if ch is None:
+            return None
+        if not e.get("xc") and not e.get("h") and self.cfg.get("promo_target", 2) != 1 and \
+                self._final_break(e, self.block_at(e["s"])):
+            return None
+        off = specials_shift(self.cfg)
+        t = e["s"]
+        day = datetime.date.fromtimestamp(t + off)
+        for st, en, sp, blk in specials.between(every, t + off, t + off + (SPECIAL_PROMO_DAYS + 1) * 86400, cid):
+            ahead = (datetime.date.fromtimestamp(st) - day).days
+            if st - off < t + 600 or ahead > SPECIAL_PROMO_DAYS or sp["name"] in avoid:
+                continue
+            rate = SPECIAL_PROMO_RATES[min(ahead, len(SPECIAL_PROMO_RATES) - 1)]
+            if random.Random("%s|%.0f|special" % (self.ch["id"], t)).random() >= rate:
+                return None
+            try:
+                other = self if cid == self.ch["id"] else self.lineup.schedule(ch, ensure=False)
+                pool = other._special_pool(blk)
+            except Exception as exc:
+                log("promo for %s: %s" % (sp.get("name"), exc))
+                return None
+            series, singles = pool["series"], pool["singles"]
+            if not series and not singles:
+                continue                         # nothing to air (no holiday episodes): nothing to promote
+            names = [s["title"] for s in series] + ([singles[0]["title"]] if singles and not series else [])
+            path = series[0]["episodes"][0]["path"] if series else singles[0]["path"]
+            return {"s": st - off, "e": en - off, "t": sp["name"], "sp": sp["id"],
+                    "sub": ", ".join(names[:3])}, path
+        return None
 
     def _house_cross_for(self, e, avoid):
         """Turn a house promo into a promo for another channel's show (sets its

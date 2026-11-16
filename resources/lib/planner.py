@@ -4,11 +4,15 @@ Pin shows to fixed times ("Seinfeld, Fridays 8:00 PM, in order"), paint
 off-air hours, copy or clear days.  Anything not pinned is filled by the
 automatic scheduler, which never runs into a pinned slot.
 
-The grid is any week, except for Holidays and specials: this week's specials on the
-channel show over it (a star in the day's header, their hours as a block; marks()).
-The pins underneath are not changed and the planner's own overlap check ignores them.
+Pins and off-air hours are the same in every week.  Holidays and specials are looked
+up for the week on screen (a star in the day's header, their hours as a block;
+load_marks).  The pins underneath are not changed and the planner's own overlap check
+ignores them.  Right past Sunday is the next week, Left past Monday the week before;
+it always opens on this week, and a past week is read-only.
 """
+import datetime
 import json
+import time
 import uuid
 
 import xbmc
@@ -25,6 +29,7 @@ DAYS = 7
 STEP = 30          # minutes per row
 WEEK = 7 * 1440
 PIN_COLORS = 6
+WEEKS = 520        # how far Left / Right go from this week
 
 A_LEFT, A_RIGHT, A_UP, A_DOWN = 1, 2, 3, 4
 A_PGUP, A_PGDN, A_SELECT, A_INFO = 5, 6, 7, 11
@@ -96,7 +101,6 @@ def clock(m):
         fmt = xbmc.getRegion("time").replace(":%S", "")
     except Exception:
         fmt = "%I:%M %p"
-    import time
     s = time.strftime(fmt, time.struct_time((2000, 1, 1, m // 60, m % 60, 0, 5, 1, -1)))
     return s[1:] if s.startswith("0") else s
 
@@ -161,17 +165,60 @@ class Planner(xbmcgui.WindowXMLDialog):
         if not self.ch:
             self.close()
             return
-        import time
+        from . import scheduler
+        self.shift = scheduler.specials_shift(K.schedule_cfg())    # 0, but for the rig's test date
         lt = time.localtime()
-        self.col = lt.tm_wday
+        self.week = 0                                   # weeks from this one
+        self.col = self.today().weekday()
         self.row = (lt.tm_hour * 60 + lt.tm_min) // STEP
         self.top = max(0, min(self.row - 3, 1440 // STEP - ROWS))
-        self.setProperty("title", _("Weekly planner  -  %d  %s") % (self.ch["number"], self.ch["name"]))
-        self.setProperty("hint", _("OK: pin / edit    Menu: copy / clear day    Back: done"))
         for c, n in enumerate(day_names()):
             self.setProperty("D%d" % c, n)
-        self.load_marks()
+        self.show_week()
         self.refresh()
+
+    # ---------------------------------------------------------------- weeks
+    def today(self):
+        return datetime.date.fromtimestamp(time.time() + self.shift)
+
+    def monday(self):
+        """The Monday of the week on screen."""
+        t = self.today()
+        return t - datetime.timedelta(days=t.weekday()) + datetime.timedelta(weeks=self.week)
+
+    def show_week(self):
+        """The title, hint and specials of the week on screen (nothing else changes
+        from week to week)."""
+        if self.week == 0:
+            week = _("This week")
+        else:
+            mon = self.monday()
+            try:
+                month = xbmc.getLocalizedString(50 + mon.month)      # Kodi's 'Jan' ... 'Dec'
+            except Exception:
+                month = ""
+            day = "%d %s" % (mon.day, month or mon.strftime("%b"))
+            week = _("Week of %s") % (day if mon.year == self.today().year else "%s %d" % (day, mon.year))
+        self.setProperty("title", "%s  -  %s" % (
+            _("Weekly planner  -  %d  %s") % (self.ch["number"], self.ch["name"]), week))
+        self.setProperty("hint", _("OK: pin / edit    Menu: copy / clear day    Back: done") if self.week >= 0
+                         else _("A past week: view only    Back: done"))
+        self.load_marks()
+
+    def step_week(self, by):
+        week = max(-WEEKS, min(WEEKS, self.week + by))
+        if week == self.week:
+            return False
+        self.week = week
+        self.show_week()
+        return True
+
+    def past(self):
+        """A past week is for looking at: OK and Menu only say so."""
+        if self.week >= 0:
+            return False
+        M.D.notification(K.ADDON_NAME, _("A past week can't be changed"), time=2500)
+        return True
 
     # ---------------------------------------------------------------- model
     def save(self):
@@ -182,34 +229,33 @@ class Planner(xbmcgui.WindowXMLDialog):
         C.save(chans)
 
     def load_marks(self):
-        """This week's specials on the channel (most weeks: none, and nothing more is
-        loaded): marks = [(first minute of the week, end, special, block, date)],
-        cut to the week; stars = {day column: names} for the header."""
+        """The specials on the channel in the week on screen (most weeks: none):
+        marks = [(first minute of the week, end, special, block, date)], cut to the
+        week, so a block that began on Sunday night shows on Monday morning too;
+        stars = {day column: name, or '2 specials'} for the header, on the special's
+        own date only.  calendar.json is read once (specials.load keeps it)."""
         from . import specials
         self.marks, stars = [], {}
         try:
             cal = specials.load()
             if cal:
-                import datetime
-                import time
-                from . import scheduler
-                today = datetime.date.fromtimestamp(time.time() + scheduler.specials_shift(K.schedule_cfg()))
-                mon = today - datetime.timedelta(days=today.weekday())
+                mon = self.monday()
                 t0 = time.mktime(mon.timetuple())
                 t1 = time.mktime((mon + datetime.timedelta(days=7)).timetuple())
                 for st, en, sp, blk in specials.between(cal, t0, t1, self.ch["id"]):
                     a, b = [(d.date() - mon).days * 1440 + d.hour * 60 + d.minute
                             for d in (datetime.datetime.fromtimestamp(st), datetime.datetime.fromtimestamp(en))]
                     day = mon + datetime.timedelta(days=a // 1440)      # the special's date
-                    a, b = max(0, a), min(WEEK, b)
-                    if a < b:
-                        self.marks.append((a, b, sp, blk, day))
+                    if 0 <= a < WEEK:
                         names = stars.setdefault(a // 1440, [])
                         if sp["name"] not in names:
                             names.append(sp["name"])
+                    a, b = max(0, a), min(WEEK, b)
+                    if a < b:
+                        self.marks.append((a, b, sp, blk, day))
         except Exception as exc:                    # the planner opens without its marks
             K.log("Weekly planner, specials: %s" % exc)
-        self.stars = dict((c, ", ".join(n)) for c, n in stars.items())
+        self.stars = dict((c, n[0] if len(n) == 1 else _("%d specials") % len(n)) for c, n in stars.items())
 
     def mark_at(self, day, minute):
         w = day * 1440 + minute
@@ -298,6 +344,8 @@ class Planner(xbmcgui.WindowXMLDialog):
             dp = self.ch["dayparts"][idx]
             return _("%s:  time block '%s' - picked automatically from its own programming") % (
                 where, dp.get("label", ""))
+        if self.week < 0:
+            return _("%s:  automatic programming") % where
         return _("%s:  automatic programming  -  press OK to pin a show here") % where
 
     # ---------------------------------------------------------------- input
@@ -307,10 +355,16 @@ class Planner(xbmcgui.WindowXMLDialog):
         if a in A_BACK:
             self.close()
             return
-        if a == A_LEFT:
-            self.col = (self.col - 1) % DAYS
-        elif a == A_RIGHT:
-            self.col = (self.col + 1) % DAYS
+        if a == A_LEFT:                 # past Monday: the week before
+            if self.col > 0:
+                self.col -= 1
+            elif self.step_week(-1):
+                self.col = DAYS - 1
+        elif a == A_RIGHT:              # past Sunday: the next week
+            if self.col < DAYS - 1:
+                self.col += 1
+            elif self.step_week(1):
+                self.col = 0
         elif a == A_UP:
             self.row = (self.row - 1) % total
         elif a == A_DOWN:
@@ -333,6 +387,8 @@ class Planner(xbmcgui.WindowXMLDialog):
 
     # ---------------------------------------------------------------- actions
     def on_select(self):
+        if self.past():
+            return
         m = self.row * STEP
         kind, idx, _t, _f = self.cell(self.col, m)
         if kind == "sp":
@@ -555,6 +611,8 @@ class Planner(xbmcgui.WindowXMLDialog):
             self.save()
 
     def on_menu(self):
+        if self.past():
+            return
         day = day_names(False)[self.col]
         opts = [_("Copy %s's pinned shows to other days") % day, _("Clear %s's pinned shows") % day,
                 _("Off-air screen and sign-off clips..."), _("Preview what airs next")]

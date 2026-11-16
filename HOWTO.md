@@ -35,6 +35,7 @@ guide is the "how do I…?" companion.
 15. [The guide channel and the weather channel](#15-the-guide-channel-and-the-weather-channel)
     - [Boombox TV: a music video channel](#boombox-tv-a-music-video-channel)
 16. [Holidays](#16-holidays)
+    - [Plan a Turkey Day marathon](#plan-a-turkey-day-marathon)
 17. [The look: static, CRT effect, turn-on and turn-off](#17-the-look-static-crt-effect-turn-on-and-turn-off)
 18. [Start CableBox from the home screen, a favourite or Kodi's start-up](#18-start-cablebox-from-the-home-screen-a-favourite-or-kodis-start-up)
 
@@ -712,6 +713,7 @@ light blue, off-air hours grey; everything else is filled automatically.
 | Button | Action |
 |---|---|
 | Arrows | Move around |
+| **Right** past Sunday, **Left** past Monday | Next week, the week before |
 | Page Up / Down, CH+ / CH− | Jump 7 hours |
 | **OK** on a pin | Change show, time, length, days or order; rename; start the series over; remove |
 | **Menu** | Copy a day to other days, clear a day, off-air screen and clips, preview |
@@ -720,6 +722,14 @@ light blue, off-air hours grey; everything else is filled automatically.
 Pinned slots always start on time — the automatic programming works around
 them. A pinned show can still turn up at other times; to keep it to its slot,
 untick it in *What's on this channel*.
+
+**Stepping through the weeks.** The planner opens on *This week*. Keep pressing
+**Right** past Sunday to go week by week (*Week of 23 Nov*, *Week of 30 Nov*…);
+**Left** past Monday comes back. Your pins look the same in every week, because
+they repeat. What changes is the [specials](#plan-a-turkey-day-marathon): in
+Thanksgiving week the Thursday heading shows ★ and the special's name, and its
+hours are a gold block. OK on the block → *Edit this special*. Weeks before
+this one can be looked at but not changed.
 
 ---
 
@@ -1001,6 +1011,56 @@ tag your holiday episodes in Kodi (*Information → Manage → Manage tags*).
 
 Each holiday can have its own commercials and bumps folders. *Save holiday
 episodes and movies for their season* keeps Christmas specials out of July.
+
+### Plan a Turkey Day marathon
+
+The seasons choose holiday programmes for you. When you want one exact thing
+on one day, add a **special**.
+
+1. *Settings → Tools → Holidays and specials* → **Add a special**.
+2. **When?** → *A ready-made holiday…* → *Thanksgiving (US)* → *On the day
+   itself*.
+3. **How often?** → *Every year*.
+4. **Name:** type *Turkey Day Marathon* (or keep *Thanksgiving*).
+5. **Which channel?** → your comedy channel.
+6. **Which hours?** → *All day*.
+7. **What to air?** → *Choose programming…* → *TV shows from my library* →
+   the show.
+8. **Episode order** → *Continue where last year's marathon stopped*.
+9. Check the summary → **Add special**.
+
+That's it. On the fourth Thursday of November the channel airs the show all
+day, in order; next year it carries on from where this year's marathon
+stopped. The show's ordinary run on the channel doesn't move in the meantime.
+In the days before, breaks promote it (*Thursday, all day*).
+
+- **See it before the day:** the special's page → *Preview the day*. Or open
+  the channel's weekly planner and press **Right** past Sunday until you reach
+  Thanksgiving week.
+- **More channels:** the special's page → *Add another channel*. Each channel
+  has its own hours and programming, so Christmas Day can be holiday episodes
+  on one channel and a movie at 8 PM on another.
+- **Only the holiday episodes:** for Halloween, Thanksgiving and Christmas,
+  **What to air?** also offers *… episodes of this channel's shows*.
+- **Part of a day:** **Which hours?** → *Choose hours…*. An end earlier than
+  the start means the next morning: New Year's Eve from 6:00 PM to 6:00 AM
+  runs through midnight, and through the channel's sign-off hours.
+- **Change or remove it:** pick it in the list. Changes are saved as you go.
+
+**Dates for other countries.** Nothing is tied to the US calendar:
+
+| You want | Choose |
+|---|---|
+| Canadian Thanksgiving | *A weekday of a month…* → *2nd* → *Monday* → *October* |
+| Boxing Day | *A date…* → *December* → *26* |
+| Good Friday, Easter Monday | *Easter…* |
+| Whit Monday, Ascension Day, Carnival | *Easter…* → *Days after Easter…* (50, 39) or *Days before Easter…* (47 for Shrove Tuesday) |
+| UK late-summer bank holiday, US Memorial Day | *A weekday of a month…* → *Last* → *Monday* → *August* / *May* |
+| Black Friday | *A ready-made holiday…* → *Thanksgiving (US)* → *The day after* |
+| A birthday, an anniversary | *A date…* |
+
+The rule is worked out again every year, so floating holidays land on the
+right day by themselves.
 
 **Summer reruns:** *Settings → Seasons → Summer reruns* → *Broadcast networks* (the
 broadcast networks) or *All channels*. From June to August each series reruns the

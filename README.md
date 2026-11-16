@@ -86,6 +86,9 @@ hardware video decoding works exactly as it does for the rest of your library.
 - **Weekly planner.** A 7-day grid for each channel. Pin shows to fixed times,
   for example *Seinfeld, Fridays 8 PM, in order*. Each pinned slot picks up
   where it left off the week before.
+- **Holidays and specials.** A marathon or a holiday lineup on a date: a
+  Turkey Day marathon, New Year's Eve from 6 PM, Christmas Day on three
+  channels. Any date, any country's holidays, back every year by itself.
 - **Time blocks.** Saturday-morning cartoons, prime-time movies, late-night
   blocks.
 - **Off the air.** Sign-off hours with a 1950s stand-by card or colour bars
@@ -254,6 +257,9 @@ What airs when:
   instead.
 - **Pinned shows** from the weekly planner always start on time. Automatic
   picks never run into them.
+- **Specials** ([Holidays and specials](#holidays-and-specials)) come before
+  everything else on their channel for their hours: pinned shows, off-air
+  hours, the holiday seasons and summer reruns all wait until the special ends.
 - **No commercials?** House breaks: short breaks of about a minute inside the
   show, made of the channel's own promos, promos for other channels' shows
   ("Tonight at 9:00 on Channel 6"), ads for the guide and weather channels and
@@ -361,6 +367,7 @@ Each button closes Settings and opens the tool.
 
 | Tool | What it's for |
 |---|---|
+| **Holidays and specials** | Marathons and holiday lineups on dates: add, change, preview and remove them ([Holidays and specials](#holidays-and-specials)) |
 | **Check my videos** | Lists commercials, bumps and videos that can't be used, and why |
 | **Check extras** | Every movie's `Extras` folder (next to the movie's file, or in `VIDEO_TS` / `BDMV`): each video's cleaned-up title, length and *Air* or *Skipped* with the reason, plus totals at the top. Making-of pieces, documentaries, featurettes, interviews and other readably named videos air; deleted/extended/alternate scenes, bloopers, trailers and promos, galleries, music videos, short films, commentaries, anything under a minute and names like `title_t03` are skipped. Everything in an `Extras` subfolder named *Behind the scenes*, *Making of*, *Interviews*, *Featurettes* or *Documentaries* airs. CableBox lists and measures these folders in the background while the TV is off and never changes them. The summary shows *Lengths measured: X of Y*; while some are still to do, **Look now** (*Look for movie extras*) does the rest straight away (progress bar, *Cancel* keeps what's found so far) and says how much there is to air when it finishes. After the list it offers to look for the rest, or to add a Behind the scenes channel when there's enough and you have none. Videos whose length can't be read don't air |
 | **Check skipped episodes** | The TV episodes the last refresh left out for being shorter than *Skip episodes shorter than*, by series, with their length and file. Nothing is moved or hidden in Kodi |
@@ -473,7 +480,7 @@ Open a channel in the **Channel manager**. The editor has four groups, plus
 | **Identity** | Name, number (numbers can be **swapped** or **slid**, see below), call letters, logo (the row says where the logo comes from), **names by time of day**, its station folder, and *Use a built-in station...* / *Make this channel my own* |
 | **Programming** | Type, the channel's sources, and **What's on this channel**: a checklist of every show and movie it airs. Untick what doesn't belong |
 | **Breaks & clips** | The commercials, bumps and station IDs the channel really uses and where they come from (select *Commercials* or *Bumps* to switch them on or off; *Station IDs* to choose its own folder of "You're watching…" clips), *Break into shows for commercials*, **Ad flavour** (which retro ads its house breaks run: *Auto*, *General*, *Kids*, *Sports*, *Movies*, *Late night*), and the channel's own commercials and bumps folders |
-| **Schedule** | **Weekly planner** (pinned shows, painted off-air hours), time blocks (different programming at certain times, e.g. *Prime Time 8–11 PM: movies*), off-air hours (sign-off times, the off-air screen, sign-off and sign-on clips), lineup style (same show same time every day, or shuffle) and *Programs start on* (:00 and :30, the hour, every 15 minutes, or no clock) |
+| **Schedule** | **Weekly planner** (pinned shows, painted off-air hours), **Holidays and specials** (this channel's specials), time blocks (different programming at certain times, e.g. *Prime Time 8–11 PM: movies*), off-air hours (sign-off times, the off-air screen, sign-off and sign-on clips), lineup style (same show same time every day, or shuffle) and *Programs start on* (:00 and :30, the hour, every 15 minutes, or no clock) |
 
 **Fine-tuning tips:**
 
@@ -516,11 +523,21 @@ automatically.
 | Button | Action |
 |---|---|
 | Arrows | Move around (the grid scrolls through the whole day) |
+| **Right** past Sunday, **Left** past Monday | The next week, the week before |
 | Page Up / Down, CH+ / CH− | Jump 7 hours |
 | **OK** on an empty slot | *Pin a show here* or *Make off-air from here* |
 | **OK** on a pinned show | Change the show, start time, length, days or order; rename; **start the series over from episode 1**; remove it from one day or every day |
+| **OK** on a special's block | *Edit this special* (opens it, then comes back to the planner) |
 | **Menu** | Copy a day's pins to other days, clear a day, off-air screen and clips, preview what airs next |
 | Back | Done (changes are saved as you go) |
+
+**Weeks.** The planner opens on this week; the title says *This week* or
+*Week of 23 Nov*. Pinned shows, time blocks and off-air hours repeat, so they
+look the same in every week. [Specials](#holidays-and-specials) belong to
+dates: step to Thanksgiving week and the day's heading shows a ★ with the
+special's name (or *2 specials*), and its hours are a gold block, on both days
+when it runs past midnight. The pins under a special are not changed; they
+just don't air during it. A past week is for looking only: OK and Menu say so.
 
 **Pinning a show** asks four things:
 
@@ -800,6 +817,64 @@ season):
 3. **Titles, as a safety net.** Kodi can't tag a single episode, so episode
    and movie titles such as *Treehouse of Horror* or *A Charlie Brown
    Christmas* count too.
+
+### Holidays and specials
+
+The seasons above pick holiday programmes by themselves. A **special** is for
+saying exactly what you want on a date: a marathon, a holiday lineup, a movie
+night. *Settings → Tools → Holidays and specials*, or *Channel manager → a
+channel → Schedule → Holidays and specials* for that channel's.
+
+The list shows every special with its next date, soonest first. **Add a
+special** asks, one screen at a time (Back on any of them adds nothing):
+
+| Step | Choices |
+|---|---|
+| **When?** | *A date…* (31 December) · *A weekday of a month…* (4th Thursday of November, last Monday of May) · *Easter…* (Easter Sunday, Good Friday, Easter Monday, or any number of days before or after) · *A ready-made holiday…* (New Year's Day, Valentine's Day, Easter, Halloween, Thanksgiving (US), Christmas Eve, Christmas Day, New Year's Eve). Then *On the day itself*, *The day after*, *The day before* or *Move by days…* |
+| **How often?** | *Every year* or *This year only* |
+| **Name** | Filled in for you; change it if you like |
+| **Which channel?** | One channel. *Add another channel* on the special's page adds more |
+| **Which hours?** | *All day* (midnight to midnight) · *Broadcast day* (6 AM to 6 AM the next morning) · *Choose hours…* (an end earlier than the start means the next morning) |
+| **What to air?** | Any programming source, as in the weekly planner. For Halloween, Thanksgiving and Christmas also *… episodes of this channel's shows*: the channel's own holiday episodes |
+| **Episode order** | *Continue where last year's marathon stopped* · *From the first episode* · *Random* |
+
+The last screen sums it up: *Cancel* / *Add special*.
+
+A special's page has its name, date and repeat, each channel's programming
+(OK: change the hours, what airs or the order, or remove the channel), *Add
+another channel*, **Preview the day** (what will air, channel by channel) and
+*Remove this special*.
+
+- **Dates are rules.** *4th Thursday of November* and *Good Friday* are worked
+  out again every year. 29 February skips the years without one; the list
+  says *skips this year*.
+- **On the day** the channel airs the special for its hours, with breaks,
+  bumps and station IDs as usual. The guide shows its name after the title
+  (*Seinfeld · Turkey Day Marathon*). A programme only starts if it ends by
+  the special's end; a little time left over is a station break.
+- **A marathon keeps its own place.** The show's regular run doesn't move
+  while the marathon airs, and next year's marathon continues where this
+  year's stopped (*Continue…*).
+- **No show on two channels at once:** other channels leave a special's shows
+  out of their automatic programming for its hours. A show *pinned* on another
+  channel still airs there.
+- **Saving asks when it matters:** another special on the same channel in
+  those hours (*Cancel* / *Replace*); the same show in a special on another
+  channel at the same time (*Cancel* / *Keep both*); a channel with no holiday
+  episodes is told so, and airs its normal programming on the day.
+- **A special for today** starts after the programme that's on now. Nothing
+  on air is cut off.
+- **Promos:** in the six days before, some of the channel's promos (and
+  other channels' promos for it) name the special: *Thursday, all day*,
+  *Tomorrow, all day*, *Tonight at 6:00 PM*. They follow the promo settings
+  under [Promos](#promos); house breaks carry them too.
+- **This year only** specials leave the list once their date has passed.
+- **Deleting a channel** asks first when it has specials, and takes its part
+  in them with it. If a channel disappears another way (*Build my lineup →
+  Replace*), its specials stay in the list as *channel removed* and air
+  nowhere until you pick them and *Choose a channel* (or *Remove*).
+- **In the weekly planner** a special shows in its own week: see
+  [The weekly planner](#the-weekly-planner).
 
 ### Summer reruns
 
@@ -1248,6 +1323,7 @@ Everything lives in the add-on's data folder,
 | File | Contents |
 |---|---|
 | `channels.json` | Your lineup: channels, sources, pinned shows, time blocks, off-air hours |
+| `calendar.json` | Holidays and specials: each special's date rule, channels, hours and programming. No file until you add one |
 | `schedules/<id>.json` | Each channel's rolling schedule and episode bookmarks (rebuilt automatically) |
 | `durations.json`, `codecs.json` | Cached running times and video codecs of files |
 | `musicvideos.json` | What CableBox read from each music video: length, frame rate, audio track, tags |

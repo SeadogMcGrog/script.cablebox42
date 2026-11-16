@@ -2731,6 +2731,8 @@ e.g. Seinfeld, Fridays 8:00 PM, one hour, in order: every week it continues with
 the next episodes.  Pinned slots always start on time; the automatic scheduler
 fills everything else and never runs into them.  You can also paint off-air
 hours, copy a day to other days, or clear a day (Menu button).
+Right past Sunday goes to the next week, Left past Monday to the week before;
+holidays and specials show in their own week, with a star on the day.
 
 [B]Your watch progress[/B]
 CableBox puts back resume points, watched status and last-played dates after it
@@ -2750,6 +2752,13 @@ episodes and movies (Kodi tags first, then genres such as Horror and Mystery, th
 first, more as the day gets closer, all day on the day itself.  Optional holiday
 commercial and bump folders.  The rest of the year Christmas and Thanksgiving episodes
 are saved for their season.  Settings > Seasons.
+
+[B]Holidays and specials[/B]
+Settings > Tools > Holidays and specials (or Channel manager > channel > Schedule):
+a marathon or a holiday lineup on a date - 31 December, the 4th Thursday of
+November, Good Friday - on one channel or several, all day or for hours you
+choose, back every year.  It airs instead of the channel's usual schedule for
+those hours, and breaks promote it in the days before.
 
 [B]Off the air[/B]
 Off-air hours show a 1950s 'Please stand by' test card (or color bars), with an

@@ -92,7 +92,7 @@ for cid, d in sched.items():
             last_title = None            # named later (next planning pass or on air): it sits between
             if e.get("xc"):
                 stats["cross promos"] += 1
-        if e["k"] == "promo" and e.get("xc") and e.get("pt"):
+        if e["k"] == "promo" and e.get("xc") and e.get("pt") and not e.get("sp"):   # sp: a special's promo
             o = sched.get(e["xc"])
             blk = [b for b in (o or {}).get("blocks", []) if abs(b["s"] - e["pt"]) < 1]
             stats["cross checked"] += 1
