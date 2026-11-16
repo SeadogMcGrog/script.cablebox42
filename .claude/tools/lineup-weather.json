@@ -1,0 +1,151 @@
+{
+ "version": 2,
+ "channels": [
+  {
+   "id": "guide002",
+   "number": 2,
+   "name": "TV Guide",
+   "type": "guide",
+   "sources": [],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": false,
+   "midroll": false,
+   "bumps": false,
+   "lineup": "shuffle",
+   "slot": 30,
+   "callsign": "TG"
+  },
+  {
+   "id": "keys0003",
+   "number": 3,
+   "name": "Keystone",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvgenre",
+     "value": "Comedy"
+    },
+    {
+     "type": "tvgenre",
+     "value": "Science Fiction"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "callsign": "KEY"
+  },
+  {
+   "id": "beac0004",
+   "number": 4,
+   "name": "Beacon",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvgenre",
+     "value": "Comedy"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "callsign": "BCN"
+  },
+  {
+   "id": "film0006",
+   "number": 6,
+   "name": "Drama Movies",
+   "type": "movies",
+   "sources": [
+    {
+     "type": "movies",
+     "genre": "Drama"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "midroll": false,
+   "bumps": false,
+   "lineup": "shuffle",
+   "slot": 30,
+   "callsign": "DRM"
+  },
+  {
+   "id": "kids0007",
+   "number": 7,
+   "name": "Kid Stuff",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvgenre",
+     "value": "Comedy"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "callsign": "KID",
+   "ad_flavour": "K"
+  },
+  {
+   "id": "shrt0008",
+   "number": 8,
+   "name": "Shorties TV",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvgenre",
+     "value": "Animation"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "callsign": "SHRT"
+  },
+  {
+   "id": "allm0010",
+   "number": 10,
+   "name": "All Movies",
+   "type": "movies",
+   "sources": [
+    {
+     "type": "movies"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "midroll": false,
+   "bumps": false,
+   "lineup": "shuffle",
+   "slot": 30,
+   "callsign": "ALLM"
+  },
+  {
+   "id": "wthr0025",
+   "number": 25,
+   "name": "Weather",
+   "type": "weather",
+   "sources": [],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": false,
+   "midroll": false,
+   "bumps": false,
+   "lineup": "shuffle",
+   "slot": 30,
+   "callsign": "WX"
+  }
+ ]
+}

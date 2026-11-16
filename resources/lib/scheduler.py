@@ -136,6 +136,64 @@ def _episode_order(label):
     return (season == 0, season, episode)
 
 
+# ----------------------------------------------------------------- summer reruns
+RERUN_OFF, RERUN_NETWORKS, RERUN_ALL = 0, 1, 2
+RERUN_MONTHS = (6, 7, 8)        # 1 June - 31 August, local time
+RERUN_SUFFIX = ":rerun"
+RERUN_MIN = 3                   # aired episodes a season needs before it reruns
+
+
+def rerun_season(ts, cfg):
+    """Summer reruns at ts?  cfg 'reruns' is the setting; 'rerun_today' (a hidden test
+    setting, YYYY-MM-DD) stands in for the date in the rig."""
+    if not cfg or not cfg.get("reruns"):
+        return False
+    fake = cfg.get("rerun_today") or ""
+    if fake:
+        try:
+            return int(fake.split("-")[1]) in RERUN_MONTHS
+        except (IndexError, ValueError):
+            pass
+    return time.localtime(ts).tm_mon in RERUN_MONTHS
+
+
+def rerun_channel(ch, cfg):
+    """Does this channel rerun in the summer?  'Broadcast networks': the broadcast
+    networks (Keystone, Beacon, Horizon and channels set up as one); 'All channels':
+    every show channel.  Movie, loop, Boombox, extras, guide and weather: never."""
+    mode = (cfg or {}).get("reruns", RERUN_OFF)
+    if ch.get("type") != "network":
+        return False
+    if mode == RERUN_ALL:
+        return True
+    return mode == RERUN_NETWORKS and bool(ch.get("broadcast"))
+
+
+def _season_of(ep):
+    k = _episode_order(ep.get("label"))
+    return k[:2] if k else None
+
+
+def rerun_range(eps, last_i):
+    """Indexes of the episodes a summer rerun picks from: the season the series is
+    in (where its next new episode is), from its first episode up to the last one
+    that aired (last_i); the season before when fewer than RERUN_MIN of this season
+    have aired (an episode 1 next: none).  Series without season numbers: from the
+    start.  Empty (the series airs new episodes) when there isn't enough to rerun:
+    one episode again and again all summer would be no rerun season."""
+    if last_i is None or last_i < 0:
+        return []
+    nxt = last_i + 1
+    want = _season_of(eps[nxt]) if nxt < len(eps) else _season_of(eps[last_i])
+    rng = [j for j in range(last_i + 1) if _season_of(eps[j]) == want]
+    if len(rng) < RERUN_MIN:
+        before = (rng[0] if rng else nxt) - 1
+        if before >= 0:
+            prev = _season_of(eps[before])
+            rng = [j for j in range(before + 1) if _season_of(eps[j]) == prev]
+    return rng if len(rng) >= RERUN_MIN else []
+
+
 # ----------------------------------------------------------------- time utils
 def local_tod(ts):
     lt = time.localtime(ts)
@@ -275,12 +333,13 @@ class ChannelSchedule(object):
 
     # -- series bookmarks (bookmarks.py) and the undo log
     def _shared(self, key):
-        """Does this channel move the show's shared bookmark?  A TV show: only on its
+        """Does this channel move the show's shared bookmark?  Never a summer rerun's
+        own bookmark ('<key>:rerun'): it belongs to the channel.  A TV show: only on its
         home channel.  A show with no home (taken off every channel, but aired as a
         fill-in) keeps its shared bookmark untouched for when it comes back.  Pinned
         slots ('rule:...') and other channels airing the show keep their own run
         here.  Folder series (no home channels) share theirs."""
-        if key.startswith("rule:"):
+        if key.startswith("rule:") or key.endswith(RERUN_SUFFIX):
             return False
         if not key.startswith("tv:"):
             return True
@@ -296,7 +355,16 @@ class ChannelSchedule(object):
 
     def _bm_set(self, key, path, label=None):
         """Move a bookmark while planning (undone by cut()).  label ('S01E04'):
-        where the episode is in the series, should its file leave the library."""
+        where the episode is in the series, should its file leave the library.
+        A summer rerun (_next_episode just picked it as one) moves the series'
+        rerun bookmark instead: the main one stays where the season stopped."""
+        rr = getattr(self, "_rerun_pick", None)
+        self._rerun_pick = None
+        if rr == (key, path):
+            key += RERUN_SUFFIX
+            self._rr_path = path         # the block gets "(R)"
+        else:
+            self._rr_path = None
         bookmarks.remember(path, label)
         shared = self._shared(key)
         self._undo("s" if shared else "l", key, self._bm_get(key))
@@ -946,6 +1014,9 @@ class ChannelSchedule(object):
             pos = fill(pos, blen, ads, bumps, rng, final=(i == k), ids=ids if i == k else None,
                        absorb=i < k)
         self._add_block(t, end, prog["title"], "show", prog.get("sub", ""), prog.get("label", ""))
+        if getattr(self, "_rr_path", None) == prog["path"]:
+            self.data["blocks"][-1]["rr"] = 1     # a summer rerun: "(R)" in the guide and banner
+        self._rr_path = None
         return end
 
     def _chapter_points(self, prog, dur, gap, timed_k, midroll):
@@ -2324,6 +2395,13 @@ class ChannelSchedule(object):
     def _next_episode(self, ser, ptr_key):
         eps = ser["episodes"]
         last = self._bm_get(ptr_key)
+        self._rerun_pick = None
+        when = getattr(self, "_season_t", None)
+        if when is not None and last and not ptr_key.startswith("rule:") and                 rerun_channel(self.ch, self.cfg) and rerun_season(when, self.cfg):
+            ep = self._rerun_episode(eps, ptr_key, last, when)
+            if ep is not None:
+                self._rerun_pick = (ptr_key, ep["path"])
+                return ep
         idx = 0
         if last:
             for i, e in enumerate(eps):
@@ -2349,6 +2427,26 @@ class ChannelSchedule(object):
                 continue
             return e
         return eps[idx]
+
+    def _rerun_episode(self, eps, ptr_key, last, when):
+        """Summer reruns (automatic programming only, never a pinned slot): the next
+        episode, in order, of the season the series is in, up to the last that aired;
+        round again from the season's start.  None: nothing to rerun (airs normally)."""
+        last_i = next((i for i, e in enumerate(eps) if e["path"] == last), None)
+        rng = rerun_range(eps, last_i)
+        if not rng:
+            return None
+        prev = self._bm_get(ptr_key + RERUN_SUFFIX)
+        pos = next((k for k, j in enumerate(rng) if eps[j]["path"] == prev), None)
+        start = 0 if pos is None else (pos + 1) % len(rng)
+        for k in range(len(rng)):
+            e = eps[rng[(start + k) % len(rng)]]
+            if library.is_bad(e["path"]) or library.stale(e["path"]):
+                continue
+            if seasons.out_of_season(e, when, self.cfg):
+                continue
+            return e
+        return None
 
     def _pick_rule(self, pool, t, rule):
         """Programme for a pinned slot.  'inorder' continues each series where

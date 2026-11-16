@@ -58,6 +58,7 @@ def _check_gen():
             _AIR_CACHE.clear()
             _EXISTS.clear()
             _SHOWS[1] = None
+            listing_clear()
         _GEN[0] = g
 
 
@@ -158,6 +159,20 @@ class Durations(object):
             self.data[path] = d
             self.dirty = True
         return d
+
+    # Frame rates of the guide's top-half clips (trailers, Extras promos, commercials),
+    # measured by the service's background reader: "fps|<path>" -> fps (0: unreadable).
+    # Same file, so every value stays a number for the tools that read durations.json.
+    FPS = "fps|"
+
+    def fps(self, path):
+        """The measured frame rate, 0 if the file couldn't be read, None if not measured yet."""
+        v = self.data.get(self.FPS + path)
+        return None if v is None else float(v)
+
+    def set_fps(self, path, fps):
+        self.data[self.FPS + path] = round(float(fps or 0), 3)
+        self.dirty = True
 
     def learn(self, path, seconds):
         if seconds and seconds > 0 and abs(self.data.get(path, 0) - seconds) > 1:
@@ -877,6 +892,7 @@ def clear_cache():
     _POOL_CACHE.clear()
     _AIR_CACHE.clear()
     _EXISTS.clear()
+    listing_clear()
     from . import seasons          # holiday matches follow library changes too
     seasons.clear_cache()
 
@@ -1795,3 +1811,219 @@ def chapters_read_all(abort=lambda: False, progress=None):
     cache.save()
     log("chapters: Read now read %d of %d files" % (n, len(todo)), level=xbmc.LOGINFO)
     return n, got
+
+
+# ------------------------------------------------------------- guide listings and ratings
+# Library data only (never opens a media file): year, content rating, genres,
+# subtitle tracks and audio channels of every movie and episode, read once in a
+# background thread (paged, so a big library doesn't hold Kodi up) and kept for
+# _POOL_TTL.  Sidecar subtitle files: one folder listing per folder asked about,
+# also in that thread.  The guide and the rating box never wait for it.
+SUB_EXT = (".srt", ".ass", ".ssa", ".sub", ".smi", ".vtt", ".idx", ".sup")
+_LISTING = {"t": 0, "files": None, "shows": None, "busy": False, "dirs": {}, "want": set()}
+_LISTING_LOCK = threading.Lock()
+_PAGE = 1000
+
+
+def _sd_flags(sd):
+    sd = sd or {}
+    aud = sd.get("audio") or []
+    return bool(sd.get("subtitle")), bool(aud) and max(int(a.get("channels") or 0) for a in aud) >= 2
+
+
+def _paged(method, key, props):
+    out, start = [], 0
+    while True:
+        r = rpc(method, {"properties": props, "limits": {"start": start, "end": start + _PAGE}})
+        items = r.get(key) or []
+        out.extend(items)
+        total = (r.get("limits") or {}).get("total", 0)
+        start += _PAGE
+        if not items or start >= total:
+            return out
+        xbmc.sleep(30)
+
+
+def _load_listing():
+    try:
+        shows = {}
+        for s in rpc("VideoLibrary.GetTVShows", {"properties": ["mpaa", "genre"]}).get("tvshows", []):
+            shows[s["tvshowid"]] = {"mpaa": s.get("mpaa") or "", "genre": s.get("genre") or []}
+        files = {}
+        for m in _paged("VideoLibrary.GetMovies", "movies", ["file", "year", "mpaa", "genre", "streamdetails"]):
+            cc, st = _sd_flags(m.get("streamdetails"))
+            if m.get("file"):
+                files[m["file"]] = {"kind": "movie", "year": m.get("year") or 0, "mpaa": m.get("mpaa") or "",
+                                    "genre": m.get("genre") or [], "cc": cc, "stereo": st}
+        for e in _paged("VideoLibrary.GetEpisodes", "episodes", ["file", "tvshowid", "streamdetails"]):
+            cc, st = _sd_flags(e.get("streamdetails"))
+            sh = shows.get(e.get("tvshowid")) or {}
+            if e.get("file"):
+                files[e["file"]] = {"kind": "episode", "year": 0, "mpaa": sh.get("mpaa", ""),
+                                    "genre": sh.get("genre", []), "cc": cc, "stereo": st}
+        with _LISTING_LOCK:
+            _LISTING.update(t=time.time(), files=files, shows=shows)
+    except Exception as exc:
+        log("listing details: %s" % exc)
+    _listing_dirs()
+    with _LISTING_LOCK:
+        _LISTING["busy"] = False
+
+
+def _listing_dirs():
+    """Sidecar subtitles: list each folder asked about once (read-only)."""
+    while True:
+        with _LISTING_LOCK:
+            todo = [d for d in _LISTING["want"] if d not in _LISTING["dirs"]]
+            _LISTING["want"] = set()
+        if not todo:
+            return
+        for d in todo[:200]:
+            subs = set()
+            try:
+                _dirs, names = xbmcvfs.listdir(d)
+                for n in names:
+                    low = n.lower()
+                    if low.endswith(SUB_EXT):
+                        subs.add(low.rsplit(".", 1)[0])
+            except Exception:
+                pass
+            with _LISTING_LOCK:
+                _LISTING["dirs"][d] = subs
+            xbmc.sleep(10)
+
+
+def _listing_kick():
+    with _LISTING_LOCK:
+        if _LISTING["busy"]:
+            return
+        stale = _LISTING["files"] is None or time.time() - _LISTING["t"] > _POOL_TTL
+        if not stale and not [d for d in _LISTING["want"] if d not in _LISTING["dirs"]]:
+            return
+        _LISTING["busy"] = True
+    t = threading.Thread(target=_load_listing if stale else _listing_dirs_done, name="cb42-listing")
+    t.daemon = True
+    t.start()
+
+
+def _listing_dirs_done():
+    _listing_dirs()
+    with _LISTING_LOCK:
+        _LISTING["busy"] = False
+
+
+def listing_clear():
+    with _LISTING_LOCK:
+        _LISTING.update(t=0, files=None, dirs={})
+
+
+def listing_info(path):
+    """{kind, year, mpaa, genre, cc, stereo} for a planned file, or None while the
+    library data is still being read (or the file isn't in the library).  cc also
+    counts a subtitle file next to the video once its folder has been listed."""
+    if not path:
+        return None
+    _check_gen()
+    with _LISTING_LOCK:
+        files = _LISTING["files"]
+        info = files.get(path) if files else None
+        folder = _pdir(path) if not any(path.startswith(x) for x in _NO_FS) else ""
+        subs = _LISTING["dirs"].get(folder) if folder else None
+        if folder and subs is None:
+            _LISTING["want"].add(folder)
+    _listing_kick()
+    if info is None:
+        return None
+    if not info["cc"] and subs:
+        stem = _pname(path).lower().rsplit(".", 1)[0]
+        if any(s == stem or s.startswith(stem + ".") for s in subs):
+            info = dict(info, cc=True)
+    return info
+
+
+def listing_ready():
+    """The listing data is read and no folder waits for its subtitle check."""
+    with _LISTING_LOCK:
+        return _LISTING["files"] is not None and not [d for d in _LISTING["want"] if d not in _LISTING["dirs"]]             and not _LISTING["busy"]
+
+
+def listing_warm():
+    """Start reading the listing data (TV start), so the first programme's rating is there."""
+    _listing_kick()
+
+
+_RATING_RX = re.compile(r"(TV-?(?:Y7-?FV|Y7|Y|G|PG|14|MA)|NC-17|PG-13|PG|G|R)\b", re.I)
+
+
+def mpaa_code(text):
+    """'Rated PG-13', 'US:PG-13', 'PG-13' -> 'PG-13'; 'TV-PG', 'US:TV-PG' -> 'TV-PG';
+    anything else (other countries' systems, 'Not Rated') -> ''."""
+    t = (text or "").strip()
+    if not t:
+        return ""
+    if ":" in t:
+        t = t.split(":", 1)[1] if t.split(":", 1)[0].strip().upper() in ("US", "USA") else ""
+    t = re.sub(r"^\s*rated\s+", "", t, flags=re.I).strip()
+    m = _RATING_RX.match(t)
+    if not m:
+        return ""
+    code = m.group(1).upper()
+    if code.startswith("TV") and not code.startswith("TV-"):
+        code = "TV-" + code[2:]
+    return code.replace("Y7FV", "Y7-FV")
+
+
+_MOVIE_TV = {"G": "TV-G", "PG": "TV-PG", "PG-13": "TV-14", "R": "TV-MA", "NC-17": "TV-MA"}
+
+
+def tv_rating(text):
+    """The 1997 TV Parental Guidelines rating to show: TV ratings as they are,
+    movie ratings mapped (PG-13 -> TV-14, R -> TV-MA)."""
+    code = mpaa_code(text)
+    if code.startswith("TV-"):
+        return "TV-Y7" if code == "TV-Y7-FV" else code
+    return _MOVIE_TV.get(code, "")
+
+
+def rating_for(path):
+    """TV rating of a planned file ('' when unknown): the listing data, or - while
+    that is still being read - one lookup by file name."""
+    info = listing_info(path)
+    if info is not None:
+        return tv_rating(info["mpaa"])
+    name = _pname(path)
+    try:
+        flt = {"field": "filename", "operator": "is", "value": name}
+        for m in rpc("VideoLibrary.GetMovies", {"filter": flt, "properties": ["file", "mpaa"]}).get("movies", []):
+            if m.get("file") == path:
+                return tv_rating(m.get("mpaa"))
+        for e in rpc("VideoLibrary.GetEpisodes", {"filter": flt, "properties": ["file", "tvshowid"]}).get("episodes", []):
+            if e.get("file") == path:
+                s = rpc("VideoLibrary.GetTVShowDetails", {"tvshowid": e["tvshowid"], "properties": ["mpaa"]})
+                return tv_rating((s.get("tvshowdetails") or {}).get("mpaa"))
+    except Exception as exc:
+        log("rating: %s" % exc)
+    return ""
+
+
+# ------------------------------------------------------------- the guide's trailers
+_TRAILERS = [0, None]       # (when, {movie file: local trailer file})
+
+
+def movie_trailers():
+    """{movie file: trailer file} for library movies whose trailer is a local file
+    (Kodi's 'trailer' field; plugin:// and web trailers are left out: network, ads,
+    failures).  Cached like the pools."""
+    _check_gen()
+    if _TRAILERS[1] is not None and time.time() - _TRAILERS[0] < _POOL_TTL:
+        return _TRAILERS[1]
+    out = {}
+    try:
+        for m in all_movies(["file", "trailer"]):
+            t = (m.get("trailer") or "").strip()
+            if m.get("file") and t and not t.lower().startswith(_NO_FS):
+                out[m["file"]] = t
+    except Exception as exc:
+        log("trailers: %s" % exc)
+    _TRAILERS[0], _TRAILERS[1] = time.time(), out
+    return out

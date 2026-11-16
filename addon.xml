@@ -10,7 +10,7 @@
     <extension point="xbmc.addon.metadata">
         <summary lang="en_GB">Retro cable TV from your own library - flip channels, not menus.</summary>
         <description lang="en_GB">CableBox 42 turns your Kodi library into a live cable TV lineup. Shows air on a real-time schedule with commercial breaks and bumps from your own clip folders, a scrolling program guide channel, a retro weather channel, static between channels and a channel banner. Lineups build themselves from your library (genres, decades, studios, tags, smart playlists or folders) and can be fine-tuned show by show - there is no schedule to compile. Playback uses Kodi's own player, so hardware decoding works exactly as it does for the rest of your library.[CR][CR]Inspired by the FieldStation42 project; not affiliated with it.</description>
-        <disclaimer lang="en_GB">Plays only media from your own Kodi library and folders. The optional weather channel uses Kodi's weather service or, if you enter a location, fetches forecasts from open-meteo.com.</disclaimer>
+        <disclaimer lang="en_GB">Plays only media from your own Kodi library and folders. The optional weather channel uses Kodi's weather service or, if you enter a location, fetches forecasts (and nearby cities' temperatures) from open-meteo.com. Map data: Natural Earth (public domain).</disclaimer>
         <news>1.2.0
 - New: schedule promos ("Up next", "Tonight at 8:00") made from your library (off by default)
 - New: house breaks for channels without commercials (promos, guide and weather ads)

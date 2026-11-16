@@ -1,0 +1,134 @@
+{
+ "version": 2,
+ "channels": [
+  {
+   "id": "guide002",
+   "number": 2,
+   "name": "TV Guide",
+   "type": "guide",
+   "sources": [],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": false,
+   "midroll": false,
+   "bumps": false,
+   "lineup": "shuffle",
+   "slot": 30,
+   "callsign": "TG"
+  },
+  {
+   "id": "keys0003",
+   "number": 3,
+   "name": "Keystone",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvgenre",
+     "value": "Comedy"
+    },
+    {
+     "type": "tvgenre",
+     "value": "Science Fiction"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [
+    {
+     "id": "trek01",
+     "label": "Star Trek",
+     "start": "04:00",
+     "minutes": 60,
+     "days": "all",
+     "order": "inorder",
+     "sources": [
+      {
+       "type": "tvshow",
+       "value": "Star Trek: The Next Generation (1987)"
+      }
+     ]
+    }
+   ],
+   "commercials": true,
+   "callsign": "KEY",
+   "broadcast": 1,
+   "station": "keystone"
+  },
+  {
+   "id": "beac0004",
+   "number": 4,
+   "name": "Beacon",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvgenre",
+     "value": "Comedy"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [
+    {
+     "id": "fugi01",
+     "label": "The Fugitive",
+     "start": "06:00",
+     "minutes": 150,
+     "days": "all",
+     "order": "inorder",
+     "sources": [
+      {
+       "type": "movie",
+       "value": [
+        "The Fugitive"
+       ]
+      }
+     ]
+    }
+   ],
+   "commercials": true,
+   "callsign": "BCN",
+   "broadcast": 2,
+   "station": "beacon"
+  },
+  {
+   "id": "film0006",
+   "number": 6,
+   "name": "Drama Movies",
+   "type": "movies",
+   "sources": [
+    {
+     "type": "movies",
+     "genre": "Drama"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "midroll": false,
+   "bumps": false,
+   "lineup": "shuffle",
+   "slot": 30,
+   "callsign": "DRM"
+  },
+  {
+   "id": "kids0007",
+   "number": 7,
+   "name": "Kid Stuff",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvgenre",
+     "value": "Comedy"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "callsign": "KID",
+   "ad_flavour": "K"
+  }
+ ]
+}

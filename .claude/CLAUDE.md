@@ -225,6 +225,25 @@ A task often starts as "implement `briefs\<name>.md`".
   one ends - two copies at once, +6 dB for 0.4 s every loop (plain Kodi 21.3 in the rig, crossfade
   off). 6, 8 and 10 s files repeat seamlessly. The off-air tone (`media/offair_tone.wav`) is therefore
   10 s (10,000 whole cycles). Check a loop with a recording, not by ear in the log.
+- **The guide crawl** (`tv.crawl_loop`): list 50 is a `wraplist` with `<scrolltime tween="linear">3200`,
+  moved by `Control.Move(50,1)` from its own thread every step (3.0 / 2.5 / 1.7 s). A linear scroll
+  restarts from where it is, so a move arriving mid-scroll keeps the speed at exactly one row a
+  step - the scroll time must stay above the slowest step and below twice the fastest (the list
+  is 8 rows tall so Kodi's jump correction, `itemsPerPage / 4` rows, never fires). The 5-minute
+  refresh changes the rows in place (`getListItem(i).setProperty`); `reset()` would jump.
+  Rig: `rec F.mp4 40 "RunScript(script.cablebox42,watch,2)"`, then `.claude/tools/crawl_speed.py F.mp4`
+  (in the rig) measures the grid's motion: a constant 35 px/s at 1080p (Normal), no still frames.
+- **Skin conditions group with `[ ]`, not `( )`**, and `String.EndsWith(...,2)` also matches
+  `font12`: the guide's cells use the value `two` for their two-line variant.
+- **A `grouplist` clips its children to its own rectangle** (Kodi 21, verified in the rig): the weather
+  map's tiles (`media/wxmap`, slots 4101-4112) sit in a group inside a grouplist and are moved with
+  `setPosition` relative to it; a plain `group` would let them spill over the header and ticker.
+- **The skin folder is `resources/skins/Default`** (capital D): a path built as `.../default/...` works
+  on Windows and fails on Linux/CoreELEC (the weather map's `index.json` did).
+- **Weather map and cities** come from Natural Earth (public domain) via `G:/CableBox42/rig/wx_prerender.py`
+  (not shipped; the GeoJSON sources are in `G:/CableBox42/rig/naturalearth/`): `resources/weather/places.json`
+  (places of 50,000+) and the 32768-px equirectangular world in 1024-px tiles (~1.9 MB, ocean-only
+  tiles left out). `.claude/tools/gen_weather_xml.py` writes the two pages into the TV skin.
 - `kodi-addon-checker` rejects `<news>` over 1500 characters. Keep the newest release
   notes there and the full history in `changelog.txt`.
 

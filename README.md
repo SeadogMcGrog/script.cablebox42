@@ -95,7 +95,9 @@ hardware video decoding works exactly as it does for the rest of your library.
 - **Promos.** "Channel 7 — Seinfeld: \"The Contest\" — Up next", with the
   episode's still, the show's logo and its theme music, made from your own
   library (opt-in).
-- **Guide channel.** A scrolling grid of what's on now and next, with promos.
+- **Guide channel.** A Prevue-style grid that crawls up without stopping: call
+  letters, titles with year, rating, *(CC)* and *(Stereo)*, colour-coded movies,
+  sports and kids' shows, and cable-company ads.
 - **Weather channel.** Current conditions, a text forecast, a 4-day outlook and
   the next few hours, with a ticker and optional background music.
 - **The look of a CRT.** Static and a static sound between channels, a glowing
@@ -799,6 +801,31 @@ season):
    and movie titles such as *Treehouse of Horror* or *A Charlie Brown
    Christmas* count too.
 
+### Summer reruns
+
+The 90s TV year had a shape: new episodes in the fall, then a summer of reruns.
+With *Settings → Seasons → Summer reruns* on, from **1 June to 31 August** the
+channels air episodes of each series they've already shown instead of moving it on:
+
+- A series reruns its current season in order, from its first episode up to the
+  last one that aired, then round again. If fewer than three episodes of the
+  current season have aired (say the next new one is an episode 1), it reruns the
+  season before. A series with fewer than three episodes aired in all keeps airing
+  new ones: there isn't enough to rerun.
+- **In September each series carries on** with its next new episode, exactly where
+  it stopped in May: the summer never moves a series on. Turning the setting off
+  does the same at once.
+- The guide and the banner show *(R)* after a rerun's title.
+- *Broadcast networks*: Keystone, Beacon,
+  Horizon). *All channels*: every show channel. Movie channels, Boombox, *Behind the
+  scenes*, the guide and weather never rerun.
+- Only the automatic schedule reruns. Slots you pinned in the weekly planner air as
+  you set them, and pinned *in order* slots keep moving forward all summer.
+- Holiday rules still apply to reruns (no Christmas episode in July).
+- Schedules are planned hours ahead, so the switch shows in programmes planned after
+  midnight on 1 June and 1 September; changing the setting replans from each
+  channel's next programme.
+
 Tagging a whole show (an anthology of Halloween specials, say) or a movie in
 Kodi is the surest way to get it into the holiday lineup. Out of season, items
 tagged with the holiday's own name (*halloween*, *thanksgiving*,
@@ -912,6 +939,23 @@ beats the channel's. A new logo shows within a couple of minutes; new clips are
 used from each channel's next programme once you close the Channel manager (or
 with *Settings → Tools → Refresh schedules*).
 
+### The rating box
+
+From 1997 every US show opened with a small black box in the top-left corner:
+**TV** over the rating. CableBox shows it for the first 15 seconds of a show or
+movie (also when you tune in within its first 10 seconds), with a **CC** box next
+to it when the programme has captions (the same check as the CC button).
+
+- The rating is the library's content rating (*MPAA* in Kodi's info). Shows keep
+  their TV rating (*TV-Y*, *TV-Y7*, *TV-G*, *TV-PG*, *TV-14*, *TV-MA*); movies get the
+  TV rating they'd have had on 90s TV: G → TV-G, PG → TV-PG, PG-13 → TV-14,
+  R and NC-17 → TV-MA. *Rated PG-13*, *US:PG-13* and *PG-13* all work; no rating
+  (or another country's), no box.
+- Not after a break, not on commercials, bumps, promos, station IDs, the guide,
+  weather, music videos or *Behind the scenes*.
+- With the logo bug in the top-left corner, the box goes top right.
+- Off: *Settings → Viewing → Show rating at start of programmes*.
+
 ### The corner logo ("bug")
 
 - It shows in a corner during programmes only, fading in a moment after the
@@ -931,10 +975,45 @@ logos to PNG first. Real network logos are trademarks, so use your own images.
 
 ## The guide channel
 
-A scrolling grid of every channel with what's on now, in 30 minutes and in an
-hour, and promos for upcoming movies and long programs. Press **OK** on the
-guide to pick a channel. Add music under *Settings → Guide & Weather → Guide channel
-music folder*, and change the title with *Guide title*.
+A grid of every channel with what's on now, in 30 minutes and in an hour, and
+promos for upcoming movies and long programs. Press **OK** on the guide to pick
+a channel. Add music under *Settings → Guide & Weather → Guide channel music folder*,
+and change the title with *Guide title*.
+
+The grid crawls up at a steady speed, the way the 90s preview channel did, and
+never stops: after the last channel come a row with the guide's title and one to
+three ads from the "cable company", then the first channel again. *Guide scroll
+speed* sets the pace (Slow, Normal or Fast: about 3, 2.5 or 1.7 seconds a row).
+
+- **Channels** show their number and call letters (*3 KEY*). A channel without
+  call letters gets a short abbreviation of its name (at most 5 letters); the full
+  name stays in the banner.
+- **Listings** add what your library knows: movies get their year and rating
+  (*The Fugitive (1993) PG-13*), and anything with a subtitle track, or a subtitle
+  file next to it, gets *(CC)*; *(Stereo)* when the audio has two or more channels.
+  A long title drops these details first, then gets a smaller font, then two lines;
+  it's never cut off. The details are read from the library in the background just
+  after the TV turns on, so they can appear a few seconds after the titles. Files
+  are never opened for this.
+- **Colours:** movies have a red cell, sports a green one and kids' programmes an
+  amber one; everything else stays on the guide's blue. Sports and kids come from
+  the library's genres (*Sport*, *Football*...; *Animation*, *Family*, *Children*,
+  *Kids*); everything on a kids' channel (Ad flavour *Kids*, Chameleon, Animation
+  Station) counts as kids.
+- **Video in the top half** (*Guide top half: Video*, the default): trailers of movies
+  airing in the next 4 hours on any channel (the library's trailer, local files only),
+  short *Promo* / *Trailer* clips from a show's Extras folder, and commercials (the guide
+  channel's own `commercials` folder if it has one, else the usual commercials) play in a
+  small picture top left, with *Tonight 8:00 PM · 12 PIX* and the title beside it. Between
+  runs of 2-4 minutes come 1-2 minutes of text and guide music. Each run uses clips of one
+  frame rate only, played as one list, so a TV that switches refresh rate blanks only
+  between runs. CableBox measures each clip's frame rate in the background first (MP4 and
+  MKV; other files aren't used), so on a new install the top half stays text until clips
+  are measured. Like every channel it runs on the clock: flip away and back and it's
+  further on, not starting over. *Text only* gives the guide as it was.
+- **Your own ads:** put a `guide.txt` in the guide channel's station folder, one ad
+  per line (lines starting with `#` are skipped). They're used before the built-in
+  ones. CableBox only reads the file.
 
 Listings appear immediately. A channel whose listings are still being prepared
 shows *Updating listings…* and fills in shortly afterwards.
@@ -947,12 +1026,29 @@ Pages rotate every 10 seconds:
 
 - **Current conditions:** temperature, conditions, humidity, dew point, feels
   like, wind, pressure, UV index.
+- **Latest observations:** the temperature and sky in 6-8 nearby cities of
+  50,000 people or more (within about 300 km, further in empty areas), like the
+  90s weather channel's "41 in Peoria, 38 in Springfield".
 - **Local forecast:** an old-style TODAY… TONIGHT… TOMORROW… text forecast.
+- **Regional map:** a drawn map around you (land, lakes, country and state
+  borders) with the bigger cities nearby, their temperatures and sky icons. The map
+  ships with CableBox (made from Natural Earth's public-domain maps) and works
+  offline; only the temperatures come from Open-Meteo.
 - **Extended forecast:** 4 days with icons, highs and lows.
 - **The next few hours:** hourly temperatures and conditions, plus sunrise and
   sunset.
 
-A conditions ticker scrolls along the bottom.
+Times on the weather pages (sunrise, sunset, the hours, the day names) are the
+forecast place's own local time; the clock at the top is your box's.
+
+A ticker scrolls along the bottom of every page: current conditions, today's high
+and low, and the forecast.
+
+The observations and the map need to know where you are: a city typed in, or
+(*Automatic*) the place Kodi's weather is set to. All the nearby cities come in one
+Open-Meteo request, refreshed every 15 minutes. If it fails, the last temperatures
+show (up to 6 hours old). With *Kodi weather service only*, or if there has never
+been any data, the two pages are left out, never shown blank.
 
 **Where the weather comes from** (*Settings → Guide & Weather*):
 
@@ -1062,6 +1158,7 @@ tap to tune. Yatse custom commands can call the `RunScript` actions above.
 | CRT effect | Off | Off / Subtle / Full |
 | Captions: show programmes in Kodi's full-screen player | On | Needed on most TV boxes |
 | Captions: rewind 1 second so embedded subtitles appear | Automatic | |
+| Show rating at start of programmes | On | The 1997-style *TV-PG* box in the top-left corner for the first 15 seconds of a show or movie (top right when the station logo is top left), with a *CC* box beside it when it has captions ([The rating box](#the-rating-box)) |
 
 **Guide & Weather**
 
@@ -1069,6 +1166,8 @@ tap to tune. Yatse custom commands can call the `RunScript` actions above.
 |---|---|---|
 | Guide title | *CableBox 42 Program Guide* | |
 | Guide channel music folder | – | Music behind the guide |
+| Guide scroll speed | Normal | Slow / Normal / Fast ([The guide channel](#the-guide-channel)) |
+| Guide top half | Video | Trailers, promos and commercials in the guide's top half, or *Text only* ([The guide channel](#the-guide-channel)) |
 | Weather data from | Automatic | Automatic / Kodi weather service only / Open-Meteo only |
 | City or lat,lon | – | For Open-Meteo |
 | Units | Automatic | Automatic / Fahrenheit / Celsius |
@@ -1089,6 +1188,7 @@ tap to tune. Yatse custom commands can call the `RunScript` actions above.
 | Tags | *halloween, spooky, horror* · *thanksgiving* · *christmas, xmas, holiday* | Any Kodi tag containing one of these words |
 | Genres | *Horror, Mystery* · – · *Christmas, Holiday* | Empty = don't use genres |
 | Save holiday episodes and movies for their season | On | Keeps Christmas episodes out of July |
+| Summer reruns | Off | *Broadcast networks* or *All channels*: June to August, series rerun episodes already shown ([Summer reruns](#summer-reruns)) |
 
 **Start-up & library**
 

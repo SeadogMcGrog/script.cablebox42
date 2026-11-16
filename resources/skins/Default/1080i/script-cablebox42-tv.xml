@@ -1402,21 +1402,66 @@
                 <left>0</left><top>0</top><width>1920</width><height>1080</height>
                 <texture>guide_bg.jpg</texture>
             </control>
-            <control type="label">
-                <left>70</left><top>40</top><width>1200</width><height>80</height>
-                <font>font45</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor>
-                <label>$INFO[Window.Property(guide_title)]</label>
+            <!-- the top half: text and music (as 1.2.0), or a video run (guide stage 3, tv.top_tick) -->
+            <control type="group">
+                <visible>!String.IsEqual(Window.Property(gtop),video)</visible>
+                <control type="label">
+                    <left>70</left><top>40</top><width>1200</width><height>80</height>
+                    <font>font45</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor>
+                    <label>$INFO[Window.Property(guide_title)]</label>
+                </control>
+                <control type="label">
+                    <left>1250</left><top>40</top><width>600</width><height>80</height>
+                    <align>right</align><font>font45</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor>
+                    <label>$INFO[System.Time]</label>
+                </control>
+                <control type="label">
+                    <left>70</left><top>140</top><width>1780</width><height>200</height>
+                    <font>font37</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor>
+                    <wrapmultiline>true</wrapmultiline>
+                    <label>$INFO[Window.Property(guide_promo)]</label>
+                </control>
             </control>
-            <control type="label">
-                <left>1250</left><top>40</top><width>600</width><height>80</height>
-                <align>right</align><font>font45</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor>
-                <label>$INFO[System.Time]</label>
-            </control>
-            <control type="label">
-                <left>70</left><top>140</top><width>1780</width><height>200</height>
-                <font>font37</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor>
-                <wrapmultiline>true</wrapmultiline>
-                <label>$INFO[Window.Property(guide_promo)]</label>
+            <control type="group">
+                <visible>String.IsEqual(Window.Property(gtop),video)</visible>
+                <!-- 4:3 video, framed, top left -->
+                <control type="image">
+                    <left>56</left><top>16</top><width>464</width><height>348</height>
+                    <texture colordiffuse="FFD8C890">white.png</texture>
+                </control>
+                <control type="image">
+                    <left>60</left><top>20</top><width>456</width><height>340</height>
+                    <texture colordiffuse="FF000000">white.png</texture>
+                </control>
+                <control type="videowindow">
+                    <left>60</left><top>20</top><width>456</width><height>340</height>
+                </control>
+                <!-- the panel: guide title and clock, then the caption -->
+                <control type="label">
+                    <left>560</left><top>28</top><width>900</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor>
+                    <label>$INFO[Window.Property(guide_title)]</label>
+                </control>
+                <control type="label">
+                    <left>1460</left><top>28</top><width>400</width><height>70</height>
+                    <align>right</align><font>font37</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor>
+                    <label>$INFO[System.Time]</label>
+                </control>
+                <control type="image">
+                    <left>560</left><top>104</top><width>1300</width><height>3</height>
+                    <texture colordiffuse="FFD8C890">white.png</texture>
+                </control>
+                <control type="label">
+                    <left>560</left><top>140</top><width>1300</width><height>64</height>
+                    <font>font37</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor>
+                    <label>$INFO[Window.Property(gt_cap)]</label>
+                </control>
+                <control type="label">
+                    <left>560</left><top>210</top><width>1300</width><height>150</height>
+                    <font>font45</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor>
+                    <wrapmultiline>true</wrapmultiline>
+                    <label>$INFO[Window.Property(gt_title)]</label>
+                </control>
             </control>
             <!-- time header -->
             <control type="image">
@@ -1440,110 +1485,376 @@
                 <font>font27</font><textcolor>FFFFD24A</textcolor><label>$INFO[Window.Property(g_t3)]</label>
             </control>
             <!-- scrolling grid -->
-            <control type="list" id="50">
-                <left>40</left><top>440</top><width>1840</width><height>620</height>
+            <!-- the crawl: a wraplist moved one row a step by tv.crawl_loop; its linear
+                 scroll lasts longer than the slowest step, so the steps blend into one
+                 constant motion. 8 rows tall (to the screen's bottom edge). -->
+            <control type="wraplist" id="50">
+                <left>40</left><top>440</top><width>1840</width><height>704</height>
                 <orientation>vertical</orientation>
-                <scrolltime>900</scrolltime>
+                <focusposition>0</focusposition>
+                <scrolltime tween="linear">3200</scrolltime>
                 <itemlayout height="88">
                     <control type="image">
                         <left>0</left><top>2</top><width>1840</width><height>84</height>
                         <texture>$INFO[ListItem.Property(rowbg)]</texture>
+                        <visible>String.IsEqual(ListItem.Property(rt),ch)</visible>
+                    </control>
+                    <control type="image">
+                        <left>412</left><top>6</top><width>472</width><height>76</height>
+                        <texture colordiffuse="FF6A2A2A">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c1k),movie)</visible>
+                    </control>
+                    <control type="image">
+                        <left>412</left><top>6</top><width>472</width><height>76</height>
+                        <texture colordiffuse="FF1F5A34">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c1k),sports)</visible>
+                    </control>
+                    <control type="image">
+                        <left>412</left><top>6</top><width>472</width><height>76</height>
+                        <texture colordiffuse="FF6B4A10">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c1k),kids)</visible>
+                    </control>
+                    <control type="image">
+                        <left>892</left><top>6</top><width>472</width><height>76</height>
+                        <texture colordiffuse="FF6A2A2A">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c2k),movie)</visible>
+                    </control>
+                    <control type="image">
+                        <left>892</left><top>6</top><width>472</width><height>76</height>
+                        <texture colordiffuse="FF1F5A34">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c2k),sports)</visible>
+                    </control>
+                    <control type="image">
+                        <left>892</left><top>6</top><width>472</width><height>76</height>
+                        <texture colordiffuse="FF6B4A10">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c2k),kids)</visible>
+                    </control>
+                    <control type="image">
+                        <left>1372</left><top>6</top><width>452</width><height>76</height>
+                        <texture colordiffuse="FF6A2A2A">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c3k),movie)</visible>
+                    </control>
+                    <control type="image">
+                        <left>1372</left><top>6</top><width>452</width><height>76</height>
+                        <texture colordiffuse="FF1F5A34">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c3k),sports)</visible>
+                    </control>
+                    <control type="image">
+                        <left>1372</left><top>6</top><width>452</width><height>76</height>
+                        <texture colordiffuse="FF6B4A10">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c3k),kids)</visible>
+                    </control>
+                    <control type="image">
+                        <left>0</left><top>2</top><width>1840</width><height>84</height>
+                        <texture colordiffuse="FF101A52">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(rt),hdr)</visible>
+                    </control>
+                    <control type="image">
+                        <left>0</left><top>2</top><width>1840</width><height>84</height>
+                        <texture colordiffuse="FF46226E">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(rt),ad)</visible>
                     </control>
                     <control type="label">
                         <left>20</left><top>4</top><width>110</width><height>80</height>
                         <font>font37</font><textcolor>FFFFD24A</textcolor><align>center</align>
                         <label>$INFO[ListItem.Label]</label>
+                        <visible>String.IsEqual(ListItem.Property(rt),ch)</visible>
                     </control>
                     <control type="label">
                         <left>135</left><top>4</top><width>270</width><height>80</height>
-                        <textcolor>FFFFFFFF</textcolor><font>font27</font>
+                        <font>font37</font><textcolor>FFFFFFFF</textcolor><aligny>center</aligny>
                         <label>$INFO[ListItem.Label2]</label>
-                        <visible>String.IsEqual(ListItem.Property(nfit),font27) | String.IsEmpty(ListItem.Property(nfit))</visible>
+                        <visible>String.IsEqual(ListItem.Property(rt),ch) + [String.IsEqual(ListItem.Property(nfit),font37) | String.IsEmpty(ListItem.Property(nfit))]</visible>
                     </control>
                     <control type="label">
                         <left>135</left><top>4</top><width>270</width><height>80</height>
-                        <textcolor>FFFFFFFF</textcolor><font>font12</font>
+                        <font>font27</font><textcolor>FFFFFFFF</textcolor><aligny>center</aligny>
+                        <label>$INFO[ListItem.Label2]</label>
+                        <visible>String.IsEqual(ListItem.Property(nfit),font27)</visible>
+                    </control>
+                    <control type="label">
+                        <left>135</left><top>4</top><width>270</width><height>80</height>
+                        <font>font12</font><textcolor>FFFFFFFF</textcolor><aligny>center</aligny>
                         <label>$INFO[ListItem.Label2]</label>
                         <visible>String.IsEqual(ListItem.Property(nfit),font12)</visible>
                     </control>
                     <control type="label">
                         <left>135</left><top>4</top><width>270</width><height>80</height>
-                        <textcolor>FFFFFFFF</textcolor><font>font10</font>
+                        <font>font10</font><textcolor>FFFFFFFF</textcolor><aligny>center</aligny>
                         <label>$INFO[ListItem.Label2]</label>
                         <visible>String.IsEqual(ListItem.Property(nfit),font10)</visible>
                     </control>
                     <control type="label">
                         <left>135</left><top>4</top><width>270</width><height>80</height>
-                        <aligny>center</aligny><font>font23_narrow</font><textcolor>FFFFFFFF</textcolor>
-                        <wrapmultiline>true</wrapmultiline>
+                        <font>font23_narrow</font><textcolor>FFFFFFFF</textcolor><aligny>center</aligny><wrapmultiline>true</wrapmultiline>
                         <label>$INFO[ListItem.Property(name2)]</label>
-                        <visible>String.EndsWith(ListItem.Property(nfit),2)</visible>
+                        <visible>String.IsEqual(ListItem.Property(nfit),two)</visible>
                     </control>
                     <control type="label">
                         <left>420</left><top>4</top><width>460</width><height>80</height>
-                        <font>font27</font><textcolor>FFFFFFFF</textcolor>
+                        <font>font27</font><textcolor>FFFFFFFF</textcolor><aligny>center</aligny>
                         <label>$INFO[ListItem.Property(c1)]</label>
+                        <visible>String.IsEqual(ListItem.Property(c1f),font27)</visible>
+                    </control>
+                    <control type="label">
+                        <left>420</left><top>4</top><width>460</width><height>80</height>
+                        <font>font12</font><textcolor>FFFFFFFF</textcolor><aligny>center</aligny>
+                        <label>$INFO[ListItem.Property(c1)]</label>
+                        <visible>String.IsEqual(ListItem.Property(c1f),font12)</visible>
+                    </control>
+                    <control type="label">
+                        <left>420</left><top>4</top><width>460</width><height>80</height>
+                        <font>font10</font><textcolor>FFFFFFFF</textcolor><aligny>center</aligny>
+                        <label>$INFO[ListItem.Property(c1)]</label>
+                        <visible>String.IsEqual(ListItem.Property(c1f),font10)</visible>
+                    </control>
+                    <control type="label">
+                        <left>420</left><top>4</top><width>460</width><height>80</height>
+                        <font>font23_narrow</font><textcolor>FFFFFFFF</textcolor><aligny>center</aligny><wrapmultiline>true</wrapmultiline>
+                        <label>$INFO[ListItem.Property(c12)]</label>
+                        <visible>String.IsEqual(ListItem.Property(c1f),two)</visible>
                     </control>
                     <control type="label">
                         <left>900</left><top>4</top><width>460</width><height>80</height>
-                        <font>font27</font><textcolor>FFDDE4FF</textcolor>
+                        <font>font27</font><textcolor>FFDDE4FF</textcolor><aligny>center</aligny>
                         <label>$INFO[ListItem.Property(c2)]</label>
+                        <visible>String.IsEqual(ListItem.Property(c2f),font27)</visible>
+                    </control>
+                    <control type="label">
+                        <left>900</left><top>4</top><width>460</width><height>80</height>
+                        <font>font12</font><textcolor>FFDDE4FF</textcolor><aligny>center</aligny>
+                        <label>$INFO[ListItem.Property(c2)]</label>
+                        <visible>String.IsEqual(ListItem.Property(c2f),font12)</visible>
+                    </control>
+                    <control type="label">
+                        <left>900</left><top>4</top><width>460</width><height>80</height>
+                        <font>font10</font><textcolor>FFDDE4FF</textcolor><aligny>center</aligny>
+                        <label>$INFO[ListItem.Property(c2)]</label>
+                        <visible>String.IsEqual(ListItem.Property(c2f),font10)</visible>
+                    </control>
+                    <control type="label">
+                        <left>900</left><top>4</top><width>460</width><height>80</height>
+                        <font>font23_narrow</font><textcolor>FFDDE4FF</textcolor><aligny>center</aligny><wrapmultiline>true</wrapmultiline>
+                        <label>$INFO[ListItem.Property(c22)]</label>
+                        <visible>String.IsEqual(ListItem.Property(c2f),two)</visible>
                     </control>
                     <control type="label">
                         <left>1380</left><top>4</top><width>440</width><height>80</height>
-                        <font>font27</font><textcolor>FFC4CCEE</textcolor>
+                        <font>font27</font><textcolor>FFC4CCEE</textcolor><aligny>center</aligny>
                         <label>$INFO[ListItem.Property(c3)]</label>
+                        <visible>String.IsEqual(ListItem.Property(c3f),font27)</visible>
+                    </control>
+                    <control type="label">
+                        <left>1380</left><top>4</top><width>440</width><height>80</height>
+                        <font>font12</font><textcolor>FFC4CCEE</textcolor><aligny>center</aligny>
+                        <label>$INFO[ListItem.Property(c3)]</label>
+                        <visible>String.IsEqual(ListItem.Property(c3f),font12)</visible>
+                    </control>
+                    <control type="label">
+                        <left>1380</left><top>4</top><width>440</width><height>80</height>
+                        <font>font10</font><textcolor>FFC4CCEE</textcolor><aligny>center</aligny>
+                        <label>$INFO[ListItem.Property(c3)]</label>
+                        <visible>String.IsEqual(ListItem.Property(c3f),font10)</visible>
+                    </control>
+                    <control type="label">
+                        <left>1380</left><top>4</top><width>440</width><height>80</height>
+                        <font>font23_narrow</font><textcolor>FFC4CCEE</textcolor><aligny>center</aligny><wrapmultiline>true</wrapmultiline>
+                        <label>$INFO[ListItem.Property(c32)]</label>
+                        <visible>String.IsEqual(ListItem.Property(c3f),two)</visible>
+                    </control>
+                    <control type="label">
+                        <left>40</left><top>4</top><width>1760</width><height>80</height>
+                        <font>font37</font><textcolor>FFFFD24A</textcolor><align>center</align><aligny>center</aligny>
+                        <label>$INFO[ListItem.Property(ad)]</label>
+                        <visible>String.IsEqual(ListItem.Property(rt),hdr)</visible>
+                    </control>
+                    <control type="label">
+                        <left>40</left><top>4</top><width>1760</width><height>80</height>
+                        <font>font32</font><textcolor>FFFFFFFF</textcolor><align>center</align><aligny>center</aligny>
+                        <label>$INFO[ListItem.Property(ad)]</label>
+                        <visible>String.IsEqual(ListItem.Property(rt),ad)</visible>
                     </control>
                 </itemlayout>
                 <focusedlayout height="88">
                     <control type="image">
                         <left>0</left><top>2</top><width>1840</width><height>84</height>
                         <texture>$INFO[ListItem.Property(rowbg)]</texture>
+                        <visible>String.IsEqual(ListItem.Property(rt),ch)</visible>
+                    </control>
+                    <control type="image">
+                        <left>412</left><top>6</top><width>472</width><height>76</height>
+                        <texture colordiffuse="FF6A2A2A">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c1k),movie)</visible>
+                    </control>
+                    <control type="image">
+                        <left>412</left><top>6</top><width>472</width><height>76</height>
+                        <texture colordiffuse="FF1F5A34">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c1k),sports)</visible>
+                    </control>
+                    <control type="image">
+                        <left>412</left><top>6</top><width>472</width><height>76</height>
+                        <texture colordiffuse="FF6B4A10">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c1k),kids)</visible>
+                    </control>
+                    <control type="image">
+                        <left>892</left><top>6</top><width>472</width><height>76</height>
+                        <texture colordiffuse="FF6A2A2A">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c2k),movie)</visible>
+                    </control>
+                    <control type="image">
+                        <left>892</left><top>6</top><width>472</width><height>76</height>
+                        <texture colordiffuse="FF1F5A34">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c2k),sports)</visible>
+                    </control>
+                    <control type="image">
+                        <left>892</left><top>6</top><width>472</width><height>76</height>
+                        <texture colordiffuse="FF6B4A10">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c2k),kids)</visible>
+                    </control>
+                    <control type="image">
+                        <left>1372</left><top>6</top><width>452</width><height>76</height>
+                        <texture colordiffuse="FF6A2A2A">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c3k),movie)</visible>
+                    </control>
+                    <control type="image">
+                        <left>1372</left><top>6</top><width>452</width><height>76</height>
+                        <texture colordiffuse="FF1F5A34">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c3k),sports)</visible>
+                    </control>
+                    <control type="image">
+                        <left>1372</left><top>6</top><width>452</width><height>76</height>
+                        <texture colordiffuse="FF6B4A10">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(c3k),kids)</visible>
+                    </control>
+                    <control type="image">
+                        <left>0</left><top>2</top><width>1840</width><height>84</height>
+                        <texture colordiffuse="FF101A52">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(rt),hdr)</visible>
+                    </control>
+                    <control type="image">
+                        <left>0</left><top>2</top><width>1840</width><height>84</height>
+                        <texture colordiffuse="FF46226E">white.png</texture>
+                        <visible>String.IsEqual(ListItem.Property(rt),ad)</visible>
                     </control>
                     <control type="label">
                         <left>20</left><top>4</top><width>110</width><height>80</height>
                         <font>font37</font><textcolor>FFFFD24A</textcolor><align>center</align>
                         <label>$INFO[ListItem.Label]</label>
+                        <visible>String.IsEqual(ListItem.Property(rt),ch)</visible>
                     </control>
                     <control type="label">
                         <left>135</left><top>4</top><width>270</width><height>80</height>
-                        <textcolor>FFFFFFFF</textcolor><font>font27</font>
+                        <font>font37</font><textcolor>FFFFFFFF</textcolor><aligny>center</aligny>
                         <label>$INFO[ListItem.Label2]</label>
-                        <visible>String.IsEqual(ListItem.Property(nfit),font27) | String.IsEmpty(ListItem.Property(nfit))</visible>
+                        <visible>String.IsEqual(ListItem.Property(rt),ch) + [String.IsEqual(ListItem.Property(nfit),font37) | String.IsEmpty(ListItem.Property(nfit))]</visible>
                     </control>
                     <control type="label">
                         <left>135</left><top>4</top><width>270</width><height>80</height>
-                        <textcolor>FFFFFFFF</textcolor><font>font12</font>
+                        <font>font27</font><textcolor>FFFFFFFF</textcolor><aligny>center</aligny>
+                        <label>$INFO[ListItem.Label2]</label>
+                        <visible>String.IsEqual(ListItem.Property(nfit),font27)</visible>
+                    </control>
+                    <control type="label">
+                        <left>135</left><top>4</top><width>270</width><height>80</height>
+                        <font>font12</font><textcolor>FFFFFFFF</textcolor><aligny>center</aligny>
                         <label>$INFO[ListItem.Label2]</label>
                         <visible>String.IsEqual(ListItem.Property(nfit),font12)</visible>
                     </control>
                     <control type="label">
                         <left>135</left><top>4</top><width>270</width><height>80</height>
-                        <textcolor>FFFFFFFF</textcolor><font>font10</font>
+                        <font>font10</font><textcolor>FFFFFFFF</textcolor><aligny>center</aligny>
                         <label>$INFO[ListItem.Label2]</label>
                         <visible>String.IsEqual(ListItem.Property(nfit),font10)</visible>
                     </control>
                     <control type="label">
                         <left>135</left><top>4</top><width>270</width><height>80</height>
-                        <aligny>center</aligny><font>font23_narrow</font><textcolor>FFFFFFFF</textcolor>
-                        <wrapmultiline>true</wrapmultiline>
+                        <font>font23_narrow</font><textcolor>FFFFFFFF</textcolor><aligny>center</aligny><wrapmultiline>true</wrapmultiline>
                         <label>$INFO[ListItem.Property(name2)]</label>
-                        <visible>String.EndsWith(ListItem.Property(nfit),2)</visible>
+                        <visible>String.IsEqual(ListItem.Property(nfit),two)</visible>
                     </control>
                     <control type="label">
                         <left>420</left><top>4</top><width>460</width><height>80</height>
-                        <font>font27</font><textcolor>FFFFFFFF</textcolor>
+                        <font>font27</font><textcolor>FFFFFFFF</textcolor><aligny>center</aligny>
                         <label>$INFO[ListItem.Property(c1)]</label>
+                        <visible>String.IsEqual(ListItem.Property(c1f),font27)</visible>
+                    </control>
+                    <control type="label">
+                        <left>420</left><top>4</top><width>460</width><height>80</height>
+                        <font>font12</font><textcolor>FFFFFFFF</textcolor><aligny>center</aligny>
+                        <label>$INFO[ListItem.Property(c1)]</label>
+                        <visible>String.IsEqual(ListItem.Property(c1f),font12)</visible>
+                    </control>
+                    <control type="label">
+                        <left>420</left><top>4</top><width>460</width><height>80</height>
+                        <font>font10</font><textcolor>FFFFFFFF</textcolor><aligny>center</aligny>
+                        <label>$INFO[ListItem.Property(c1)]</label>
+                        <visible>String.IsEqual(ListItem.Property(c1f),font10)</visible>
+                    </control>
+                    <control type="label">
+                        <left>420</left><top>4</top><width>460</width><height>80</height>
+                        <font>font23_narrow</font><textcolor>FFFFFFFF</textcolor><aligny>center</aligny><wrapmultiline>true</wrapmultiline>
+                        <label>$INFO[ListItem.Property(c12)]</label>
+                        <visible>String.IsEqual(ListItem.Property(c1f),two)</visible>
                     </control>
                     <control type="label">
                         <left>900</left><top>4</top><width>460</width><height>80</height>
-                        <font>font27</font><textcolor>FFDDE4FF</textcolor>
+                        <font>font27</font><textcolor>FFDDE4FF</textcolor><aligny>center</aligny>
                         <label>$INFO[ListItem.Property(c2)]</label>
+                        <visible>String.IsEqual(ListItem.Property(c2f),font27)</visible>
+                    </control>
+                    <control type="label">
+                        <left>900</left><top>4</top><width>460</width><height>80</height>
+                        <font>font12</font><textcolor>FFDDE4FF</textcolor><aligny>center</aligny>
+                        <label>$INFO[ListItem.Property(c2)]</label>
+                        <visible>String.IsEqual(ListItem.Property(c2f),font12)</visible>
+                    </control>
+                    <control type="label">
+                        <left>900</left><top>4</top><width>460</width><height>80</height>
+                        <font>font10</font><textcolor>FFDDE4FF</textcolor><aligny>center</aligny>
+                        <label>$INFO[ListItem.Property(c2)]</label>
+                        <visible>String.IsEqual(ListItem.Property(c2f),font10)</visible>
+                    </control>
+                    <control type="label">
+                        <left>900</left><top>4</top><width>460</width><height>80</height>
+                        <font>font23_narrow</font><textcolor>FFDDE4FF</textcolor><aligny>center</aligny><wrapmultiline>true</wrapmultiline>
+                        <label>$INFO[ListItem.Property(c22)]</label>
+                        <visible>String.IsEqual(ListItem.Property(c2f),two)</visible>
                     </control>
                     <control type="label">
                         <left>1380</left><top>4</top><width>440</width><height>80</height>
-                        <font>font27</font><textcolor>FFC4CCEE</textcolor>
+                        <font>font27</font><textcolor>FFC4CCEE</textcolor><aligny>center</aligny>
                         <label>$INFO[ListItem.Property(c3)]</label>
+                        <visible>String.IsEqual(ListItem.Property(c3f),font27)</visible>
+                    </control>
+                    <control type="label">
+                        <left>1380</left><top>4</top><width>440</width><height>80</height>
+                        <font>font12</font><textcolor>FFC4CCEE</textcolor><aligny>center</aligny>
+                        <label>$INFO[ListItem.Property(c3)]</label>
+                        <visible>String.IsEqual(ListItem.Property(c3f),font12)</visible>
+                    </control>
+                    <control type="label">
+                        <left>1380</left><top>4</top><width>440</width><height>80</height>
+                        <font>font10</font><textcolor>FFC4CCEE</textcolor><aligny>center</aligny>
+                        <label>$INFO[ListItem.Property(c3)]</label>
+                        <visible>String.IsEqual(ListItem.Property(c3f),font10)</visible>
+                    </control>
+                    <control type="label">
+                        <left>1380</left><top>4</top><width>440</width><height>80</height>
+                        <font>font23_narrow</font><textcolor>FFC4CCEE</textcolor><aligny>center</aligny><wrapmultiline>true</wrapmultiline>
+                        <label>$INFO[ListItem.Property(c32)]</label>
+                        <visible>String.IsEqual(ListItem.Property(c3f),two)</visible>
+                    </control>
+                    <control type="label">
+                        <left>40</left><top>4</top><width>1760</width><height>80</height>
+                        <font>font37</font><textcolor>FFFFD24A</textcolor><align>center</align><aligny>center</aligny>
+                        <label>$INFO[ListItem.Property(ad)]</label>
+                        <visible>String.IsEqual(ListItem.Property(rt),hdr)</visible>
+                    </control>
+                    <control type="label">
+                        <left>40</left><top>4</top><width>1760</width><height>80</height>
+                        <font>font32</font><textcolor>FFFFFFFF</textcolor><align>center</align><aligny>center</aligny>
+                        <label>$INFO[ListItem.Property(ad)]</label>
+                        <visible>String.IsEqual(ListItem.Property(rt),ad)</visible>
                     </control>
                 </focusedlayout>
             </control>
@@ -1770,6 +2081,589 @@
                 <label>$INFO[Window.Property(wx_d4_hi)]</label>
             </control>
         </control>
+        <!-- Latest Observations: nearby cities (weather.nearby), one request for all (from_open_meteo_many) -->
+        <control type="group">
+            <visible>String.IsEqual(Window.Property(mode),weather) + String.IsEqual(Window.Property(wx_page),observations)</visible>
+            <animation effect="fade" start="0" end="100" time="400">Visible</animation>
+            <control type="label">
+                    <left>150</left><top>190</top><width>900</width><height>60</height>
+                    <font>font30_title</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><align>left</align>
+                    <label>$ADDON[script.cablebox42 34207]</label>
+                </control>
+            <control type="group">
+                <top>280</top>
+                <visible>!String.IsEmpty(Window.Property(wx_o0_name))</visible>
+                <control type="label">
+                    <left>150</left><top>0</top><width>720</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o0_name)]</label>
+                </control>
+                <control type="image">
+                    <left>890</left><top>3</top><width>64</width><height>64</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_o0_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>980</left><top>0</top><width>170</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><align>right</align><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o0_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>1200</left><top>0</top><width>620</width><height>70</height>
+                    <font>font37</font><textcolor>FFE0E8FF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o0_cond)]</label>
+                </control>
+            </control>
+            <control type="group">
+                <top>356</top>
+                <visible>!String.IsEmpty(Window.Property(wx_o1_name))</visible>
+                <control type="label">
+                    <left>150</left><top>0</top><width>720</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o1_name)]</label>
+                </control>
+                <control type="image">
+                    <left>890</left><top>3</top><width>64</width><height>64</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_o1_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>980</left><top>0</top><width>170</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><align>right</align><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o1_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>1200</left><top>0</top><width>620</width><height>70</height>
+                    <font>font37</font><textcolor>FFE0E8FF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o1_cond)]</label>
+                </control>
+            </control>
+            <control type="group">
+                <top>432</top>
+                <visible>!String.IsEmpty(Window.Property(wx_o2_name))</visible>
+                <control type="label">
+                    <left>150</left><top>0</top><width>720</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o2_name)]</label>
+                </control>
+                <control type="image">
+                    <left>890</left><top>3</top><width>64</width><height>64</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_o2_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>980</left><top>0</top><width>170</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><align>right</align><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o2_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>1200</left><top>0</top><width>620</width><height>70</height>
+                    <font>font37</font><textcolor>FFE0E8FF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o2_cond)]</label>
+                </control>
+            </control>
+            <control type="group">
+                <top>508</top>
+                <visible>!String.IsEmpty(Window.Property(wx_o3_name))</visible>
+                <control type="label">
+                    <left>150</left><top>0</top><width>720</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o3_name)]</label>
+                </control>
+                <control type="image">
+                    <left>890</left><top>3</top><width>64</width><height>64</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_o3_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>980</left><top>0</top><width>170</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><align>right</align><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o3_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>1200</left><top>0</top><width>620</width><height>70</height>
+                    <font>font37</font><textcolor>FFE0E8FF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o3_cond)]</label>
+                </control>
+            </control>
+            <control type="group">
+                <top>584</top>
+                <visible>!String.IsEmpty(Window.Property(wx_o4_name))</visible>
+                <control type="label">
+                    <left>150</left><top>0</top><width>720</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o4_name)]</label>
+                </control>
+                <control type="image">
+                    <left>890</left><top>3</top><width>64</width><height>64</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_o4_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>980</left><top>0</top><width>170</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><align>right</align><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o4_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>1200</left><top>0</top><width>620</width><height>70</height>
+                    <font>font37</font><textcolor>FFE0E8FF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o4_cond)]</label>
+                </control>
+            </control>
+            <control type="group">
+                <top>660</top>
+                <visible>!String.IsEmpty(Window.Property(wx_o5_name))</visible>
+                <control type="label">
+                    <left>150</left><top>0</top><width>720</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o5_name)]</label>
+                </control>
+                <control type="image">
+                    <left>890</left><top>3</top><width>64</width><height>64</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_o5_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>980</left><top>0</top><width>170</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><align>right</align><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o5_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>1200</left><top>0</top><width>620</width><height>70</height>
+                    <font>font37</font><textcolor>FFE0E8FF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o5_cond)]</label>
+                </control>
+            </control>
+            <control type="group">
+                <top>736</top>
+                <visible>!String.IsEmpty(Window.Property(wx_o6_name))</visible>
+                <control type="label">
+                    <left>150</left><top>0</top><width>720</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o6_name)]</label>
+                </control>
+                <control type="image">
+                    <left>890</left><top>3</top><width>64</width><height>64</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_o6_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>980</left><top>0</top><width>170</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><align>right</align><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o6_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>1200</left><top>0</top><width>620</width><height>70</height>
+                    <font>font37</font><textcolor>FFE0E8FF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o6_cond)]</label>
+                </control>
+            </control>
+            <control type="group">
+                <top>812</top>
+                <visible>!String.IsEmpty(Window.Property(wx_o7_name))</visible>
+                <control type="label">
+                    <left>150</left><top>0</top><width>720</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o7_name)]</label>
+                </control>
+                <control type="image">
+                    <left>890</left><top>3</top><width>64</width><height>64</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_o7_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>980</left><top>0</top><width>170</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><align>right</align><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o7_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>1200</left><top>0</top><width>620</width><height>70</height>
+                    <font>font37</font><textcolor>FFE0E8FF</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_o7_cond)]</label>
+                </control>
+            </control>
+        </control>
+        <!-- Regional Map: Natural Earth tiles drawn by G:\CableBox42\rig\wx_prerender.py (media/wxmap),
+             placed by weather.map_layout into slots 4101-4112 inside a grouplist, which clips them
+             to the map's area; cities 4120-4128 (0 = your own) are moved to their places -->
+        <control type="group">
+            <visible>String.IsEqual(Window.Property(mode),weather) + String.IsEqual(Window.Property(wx_page),map)</visible>
+            <animation effect="fade" start="0" end="100" time="400">Visible</animation>
+            <control type="label">
+                    <left>150</left><top>190</top><width>900</width><height>60</height>
+                    <font>font30_title</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><align>left</align>
+                    <label>$ADDON[script.cablebox42 34208]</label>
+                </control>
+                <control type="image">
+                    <left>112</left><top>252</top><width>1696</width><height>680</height>
+                    <texture colordiffuse="FFD6C496">white.png</texture>
+                </control>
+                <control type="image">
+                    <left>116</left><top>256</top><width>1688</width><height>672</height>
+                    <texture colordiffuse="FF183480">white.png</texture>
+                </control>
+            <control type="grouplist">
+                <left>116</left><top>256</top><width>1688</width><height>672</height>
+                <orientation>vertical</orientation><itemgap>0</itemgap>
+                <control type="group">
+                    <width>1688</width><height>672</height>
+                    <control type="image" id="4101">
+                        <left>0</left><top>0</top><width>10</width><height>10</height>
+                        <texture></texture>
+                    </control>
+                    <control type="image" id="4102">
+                        <left>0</left><top>0</top><width>10</width><height>10</height>
+                        <texture></texture>
+                    </control>
+                    <control type="image" id="4103">
+                        <left>0</left><top>0</top><width>10</width><height>10</height>
+                        <texture></texture>
+                    </control>
+                    <control type="image" id="4104">
+                        <left>0</left><top>0</top><width>10</width><height>10</height>
+                        <texture></texture>
+                    </control>
+                    <control type="image" id="4105">
+                        <left>0</left><top>0</top><width>10</width><height>10</height>
+                        <texture></texture>
+                    </control>
+                    <control type="image" id="4106">
+                        <left>0</left><top>0</top><width>10</width><height>10</height>
+                        <texture></texture>
+                    </control>
+                    <control type="image" id="4107">
+                        <left>0</left><top>0</top><width>10</width><height>10</height>
+                        <texture></texture>
+                    </control>
+                    <control type="image" id="4108">
+                        <left>0</left><top>0</top><width>10</width><height>10</height>
+                        <texture></texture>
+                    </control>
+                    <control type="image" id="4109">
+                        <left>0</left><top>0</top><width>10</width><height>10</height>
+                        <texture></texture>
+                    </control>
+                    <control type="image" id="4110">
+                        <left>0</left><top>0</top><width>10</width><height>10</height>
+                        <texture></texture>
+                    </control>
+                    <control type="image" id="4111">
+                        <left>0</left><top>0</top><width>10</width><height>10</height>
+                        <texture></texture>
+                    </control>
+                    <control type="image" id="4112">
+                        <left>0</left><top>0</top><width>10</width><height>10</height>
+                        <texture></texture>
+                    </control>
+                </control>
+            </control>
+            <control type="group" id="4120">
+                <left>0</left><top>0</top>
+                <visible>String.IsEqual(Window.Property(wx_m0),1)</visible>
+                <control type="image">
+                    <left>-11</left><top>-11</top><width>22</width><height>22</height>
+                    <texture colordiffuse="FFFFFFFF">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m0_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-9</left><top>-9</top><width>18</width><height>18</height>
+                    <texture colordiffuse="FFD02020">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m0_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-15</left><top>-15</top><width>30</width><height>30</height>
+                    <texture colordiffuse="FFFFD24A">white.png</texture>
+                    <visible>String.IsEqual(Window.Property(wx_m0_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-80</left><top>-86</top><width>72</width><height>72</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_m0_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>0</left><top>-86</top><width>140</width><height>72</height>
+                    <font>font45</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_m0_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>-160</left><top>14</top><width>320</width><height>44</height>
+                    <font>font27</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><align>center</align>
+                    <label>$INFO[Window.Property(wx_m0_name)]</label>
+                </control>
+            </control>
+            <control type="group" id="4121">
+                <left>0</left><top>0</top>
+                <visible>String.IsEqual(Window.Property(wx_m1),1)</visible>
+                <control type="image">
+                    <left>-11</left><top>-11</top><width>22</width><height>22</height>
+                    <texture colordiffuse="FFFFFFFF">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m1_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-9</left><top>-9</top><width>18</width><height>18</height>
+                    <texture colordiffuse="FFD02020">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m1_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-15</left><top>-15</top><width>30</width><height>30</height>
+                    <texture colordiffuse="FFFFD24A">white.png</texture>
+                    <visible>String.IsEqual(Window.Property(wx_m1_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-80</left><top>-86</top><width>72</width><height>72</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_m1_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>0</left><top>-86</top><width>140</width><height>72</height>
+                    <font>font45</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_m1_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>-160</left><top>14</top><width>320</width><height>44</height>
+                    <font>font27</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><align>center</align>
+                    <label>$INFO[Window.Property(wx_m1_name)]</label>
+                </control>
+            </control>
+            <control type="group" id="4122">
+                <left>0</left><top>0</top>
+                <visible>String.IsEqual(Window.Property(wx_m2),1)</visible>
+                <control type="image">
+                    <left>-11</left><top>-11</top><width>22</width><height>22</height>
+                    <texture colordiffuse="FFFFFFFF">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m2_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-9</left><top>-9</top><width>18</width><height>18</height>
+                    <texture colordiffuse="FFD02020">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m2_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-15</left><top>-15</top><width>30</width><height>30</height>
+                    <texture colordiffuse="FFFFD24A">white.png</texture>
+                    <visible>String.IsEqual(Window.Property(wx_m2_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-80</left><top>-86</top><width>72</width><height>72</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_m2_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>0</left><top>-86</top><width>140</width><height>72</height>
+                    <font>font45</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_m2_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>-160</left><top>14</top><width>320</width><height>44</height>
+                    <font>font27</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><align>center</align>
+                    <label>$INFO[Window.Property(wx_m2_name)]</label>
+                </control>
+            </control>
+            <control type="group" id="4123">
+                <left>0</left><top>0</top>
+                <visible>String.IsEqual(Window.Property(wx_m3),1)</visible>
+                <control type="image">
+                    <left>-11</left><top>-11</top><width>22</width><height>22</height>
+                    <texture colordiffuse="FFFFFFFF">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m3_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-9</left><top>-9</top><width>18</width><height>18</height>
+                    <texture colordiffuse="FFD02020">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m3_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-15</left><top>-15</top><width>30</width><height>30</height>
+                    <texture colordiffuse="FFFFD24A">white.png</texture>
+                    <visible>String.IsEqual(Window.Property(wx_m3_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-80</left><top>-86</top><width>72</width><height>72</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_m3_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>0</left><top>-86</top><width>140</width><height>72</height>
+                    <font>font45</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_m3_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>-160</left><top>14</top><width>320</width><height>44</height>
+                    <font>font27</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><align>center</align>
+                    <label>$INFO[Window.Property(wx_m3_name)]</label>
+                </control>
+            </control>
+            <control type="group" id="4124">
+                <left>0</left><top>0</top>
+                <visible>String.IsEqual(Window.Property(wx_m4),1)</visible>
+                <control type="image">
+                    <left>-11</left><top>-11</top><width>22</width><height>22</height>
+                    <texture colordiffuse="FFFFFFFF">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m4_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-9</left><top>-9</top><width>18</width><height>18</height>
+                    <texture colordiffuse="FFD02020">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m4_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-15</left><top>-15</top><width>30</width><height>30</height>
+                    <texture colordiffuse="FFFFD24A">white.png</texture>
+                    <visible>String.IsEqual(Window.Property(wx_m4_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-80</left><top>-86</top><width>72</width><height>72</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_m4_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>0</left><top>-86</top><width>140</width><height>72</height>
+                    <font>font45</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_m4_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>-160</left><top>14</top><width>320</width><height>44</height>
+                    <font>font27</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><align>center</align>
+                    <label>$INFO[Window.Property(wx_m4_name)]</label>
+                </control>
+            </control>
+            <control type="group" id="4125">
+                <left>0</left><top>0</top>
+                <visible>String.IsEqual(Window.Property(wx_m5),1)</visible>
+                <control type="image">
+                    <left>-11</left><top>-11</top><width>22</width><height>22</height>
+                    <texture colordiffuse="FFFFFFFF">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m5_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-9</left><top>-9</top><width>18</width><height>18</height>
+                    <texture colordiffuse="FFD02020">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m5_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-15</left><top>-15</top><width>30</width><height>30</height>
+                    <texture colordiffuse="FFFFD24A">white.png</texture>
+                    <visible>String.IsEqual(Window.Property(wx_m5_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-80</left><top>-86</top><width>72</width><height>72</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_m5_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>0</left><top>-86</top><width>140</width><height>72</height>
+                    <font>font45</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_m5_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>-160</left><top>14</top><width>320</width><height>44</height>
+                    <font>font27</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><align>center</align>
+                    <label>$INFO[Window.Property(wx_m5_name)]</label>
+                </control>
+            </control>
+            <control type="group" id="4126">
+                <left>0</left><top>0</top>
+                <visible>String.IsEqual(Window.Property(wx_m6),1)</visible>
+                <control type="image">
+                    <left>-11</left><top>-11</top><width>22</width><height>22</height>
+                    <texture colordiffuse="FFFFFFFF">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m6_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-9</left><top>-9</top><width>18</width><height>18</height>
+                    <texture colordiffuse="FFD02020">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m6_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-15</left><top>-15</top><width>30</width><height>30</height>
+                    <texture colordiffuse="FFFFD24A">white.png</texture>
+                    <visible>String.IsEqual(Window.Property(wx_m6_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-80</left><top>-86</top><width>72</width><height>72</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_m6_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>0</left><top>-86</top><width>140</width><height>72</height>
+                    <font>font45</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_m6_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>-160</left><top>14</top><width>320</width><height>44</height>
+                    <font>font27</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><align>center</align>
+                    <label>$INFO[Window.Property(wx_m6_name)]</label>
+                </control>
+            </control>
+            <control type="group" id="4127">
+                <left>0</left><top>0</top>
+                <visible>String.IsEqual(Window.Property(wx_m7),1)</visible>
+                <control type="image">
+                    <left>-11</left><top>-11</top><width>22</width><height>22</height>
+                    <texture colordiffuse="FFFFFFFF">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m7_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-9</left><top>-9</top><width>18</width><height>18</height>
+                    <texture colordiffuse="FFD02020">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m7_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-15</left><top>-15</top><width>30</width><height>30</height>
+                    <texture colordiffuse="FFFFD24A">white.png</texture>
+                    <visible>String.IsEqual(Window.Property(wx_m7_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-80</left><top>-86</top><width>72</width><height>72</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_m7_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>0</left><top>-86</top><width>140</width><height>72</height>
+                    <font>font45</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_m7_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>-160</left><top>14</top><width>320</width><height>44</height>
+                    <font>font27</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><align>center</align>
+                    <label>$INFO[Window.Property(wx_m7_name)]</label>
+                </control>
+            </control>
+            <control type="group" id="4128">
+                <left>0</left><top>0</top>
+                <visible>String.IsEqual(Window.Property(wx_m8),1)</visible>
+                <control type="image">
+                    <left>-11</left><top>-11</top><width>22</width><height>22</height>
+                    <texture colordiffuse="FFFFFFFF">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m8_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-9</left><top>-9</top><width>18</width><height>18</height>
+                    <texture colordiffuse="FFD02020">white.png</texture>
+                    <visible>!String.IsEqual(Window.Property(wx_m8_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-15</left><top>-15</top><width>30</width><height>30</height>
+                    <texture colordiffuse="FFFFD24A">white.png</texture>
+                    <visible>String.IsEqual(Window.Property(wx_m8_home),1)</visible>
+                </control>
+                <control type="image">
+                    <left>-80</left><top>-86</top><width>72</width><height>72</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture>$INFO[Window.Property(wx_m8_icon)]</texture>
+                </control>
+                <control type="label">
+                    <left>0</left><top>-86</top><width>140</width><height>72</height>
+                    <font>font45</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><aligny>center</aligny>
+                    <label>$INFO[Window.Property(wx_m8_temp)]</label>
+                </control>
+                <control type="label">
+                    <left>-160</left><top>14</top><width>320</width><height>44</height>
+                    <font>font27</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor><align>center</align>
+                    <label>$INFO[Window.Property(wx_m8_name)]</label>
+                </control>
+            </control>
+        </control>
         <control type="group">
             <visible>String.IsEqual(Window.Property(mode),weather) + String.IsEqual(Window.Property(wx_page),almanac)</visible>
             <animation effect="fade" start="0" end="100" time="400">Visible</animation>
@@ -1814,6 +2708,96 @@
             </control>
         </control>
 
+        <!-- ============ TV rating box at the start of a programme (tv.rating_tick): 1997 style,
+             top left; top right when the logo bug is in the top-left corner ============ -->
+        <control type="group">
+            <left>96</left><top>54</top><width>212</width><height>124</height>
+            <visible>String.IsEqual(Window.Property(rating),1) + !String.IsEqual(Window.Property(static),1) + !String.IsEqual(Window.Property(osd),1) + !String.IsEqual(Window.Property(bug_corner),tl)</visible>
+            <animation effect="fade" start="0" end="100" time="300">Visible</animation>
+            <animation effect="fade" start="100" end="0" time="300">Hidden</animation>
+            <control type="group">
+                <left>0</left><top>0</top><width>100</width><height>124</height>
+                <control type="image">
+                    <left>0</left><top>0</top><width>100</width><height>124</height>
+                    <texture colordiffuse="FFF2F2F2">white.png</texture>
+                </control>
+                <control type="image">
+                    <left>4</left><top>4</top><width>92</width><height>116</height>
+                    <texture colordiffuse="F0000000">white.png</texture>
+                </control>
+                <control type="label">
+                    <left>4</left><top>6</top><width>92</width><height>40</height>
+                    <font>font27</font><textcolor>FFFFFFFF</textcolor><align>center</align><aligny>center</aligny>
+                    <label>TV</label>
+                </control>
+                <control type="label">
+                    <left>4</left><top>46</top><width>92</width><height>70</height>
+                    <font>font45</font><textcolor>FFFFFFFF</textcolor><align>center</align><aligny>center</aligny>
+                    <label>$INFO[Window.Property(rating_code)]</label>
+                </control>
+            </control>
+            <control type="group">
+                <left>112</left><top>0</top><width>100</width><height>124</height>
+                <visible>String.IsEqual(Window.Property(now_cc),1)</visible>
+                <control type="image">
+                    <left>0</left><top>0</top><width>100</width><height>124</height>
+                    <texture colordiffuse="FFF2F2F2">white.png</texture>
+                </control>
+                <control type="image">
+                    <left>4</left><top>4</top><width>92</width><height>116</height>
+                    <texture colordiffuse="F0000000">white.png</texture>
+                </control>
+                <control type="label">
+                    <left>4</left><top>4</top><width>92</width><height>116</height>
+                    <font>font45</font><textcolor>FFFFFFFF</textcolor><align>center</align><aligny>center</aligny>
+                    <label>CC</label>
+                </control>
+            </control>
+        </control>
+        <control type="group">
+            <left>1612</left><top>54</top><width>212</width><height>124</height>
+            <visible>String.IsEqual(Window.Property(rating),1) + !String.IsEqual(Window.Property(static),1) + !String.IsEqual(Window.Property(osd),1) + String.IsEqual(Window.Property(bug_corner),tl) + !String.IsEqual(Window.Property(osd),1)</visible>
+            <animation effect="fade" start="0" end="100" time="300">Visible</animation>
+            <animation effect="fade" start="100" end="0" time="300">Hidden</animation>
+            <control type="group">
+                <left>0</left><top>0</top><width>100</width><height>124</height>
+                <control type="image">
+                    <left>0</left><top>0</top><width>100</width><height>124</height>
+                    <texture colordiffuse="FFF2F2F2">white.png</texture>
+                </control>
+                <control type="image">
+                    <left>4</left><top>4</top><width>92</width><height>116</height>
+                    <texture colordiffuse="F0000000">white.png</texture>
+                </control>
+                <control type="label">
+                    <left>4</left><top>6</top><width>92</width><height>40</height>
+                    <font>font27</font><textcolor>FFFFFFFF</textcolor><align>center</align><aligny>center</aligny>
+                    <label>TV</label>
+                </control>
+                <control type="label">
+                    <left>4</left><top>46</top><width>92</width><height>70</height>
+                    <font>font45</font><textcolor>FFFFFFFF</textcolor><align>center</align><aligny>center</aligny>
+                    <label>$INFO[Window.Property(rating_code)]</label>
+                </control>
+            </control>
+            <control type="group">
+                <left>112</left><top>0</top><width>100</width><height>124</height>
+                <visible>String.IsEqual(Window.Property(now_cc),1)</visible>
+                <control type="image">
+                    <left>0</left><top>0</top><width>100</width><height>124</height>
+                    <texture colordiffuse="FFF2F2F2">white.png</texture>
+                </control>
+                <control type="image">
+                    <left>4</left><top>4</top><width>92</width><height>116</height>
+                    <texture colordiffuse="F0000000">white.png</texture>
+                </control>
+                <control type="label">
+                    <left>4</left><top>4</top><width>92</width><height>116</height>
+                    <font>font45</font><textcolor>FFFFFFFF</textcolor><align>center</align><aligny>center</aligny>
+                    <label>CC</label>
+                </control>
+            </control>
+        </control>
         <!-- ============ Station logo "bug" (Settings > Viewing): during programmes only ============ -->
         <control type="group" id="350">
             <visible>String.IsEqual(Window.Property(bug),1) + !String.IsEmpty(Window.Property(bug_logo)) + !String.IsEqual(Window.Property(banner),1) + !String.IsEqual(Window.Property(osd),1) + !String.IsEqual(Window.Property(static),1)</visible>

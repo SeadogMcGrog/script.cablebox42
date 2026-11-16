@@ -39,12 +39,15 @@
         <setting id="crt_mode" type="enum" label="32031" lvalues="32032|32033|32034" default="0"/>
         <setting id="cc_fullscreen" type="bool" label="32941" default="true"/>
         <setting id="cc_nudge" type="enum" label="32942" lvalues="32943|32944|32945" default="0"/>
+        <setting id="rating_box" type="bool" label="34202" default="true"/>
     </category>
     <!-- Guide & Weather -->
     <category label="34115">
         <setting label="32121" type="lsep"/>
         <setting id="guide_title" type="text" label="32004" default="CableBox 42 Program Guide"/>
         <setting id="guide_music_path" type="folder" label="32003" source="music" default=""/>
+        <setting id="guide_speed" type="enum" label="34186" lvalues="34187|34188|34189" default="1"/>
+        <setting id="guide_top" type="enum" label="34210" lvalues="33658|34211" default="0"/>
         <setting label="32020" type="lsep"/>
         <setting id="weather_source" type="enum" label="32021" lvalues="32026|32027|32028" default="0"/>
         <setting id="weather_location" type="text" label="32022" default=""/>
@@ -76,6 +79,9 @@
         <setting id="christmas_bumps" type="folder" label="32068" source="video" default="" enable="eq(-19,true)+eq(-4,true)"/>
         <setting label="32070" type="lsep"/>
         <setting id="season_hold" type="bool" label="32069" default="true" enable="eq(-21,true)"/>
+        <setting label="34206" type="lsep"/>
+        <setting id="summer_reruns" type="enum" label="34203" lvalues="33454|34204|33471" default="0"/>
+        <setting id="rerun_today" type="text" label="34203" default="" visible="false"/>
     </category>
     <!-- Start-up & library -->
     <category label="34116">

@@ -922,9 +922,20 @@ pitch cards with a jingle, local businesses, public service announcements and
 
 ## 15. The guide channel and the weather channel
 
-**TV Guide (channel 2):** scrolling listings for every channel with background
-music. Press **OK** on it to pick a channel. Title: *Settings → Guide & Weather →
-Guide title*; music: *Guide channel music folder*.
+**TV Guide (channel 2):** listings for every channel crawl up the screen with
+background music. Press **OK** on it to pick a channel. Title: *Settings → Guide &
+Weather → Guide title*; music: *Guide channel music folder*; pace: *Guide
+scroll speed*.
+
+The top half plays trailers of movies coming up (from your library's trailers),
+show promos from Extras folders and commercials, with the time and channel beside
+them. It needs a few minutes after installing to measure the clips; *Settings → Guide &
+Weather → Guide top half → Text only* turns it off.
+
+Your own "cable company" ads in the crawl: make a text file `guide.txt` in the
+guide channel's station folder (e.g. `Stations/TV Guide/guide.txt`) with one ad
+per line, such as `Call 555-0123 for Pay-Per-View`. Lines starting with `#` are
+skipped.
 
 **Weather channel (25):**
 
@@ -932,6 +943,11 @@ Guide title*; music: *Guide channel music folder*.
    `39.8,-89.6`). Leave it empty to use Kodi's weather location.
 2. *Weather data from*: Automatic, Kodi's weather service only, or Open-Meteo only.
 3. *Units*, *title* (*Your Local Forecast*) and *music* (smooth jazz!).
+
+With a city (or Kodi's weather location) set and *Automatic* or *Open-Meteo*, the
+channel adds **Latest Observations** (nearby cities) and a **Regional Map**. For
+background music, point *Weather channel music folder* at a folder of smooth jazz;
+CableBox doesn't ship any music.
 
 ### Boombox TV: a music video channel
 
@@ -986,6 +1002,12 @@ tag your holiday episodes in Kodi (*Information → Manage → Manage tags*).
 Each holiday can have its own commercials and bumps folders. *Save holiday
 episodes and movies for their season* keeps Christmas specials out of July.
 
+**Summer reruns:** *Settings → Seasons → Summer reruns* → *Broadcast networks* (the
+broadcast networks) or *All channels*. From June to August each series reruns the
+episodes of its current season it has already shown, marked *(R)* in the guide and
+banner; in September it picks up with the next new episode. Your pinned slots are
+never changed.
+
 ---
 
 ## 17. The look: static, CRT effect, turn-on and turn-off
@@ -999,6 +1021,7 @@ episodes and movies for their season* keeps Christmas specials out of July.
 | Static plays as | **Automatic**; **Quick** (an interface sound over the picture); **Video clip** (most reliable sound — use it on Windows if the static is silent) |
 | CRT effect | Off, Subtle (scanlines, dark corners), Full (curved glass, phosphor mask, rolling hum bar) |
 | Show channel banner for | 3, 6 or 10 seconds |
+| Show rating at start of programmes | The *TV-PG* box (and *CC*) top left for a show's first 15 seconds. It needs ratings in your library: Kodi's scrapers fill them in (*Information → MPAA*) |
 
 > If your TV switches refresh rate for each video (*Kodi Settings → Player →
 > Adjust display refresh rate*), keep static on **Automatic** or **Quick**: the

@@ -25,6 +25,7 @@ from . import captions
 from . import promos
 from . import musicvideos
 from . import ads
+from . import guide
 from .kodiutil import _
 
 
@@ -154,8 +155,8 @@ class TVWindow(xbmcgui.WindowXML):
         self.sleep_at = 0
         self.guide_next = 0
         self.promo_next = 0
-        self.scroll_top = 0          # first guide row on screen
-        self.scroll_next = 0
+        self.crawl_token = 0         # the guide crawl's thread runs while this stays the same
+        self.guide_shape = None      # the guide list's rows (channel ids, scroll ads) as filled
         self.promos = []
         self.closing = False
         self.exit_how = "back"       # how the TV was turned off: back / menu / sleep / away
@@ -209,7 +210,8 @@ class TVWindow(xbmcgui.WindowXML):
         self.started = True
         self.win_id = xbmcgui.getCurrentWindowId()
         xbmcgui.Window(10000).setProperty("cablebox42.running", "1")
-        crt = K.setting_int("crt_mode", 0)   # 0 off, 1 subtle, 2 full
+        library.listing_warm()               # guide details and ratings, read in the background
+        crt =K.setting_int("crt_mode", 0)   # 0 off, 1 subtle, 2 full
         self.setProperty("crt", str(crt) if crt in (1, 2) else "")
         if self.cc_fullscreen:
             # made here, on the script's main thread, so its button callbacks are delivered
@@ -397,6 +399,8 @@ class TVWindow(xbmcgui.WindowXML):
             if not self.power_on:
                 self.show_digits(str(ch["number"]))
             self.setProperty("ch_number", str(ch["number"]))
+            self.rating_clear()
+            self.guide_on = None
             self.set_logo(ch)
             if static and self.static_on and self.static_sound and self.careful_static:
                 # Windows resets its audio device whenever a video starts or
@@ -761,6 +765,7 @@ class TVWindow(xbmcgui.WindowXML):
         elif e["k"] == "offair" and e.get("sub") == "bars_tone":
             self.tone_tick(now)
         self.caption_tick(now)
+        self.rating_tick(now)
         if e["k"] == "guide":
             self.guide_tick(now)
         elif e["k"] == "weather":
@@ -803,6 +808,10 @@ class TVWindow(xbmcgui.WindowXML):
         self.setProperty("bug", "1" if on and getattr(self, "bug_on", False) else "")
 
     def start_entry(self, e, key, now):
+        self.rating_start(e, now)
+        if e.get("k") != "guide" and self.guide_on:
+            self.guide_on = None             # left the guide: its top half stops with what plays next
+            self.top_reset()
         self.unsqueeze()                     # a new item: the picture is full size again
         self.uncover()
         self.promo_stop()                    # a promo's theme cut with its card, before anything else plays
@@ -838,11 +847,17 @@ class TVWindow(xbmcgui.WindowXML):
             if kind == "guide":
                 self.set_mode("guide")
                 self.guide_next = 0
-                self.promo_next = 0
-                self.scroll_top = 0
-                self.scroll_next = now + 5.0
-                self.guide_tick(now)
-                self.background_audio(K.setting("guide_music_path"))
+                if self.guide_on != self.ch["id"]:
+                    # tuned in: a fresh list from the top; the guide's next half-hour block
+                    # on the same channel carries on (no jump, the music and video go on)
+                    self.guide_on = self.ch["id"]
+                    self.promo_next = 0
+                    self.guide_shape = None
+                    self.top_reset()
+                    self.guide_tick(now)
+                    self.crawl_start()
+                else:
+                    self.guide_tick(now)
             elif kind == "weather":
                 self.set_mode("weather")
                 self.weather.tick(now, force=True)
@@ -874,6 +889,49 @@ class TVWindow(xbmcgui.WindowXML):
         if kind == "show":
             self.update_banner()
         self.prefetch_promo(e)
+
+    # ----------------------------------------------------------- TV rating box
+    # The 1997 TV Parental Guidelines box: top left, for the first 15 seconds of a
+    # show or movie (not after a break, not when you tune in later), with a CC box
+    # beside it when the programme has captions (the skin keys that off now_cc, the
+    # same check as the banner's CC and the CC button).
+    RATING_SECS = 15.0
+    RATING_TUNE_IN = 10.0
+    rating_at = None             # (show from, until)
+
+    def rating_clear(self):
+        self.rating_at = None
+        if self.getProperty("rating"):
+            self.setProperty("rating", "")
+
+    def rating_start(self, e, now):
+        self.rating_clear()
+        if e.get("k") != "show" or not e.get("p") or now - e["s"] > self.RATING_TUNE_IN:
+            return
+        if (self.ch or {}).get("type") in ("musicvideos", "extras") or not K.setting_bool("rating_box", True):
+            return
+        sched = self.lineup.schedule(self.ch, ensure=False)
+        b = sched.block_at(e["s"])
+        first = self.block_entry(sched, b) if b else None
+        if not first or first["s"] != e["s"]:
+            return                           # a later part (after a break) or a later short in the block
+        code = library.rating_for(e["p"])
+        if not code:
+            return
+        self.setProperty("rating_code", code[3:])
+        # from the picture's first second (Kodi opens the file meanwhile)
+        self.rating_at = (max(now, e["s"]) + 1.0, e["s"] + 1.0 + self.RATING_SECS)
+
+    def rating_tick(self, now):
+        if not self.rating_at:
+            return
+        start, until = self.rating_at
+        if now >= until:
+            self.rating_clear()
+            return
+        want = "1" if now >= start else ""
+        if self.getProperty("rating") != want:
+            self.setProperty("rating", want)
 
     # ----------------------------------------------------------- video captions
     # Boombox's lower third, the classic music-channel way: artist, "title",
@@ -2478,6 +2536,8 @@ class TVWindow(xbmcgui.WindowXML):
         b = sched.block_at(now)
         if b:
             title = library.on_air(b["t"])
+            if b.get("rr"):
+                title += " " + _("(R)")           # a summer rerun
             self.setProperty("now_title", title)
             if b.get("sub"):
                 sub = " ".join(x for x in (b.get("lb", ""), b["sub"]) if x)
@@ -2511,86 +2571,324 @@ class TVWindow(xbmcgui.WindowXML):
         if now >= self.guide_next:
             self.fill_guide(now)
             self.guide_next = min(now + 300, scheduler.floor_slot(now, 1800) + 1801)
+            if not library.listing_ready():
+                self.guide_next = now + 4         # details still being read: fill them in (in place) soon
         if now >= self.promo_next and self.promos:
             self.setProperty("guide_promo", self.promos[0])
             self.promos = self.promos[1:] + self.promos[:1]
             self.promo_next = now + 8
-        if now >= self.scroll_next:
-            self.guide_scroll(now)
+        self.top_tick(now)
 
-    GUIDE_ROWS = 7          # rows visible in the guide list (620 / 88)
-    SCROLL_STEP = 2.5       # seconds per row
-    SCROLL_HOLD = 5.0       # pause at the bottom (and top) before moving on
+    # ----------------------------------------------------------- the guide's top half
+    # Trailers, show promos and commercials in a small video window, in runs of one
+    # frame rate (one Kodi playlist a run: a TV that switches refresh rate blanks only
+    # between runs), text and guide music between them.  Each half hour's plan
+    # (guide.top_plan) is made once in a thread and kept in guide_top.json, so the TV
+    # joins it at the clock like any channel (flip away and back: same place).
+    guide_on = None              # the guide channel's id while it's on screen
+    top = None                   # {"slot", "plan", "idx", "building", "seek", "paths", "pos"}
 
-    def guide_scroll(self, now):
-        """Scroll one row at a time; hold at the end, then jump back to the top."""
+    def top_reset(self):
+        """A fresh start for the top half; a run that's playing is stopped only by
+        what plays next (leaving the guide) or by the next text stretch."""
+        self.top = {"slot": None, "plan": None, "idx": None, "building": False, "seek": None,
+                    "paths": [], "pos": -2, "tries": 0, "wait": 0}
+        for k in ("gtop", "gt_cap", "gt_title"):
+            if self.getProperty(k):
+                self.setProperty(k, "")
+
+    @staticmethod
+    def top_text_only():
+        return K.setting_int("guide_top", 0) == 1
+
+    def top_music(self):
+        self.setProperty("gtop", "")
+        self.setProperty("gt_cap", "")
+        self.setProperty("gt_title", "")
+        self.background_audio(K.setting("guide_music_path"))
+
+    def top_tick(self, now):
+        st = self.top
+        if st is None:
+            self.top_reset()
+            st = self.top
+        if self.top_text_only():
+            if st["idx"] != "text":
+                st["idx"] = "text"
+                self.top_music()                 # exactly 1.2.0
+            return
+        slot = scheduler.floor_slot(now, 1800)
+        if st["slot"] != slot:
+            st.update(slot=slot, plan=None)
+            if not st["building"]:
+                st["building"] = True
+                t = threading.Thread(target=self.top_build, args=(st, slot, self.ch), name="cb42-guide-top")
+                t.daemon = True
+                t.start()
+        plan = st["plan"]
+        if not plan:
+            # being planned (a moment when the plan is saved): text and music meanwhile.
+            # Not at once - a play asked for just after a stop is dropped by Kodi, so a
+            # run ready in a moment replaces what plays, like a programme change does
+            if st["idx"] is None:
+                st["idx"], st["wait"] = "wait0", time.time()
+            if st["idx"] == "wait0" and time.time() - st["wait"] > 1.5 or \
+                    st["idx"] not in ("wait", "wait0") and not self.top_playing():
+                st["idx"] = "wait"
+                self.top_music()
+            return
+        i, it = guide.top_at(plan, now - slot)
+        if st["idx"] != i:
+            st["idx"] = i
+            if it["k"] == "run":
+                st["tries"] = 0
+                self.top_run(it, now - slot)
+            else:
+                self.top_music()
+            return
+        if it["k"] == "run":
+            if self.av_started_token != self.play_token and time.time() - self.play_started_at > 4 \
+                    and st["tries"] < 3 and not self.player.isPlaying():
+                # Kodi drops a play asked for while it's still stopping the static or
+                # turn-on clip (rig): start the run again, at the clock
+                st["tries"] += 1
+                K.log("guide run didn't start: again (%d)" % st["tries"], xbmc.LOGINFO)
+                self.top_run(it, now - slot)
+                return
+            self.top_follow(now)
+
+    def top_playing(self):
+        return self.getProperty("gtop") == "video" and self.playing_ours()
+
+    def top_build(self, st, slot, ch):
+        """Plan the top half of a half hour (a thread of its own): from guide_top.json
+        if the TV planned it already, else from the clips with measured frame rates."""
         try:
-            lst = self.getControl(50)
-            n = lst.size()
+            path = os.path.join(K.PROFILE, guide.TOP_FILE)
+            saved = K.load_json(path, {}) or {}
+            key = "%s|%d" % (ch["id"], int(slot))
+            plan = saved.get(key)
+            if plan is None:
+                clips = guide.measured(guide.top_candidates(self.lineup, slot, ch, K.schedule_cfg()))
+                plan = guide.top_plan(key, 1800.0, clips)
+                keep = dict((k, v) for k, v in saved.items()
+                            if k.split("|")[-1].isdigit() and int(k.split("|")[-1]) >= slot - 3600)
+                keep[key] = plan
+                K.save_json(path, keep)
+                runs = [x for x in plan if x["k"] == "run"]
+                K.log("guide top half from %s: %d runs (%s) from %d measured clips" % (
+                    fmt_time(slot), len(runs), ", ".join(sorted(set(x["fam"] for x in runs))) or "text only",
+                    len(clips)), xbmc.LOGINFO)
+            st["plan"] = plan
+        except Exception as exc:
+            K.log_err("guide top half: %s" % exc)
+            st["plan"] = [{"k": "text", "s": 0, "e": 1800}]
+        finally:
+            st["building"] = False
+
+    def top_run(self, it, offset):
+        """Start a run as one playlist, joined at the clock: the clip on now, partway in."""
+        st = self.top
+        into = offset - it["s"]
+        start, acc = len(it["clips"]), 0.0
+        for k, c in enumerate(it["clips"]):
+            if acc + c["dur"] > into:
+                start = k
+                break
+            acc += c["dur"]
+        clips = [c for c in it["clips"][start:] if not self.file_missing(c["path"])]
+        if not clips:
+            self.top_music()
+            return
+        lead = into - acc if clips[0] is it["clips"][start] else 0.0
+        if lead > clips[0]["dur"] - 4 and len(clips) > 1:
+            clips, lead = clips[1:], 0.0     # the clip's last seconds: the next one, a moment early
+        pl = xbmc.PlayList(getattr(xbmc, "PLAYLIST_VIDEO", 1))
+        pl.clear()
+        for c in clips:
+            pl.add(c["path"])
+            self.our_files.add(c["path"])
+        st["paths"] = clips
+        st["pos"] = -2
+        # the seek is worked out when the picture is on: Kodi's open time (2-5 s) counts too
+        st["seek"] = (clips[0]["path"], lead, time.time(), clips[0]["dur"])
+        self.clear_music()
+        self.play_token += 1
+        self.play_started_at = time.time()
+        self.player.play(pl, windowed=True)
+        self.setProperty("gtop", "video")
+        K.log("guide run %s: %d clips, %d s (joined %d s in)" % (
+            it["fam"], len(clips), round(it["e"] - it["s"]), round(into)), xbmc.LOGINFO)
+
+    def top_follow(self, now):
+        """During a run: the seek to the clock once the picture is on, and the caption
+        of the clip playing (Kodi's playlist position)."""
+        st = self.top
+        try:
+            if st["seek"] and self.av_started_token == self.play_token and \
+                    self.requested(self.player.getPlayingFile()) == st["seek"][0]:
+                path, lead, t0, dur = st["seek"]
+                st["seek"] = None
+                to = lead + (time.time() - t0)
+                if 1.0 < to < dur - 1.5:     # not in a clip's last moments (Kodi's own move)
+                    self.player.seekTime(to)
+            pos = xbmc.PlayList(getattr(xbmc, "PLAYLIST_VIDEO", 1)).getposition()
         except Exception:
             return
-        last_top = max(0, n - self.GUIDE_ROWS)
-        if last_top == 0:                      # everything fits - nothing to scroll
-            self.scroll_next = now + 30
-            return
-        if self.scroll_top >= last_top:        # held at the bottom long enough
-            self.scroll_top = 0
-            lst.selectItem(0)
-            self.scroll_next = now + self.SCROLL_HOLD
-            return
-        self.scroll_top += 1
-        # selecting the row just below the screen pushes the view down by one
-        lst.selectItem(min(n - 1, self.scroll_top + self.GUIDE_ROWS - 1))
-        self.scroll_next = now + (self.SCROLL_HOLD if self.scroll_top >= last_top else self.SCROLL_STEP)
+        if pos != st["pos"] and 0 <= pos < len(st["paths"]):
+            st["pos"] = pos
+            c = st["paths"][pos]
+            self.setProperty("gt_cap", guide.caption(c, fmt_time, now))
+            self.setProperty("gt_title", library.on_air(c.get("title", "")) if c.get("kind") != "ad" else "")
+
+    def crawl_start(self):
+        """The grid crawls up at a constant speed and never pauses: list 50 is a
+        wraplist whose linear scroll lasts longer than a step, and this thread moves
+        it one row each step by the clock, so every move takes over the one still
+        running and the steps blend into one motion."""
+        self.crawl_token += 1
+        t = threading.Thread(target=self.crawl_loop,
+                             args=(self.crawl_token, guide.speed(K.setting_int("guide_speed", 1))),
+                             name="cb42-crawl")
+        t.daemon = True
+        t.start()
+
+    def crawl_loop(self, token, step):
+        nxt = time.time() + 1.0
+        while not self.closing and token == self.crawl_token and self.prop_mode == "guide":
+            wait = nxt - time.time()
+            if wait > 0:
+                if self.monitor.waitForAbort(min(wait, 0.5)):
+                    return
+                continue
+            nxt += step
+            if time.time() > nxt:                 # held up (a dialog, a busy box): no catching up
+                nxt = time.time() + step
+            try:
+                # only in our own window: Control.Move goes to the window that has focus
+                if xbmcgui.getCurrentWindowDialogId() == 9999 and \
+                        (not self.win_id or xbmcgui.getCurrentWindowId() == self.win_id):
+                    xbmc.executebuiltin("Control.Move(50,1)")
+            except Exception:
+                pass
+
+    @staticmethod
+    def block_entry(sched, b):
+        """The first programme entry of a block (None if there's none)."""
+        t = b["s"] + 0.01
+        for _i in range(12):
+            e = sched.entry_at(t)
+            if e is None or e["s"] >= b["e"]:
+                return None
+            if e.get("k") == "show" and e.get("p"):
+                return e
+            t = e["e"] + 0.001
+        return None
+
+    def block_file(self, sched, b):
+        """The first programme file of a block (for its listing details)."""
+        e = self.block_entry(sched, b)
+        return e["p"] if e else ""
+
+    def listing(self, sched, b, prefix, width, kids_ch=False):
+        """(text, font, two-line text, colour category) of one listing cell."""
+        title = prefix + library.on_air(b["t"])
+        extra, cat = [], ""
+        if b.get("k") == "show":
+            info = library.listing_info(self.block_file(sched, b))
+            if info and info.get("kind") == "movie" and info.get("year") and \
+                    title.endswith("(%s)" % info["year"]):
+                info = dict(info, year=0)             # a shared name keeps its year in the title
+            extra = guide.details(info, rerun=bool(b.get("rr")))
+            cat = guide.category(info, kids_ch)
+        return guide.fit_cell(title, extra, width) + (cat,)
+
+    GUIDE_MIN_ROWS = 10       # the list shows 8 rows; fewer items and Kodi adds copies of its own
+    ROW_KEYS = ("nfit", "name2", "rowbg", "ad", "c1", "c1f", "c12", "c1k", "c2", "c2f", "c22", "c2k",
+                "c3", "c3f", "c32", "c3k")
 
     def fill_guide(self, now):
         t0 = scheduler.floor_slot(now, 1800)
         cols = [t0, t0 + 1800, t0 + 3600]
-        self.setProperty("guide_title", K.setting("guide_title", _("CableBox 42 Program Guide")))
+        title = K.setting("guide_title", _("CableBox 42 Program Guide"))
+        self.setProperty("guide_title", title)
         for i, c in enumerate(cols):
             self.setProperty("g_t%d" % (i + 1), fmt_time(c))
-        items = []
+        rows = []                     # (shape key, label, label2, {property: value})
         guide_promos = []
-        for n, ch in enumerate(self.lineup.channels):
+        guide_ch = None
+        for ch in self.lineup.channels:
             if ch["type"] == "guide":
+                guide_ch = guide_ch or ch
                 continue
             # never build schedules here - that froze the guide after upgrades
             sched = self.lineup.schedule(ch, ensure=False)
-            li = xbmcgui.ListItem(str(ch["number"]), stations.brand(ch, now)["name"])
-            li.setProperty("nfit", promos.fit_font(li.getLabel2(), 270))
-            li.setProperty("name2", promos.two_lines(li.getLabel2()))
+            br = stations.brand(ch, now)
+            call = guide.short_call(br["name"], br["call"])
+            nfit, name2 = guide.call_fit(call)
+            props = {"rt": "ch", "nfit": nfit, "name2": name2,
+                     "rowbg": "guide_row_a.png" if len(rows) % 2 == 0 else "guide_row_b.png"}
             if sched.block_at(now) is None:
                 self.guide_pending = True
-                li.setProperty("c1", _("Updating listings..."))
-                li.setProperty("rowbg", "guide_row_a.png" if n % 2 == 0 else "guide_row_b.png")
-                items.append(li)
-                continue
-            for i, c in enumerate(cols):
-                b = sched.block_at(c + 1)
-                txt = ""
-                if b:
-                    txt = library.on_air(b["t"])
-                    if b["s"] < c - 60 and i == 0:
-                        txt = _("(cont.) ") + txt
-                    elif b["s"] < c - 60:
-                        txt = ">>> " + txt
-                li.setProperty("c%d" % (i + 1), txt)
-            li.setProperty("rowbg", "guide_row_a.png" if n % 2 == 0 else "guide_row_b.png")
-            items.append(li)
-            for b in sched.blocks_between(now, now + 4 * 3600):
-                if b["s"] > now and b.get("k") == "show" and b["e"] - b["s"] >= 3600:
-                    guide_promos.append(_("Coming up at %s on %s %s:  %s") % (
-                        fmt_time(b["s"]), ch["number"], ch["name"], library.on_air(b["t"])))
-                    break
+                props["c1"] = _("Updating listings...")
+                props["c1f"] = "font27"
+            else:
+                kids_ch = guide.kids_channel(ch)
+                for i, c in enumerate(cols):
+                    b = sched.block_at(c + 1)
+                    if not b:
+                        continue
+                    prefix = ""
+                    if b["s"] < c - 60:
+                        prefix = _("(cont.) ") if i == 0 else ">>> "
+                    txt, font, two, cat = self.listing(sched, b, prefix, guide.CELL_W[i], kids_ch)
+                    props.update({"c%d" % (i + 1): txt, "c%df" % (i + 1): font, "c%d2" % (i + 1): two,
+                                  "c%dk" % (i + 1): cat})
+                for b in sched.blocks_between(now, now + 4 * 3600):
+                    if b["s"] > now and b.get("k") == "show" and b["e"] - b["s"] >= 3600:
+                        guide_promos.append(_("Coming up at %s on %s %s:  %s") % (
+                            fmt_time(b["s"]), ch["number"], ch["name"], library.on_air(b["t"])))
+                        break
+            rows.append((ch["id"], str(ch["number"]), call, props))
+        # the scroll-ad rows after the last channel: the guide's title, then 1-3 ads
+        # (the viewer's own guide.txt lines first, then the built-in ones)
+        count = guide.ad_count(len(rows))
+        own = guide.own_ads(stations.brand(guide_ch, now)["folder"] if guide_ch else "")
+        picks = random.sample(own, min(len(own), count))
+        if len(picks) < count:
+            picks += random.sample(guide.builtin_ads(), count - len(picks))
+        rows.append(("hdr", "", "", {"rt": "hdr", "ad": title}))
+        rows += [("ad%d" % i, "", "", {"rt": "ad", "ad": t}) for i, t in enumerate(picks)]
+        for _k, _l, _l2, p in rows:
+            for k in self.ROW_KEYS:
+                p.setdefault(k, "")
+        # a wraplist shorter than the screen pads itself with copies that an in-place
+        # refresh doesn't reach: repeat the cycle ourselves instead
+        rows = rows * int(math.ceil(float(self.GUIDE_MIN_ROWS) / len(rows)))
+        shape = [r[0] for r in rows]
         try:
             lst = self.getControl(50)
-            lst.reset()
-            lst.addItems(items)
-            # keep the scroll position across the 5-minute refresh
-            self.scroll_top = min(self.scroll_top, max(0, len(items) - self.GUIDE_ROWS))
-            if self.scroll_top:
-                lst.selectItem(0)
-                lst.selectItem(min(len(items) - 1, self.scroll_top + self.GUIDE_ROWS - 1))
+            if shape == self.guide_shape and lst.size() == len(rows):
+                # the same rows: change them in place, so the 5-minute refresh never jumps the crawl
+                for i, (_k, label, label2, props) in enumerate(rows):
+                    li = lst.getListItem(i)
+                    if li.getLabel() != label:
+                        li.setLabel(label)
+                    if li.getLabel2() != label2:
+                        li.setLabel2(label2)
+                    for k, v in props.items():
+                        if li.getProperty(k) != v:
+                            li.setProperty(k, v)
+            else:
+                items = []
+                for _k, label, label2, props in rows:
+                    li = xbmcgui.ListItem(label, label2)
+                    for k, v in props.items():
+                        li.setProperty(k, v)
+                    items.append(li)
+                lst.reset()
+                lst.addItems(items)
+                self.guide_shape = shape
         except Exception as exc:
             K.log_err("guide list: %s" % exc)
         random.shuffle(guide_promos)
