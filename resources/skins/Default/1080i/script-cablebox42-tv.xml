@@ -2088,7 +2088,7 @@
             <control type="label">
                     <left>150</left><top>190</top><width>900</width><height>60</height>
                     <font>font30_title</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><align>left</align>
-                    <label>$ADDON[script.cablebox42 34057]</label>
+                    <label>$ADDON[script.cablebox42 34207]</label>
                 </control>
             <control type="group">
                 <top>280</top>
@@ -2292,7 +2292,7 @@
             <control type="label">
                     <left>150</left><top>190</top><width>900</width><height>60</height>
                     <font>font30_title</font><textcolor>FFFFD24A</textcolor><shadowcolor>FF000000</shadowcolor><align>left</align>
-                    <label>$ADDON[script.cablebox42 34058]</label>
+                    <label>$ADDON[script.cablebox42 34208]</label>
                 </control>
                 <control type="image">
                     <left>112</left><top>252</top><width>1696</width><height>680</height>

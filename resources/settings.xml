@@ -14,8 +14,8 @@
         <setting id="promo_extras" type="bool" label="33122" default="false" enable="eq(-5,true)"/>
         <setting id="guide_music_path" type="folder" label="32003" source="music" default=""/>
         <setting id="guide_title" type="text" label="32004" default="CableBox 42 Program Guide"/>
-        <setting id="guide_speed" type="enum" label="34036" lvalues="34037|34038|34039" default="1"/>
-        <setting id="guide_top" type="enum" label="34060" lvalues="33658|34061" default="0"/>
+        <setting id="guide_speed" type="enum" label="34186" lvalues="34187|34188|34189" default="1"/>
+        <setting id="guide_top" type="enum" label="34210" lvalues="33658|34211" default="0"/>
         <setting id="share_mode" type="enum" label="32039" lvalues="32040|32041|32042" default="0"/>
         <setting id="shorts_mode" type="enum" label="32044" lvalues="32045|32046|32047" default="0"/>
         <setting id="skip_short" type="enum" label="33996" lvalues="33454|33997|33998|33999" default="2"/>
@@ -42,7 +42,7 @@
         <setting id="logo_corner" type="enum" label="32078" lvalues="32079|32080|32081|32082" default="3" enable="eq(-1,true)"/>
         <setting id="logo_opacity" type="enum" label="32083" lvalues="32084|32085|32086|32087" default="1" enable="eq(-2,true)"/>
         <setting id="logo_banner" type="bool" label="32089" default="true"/>
-        <setting id="rating_box" type="bool" label="34052" default="true"/>
+        <setting id="rating_box" type="bool" label="34202" default="true"/>
         <setting id="keep_progress" type="bool" label="32043" default="true"/>
         <setting id="skip_menu" type="bool" label="32016" default="false"/>
         <setting id="autostart" type="bool" label="32017" default="false"/>
@@ -78,9 +78,9 @@
         <setting id="christmas_bumps" type="folder" label="32068" source="video" default="" enable="eq(-19,true)+eq(-4,true)"/>
         <setting label="32070" type="lsep"/>
         <setting id="season_hold" type="bool" label="32069" default="true" enable="eq(-21,true)"/>
-        <setting label="34056" type="lsep"/>
-        <setting id="summer_reruns" type="enum" label="34053" lvalues="33454|34054|33471" default="0"/>
-        <setting id="rerun_today" type="text" label="34053" default="" visible="false"/>
+        <setting label="34206" type="lsep"/>
+        <setting id="summer_reruns" type="enum" label="34203" lvalues="33454|34204|33471" default="0"/>
+        <setting id="rerun_today" type="text" label="34203" default="" visible="false"/>
     </category>
     <category label="32048">
         <setting label="32049" type="lsep"/>

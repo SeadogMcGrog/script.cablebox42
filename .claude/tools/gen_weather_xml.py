@@ -27,7 +27,7 @@ obs = '''        <!-- Latest Observations: nearby cities (weather.nearby), one r
             <visible>%s</visible>
             <animation effect="fade" start="0" end="100" time="400">Visible</animation>
 ''' % (V % "observations")
-obs += label(150, 190, 900, 60, "font30_title", "FFFFD24A", "$ADDON[script.cablebox42 34057]", "<align>left</align>").replace("                ", "            ", 1)
+obs += label(150, 190, 900, 60, "font30_title", "FFFFD24A", "$ADDON[script.cablebox42 34207]", "<align>left</align>").replace("                ", "            ", 1)
 for i in range(8):
     y = 280 + i * 76
     vis = "!String.IsEmpty(Window.Property(wx_o%d_name))" % i
@@ -47,7 +47,7 @@ mp = '''        <!-- Regional Map: Natural Earth tiles drawn by G:\\CableBox42\\
             <visible>%s</visible>
             <animation effect="fade" start="0" end="100" time="400">Visible</animation>
 ''' % (V % "map")
-mp += label(150, 190, 900, 60, "font30_title", "FFFFD24A", "$ADDON[script.cablebox42 34058]", "<align>left</align>").replace("                ", "            ", 1)
+mp += label(150, 190, 900, 60, "font30_title", "FFFFD24A", "$ADDON[script.cablebox42 34208]", "<align>left</align>").replace("                ", "            ", 1)
 mp += image(VX - 4, VY - 4, VW + 8, VH + 8, ' colordiffuse="FFD6C496">white.png')
 mp += image(VX, VY, VW, VH, ' colordiffuse="FF183480">white.png')
 mp += '''            <control type="grouplist">

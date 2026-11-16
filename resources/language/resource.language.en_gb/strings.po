@@ -6295,118 +6295,118 @@ msgctxt "#34035"
 msgid "Chapters read: %d of %d - schedules updated"
 msgstr ""
 
-msgctxt "#34036"
+msgctxt "#34186"
 msgid "Guide scroll speed"
 msgstr ""
 
-msgctxt "#34037"
+msgctxt "#34187"
 msgid "Slow"
 msgstr ""
 
-msgctxt "#34038"
+msgctxt "#34188"
 msgid "Normal"
 msgstr ""
 
-msgctxt "#34039"
+msgctxt "#34189"
 msgid "Fast"
 msgstr ""
 
-msgctxt "#34040"
+msgctxt "#34190"
 msgid "(CC)"
 msgstr ""
 
-msgctxt "#34041"
+msgctxt "#34191"
 msgid "(Stereo)"
 msgstr ""
 
-msgctxt "#34042"
+msgctxt "#34192"
 msgid "Add a premium channel today!  Call your cable company."
 msgstr ""
 
-msgctxt "#34043"
+msgctxt "#34193"
 msgid "Pay-Per-View: call 555-0142 to order."
 msgstr ""
 
-msgctxt "#34044"
+msgctxt "#34194"
 msgid "Ask about our Movie Lovers package."
 msgstr ""
 
-msgctxt "#34045"
+msgctxt "#34195"
 msgid "Two months of premium channels, half price."
 msgstr ""
 
-msgctxt "#34046"
+msgctxt "#34196"
 msgid "Moving?  Take your cable with you.  Call 555-0199."
 msgstr ""
 
-msgctxt "#34047"
+msgctxt "#34197"
 msgid "Remote not working?  Free replacement at the cable office."
 msgstr ""
 
-msgctxt "#34048"
+msgctxt "#34198"
 msgid "New this month: more channels on the basic tier."
 msgstr ""
 
-msgctxt "#34049"
+msgctxt "#34199"
 msgid "Watch the big fight live on Pay-Per-View."
 msgstr ""
 
-msgctxt "#34050"
+msgctxt "#34200"
 msgid "Cable installation: just $9.95 this month."
 msgstr ""
 
-msgctxt "#34051"
+msgctxt "#34201"
 msgid "Thank you for choosing cable."
 msgstr ""
 
-msgctxt "#34052"
+msgctxt "#34202"
 msgid "Show rating at start of programmes"
 msgstr ""
 
-msgctxt "#34053"
+msgctxt "#34203"
 msgid "Summer reruns"
 msgstr ""
 
-msgctxt "#34054"
+msgctxt "#34204"
 msgid "Broadcast networks"
 msgstr ""
 
-msgctxt "#34055"
+msgctxt "#34205"
 msgid "(R)"
 msgstr ""
 
-msgctxt "#34056"
+msgctxt "#34206"
 msgid "Summer reruns (June to August)"
 msgstr ""
 
-msgctxt "#34057"
+msgctxt "#34207"
 msgid "LATEST OBSERVATIONS"
 msgstr ""
 
-msgctxt "#34058"
+msgctxt "#34208"
 msgid "REGIONAL MAP"
 msgstr ""
 
-msgctxt "#34059"
+msgctxt "#34209"
 msgid "Today's high %s, low %s"
 msgstr ""
 
-msgctxt "#34060"
+msgctxt "#34210"
 msgid "Guide top half"
 msgstr ""
 
-msgctxt "#34061"
+msgctxt "#34211"
 msgid "Text only"
 msgstr ""
 
-msgctxt "#34062"
+msgctxt "#34212"
 msgid "Tonight %s"
 msgstr ""
 
-msgctxt "#34063"
+msgctxt "#34213"
 msgid "Today %s"
 msgstr ""
 
-msgctxt "#34064"
+msgctxt "#34214"
 msgid "Tomorrow %s"
 msgstr ""
