@@ -971,6 +971,8 @@ class TVWindow(xbmcgui.WindowXML):
     def promo_subject(sched, e):
         """(time, path, title, later) of the programme a promo slot advertises."""
         pt, path, title, later = e.get("pt"), e.get("pp"), e.get("t"), e.get("pw") == "later"
+        if e.get("sp"):                      # a special: still in the calendar for that time?
+            return (pt if pt and TVWindow.special_still_on(sched, e) else None), path, title, True
         if e.get("xc"):                      # another channel's show: still planned there?
             try:
                 if pt and not TVWindow.cross_still_on(sched, e):
@@ -1028,15 +1030,29 @@ class TVWindow(xbmcgui.WindowXML):
         if not (house or K.setting_bool("promos_on", False)) or not pt or pt < now:
             self.card_for({"k": "card", "sub": "id"}, now)     # promos switched off since: a station ID
             return
+        special = {"end": e.get("pe"), "sub": e.get("sub")} if e.get("sp") else None
         if e.get("xc"):
             other = next((c for c in self.lineup.channels if c["id"] == e["xc"]), None)
             if other is None:
                 self.card_for({"k": "card", "sub": "id"}, now)
                 return
             self.air_promo(pt, path, title, True, now, e["e"], ch=other,
-                           kicker=lambda name: promos.cross_kicker(name, other["number"]))
+                           kicker=lambda name: promos.cross_kicker(name, other["number"]), special=special)
             return
-        self.air_promo(pt, path, title, later, now, e["e"])
+        self.air_promo(pt, path, title, later, now, e["e"], special=special)
+
+    @staticmethod
+    def special_still_on(sched, e):
+        """A special's promo: the special still starts then on that channel (it may
+        have been changed or removed since the break was planned)."""
+        from . import specials
+        off = scheduler.specials_shift(sched.cfg)
+        cid = e.get("xc") or sched.ch["id"]
+        if sched.lineup is not None and not any(c["id"] == cid for c in sched.lineup.channels):
+            return False
+        return any(sp["id"] == e["sp"] and sp["name"] == e.get("t") and abs(st - off - e["pt"]) < 1
+                   for st, _en, sp, _b in specials.between(scheduler.all_specials(), e["pt"] + off - 60,
+                                                           e["pt"] + off + 60, cid))
 
     @staticmethod
     def cross_still_on(sched, e):
@@ -1105,10 +1121,10 @@ class TVWindow(xbmcgui.WindowXML):
         self.set_mode("retro")
         self.start_theme(ads.music(c, e["e"] - time.time()), e["e"])     # tuned in late: silent
 
-    def air_promo(self, pt, path, title, later, now, end, ch=None, kicker=None):
+    def air_promo(self, pt, path, title, later, now, end, ch=None, kicker=None, special=None):
         """The card and its theme until `end` (promos.air: the same for breaks,
         Preview promo and the Developer tools cheat code)."""
-        music = promos.air(self, ch or self.ch, pt, path, title, later, now, kicker=kicker)
+        music = promos.air(self, ch or self.ch, pt, path, title, later, now, kicker=kicker, special=special)
         self.set_mode("promo")
         self.start_theme(music, end)
 
@@ -2799,7 +2815,7 @@ class TVWindow(xbmcgui.WindowXML):
             if info and info.get("kind") == "movie" and info.get("year") and \
                     title.endswith("(%s)" % info["year"]):
                 info = dict(info, year=0)             # a shared name keeps its year in the title
-            extra = guide.details(info, rerun=bool(b.get("rr")))
+            extra = guide.details(info, rerun=bool(b.get("rr")), special=b.get("sp") or "")
             cat = guide.category(info, kids_ch)
         return guide.fit_cell(title, extra, width) + (cat,)
 

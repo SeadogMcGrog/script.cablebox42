@@ -477,6 +477,24 @@ def day_phrase(pt, now):
     return text % clock(pt)
 
 
+def _day_all(wday):
+    return (_("Monday, all day"), _("Tuesday, all day"), _("Wednesday, all day"), _("Thursday, all day"),
+            _("Friday, all day"), _("Saturday, all day"), _("Sunday, all day"))[wday % 7]
+
+
+def special_phrase(pt, end, now):
+    """When a special is on: 'Thursday, all day' (23 hours or more), otherwise like
+    any programme: 'Tonight at 6:00 PM' / 'Thursday at 6:00 PM'."""
+    if end - pt < 23 * 3600:
+        return day_phrase(pt, now)
+    days = (datetime.date.fromtimestamp(pt) - datetime.date.fromtimestamp(now)).days
+    if days <= 0:
+        return _("Today, all day")
+    if days == 1:
+        return _("Tomorrow, all day")
+    return _day_all(time.localtime(pt).tm_wday)
+
+
 def slot_phrase(ch, pt):
     """A pinned weekly slot starting at pt, said the way a promo says it
     ('Weeknights at 8:00 PM'), or '' if pt isn't one."""
@@ -508,9 +526,23 @@ def time_phrase(pt, now, ch=None, has_episode=True, next_up=False):
     return (not has_episode and slot_phrase(ch, pt)) or day_phrase(pt, now)
 
 
-def card(inf, title, pt, now, ch=None, channel_name="", later=False):
+def card(inf, title, pt, now, ch=None, channel_name="", later=False, special=None):
     """Window properties of a promo card: {property: value}.  later: not the
-    very next programme on the channel."""
+    very next programme on the channel.  special: {'end', 'sub'} when the card is
+    for a special (Holidays and specials): its name is the title - never a show's
+    logo - with what it airs under it and 'Thursday, all day' as the time."""
+    if special:
+        return {
+            "promo_style": style(),
+            "promo_kicker": channel_name or "",
+            "promo_title": title or "",
+            "promo_ep": special.get("sub") or "",
+            "promo_plot": (inf.get("plot") or "") if "," not in (special.get("sub") or "") else "",
+            "promo_when": special_phrase(pt, special.get("end") or pt, now),
+            "promo_bg": inf.get("bg") or "",
+            "promo_letterbox": "1" if inf.get("letterbox") else "",
+            "promo_logo": "",
+        }
     episode = inf.get("episode") or ""
     # the logo or the title, never both: the title is never a stand-in behind a
     # logo that is still loading.  A logo not yet in the texture cache -> title.
@@ -693,7 +725,7 @@ def music(inf):
     return inf.get("theme") or (BED if os.path.exists(BED) else "")
 
 
-def air(win, ch, pt, path, title, later, now, kicker=None):
+def air(win, ch, pt, path, title, later, now, kicker=None, special=None):
     """Put one promo card on `win` (a window with the TV's layout,
     script-cablebox42-tv.xml) and return its music ('' for a silent card).
     The one way a promo goes on screen: in a break (tv.start_promo), in
@@ -708,7 +740,7 @@ def air(win, ch, pt, path, title, later, now, kicker=None):
     name = stations.brand(ch, pt)["name"] if ch else ""      # its branding at that hour
     if kicker:
         name = kicker(name) if callable(kicker) else kicker % name    # another channel's: cross_kicker
-    apply_card(win, card(inf, title, pt, now, ch, name, later))
+    apply_card(win, card(inf, title, pt, now, ch, name, later, special))
     win.setProperty("mode", "promo")
     return music(inf)
 

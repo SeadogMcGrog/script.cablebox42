@@ -114,6 +114,7 @@ def schedule_cfg():
         "seasons": seasons_cfg(),
         "reruns": setting_int("summer_reruns", 0),
         "rerun_today": setting("rerun_today", ""),     # hidden: a date for testing reruns
+        "specials_today": setting("specials_today", ""),   # hidden: today's date for testing specials
         "promos": setting_bool("promos_on", False),
         "promo_every": setting_int("promo_every", 1),
         "promo_target": setting_int("promo_target", 2),

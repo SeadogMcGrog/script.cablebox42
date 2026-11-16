@@ -870,7 +870,8 @@ def code_fingerprint():
     version number) plans breaks differently, so the first run after one refreshes."""
     import hashlib
     h = hashlib.md5(K.ADDON.getAddonInfo("version").encode("utf-8"))
-    for name in ("scheduler.py", "promos.py", "ads.py", "chapters.py", os.path.join("..", "ads", "ads.json")):
+    for name in ("scheduler.py", "promos.py", "ads.py", "chapters.py", "specials.py",
+                 os.path.join("..", "ads", "ads.json")):
         try:
             with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), name), "rb") as f:
                 h.update(f.read())
@@ -1368,6 +1369,10 @@ def _editor_rows(ch, chans):
 
     # -- schedule: when things air
     add("schedule", "planner", _("[B]Weekly planner[/B] (%d pinned shows)") % len(ch.get("slots", [])))
+    if ch["type"] in AIR_TYPES:
+        from . import specials_editor
+        add("schedule", "specials", _("[B]Holidays and specials[/B] (%d)") % len(specials_editor.on_channel(ch["id"])),
+            _("Marathons and holiday programming on dates, back every year."))
     add("schedule", "dayparts", _("Time blocks (prime time, Saturday mornings...): %d") % len(ch["dayparts"]))
     add("schedule", "offair", _("Off-air hours: %s") % (", ".join("%s-%s" % (w["start"], w["end"])
                                                                for w in ch["offair"]) or _("never")))
@@ -1425,11 +1430,20 @@ def edit_channel(cid):
         elif key == "preview":
             preview(ch)
         elif key == "delete":
-            if confirm_remove(_("Delete %d %s?[CR][CR]Its schedule and pinned shows go with it. Your videos "
-                                "and its station folder are not touched.") % (ch["number"], ch["name"]),
-                              _("Delete")):
+            from . import specials_editor
+            names = specials_editor.on_channel(cid)
+            text = _("Delete %d %s?[CR][CR]Its schedule and pinned shows go with it. Your videos "
+                     "and its station folder are not touched.") % (ch["number"], ch["name"])
+            head = TITLE
+            if names:        # more to say: the question goes in the heading (the box shows 4 lines)
+                head = _("Delete %d %s?") % (ch["number"], ch["name"])
+                text = _("Its schedule, pinned shows and its part in these specials go with it: %s.[CR]"
+                         "Your videos and its station folder are not touched.") % (
+                             ", ".join(names[:3]) + (" ..." if len(names) > 3 else ""))
+            if confirm(text, _("Delete"), heading=head):
                 chans = [c for c in chans if c["id"] != cid]
                 C.save(chans)
+                specials_editor.drop_channel(cid)   # its blocks; a special left with none goes too
                 # its schedule goes; its shows keep their place (their bookmarks go
                 # back to what it aired)
                 scheduler.Lineup(K.schedule_cfg()).drop_removed()
@@ -1546,6 +1560,10 @@ def _edit_row(key, ch, chans, cid):
         C.save(chans)
         from . import planner
         planner.open_planner(cid)
+    elif key == "specials":
+        C.save(chans)
+        from . import specials_editor
+        specials_editor.open_specials(cid)
 
 
 def _ad_flavour_label(ch):
@@ -2713,6 +2731,8 @@ e.g. Seinfeld, Fridays 8:00 PM, one hour, in order: every week it continues with
 the next episodes.  Pinned slots always start on time; the automatic scheduler
 fills everything else and never runs into them.  You can also paint off-air
 hours, copy a day to other days, or clear a day (Menu button).
+Right past Sunday goes to the next week, Left past Monday to the week before;
+holidays and specials show in their own week, with a star on the day.
 
 [B]Your watch progress[/B]
 CableBox puts back resume points, watched status and last-played dates after it
@@ -2732,6 +2752,14 @@ episodes and movies (Kodi tags first, then genres such as Horror and Mystery, th
 first, more as the day gets closer, all day on the day itself.  Optional holiday
 commercial and bump folders.  The rest of the year Christmas and Thanksgiving episodes
 are saved for their season.  Settings > Seasons.
+
+[B]Holidays and specials[/B]
+Settings > Tools > Holidays and specials (or Channel manager > channel > Schedule):
+a month calendar - OK on a day adds a special there, Menu shows them as a list.
+A special is a marathon or a holiday lineup on a date - 31 December, the 4th Thursday of
+November, Good Friday - on one channel or several, all day or for hours you
+choose, back every year.  It airs instead of the channel's usual schedule for
+those hours, and breaks promote it in the days before.
 
 [B]Off the air[/B]
 Off-air hours show a 1950s 'Please stand by' test card (or color bars), with an
@@ -2826,6 +2854,7 @@ TOOLS = {
     "finder": lambda: run_finder(),
     "skipped": lambda: check_skipped(),
     "chapters": lambda: check_chapters(),
+    "specials": lambda: open_specials(),
 }
 
 
@@ -2952,6 +2981,12 @@ def check_skipped():
     xbmcgui.Dialog().textviewer(_("Skipped episodes"), "[CR]".join(lines))
 
 
+def open_specials():
+    """Settings > Tools > Holidays and specials."""
+    from . import specials_editor
+    specials_editor.open_specials()
+
+
 def run_finder():
     from . import finder
     finder.run()
@@ -2968,7 +3003,7 @@ CLIP_KINDS = ("bumps", "ids", "commercials")
 # CableBox's own data (in its profile folder).  durations.json / codecs.json are
 # only a cache of how long each video is and how it's encoded - kept, so a fresh
 # setup doesn't have to measure the whole library again.
-RESET_FILES = ("channels.json", "assign.json", "state.json", "unplayable.json", "weather_cache.json",
+RESET_FILES = ("channels.json", "assign.json", "state.json", "unplayable.json", "weather_cache.json", "calendar.json",
                "finder.json")
 
 
@@ -3136,7 +3171,7 @@ def folder_lines(c):
     return out
 
 
-NO_REFRESH = ("refresh", "rebuild", "restart_series", "reset", "skipped")   # "chapters" refreshes: a show's choice changes breaks
+NO_REFRESH = ("refresh", "rebuild", "restart_series", "reset", "skipped", "specials")   # "chapters" refreshes: a show's choice changes breaks
 
 
 def run_tool(name):

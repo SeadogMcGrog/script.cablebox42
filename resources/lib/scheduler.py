@@ -12,6 +12,7 @@ moves is written to the schedule's undo log with the start of the block that mov
 it, so the plan can be cut after any block and the bookmarks put back (cut()).
 """
 import bisect
+import datetime
 import hashlib
 import json
 import math
@@ -34,6 +35,7 @@ from . import musicvideos
 from . import bookmarks
 from . import ads
 from . import chapters
+from . import specials
 from .kodiutil import _
 
 DAY = 86400
@@ -69,6 +71,8 @@ def skip_short_save():
         log("skipped episodes: %s" % exc)
 PROMO_RATES = (1.0, 0.5, 0.25)      # every break, about half, now and then
 PROMO_LOOKAHEAD = 6 * 3600          # 'later today' looks this far ahead
+SPECIAL_PROMO_DAYS = 6              # a special is promoted from this many days before ('Thursday')
+SPECIAL_PROMO_RATES = (0.5, 0.4, 0.25)   # of the promo slots: on the day, the day before, earlier
 PROMO_TYPES = assign.PROGRAM_TYPES + ("musicvideos",)    # channels whose breaks carry promos
 # House breaks (Settings > Programming > House breaks): the channel's own promos,
 # promos for other channels and ads for the guide / weather channels, in place of
@@ -192,6 +196,41 @@ def rerun_range(eps, last_i):
             prev = _season_of(eps[before])
             rng = [j for j in range(before + 1) if _season_of(eps[j]) == prev]
     return rng if len(rng) >= RERUN_MIN else []
+
+
+# ----------------------------------------------------------------- holidays and specials
+_SPECIALS = [0.0, []]           # [looked at, specials]: calendar.json is checked every 2 s at most
+
+
+def all_specials():
+    """Every special in calendar.json ([] without the file: nothing changes)."""
+    now = time.time()
+    if abs(now - _SPECIALS[0]) > 2:
+        try:
+            _SPECIALS[1] = specials.load()
+        except Exception as exc:         # a broken calendar never costs a channel its schedule
+            log("Holidays and specials: %s" % exc)
+            _SPECIALS[1] = []
+        _SPECIALS[0] = now
+    return _SPECIALS[1]
+
+
+def forget_specials():
+    """calendar.json was just written here: read it again at once."""
+    _SPECIALS[0] = 0.0
+
+
+def specials_shift(cfg):
+    """Seconds from the real clock to the one specials go by: 0, or with the hidden
+    test setting 'specials_today' (YYYY-MM-DD) today counts as that date, for the rig."""
+    fake = (cfg or {}).get("specials_today") or ""
+    if not fake:
+        return 0
+    try:
+        y, m, d = [int(x) for x in fake.split("-")]
+        return time.mktime((y, m, d, 0, 0, 0, 0, 0, -1)) - local_midnight(time.time())
+    except (ValueError, OverflowError):
+        return 0
 
 
 # ----------------------------------------------------------------- time utils
@@ -339,8 +378,8 @@ class ChannelSchedule(object):
         fill-in) keeps its shared bookmark untouched for when it comes back.  Pinned
         slots ('rule:...') and other channels airing the show keep their own run
         here.  Folder series (no home channels) share theirs."""
-        if key.startswith("rule:") or key.endswith(RERUN_SUFFIX):
-            return False
+        if key.startswith(("rule:", "event:")) or key.endswith(RERUN_SUFFIX):
+            return False                 # 'event:': a special's marathon keeps its own run too
         if not key.startswith("tv:"):
             return True
         home = ((self.assignment() or {}).get("home") or {}).get(key[3:].lower())
@@ -416,7 +455,7 @@ class ChannelSchedule(object):
             if e["s"] <= now or (e.get("pt") or 0) < c:
                 continue
             if e.get("k") == "promo":
-                for k in ("pt", "t", "pp", "pw", "sub"):
+                for k in ("pt", "t", "pp", "pw", "sub", "sp", "pe"):
                     e.pop(k, None)
             elif e.get("pr") == "extras":    # a show's own promo clip: back to its card
                 ents[i] = {"s": e["s"], "e": e["e"], "k": "promo"}
@@ -504,7 +543,11 @@ class ChannelSchedule(object):
         return self.lineup.assignment if self.lineup is not None else None
 
     def full_hash(self):
-        """Channel settings + which shows this channel may air automatically."""
+        """Channel settings + which shows this channel may air automatically, + its
+        specials (calendar.json), when it has any."""
+        return self._plain_hash() + self._specials_hash()
+
+    def _plain_hash(self):
         if self.ch.get("type") == "extras":
             # rebuild once when the first extras turn up (not each time the cache changes)
             return chmod.config_hash(self.ch) + ("x1" if self._extras_films() else "x0")
@@ -688,7 +731,198 @@ class ChannelSchedule(object):
                 if occ and r.get("sources"):
                     for title in library.titles(library.resolve(r["sources"])):
                         out.setdefault(title.lower(), []).extend(occ)
+        # ...and other channels' specials: their shows are theirs for those hours
+        every = all_specials()
+        if every:
+            off = specials_shift(self.cfg)
+            ids = set(c["id"] for c in lu.channels)
+            for st, en, _sp, blk in specials.between(every, t + off, t + span + off):
+                if blk.get("channel") == self.ch["id"] or blk.get("channel") not in ids:
+                    continue
+                for title in self._special_titles(blk):
+                    out.setdefault(title.lower(), []).append((st - off, en - off))
         return out
+
+    # -- holidays and specials (specials.py, calendar.json)
+    def _specials(self):
+        """The specials with programming on this channel (none, for most)."""
+        cid = self.ch["id"]
+        return [sp for sp in all_specials() if any(b.get("channel") == cid for b in sp["blocks"])]
+
+    def _specials_hash(self):
+        """Part of the channel's hash: a changed special cuts the plan after what is on
+        air, like a changed pin.  Empty without specials (the hash is as it was)."""
+        mine = self._specials()
+        if not mine:
+            return ""
+        cid = self.ch["id"]
+        data = [[sp["id"], sp.get("name"), sp["when"], sp["repeat"], sp.get("year"),
+                 [b for b in sp["blocks"] if b.get("channel") == cid]] for sp in mine]
+        return "s" + hashlib.md5(json.dumps(data, sort_keys=True).encode("utf-8")).hexdigest()[:6]
+
+    def _special_at(self, t):
+        """(special, block, start, end) on this channel at t, with at least a minute
+        left; Nones when there is none."""
+        mine = self._specials()
+        if mine:
+            off = specials_shift(self.cfg)
+            sp, blk, st, en = specials.at(mine, self.ch["id"], t + off)
+            if sp is not None and t < en - off - 60:
+                return sp, blk, st - off, en - off
+        return None, None, None, None
+
+    def _special_edge(self, t):
+        """The next start or end of a special on this channel strictly after t (or None)."""
+        mine = self._specials()
+        if not mine:
+            return None
+        off = specials_shift(self.cfg)
+        x = specials.next_change(mine, self.ch["id"], t + off)
+        return None if x is None else x - off
+
+    @staticmethod
+    def _holiday_source(blk):
+        """The holiday of a 'Holiday episodes of this channel's shows' block, or None."""
+        for src in blk.get("sources") or ():
+            if isinstance(src, dict) and src.get("type") == "holiday":
+                return src.get("season") or ""
+        return None
+
+    def _special_titles(self, blk):
+        """Titles a special's block keeps off the other channels for its hours: its
+        shows, and in order its movies too (a pin does the same).  Not a random pick
+        from a list of movies and not holiday episodes: what airs is in the schedule."""
+        if self._holiday_source(blk) is not None:
+            return []
+        try:
+            pool = library.resolve(blk.get("sources") or [])
+        except Exception:
+            return []
+        out = [s["title"] for s in pool["series"]]
+        if blk.get("order") != "random":
+            out += [i["title"] for i in pool["singles"]]
+        return out
+
+    def _holiday_pool(self, season):
+        """The holiday episodes and movies of this channel's own programming (its
+        sources and its time blocks'), found by seasons.items(): each show with only
+        its holiday episodes, in series order."""
+        if season not in seasons.SEASONS:
+            return {"series": [], "singles": []}
+        hit = getattr(self, "_hol_pool", None)
+        if hit and hit[0] == season and abs(time.time() - hit[1]) < 300:
+            return hit[2]
+        ch = self.ch
+        pools = [library.keep_titles(
+            library.without(library.share(ch.get("sources", []), ch.get("part"), ch.get("own"),
+                                          ch.get("not_genres")), ch.get("exclude")),
+            assign.allowed_fn(self.assignment(), ch["id"]))]
+        for dp in ch.get("dayparts", []) or []:
+            pools.append(library.without(library.share(dp.get("sources", []), dp.get("part"), dp.get("own"),
+                                                       dp.get("not_genres")), ch.get("exclude")))
+        series, singles, seen = [], [], set()
+        for one in pools:
+            for ser in one["series"]:
+                if ser["key"] not in seen:
+                    seen.add(ser["key"])
+                    series.append(ser)
+            for it in one["singles"]:
+                if it["path"] not in seen:
+                    seen.add(it["path"])
+                    singles.append(it)
+        want = set(i["path"] for i in seasons.items({"series": series, "singles": singles}, season, self.cfg))
+        pool = {"series": [dict(ser, episodes=[e for e in ser["episodes"] if e["path"] in want])
+                           for ser in series if any(e["path"] in want for e in ser["episodes"])],
+                "singles": [i for i in singles if i["path"] in want]}
+        self._hol_pool = (season, time.time(), pool)
+        return pool
+
+    def _special_pool(self, blk):
+        season = self._holiday_source(blk)
+        try:
+            return self._holiday_pool(season) if season is not None else library.resolve(blk.get("sources") or [])
+        except Exception as exc:
+            log("special on %s: %s" % (self.ch.get("name"), exc))
+            return {"series": [], "singles": []}
+
+    def _special_block(self, t, sp, blk, s0, hard):
+        """Plan the special's next programme at t.  Returns (end, True) when planned;
+        (None, True) when nothing of it fits before its hours end and more than a slot
+        is left (automatic programming fills in; pins and off-air stay away);
+        (None, False) when it has nothing to air at all (no holiday episodes, an empty
+        source): the channel's normal programming."""
+        pool = self._special_pool(blk)
+        if not pool["series"] and not pool["singles"]:
+            return None, False
+        first = len(self.data["blocks"])
+        self._cont = None
+        self._season_t = None            # never a summer rerun, never held back as out of season
+        prog = self._pick_special(sp, blk, pool, t, s0, hard - t - 2)
+        if prog:
+            end = self._program(t, prog, hard)
+            if sp.get("name"):
+                for b in self.data["blocks"][first:]:
+                    b["sp"] = sp["name"]         # the guide's description: "Turkey Day Marathon"
+            return end, True
+        if hard - t <= (self.slot or 1800):
+            return self._no_programme(t, hard, pool), True      # the leftover: breaks
+        return None, True
+
+    def _pick_special(self, sp, blk, pool, t, s0, room):
+        """A special's next programme that ends by the end of its hours (None: nothing
+        does).  'continue' / 'first': each show in order from its own bookmark
+        ('event:<id>|tv:<title>'), several shows in turn; 'first' starts them over on
+        each new date.  'random': any episode or movie, none again until half have aired."""
+        rid = "event:%s" % sp["id"]
+        series, singles = pool["series"], pool["singles"]
+        st = self.data["state"]
+        if blk.get("order") == "random":
+            every = [e for ser in series for e in ser["episodes"]] + singles
+            recent = st["recent"].setdefault(rid, [])
+            keep = min(len(every) // 2, 200)
+            avoid = set(recent[-keep:]) if keep else set()
+            fit = [e for e in every if 0 < float(e["dur"]) <= room and not library.is_bad(e["path"])]
+            fit = [e for e in fit if e["path"] not in avoid] or fit
+            rng = random.Random("%s|%.0f|%s" % (self.ch["id"], t, rid))
+            while fit:
+                it = rng.choice(fit)
+                if library.stale(it["path"]):        # one at a time: a big list is never checked whole
+                    fit = [e for e in fit if e is not it]
+                    continue
+                recent.append(it["path"])
+                self._undo("ra", rid, it["path"])
+                del recent[:-max(keep, 1)]
+                self._cont = ("singles", every, rid)
+                return it
+            return None
+        rr = st.setdefault("rr", {})
+        if blk.get("order") == "first":
+            # a new date: every show from its first episode again
+            mark = "ev:%s" % sp["id"]
+            day = time.strftime("%Y-%m-%d", time.localtime(s0 + specials_shift(self.cfg)))
+            if st.get(mark) != day:
+                self._undo("st", mark, st.get(mark))
+                st[mark] = day
+                for k in [k for k in st["last"] if k.startswith(rid + "|")]:
+                    self._undo("l", k, st["last"][k])
+                    del st["last"][k]
+                if rr.get(rid):
+                    self._undo("rr", rid, rr[rid])
+                    rr[rid] = 0
+        shows = [("s", ser) for ser in series] + ([("m", None)] if singles else [])
+        i0 = rr.get(rid, 0)
+        for k in range(len(shows)):
+            kind, ser = shows[(i0 + k) % len(shows)]
+            key = rid + "|" + (ser["key"] if kind == "s" else "movies")
+            ep = self._next_episode(ser if kind == "s" else {"episodes": singles}, key)
+            if library.stale(ep["path"]) or float(ep["dur"]) > room:
+                continue
+            self._undo("rr", rid, i0)
+            rr[rid] = i0 + k + 1
+            self._bm_set(key, ep["path"], ep.get("label"))
+            self._cont = ("series", ser, key) if kind == "s" else None
+            return ep
+        return None
 
     def _clash_free(self, pool, t):
         """Drop titles that would be on another channel at the same time."""
@@ -789,7 +1023,20 @@ class ChannelSchedule(object):
             return e
 
         hard = self._next_fixed(t)
-        rule, _rs, _re = self._rule_at(t)
+        # Holidays and specials come first: over pins, off-air hours, holiday seasons,
+        # summer reruns and automatic programming.  A special's start and end are
+        # programme boundaries; during one, pins are not.
+        sp, sblk, s0, _s1 = self._special_at(t)
+        edge = self._special_edge(t)
+        if edge is not None and (sp is not None or hard is None or edge < hard):
+            hard = edge
+        pins = True
+        if sp is not None:
+            end, mine = self._special_block(t, sp, sblk, s0, hard)
+            if end is not None:
+                return end
+            pins = not mine
+        rule, _rs, _re = self._rule_at(t) if pins else (None, None, None)
         if rule:
             pool = library.resolve(rule["sources"])
             if rule.get("order") == "random":       # e.g. "Movie at 8": don't pick what's on elsewhere
@@ -802,6 +1049,8 @@ class ChannelSchedule(object):
                 return self._program(t, prog, hard)
 
         key, sources, offair, until = self._daypart(t)
+        if offair and not pins:          # the rest of a special's hours: on the air
+            key, sources, offair = "base", ch.get("sources", []), False
         if offair:
             end = until if hard is None else min(until, hard)
             return self._offair(t, end, until)
@@ -1334,7 +1583,7 @@ class ChannelSchedule(object):
         out = []
         kind, src, ptr = cont
         st = self.data["state"]
-        auto = not (ptr or "").startswith("rule:") and ptr != "season"
+        auto = not (ptr or "").startswith(("rule:", "event:")) and ptr != "season"
         if auto and kind == "singles":
             src = [it for it in src if not seasons.out_of_season(it, t, self.cfg)]
         self._season_t = t if auto else None
@@ -2074,9 +2323,12 @@ class ChannelSchedule(object):
                 if e.get("h"):
                     avoid |= self._gap_avoid(i, ga, gb)
                 signon = self._signon_slot(i, ga, gb, avoid) if e.get("h") else None
+                special = None if signon else self._special_promo(e, avoid)
                 if signon:
                     e.pop("xc", None)            # the last promo before sign-off: tomorrow's first show
                     tgt = signon
+                elif special:
+                    tgt = special                # a special in the days ahead: 'Thursday, all day'
                 elif e.get("xc"):
                     tgt = self._cross_target(e, avoid | self._own_titles_after(i))
                     if tgt is not None and tgt[0] is None and e.get("h"):
@@ -2110,13 +2362,16 @@ class ChannelSchedule(object):
                         e["pt"] = 0          # nothing to promote: the station ID card
                     continue
                 e.update(pt=b["s"], t=b["t"])
+                if b.get("sp"):
+                    e.update(sp=b["sp"], pe=b["e"])
                 if path:
                     e["pp"] = path
                 if b.get("sub"):
                     e["sub"] = b["sub"]
                 if e.get("xc") or b is not self.next_block(e["s"]):
                     e["pw"] = "later"
-                if self.cfg.get("promo_extras") and path and e["s"] > now + 30 and not e.get("xc"):
+                if self.cfg.get("promo_extras") and path and e["s"] > now + 30 and not e.get("xc") \
+                        and not b.get("sp"):
                     extras.append((i, path, b))
             if e.get("t"):
                 prev = (e["t"], e["s"])
@@ -2128,6 +2383,50 @@ class ChannelSchedule(object):
         if touched:
             self._index()
         return touched
+
+    def _special_promo(self, e, avoid):
+        """(block-like, path) when the promo slot e names a special instead of a
+        programme: one on this channel (or on the channel a cross-channel promo is
+        for) that starts within SPECIAL_PROMO_DAYS and hasn't begun; a share of the
+        slots (SPECIAL_PROMO_RATES), never the break before the next programme
+        ('Up next' stays), never a name in `avoid`.  The block-like has the
+        special's start, end, name, id and what it airs; path: one of its
+        programmes, for the card's picture.  None otherwise (always, without
+        calendar.json)."""
+        every = all_specials()
+        if not every or self.lineup is None:
+            return None
+        cid = e.get("xc") or self.ch["id"]
+        ch = next((c for c in self.lineup.channels if c["id"] == cid), None)
+        if ch is None:
+            return None
+        if not e.get("xc") and not e.get("h") and self.cfg.get("promo_target", 2) != 1 and \
+                self._final_break(e, self.block_at(e["s"])):
+            return None
+        off = specials_shift(self.cfg)
+        t = e["s"]
+        day = datetime.date.fromtimestamp(t + off)
+        for st, en, sp, blk in specials.between(every, t + off, t + off + (SPECIAL_PROMO_DAYS + 1) * 86400, cid):
+            ahead = (datetime.date.fromtimestamp(st) - day).days
+            if st - off < t + 600 or ahead > SPECIAL_PROMO_DAYS or sp["name"] in avoid:
+                continue
+            rate = SPECIAL_PROMO_RATES[min(ahead, len(SPECIAL_PROMO_RATES) - 1)]
+            if random.Random("%s|%.0f|special" % (self.ch["id"], t)).random() >= rate:
+                return None
+            try:
+                other = self if cid == self.ch["id"] else self.lineup.schedule(ch, ensure=False)
+                pool = other._special_pool(blk)
+            except Exception as exc:
+                log("promo for %s: %s" % (sp.get("name"), exc))
+                return None
+            series, singles = pool["series"], pool["singles"]
+            if not series and not singles:
+                continue                         # nothing to air (no holiday episodes): nothing to promote
+            names = [s["title"] for s in series] + ([singles[0]["title"]] if singles and not series else [])
+            path = series[0]["episodes"][0]["path"] if series else singles[0]["path"]
+            return {"s": st - off, "e": en - off, "t": sp["name"], "sp": sp["id"],
+                    "sub": ", ".join(names[:3])}, path
+        return None
 
     def _house_cross_for(self, e, avoid):
         """Turn a house promo into a promo for another channel's show (sets its
