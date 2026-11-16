@@ -1017,10 +1017,11 @@ episodes and movies for their season* keeps Christmas specials out of July.
 The seasons choose holiday programmes for you. When you want one exact thing
 on one day, add a **special**.
 
-1. *Settings → Tools → Holidays and specials* → **Add a special**.
-2. **When?** → *A ready-made holiday…* → *Thanksgiving (US)* → *On the day
-   itself*.
-3. **How often?** → *Every year*.
+1. *Settings → Tools → Holidays and specials*. A month calendar opens.
+2. Press **CH+** until it shows November, move to the fourth Thursday and
+   press **OK** → *Add a special on this day*.
+3. Choose *On the 4th Thursday of November every year*, so it moves with
+   Thanksgiving. (*On 26 November every year* would stay on that date.)
 4. **Name:** type *Turkey Day Marathon* (or keep *Thanksgiving*).
 5. **Which channel?** → your comedy channel.
 6. **Which hours?** → *All day*.
@@ -1028,6 +1029,10 @@ on one day, add a **special**.
    the show.
 8. **Episode order** → *Continue where last year's marathon stopped*.
 9. Check the summary → **Add special**.
+
+The day now shows ★ *Turkey Day Marathon* on the calendar. Prefer a list?
+**Menu** → *Show as a list*; its **Add a special** asks for the date in words
+(*When?*) instead.
 
 That's it. On the fourth Thursday of November the channel airs the show all
 day, in order; next year it carries on from where this year's marathon
@@ -1047,7 +1052,8 @@ In the days before, breaks promote it (*Thursday, all day*).
   runs through midnight, and through the channel's sign-off hours.
 - **Change or remove it:** pick it in the list. Changes are saved as you go.
 
-**Dates for other countries.** Nothing is tied to the US calendar:
+**Dates for other countries.** Nothing is tied to the US calendar. Pick the
+day on the calendar and choose its rule, or use *Add a special* in the list:
 
 | You want | Choose |
 |---|---|

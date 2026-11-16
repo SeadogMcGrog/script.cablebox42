@@ -12,7 +12,12 @@ v1.2.0 (2026-11-12)
   Thanksgiving and Christmas. Preview the day. Breaks promote a special in
   the six days before ('Thursday, all day', 'Tonight at 6:00 PM'). Specials
   whose channel is removed by Build my lineup are kept as 'channel removed'
-  until you choose a channel for them
+  until you choose a channel for them. It opens on a month calendar (a star
+  on the days with a special; CH+ / CH- change month; OK on a day: its
+  specials and 'Add a special on this day', which offers the weekday rule when
+  the date fits one); Menu switches to the list, and it opens the way you
+  left it. Saving also asks when one of the special's shows is pinned on
+  another channel during its hours (Cancel / Keep both)
 - New: the weekly planner steps through the weeks: Right past Sunday is the
   next week, Left past Monday the week before ('This week', 'Week of 23 Nov').
   Specials show in their own week: a star and the name in the day's heading,

@@ -825,8 +825,27 @@ saying exactly what you want on a date: a marathon, a holiday lineup, a movie
 night. *Settings → Tools → Holidays and specials*, or *Channel manager → a
 channel → Schedule → Holidays and specials* for that channel's.
 
-The list shows every special with its next date, soonest first. **Add a
-special** asks, one screen at a time (Back on any of them adds nothing):
+It opens on a **month calendar**. Days with a special show ★ and its name
+(or *★ 2 specials*); today is outlined in white. A special that runs past
+midnight marks its own date only.
+
+| Button | Action |
+|---|---|
+| Arrows | Move from day to day (past the edge: the next or previous month) |
+| CH+ / CH−, Page Up / Down | Next month, previous month. Any year can be looked at |
+| **OK** on a day | That day's specials (pick one to open it) and *Add a special on this day* |
+| **Menu** | *Show as a list*: every special with its next date, soonest first. The list's last row, *Month calendar*, comes back. CableBox opens whichever you used last |
+| Back | Done |
+
+**Add a special on this day** already knows the date, so it skips *When?* and
+only asks how it repeats: *On the 4th Thursday of November every year* (the
+weekday rule, when the date fits one, so a Thanksgiving picked on the calendar
+still floats; *Last Monday of May*, *Good Friday* and the like are offered the
+same way), *On 26 November every year* or *This year only*. Then it carries on
+with the name. Past days can be looked at, but not given a new special.
+
+From the list, **Add a special** asks everything, one screen at a time (Back
+on any of them adds nothing):
 
 | Step | Choices |
 |---|---|
@@ -857,11 +876,14 @@ another channel*, **Preview the day** (what will air, channel by channel) and
   year's stopped (*Continue…*).
 - **No show on two channels at once:** other channels leave a special's shows
   out of their automatic programming for its hours. A show *pinned* on another
-  channel still airs there.
+  channel still airs there: pins always win on their own channel.
 - **Saving asks when it matters:** another special on the same channel in
   those hours (*Cancel* / *Replace*); the same show in a special on another
-  channel at the same time (*Cancel* / *Keep both*); a channel with no holiday
-  episodes is told so, and airs its normal programming on the day.
+  channel at the same time (*Cancel* / *Keep both*); one of its shows pinned
+  on another channel during its hours (*Seinfeld is pinned on Beacon at 8:00 PM
+  on Thursdays and will air there too*: *Cancel* / *Keep both*); a channel
+  with no holiday episodes is told so, and airs its normal programming on the
+  day.
 - **A special for today** starts after the programme that's on now. Nothing
   on air is cut off.
 - **Promos:** in the six days before, some of the channel's promos (and

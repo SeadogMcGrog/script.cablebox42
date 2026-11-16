@@ -1,5 +1,8 @@
 """Holidays and specials: the editor (Settings > Tools, and a channel's Schedule group).
 
+It opens on a month calendar (Calendar: a 6 x 7 grid of days, a star on the days with
+a special; OK on a day: its specials and 'Add a special on this day') or on the
+soonest-first list, whichever was used last (open_specials).
 The list is a menu (changes save as you go, Done at the bottom).  Adding a special is
 step-by-step: Back on any step cancels it and nothing is saved; it ends on a
 Cancel / Add special question.  The rules, hours and calendar.json are specials.py;
@@ -244,8 +247,40 @@ def drop_channel(cid):
 
 
 # ------------------------------------------------------------------ the list
+def view():
+    """'calendar' (to start with) or 'list': the one used last."""
+    return "list" if K.load_json(K.STATE_FILE, {}).get("specials_view") == "list" else "calendar"
+
+
+def set_view(name):
+    st = K.load_json(K.STATE_FILE, {})
+    if st.get("specials_view") != name:
+        st["specials_view"] = name
+        K.save_json(K.STATE_FILE, st)
+
+
+def open_specials(cid=None):
+    """Tools > Holidays and specials; with cid, the same for one channel.  The month
+    calendar or the list, as last time; each has a way to the other."""
+    if not [c for c in C.load() if c["type"] in M.AIR_TYPES]:
+        D.ok(M.TITLE, _("Add a channel first."))
+        return
+    which = view()
+    while which:
+        which = open_calendar(cid) if which == "calendar" else open_list(cid)
+        if which:
+            set_view(which)
+
+
+def open_special(cal, sp, chans):
+    """A special picked in the list or on the calendar: its page (first Choose a
+    channel / Remove when none of its channels is left)."""
+    if len(lost(chans, sp)) < len(sp["blocks"]) or lost_special(cal, sp, chans):
+        special_page(sp["id"])
+
+
 def open_list(cid=None):
-    """Tools > Holidays and specials; with cid, the same list for one channel."""
+    """The soonest-first list.  Returns 'calendar' to switch to the month calendar."""
     while True:
         chans = C.load()
         air = [c for c in chans if c["type"] in M.AIR_TYPES]
@@ -274,18 +309,222 @@ def open_list(cid=None):
             if gone:
                 detail += DOT + _("channel removed")
             rows.append(M._menu_row("%s%s%s" % (sp["name"], DOT, date_text(day)), detail))
+        rows.append(M._menu_row(_("[B]Month calendar[/B]"), _("The same specials on a calendar, month by month")))
         head = (_("Holidays and specials - %s") % only["name"]) if only else _("Holidays and specials")
         i = M.done_select(head, rows, useDetails=True)
         if i < 0:
             return
+        if i == len(rows) - 1:
+            return "calendar"
         if i == 0:
             sid = add_special(cal, chans, cid)
             if sid:
                 special_page(sid)
         else:
-            sp = ups[i - 1][1]
-            if len(lost(chans, sp)) < len(sp["blocks"]) or lost_special(cal, sp, chans):
-                special_page(sp["id"])
+            open_special(cal, ups[i - 1][1], chans)
+
+
+# ------------------------------------------------------------------ the month calendar
+A_LEFT, A_RIGHT, A_UP, A_DOWN = 1, 2, 3, 4
+A_PGUP, A_PGDN, A_SELECT, A_INFO = 5, 6, 7, 11
+A_CHUP, A_CHDN = 184, 185
+A_CONTEXT = (117, 163)
+A_BACK = (9, 10, 92, 13)
+FIRST_YEAR, LAST_YEAR = 1990, 2099
+
+
+def on_days(cal, first, last, cid=None):
+    """{date: [special]} for the days first..last: each special on its own date
+    (a block that runs past midnight marks the day it starts)."""
+    out = {}
+    for sp in cal:
+        if cid and not any(b.get("channel") == cid for b in sp["blocks"]):
+            continue
+        for y in range(first.year - 1, last.year + 2):      # a rule moved by days can cross New Year
+            if sp.get("repeat") == "once" and sp.get("year") != y:
+                continue
+            d = specials.date_for(sp["when"], y)
+            if d and first <= d <= last and sp not in out.setdefault(d, []):
+                out[d].append(sp)
+    return out
+
+
+def rules_for(day):
+    """The every-year rules a date picked on the calendar can mean, weekday rules
+    first where they fit: [(rule, its words)]."""
+    out = []
+    n = (day.day - 1) // 7 + 1
+    if n <= 4:
+        out.append({"type": "nth", "n": n, "weekday": day.weekday(), "month": day.month})
+    if (day + datetime.timedelta(days=7)).month != day.month:
+        out.append({"type": "nth", "n": -1, "weekday": day.weekday(), "month": day.month})
+    off = (day - specials.easter(day.year)).days
+    if off in (-2, 0, 1):
+        out.append({"type": "easter", "offset": off})
+    out.append({"type": "date", "month": day.month, "day": day.day})
+    return [(w, when_text(w)) for w in out]
+
+
+def ask_day_rule(day):
+    """Add a special on this day: the date is chosen, so only how it repeats is
+    asked.  (rule, name, (repeat, year)) or None."""
+    rules = rules_for(day)
+    rows = []
+    for w, words in rules:
+        rows.append((_("On %s every year") if w["type"] != "nth" else _("On the %s every year")) % words)
+    rows.append(_("This year only") if day.year == today().year else _("Only in %d") % day.year)
+    j = D.select(date_text(day), rows)
+    if j < 0:
+        return None
+    once = j == len(rules)
+    when = {"type": "date", "month": day.month, "day": day.day} if once else rules[j][0]
+    name = next((_("Thanksgiving") if key == "thanksgiving" else PRESET[key]
+                 for key, rule in specials.PRESETS if rule == when), when_text(when))
+    return when, name, (("once", day.year) if once else ("yearly", None))
+
+
+class Calendar(xbmcgui.WindowXMLDialog):
+    """The month on screen: 42 cells from the Monday on or before the 1st.  The
+    cursor is a date; a month's specials are worked out once (on_days)."""
+    cid = None
+    result = None
+
+    def onInit(self):
+        self.chans = C.load()
+        self.only = chan(self.chans, self.cid) if self.cid else None
+        self.day = getattr(self, "day", None) or today()
+        self.setProperty("hint", _("OK: open / add    Menu: list    CH+ / CH-: month    Back: done"))
+        for c, n in enumerate(P.day_names()):
+            self.setProperty("D%d" % c, n)
+        self.shown = None
+        self.reload()
+
+    def reload(self):
+        """calendar.json again (something may have been added or changed)."""
+        self.chans = C.load()
+        self.cal = load(self.chans)
+        self.shown = None
+        self.refresh()
+
+    def first(self):
+        one = self.day.replace(day=1)
+        return one - datetime.timedelta(days=one.weekday())
+
+    def refresh(self):
+        first = self.first()
+        t = today()
+        if self.shown != (self.day.year, self.day.month):       # another month: its 42 days
+            self.shown = (self.day.year, self.day.month)
+            self.days = on_days(self.cal, first, first + datetime.timedelta(days=41), self.cid)
+            head = (_("Holidays and specials - %s") % self.only["name"]) if self.only else _("Holidays and specials")
+            title = "%s  -  %s %d" % (head, month(self.day.month), self.day.year)
+            self.setProperty("title", title)
+            from . import promos            # a long channel name: the title is never cut, the hint makes room
+            self.setProperty("hint", _("OK: open / add    Menu: list    CH+ / CH-: month    Back: done")
+                             if promos._px(title) * 45 / 27.0 < 1000 else "")
+            for i in range(42):
+                d = first + datetime.timedelta(days=i)
+                sps = self.days.get(d) or []
+                here = d.month == self.day.month
+                self.setProperty("B%d" % i, "planner_special.png" if sps else
+                                 ("planner_auto.png" if here else "planner_auto_alt.png"))
+                self.setProperty("N%d" % i, ("[B]%d[/B]" if here else "[COLOR 66FFFFFF]%d[/COLOR]") % d.day)
+                self.setProperty("L%d" % i, (u"\u2605 " + (sps[0]["name"] if len(sps) == 1 else _("%d specials") % len(sps)))
+                                 if sps else "")
+            self.setProperty("today", str((t - first).days) if 0 <= (t - first).days < 42 else "")
+        self.setProperty("cur", str((self.day - first).days))
+        self.setProperty("col", str(self.day.weekday()))
+        self.setProperty("detail", self.detail())
+
+    def detail(self):
+        d = self.day
+        where = "%s %d %s" % (P.day_names(False)[d.weekday()], d.day, month(d.month))
+        sps = self.days.get(d) or []
+        if len(sps) == 1:
+            blocks = sps[0]["blocks"]
+            what = block_text(self.chans, blocks[0]) if len(blocks) == 1 else _("%d channels") % len(
+                set(b["channel"] for b in blocks))
+            return u"%s:  [B]\u2605 %s[/B]  -  %s" % (where, sps[0]["name"], what)
+        if sps:
+            return u"%s:  [B]\u2605 %s[/B]" % (where, ", ".join(sp["name"] for sp in sps))
+        if d < today():
+            return where
+        return _("%s:  no special  -  press OK to add one") % where
+
+    def move(self, months):
+        """The same day in another month (the 31st becomes the month's last day)."""
+        m = self.day.year * 12 + self.day.month - 1 + months
+        y, mo = divmod(m, 12)
+        if not FIRST_YEAR <= y <= LAST_YEAR:
+            return
+        day = self.day.day
+        while True:
+            try:
+                self.day = datetime.date(y, mo + 1, day)
+                return
+            except ValueError:
+                day -= 1
+
+    def onAction(self, action):
+        a = action.getId()
+        if a in A_BACK:
+            self.close()
+            return
+        step = {A_LEFT: -1, A_RIGHT: 1, A_UP: -7, A_DOWN: 7}.get(a)
+        if step:
+            d = self.day + datetime.timedelta(days=step)
+            if FIRST_YEAR <= d.year <= LAST_YEAR:
+                self.day = d
+        elif a in (A_PGUP, A_CHUP):
+            self.move(1)
+        elif a in (A_PGDN, A_CHDN):
+            self.move(-1)
+        elif a == A_SELECT:
+            self.on_select()
+            return
+        elif a in A_CONTEXT or a == A_INFO:
+            if D.contextmenu([_("Show as a list")]) == 0:
+                self.result = "list"
+                self.close()
+            return
+        else:
+            return
+        self.refresh()
+
+    def on_select(self):
+        """That day's specials (open one) and Add a special on this day."""
+        d = self.day
+        sps = self.days.get(d) or []
+        past = d < today()
+        if past and not sps:
+            D.notification(M.TITLE, _("A past day can't be changed"), time=2500)
+            return
+        rows = [u"\u2605 " + sp["name"] for sp in sps]
+        if not past:
+            rows.append(_("+ Add a special on this day"))
+        rows.append(_("Cancel"))
+        j = D.select(date_text(d), rows)
+        if j < 0 or j == len(rows) - 1:
+            return
+        if j < len(sps):
+            open_special(self.cal, sps[j], self.chans)
+        else:
+            r = ask_day_rule(d)
+            sid = add_special(self.cal, self.chans, self.cid, picked=r) if r else None
+            if sid:
+                special_page(sid)
+        self.reload()
+
+
+def open_calendar(cid=None, day=None):
+    """The month calendar.  Returns 'list' to switch to the list."""
+    win = Calendar("script-cablebox42-calendar.xml", K.ADDON_PATH, "Default", "1080i")
+    win.cid = cid
+    win.day = day
+    win.doModal()
+    result = win.result
+    del win
+    return result
 
 
 # ------------------------------------------------------------------ adding: step by step
@@ -492,18 +731,58 @@ def checks(cal, sp, blk, chans, kept=None):
                 if kept is not None:
                     kept.add(pair)
                 break
+        if not pinned_elsewhere(titles, ch, chans, st, en, kept):
+            return False
     return True
 
 
-def add_special(cal, chans, cid=None):
-    """The steps of a new special; its id when it was added, None when cancelled."""
-    r = ask_when()
-    if not r:
-        return None
-    when, name = r
-    rep = ask_repeat(when)
-    if not rep:
-        return None
+def pinned_elsewhere(titles, ch, chans, st, en, kept=None):
+    """A special's show that is pinned on another channel during its hours airs there
+    too (pins win on their own channel): say so, Cancel / Keep both, once for each
+    pinned slot.  False: cancelled."""
+    from . import library
+    off = scheduler.specials_shift(K.schedule_cfg())
+    for c in chans:
+        if c["id"] == ch["id"] or c["type"] not in M.AIR_TYPES:
+            continue
+        for r in c.get("slots") or []:
+            if not scheduler.rule_occurrences(r, st - off, en - off):
+                continue
+            try:
+                both = [titles[t.lower()] for t in library.titles(library.resolve(r["sources"])) if t.lower() in titles]
+            except Exception as exc:
+                K.log("Holidays and specials, pinned shows: %s" % exc)
+                continue
+            key = ("pin", c["id"], r.get("id"), r.get("start"))
+            if not both or (kept is not None and key in kept):
+                continue
+            at = P.clock(P.mins(r.get("start")))
+            if P.norm_days(r.get("days")) == list(range(7)):
+                text = _("%s is pinned on %s at %s every day and will air there too.") % (both[0], c["name"], at)
+            else:
+                text = _("%s is pinned on %s at %s on %s and will air there too.") % (
+                    both[0], c["name"], at, P.days_text(r.get("days")))
+            if not M.confirm(text, _("Keep both")):
+                return False
+            if kept is not None:
+                kept.add(key)
+    return True
+
+
+def add_special(cal, chans, cid=None, picked=None):
+    """The steps of a new special; its id when it was added, None when cancelled.
+    picked: (rule, name, (repeat, year)) from the calendar - When? and How often?
+    are answered already."""
+    if picked:
+        when, name, rep = picked
+    else:
+        r = ask_when()
+        if not r:
+            return None
+        when, name = r
+        rep = ask_repeat(when)
+        if not rep:
+            return None
     name = (D.input(_("Name"), name) or "").strip()
     if not name:
         return None

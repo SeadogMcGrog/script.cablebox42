@@ -1563,7 +1563,7 @@ def _edit_row(key, ch, chans, cid):
     elif key == "specials":
         C.save(chans)
         from . import specials_editor
-        specials_editor.open_list(cid)
+        specials_editor.open_specials(cid)
 
 
 def _ad_flavour_label(ch):
@@ -2755,7 +2755,8 @@ are saved for their season.  Settings > Seasons.
 
 [B]Holidays and specials[/B]
 Settings > Tools > Holidays and specials (or Channel manager > channel > Schedule):
-a marathon or a holiday lineup on a date - 31 December, the 4th Thursday of
+a month calendar - OK on a day adds a special there, Menu shows them as a list.
+A special is a marathon or a holiday lineup on a date - 31 December, the 4th Thursday of
 November, Good Friday - on one channel or several, all day or for hours you
 choose, back every year.  It airs instead of the channel's usual schedule for
 those hours, and breaks promote it in the days before.
@@ -2983,7 +2984,7 @@ def check_skipped():
 def open_specials():
     """Settings > Tools > Holidays and specials."""
     from . import specials_editor
-    specials_editor.open_list()
+    specials_editor.open_specials()
 
 
 def run_finder():
