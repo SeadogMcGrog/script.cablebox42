@@ -443,6 +443,7 @@ block, so you can change or remove it in the channel editor.
 | **Movie channel** | Films on a clock, with commercials between them |
 | **Loop** | Back to back, no clock, no breaks (good for cartoons, or music videos without the clock) |
 | **Music videos** | Boombox: music videos on the real clock, like MTV in its day. Each half hour is a block of videos with commercial breaks between them, never in the middle of one, and the station ID in the last break. Each block plays videos of one frame rate only (23.976 with 24, 29.97 with 30, 25…), so the TV switches refresh rate only between blocks, inside a break; the frame rates take turns as often as you have videos of them. Never the same artist twice in a row, and no video comes round again until every video of its frame rate has played. The guide shows *Boombox Music Videos* with the block's artists. A caption in the lower left names the video shortly after it starts and again shortly before it ends: artist, "title", album, label, year, each line only when CableBox knows it (*Video captions* in the channel's settings turns it off). The channel's settings also have *Check music videos*: how many air, by frame rate, and what's skipped and why |
+| **Music channel** | DMX-style audio channel: songs from your own music around the clock, with no breaks of any kind ([Music channels](#music-channels)). Only from *Add a channel*; *Build my lineup* never makes one |
 | **Guide channel** | The program guide |
 | **Weather channel** | The local forecast |
 | **Behind the scenes** | Making-of pieces, documentaries and interviews from your movies' `Extras` folders, in per-film blocks ("Inside 2001: A Space Odyssey (1968)"). Every film with extras gets a turn before any comes round again, in a new order each time; a film gets up to an hour per turn (one longer documentary airs whole) and the rest of its extras continue on its next turn. Films with only a few minutes share a block, so a half hour is never mostly commercials. Breaks come only between segments, never in the middle of one. Named *BACKLOT* with its own logo by default; under another name CableBox asks whether to use the BACKLOT logo and corner bug. Adding a second one asks first. Its settings show *Movie extras: X h to air from N films* (opens *Check extras*). Until extras are found it shows *No programming*: **OK** there asks *Look for movie extras now?*; once CableBox has looked and found nothing to air, it points to *Check extras* instead. See *Check extras* for what airs In Kodi, turn **off** *Settings → Media → Library → Video library → Ignore video extras on scan* (on by default): while it's on, extras with their own `.nfo` are added as movies of their own and air on movie channels |
@@ -510,6 +511,24 @@ Kodi's music video scraper only adds the songs it can match online, so CableBox 
 **Skipped:** trailers and samples, anything under 30 seconds and videos with no audio track (*Check music videos* lists them, and so does Kodi's log). AV1 videos follow the AV1 setting.
 
 **The first time:** CableBox reads each new video's length, frame rate and tags in the background (while the TV is off, or bit by bit while it's on), never on a channel change. Videos Kodi has scanned air straight away; the rest join once read: when the first ones are in, the channel takes them in from its next programme. *Check music videos* → *Read them now* does it at once.
+
+## Music channels
+
+Like the old DMX and Music Choice cable channels: songs from your own music, 24 hours a day, under a mostly still screen. *Build my lineup* never adds one (music taste is personal); make your own in **Channel manager → Add a channel → Music channel**, give it a name ("Hip-Hop & R&B") and pick where its songs come from. *Replace my lineup* keeps your music channels.
+
+**Songs from:** a genre, a decade, an artist or an album of Kodi's music library, a music smart playlist, or a music folder, in any mix (*Add more* / *Done*). Without a music library only playlists and folders are offered. A channel needs at least 5 songs; songs under 30 seconds don't air.
+
+**On air.** Songs play back to back on the real clock with no commercials, bumps, station IDs or promos, and they run across the hour freely. Tuning in joins the song on air at the right point. Never the same artist twice in a row, no song comes round again until every song on the channel has played, and each round is shuffled anew. Kodi moves from song to song by itself, gaplessly; its own music screen never opens and the screensaver stays off.
+
+**The screen** (CableBox's own look, inside the 4:3 safe area): the station logo top left (from the channel's station folder or logo, else the channel name in large type), an info panel top right, a full-width bar with the channel name, and at the bottom the cover, **Artist**, "Title", Album (Year), a thin progress bar and *Coming up: Artist · Artist*. It changes only with simple fades: when the song changes, and when the info panel turns its page (every 20 seconds). Every 3 minutes the whole layout moves a few pixels so OLED and plasma sets don't burn in the logo and the bar.
+
+**The info panel** is filled from what each song already has; nothing is looked up online. First the file's tags: album and year, *Track 3 of 11*, label, composer, genre and *Also on this album* (other songs of the album on this channel). Then, only when Kodi's music library has them, one artist fact (formed or born, years active, styles) and the first sentence of the artist's biography or the album's review (left out when it's too long to fit). A song without any of these shows less, never *Unknown*. A badly tagged file shows its file name read as **Artist - Title**.
+
+**The guide** shows hour blocks named after the channel, with that hour's artists as the description.
+
+**Channel editor** for a music channel: *Identity* (name, number, call letters, logo) and *Programming*: *Songs from* (add or remove sources), *Check songs* (how many songs and hours, the artists with the most songs, songs without an artist tag, sample rates), *Preview today's schedule* and *Delete channel*.
+
+CableBox only reads your music: it never writes tags, NFOs or artwork and never changes your files or Kodi's library. Tags of files in a music folder that Kodi's library doesn't have are read as Kodi reads them and kept in `musicfiles.json` in CableBox's own data.
 
 ## The weekly planner
 

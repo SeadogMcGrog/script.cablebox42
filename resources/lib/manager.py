@@ -26,18 +26,23 @@ TITLE = "CableBox 42"
 TYPE_LABELS = {"network": _("Network (series + commercials)"), "movies": _("Movie channel"),
                "loop": _("Loop (back-to-back, no clock)"), "guide": _("Guide channel"),
                "weather": _("Weather channel"), "extras": _("Behind the scenes (movie extras)"),
-               "musicvideos": _("Music videos (real clock, breaks between videos)")}
+               "musicvideos": _("Music videos (real clock, breaks between videos)"),
+               "music": _("Music channel (songs around the clock, no breaks)")}
 PROGRAM_TYPES = ("network", "movies", "loop")
 AIR_TYPES = PROGRAM_TYPES + ("musicvideos",)    # channels whose programming comes from sources
 CLIP_TYPES = AIR_TYPES + ("extras",)            # channels with breaks: station folders, clips
-ALL_TYPES = ["network", "movies", "loop", "musicvideos", "guide", "weather", "extras"]
+ALL_TYPES = ["network", "movies", "loop", "musicvideos", "music", "guide", "weather", "extras"]
 # a channel's type in a word or two (Channel manager rows)
 TYPE_SHORT = {"network": _("Network"), "movies": _("Movies"), "loop": _("Loop"), "guide": _("Guide"),
-              "weather": _("Weather"), "extras": _("Behind the scenes"), "musicvideos": _("Music videos")}
+              "weather": _("Weather"), "extras": _("Behind the scenes"), "musicvideos": _("Music videos"),
+              "music": _("Music channel")}
 # channel editor rows that mean nothing on a Behind the scenes channel
 EXTRAS_HIDDEN = ("sources", "planner", "dayparts", "shows", "lineup", "slot")
 # ... or on a music video channel (Boombox)
 MV_HIDDEN = ("planner", "dayparts", "shows", "lineup")
+# a music channel's editor shows only these rows (no breaks, clips, time blocks or off-air hours;
+# no built-in station either: using one adds its TV shows)
+MUSIC_ROWS = ("name", "number", "callsign", "logo", "musrc", "mucheck")
 
 
 # ------------------------------------------------------------------ helpers
@@ -86,6 +91,9 @@ def confirm_remove(text, button=None):
 
 def describe_source(s):
     t = s.get("type")
+    from . import music
+    if music.is_music_source(s):
+        return music.describe_source(s)
     if t == "tvshow":
         v = s.get("value")
         v = v if isinstance(v, list) else [v]
@@ -436,6 +444,143 @@ def ask_music(pending):
     pending["weather_music_path"] = weather
 
 
+# ------------------------------------------------------------------ music channels
+def music_sources_label(ch):
+    from . import music
+    srcs = [music.describe_source(x) for x in ch.get("sources", []) if music.is_music_source(x)]
+    if not srcs:
+        return _("nothing yet")
+    return srcs[0] + (_(" +%d more") % (len(srcs) - 1) if len(srcs) > 1 else "")
+
+
+def pick_music_source():
+    """One source of songs: a genre, decade, artist, album, smart playlist or folder.
+    Back or Cancel = None."""
+    from . import music
+    kinds = [("mgenre", _("A genre")), ("mdecade", _("A decade")), ("martist", _("An artist")),
+             ("malbum", _("An album")), ("mplaylist", _("A smart playlist")), ("mfolder", _("A music folder"))]
+    if not music.library_has_music():
+        kinds = kinds[4:]                    # no music library: playlists and folders only
+    j = D.select(_("Songs from"), [k[1] for k in kinds] + [_("Cancel")])
+    if j < 0 or j >= len(kinds):
+        return None
+    kind = kinds[j][0]
+    if kind == "mgenre":
+        gs = music.genres()
+        if not gs:
+            D.ok(TITLE, _("Your music library has no genres."))
+            return None
+        i = D.select(_("Genre"), [_("%s  (%d songs)") % g for g in gs] + [_("Cancel")])
+        return {"type": "mgenre", "value": gs[i][0]} if 0 <= i < len(gs) else None
+    if kind == "mdecade":
+        ds = music.decades()
+        if not ds:
+            D.ok(TITLE, _("None of your songs has a year."))
+            return None
+        i = D.select(_("Decade"), [_("The %ss  (%d songs)") % d for d in ds] + [_("Cancel")])
+        return {"type": "mdecade", "value": ds[i][0]} if 0 <= i < len(ds) else None
+    if kind == "martist":
+        a = music.artists()
+        i = D.select(_("Artist"), [x[1] for x in a] + [_("Cancel")])
+        return {"type": "martist", "id": a[i][0], "value": a[i][1]} if 0 <= i < len(a) else None
+    if kind == "malbum":
+        a = music.albums()
+        i = D.select(_("Album"), [x[1] for x in a] + [_("Cancel")])
+        return {"type": "malbum", "id": a[i][0], "value": a[i][1]} if 0 <= i < len(a) else None
+    if kind == "mplaylist":
+        p = D.browse(1, _("Smart playlist"), "files", ".xsp", False, False, "special://profile/playlists/music/")
+        return {"type": "mplaylist", "path": p} if p and p.lower().endswith(".xsp") else None
+    p = D.browse(0, _("Music folder"), "music")
+    return {"type": "mfolder", "path": p} if p else None
+
+
+def add_music_sources(ch):
+    """Add channel > Music channel: pick sources until Done.  False = cancelled."""
+    while True:
+        src = pick_music_source()
+        if src:
+            if src not in ch["sources"]:
+                ch["sources"].append(src)
+        elif not ch["sources"]:
+            return False                     # Back before any songs: nothing added
+        r = ask(_("Songs from: %s[CR]Add more?") % music_sources_label(ch),
+                _("Add more"), _("Done"), cancel=_("Cancel"))
+        if r is None:
+            return False
+        if r == "no":
+            break
+    return music_enough(ch)
+
+
+def _music_songs(ch, fresh=False):
+    from . import music
+    if fresh:
+        music.clear_cache()
+    pd = xbmcgui.DialogProgress()
+    pd.create(TITLE, _("Looking at the songs..."))
+    try:
+        return music.songs_for(ch["sources"])
+    finally:
+        pd.close()
+
+
+def music_enough(ch):
+    """Enough songs to make a channel?  Says so if not."""
+    from . import music
+    n = len(_music_songs(ch))
+    if n >= music.MIN_SONGS:
+        return True
+    D.ok(TITLE, _("%s has only %d songs. A music channel needs at least %d.") % (ch["name"], n, music.MIN_SONGS))
+    return False
+
+
+def edit_music_sources(ch):
+    while True:
+        srcs = ch["sources"]
+        rows = [_("[B]+ Add songs[/B]")] + [describe_source(x) for x in srcs]
+        i = done_select(_("Songs on %s") % ch["name"], rows)
+        if i < 0:
+            return
+        if i == 0:
+            src = pick_music_source()
+            if src and src not in srcs:
+                srcs.append(src)
+        elif len(srcs) == 1:
+            D.ok(TITLE, _("A music channel needs at least one source of songs. Add another first."))
+        elif confirm_remove(_("Remove this?[CR]%s") % rows[i]):
+            del srcs[i - 1]
+
+
+def check_music(ch):
+    """Check songs: how many, how long, which artists and sample rates (read-only)."""
+    from . import music
+    songs = _music_songs(ch, fresh=True)
+    if not songs:
+        D.ok(TITLE, _("No songs found for %s. Check its sources, or scan your music into Kodi's library.")
+             % ch["name"])
+        return
+    count = {}
+    for x in songs:
+        if x["a"]:
+            count[x["a"]] = count.get(x["a"], 0) + 1
+    rates = {}
+    for x in songs:
+        rates[x["r"]] = rates.get(x["r"], 0) + 1
+    top = sorted(count.items(), key=lambda x: (-x[1], x[0].lower()))[:8]
+    lines = [_("%d songs: %.1f hours before a song comes round again.") % (len(songs),
+                                                                        sum(x["d"] for x in songs) / 3600.0),
+             _("%d artists. Most songs: %s") % (len(count), ", ".join("%s (%d)" % a for a in top))]
+    no_tags = len([x for x in songs if not x["a"]])
+    if no_tags:
+        lines.append(_("%d songs have no artist tag: their file name is shown instead.") % no_tags)
+    lines.append(_("Sample rates: %s") % ", ".join(
+        (("%.1f kHz" % (r / 1000.0)) if r else _("unknown")) + " (%d)" % n
+        for r, n in sorted(rates.items(), key=lambda x: -x[1])))
+    if len(songs) < music.MIN_SONGS:
+        lines.append(_("A music channel needs at least %d songs.") % music.MIN_SONGS)
+    D.textviewer(_("Songs on %s") % ch["name"], "[CR][CR]".join(lines))
+
+
 def ask_musicvideos(old, mode):
     """Setup: a folder of music videos - asked only when Kodi's library has none
     (and the lineup kept has no music video channel).  Returns [folder] or None
@@ -687,6 +832,18 @@ def _wizard_plan(express=False):
             return None
     else:
         chans = added = new
+        # music channels are the viewer's own (the wizard never makes one): they stay
+        keep = [c for c in old if c.get("type") == "music"]
+        if keep:
+            used = set(c["number"] for c in new)
+            nxt = max(used or [0]) + 1
+            for c in keep:
+                if c["number"] in used:
+                    while nxt in used:
+                        nxt += 1
+                    c["number"] = nxt
+                used.add(c["number"])
+            chans = new + keep
     if plain:
         _plain_names(added, chans)
     for c in chans:
@@ -1155,13 +1312,14 @@ def _extras_air():
 
 def _pick_kind(chans):
     """First step of Add a channel: what kind of channel.  Returns "station",
-    "own", "musicvideos", "guide", "weather" or "extras" (None for Back).  The
+    "own", "musicvideos", "music", "guide", "weather" or "extras" (None for Back).  The
     Guide and the Weather channel are only offered while the lineup has none."""
     have = set(c["type"] for c in chans)
     rows = [("station", _("A built-in station"),
              _("Comedy Corner, Orbit TV, Chameleon... with its name, logo and shows")),
             ("own", _("My own channel"), _("Your name, your programming, your logo")),
             ("musicvideos", _("Music videos"), _("Music videos on the real clock, breaks between videos")),
+            ("music", _("Music channel"), _("Songs around the clock, no breaks")),
             ("guide", _("TV Guide"), _("What's on every channel, scrolling")),
             ("weather", _("Weather"), _("Your local forecast")),
             ("extras", _("Behind the scenes"), _("Making-of pieces and interviews from your movies' Extras folders"))]
@@ -1221,13 +1379,14 @@ def add_channel(chans, kind=None):
     """Step by step: what kind of channel, then only what that kind needs.
         A built-in station: which one, number, its shows (add more / done)
         My own channel: type, name, number, programming, logo (now / later)
+        Music channel: name, number, songs (add more / done)
         Music videos, TV Guide, Weather, Behind the scenes: name, number
     Back on any step adds nothing.  `kind` preselects the kind (Check extras
     offers a Behind the scenes channel)."""
     import copy
     from . import stations
     chans = copy.deepcopy(chans)            # a number swap only counts if the channel is added
-    kind = kind if kind in ("extras", "musicvideos", "guide", "weather", "own", "station") else _pick_kind(chans)
+    kind = kind if kind in ("extras", "musicvideos", "music", "guide", "weather", "own", "station") else _pick_kind(chans)
     if not kind:
         return
     extras = kind == "extras"
@@ -1269,6 +1428,9 @@ def add_channel(chans, kind=None):
             D.ok(TITLE, _("Nothing in your library matches %s yet. Choose its programming yourself.") % name)
         if not _programming_step(ch, listed=True):
             return
+    elif ctype == "music":
+        if not add_music_sources(ch):
+            return                          # Back or Cancel: nothing added
     elif ctype == "musicvideos":
         src = pick_musicvideos()
         if not src:
@@ -1347,6 +1509,9 @@ def _editor_rows(ch, chans):
     if ch["type"] == "musicvideos":
         add("programming", "mvcheck", _("[B]Check music videos[/B] (what airs, what's skipped)"))
         add("programming", "mvcaps", _("Video captions: %s") % onoff(ch.get("mv_captions", True)))
+    if ch["type"] == "music":
+        add("programming", "musrc", _("Songs from: %s") % music_sources_label(ch))
+        add("programming", "mucheck", _("[B]Check songs[/B] (how many, which artists)"))
     add("programming", "sources", _("Programming: %d source(s)") % len(ch["sources"]))
     add("programming", "shows", _("[B]What's on this channel[/B] (%d hidden)") % len(ch.get("exclude", [])))
 
@@ -1388,6 +1553,8 @@ def _editor_rows(ch, chans):
         hidden.update(EXTRAS_HIDDEN)
     if ch["type"] == "musicvideos":
         hidden.update(MV_HIDDEN)
+    if ch["type"] == "music":
+        return [r for r in rows if r[0] in MUSIC_ROWS]
     return [r for r in rows if r[0] not in hidden]
 
 
@@ -1406,6 +1573,9 @@ def _group_rows(ch, chans):
             dot.join(label[k] for k in ("offair", "lineup") if k in label)),
            ("preview", _("[B]Preview today's schedule[/B]"), ""),
            ("delete", _("[COLOR red]Delete channel[/COLOR]"), _("Your videos and its station folder are not touched."))]
+    if ch["type"] == "music":           # songs only: no breaks, clips or schedule rows
+        out[1] = ("programming", _("[B]Programming[/B]"), label["musrc"])
+        out = [r for r in out if r[0] not in ("breaks", "schedule")]
     return out
 
 
@@ -1516,6 +1686,11 @@ def _edit_row(key, ch, chans, cid):
         check_musicvideos(ch)
     elif key == "mvcaps":
         ch["mv_captions"] = not ch.get("mv_captions", True)
+    elif key == "musrc":
+        edit_music_sources(ch)
+    elif key == "mucheck":
+        C.save(chans)
+        check_music(ch)
     elif key == "sources":
         edit_sources(ch["sources"], ch["name"])
     elif key == "dayparts":
@@ -1594,6 +1769,7 @@ def change_type(ch, chans=()):
     """Change a channel's type; ask before its settings go back to that type's defaults."""
     # one TV Guide and one Weather channel: not offered while another channel is one
     taken = set(c["type"] for c in chans if c.get("id") != ch.get("id")) & set(("guide", "weather"))
+    taken.add("music")                  # a music channel is made from Add a channel only
     types = [x for x in ALL_TYPES if x not in taken]
     j = D.select(_("Type"), [TYPE_LABELS[x] for x in types], preselect=types.index(ch["type"])
                  if ch["type"] in types else -1)

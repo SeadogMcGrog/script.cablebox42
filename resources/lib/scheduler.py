@@ -32,6 +32,7 @@ from . import seasons
 from . import stations
 from . import promos
 from . import musicvideos
+from . import music
 from . import bookmarks
 from . import ads
 from . import chapters
@@ -600,8 +601,8 @@ class ChannelSchedule(object):
                 while d["until"] < target and guard < 5000:
                     self._plan_t = d["until"]        # bookmarks moved now are undone with this block
                     marks.append(d["until"])
-                    if kind in ("extras", "musicvideos"):   # their rotation, as it was before this block
-                        name = "x" if kind == "extras" else "mv"
+                    if kind in ("extras", "musicvideos", "music"):   # their rotation, as it was before this block
+                        name = {"extras": "x", "musicvideos": "mv", "music": "mu"}[kind]
                         self._undo("st", name, json.loads(json.dumps(d["state"].get(name))))
                     d["until"] = self._block(d["until"])
                     guard += 1
@@ -1015,6 +1016,8 @@ class ChannelSchedule(object):
 
     def _block(self, t):
         ch = self.ch
+        if ch["type"] == "music":
+            return self._music_block(t)
         if ch["type"] in ("guide", "weather"):
             e = floor_slot(t, 1800) + 1800
             self._add(t, e, ch["type"])
@@ -1556,6 +1559,56 @@ class ChannelSchedule(object):
         self._add_block(t, end, title, "show",
                         u" · ".join(it["mv"].get("artist") or it["mv"].get("title", "") for it in picks))
         return end
+
+    # ------------------------------------------------- music channels (DMX-style)
+    MU_MAX = 60            # songs in one hour, at most
+
+    def _music_block(self, t):
+        """Songs back to back from t until one runs past the next full hour: no
+        breaks of any kind, songs cross the hour freely.  The guide gets one
+        block per clock hour, its artists as the description.  Rotation as on
+        Boombox: no artist twice in a row, no repeat before every song has
+        played, every round shuffled anew.  With sample-rate groups on, an
+        hour's songs share one sample rate (the output reopens at most there)."""
+        songs = music.songs_for(self.ch.get("sources", []))
+        hour = ceil_slot(t + 1, 3600)
+        if len(songs) < 1:
+            return self._no_programme(t, None, {"series": [], "singles": []})
+        st = self.data["state"].setdefault("mu", {})
+        by_path = dict((s["p"], s) for s in songs)
+        gmap = music.rate_groups(songs)
+        members = {}
+        for p, g in gmap.items():
+            members.setdefault(g, {})[p] = by_path[p]["ak"]
+        group = musicvideos.next_group(st, dict((g, len(m)) for g, m in members.items()))             if len(members) > 1 else next(iter(members))
+        pos = t
+        for _i in range(self.MU_MAX):
+            s = by_path[musicvideos.next_video(st, group, members[group], self.ch["id"])]
+            self._add(pos, pos + s["d"], "song", p=s["p"], o=0, t=s["t"], a=s["a"], al=s["al"], y=s["y"],
+                      tr=s["tr"], g=s["g"], cp=s["cp"], aid=s["aid"], arid=s["arid"], r=s["r"])
+            pos += s["d"]
+            if pos >= hour:
+                break
+        # the guide's hour blocks: the hour this run started in (again, if a replan cut it)
+        blocks = self.data["blocks"]
+        while blocks and blocks[-1]["e"] > t:
+            blocks.pop()
+        bs = blocks[-1]["e"] if blocks else floor_slot(t, 3600)
+        h = hour
+        while h <= pos:
+            self._music_hour(bs, h)
+            bs, h = h, h + 3600
+        if len(members) > 1:
+            log("%s %s: songs at %s Hz" % (self.ch.get("name"), time.strftime("%H:%M", time.localtime(t)), group),
+                level=xbmc.LOGINFO)
+        return pos
+
+    def _music_hour(self, s, e):
+        artists = []
+        for x in self.data["entries"]:
+            if x.get("k") == "song" and s <= x["s"] < e and x.get("a") and x["a"] not in artists:
+                artists.append(x["a"])
+        self._add_block(s, e, self.ch.get("name", ""), "show", u" · ".join(artists))
 
     @staticmethod
     def _x_title(films):

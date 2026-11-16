@@ -74,6 +74,213 @@
             </control>
         </control>
 
+        <!-- ============ Music channels (resources/lib/musictv.py) ============
+             DMX-style and mostly still: logo (or the name) top left, the info panel top right, the
+             genre bar, the song at the bottom.  Fades only: the song block (mu_son) when the song
+             changes, the panel (mu_pon) when it turns its page.  Python moves group 170 a few pixels
+             every few minutes (burn-in); everything sits 12 px inside the 4:3 safe area
+             (x 312-1608, y 54-1026) so it never leaves it. -->
+        <control type="image">
+            <left>0</left><top>0</top><width>1920</width><height>1080</height>
+            <texture colordiffuse="FF0C1222">white.png</texture>
+            <visible>String.IsEqual(Window.Property(mode),music)</visible>
+        </control>
+        <control type="group" id="170">
+            <left>0</left><top>0</top>
+            <visible>String.IsEqual(Window.Property(mode),music)</visible>
+            <!-- top left: the station logo, or the name in large type -->
+            <control type="image">
+                <left>324</left><top>78</top><width>440</width><height>220</height>
+                <aspectratio aligny="top" align="left">keep</aspectratio>
+                <texture background="true">$INFO[Window.Property(mu_logo)]</texture>
+                <visible>!String.IsEmpty(Window.Property(mu_logo))</visible>
+            </control>
+            <control type="group">
+                <visible>String.IsEmpty(Window.Property(mu_logo))</visible>
+                <control type="label">
+                    <left>324</left><top>90</top><width>600</width><height>90</height>
+                    <font>font60</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor>
+                    <label>$INFO[Window.Property(mu_name)]</label>
+                    <visible>String.IsEqual(Window.Property(mu_nfit),font60)</visible>
+                </control>
+                <control type="label">
+                    <left>324</left><top>96</top><width>600</width><height>80</height>
+                    <font>font45</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor>
+                    <label>$INFO[Window.Property(mu_name)]</label>
+                    <visible>String.IsEqual(Window.Property(mu_nfit),font45)</visible>
+                </control>
+                <control type="label">
+                    <left>324</left><top>100</top><width>600</width><height>70</height>
+                    <font>font37</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor>
+                    <label>$INFO[Window.Property(mu_name)]</label>
+                    <visible>String.IsEqual(Window.Property(mu_nfit),font37)</visible>
+                </control>
+                <control type="label">
+                    <left>324</left><top>104</top><width>600</width><height>60</height>
+                    <font>font32</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor>
+                    <label>$INFO[Window.Property(mu_name)]</label>
+                    <visible>String.IsEqual(Window.Property(mu_nfit),font32)</visible>
+                </control>
+                <control type="label">
+                    <left>324</left><top>106</top><width>600</width><height>56</height>
+                    <font>font27</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor>
+                    <label>$INFO[Window.Property(mu_name)]</label>
+                    <visible>String.IsEqual(Window.Property(mu_nfit),font27)</visible>
+                </control>
+                <control type="textbox">
+                    <left>324</left><top>96</top><width>600</width><height>100</height>
+                    <font>font27_narrow</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor>
+                    <label>$INFO[Window.Property(mu_name2)]</label>
+                    <visible>String.EndsWith(Window.Property(mu_nfit),2)</visible>
+                </control>
+            </control>
+            <!-- top right: the info panel (tags first, then the library's facts), fading between pages -->
+            <control type="group">
+                <visible>!String.IsEmpty(Window.Property(mu_pon))</visible>
+                <animation effect="fade" start="0" end="100" time="400">Visible</animation>
+                <animation effect="fade" start="100" end="0" time="400">Hidden</animation>
+                <control type="image">
+                    <left>1036</left><top>78</top><width>560</width><height>250</height>
+                    <texture colordiffuse="40FFFFFF">white.png</texture>
+                </control>
+                <control type="image">
+                    <left>1036</left><top>78</top><width>6</width><height>250</height>
+                    <texture colordiffuse="FFFFC24A">white.png</texture>
+                </control>
+                <control type="label">
+                    <left>1062</left><top>92</top><width>514</width><height>36</height>
+                    <font>font12</font><textcolor>FFFFC24A</textcolor>
+                    <label>$INFO[Window.Property(mu_ph)]</label>
+                </control>
+                <control type="textbox">
+                    <left>1062</left><top>134</top><width>514</width><height>180</height>
+                    <font>font27</font><textcolor>FFF0F2F8</textcolor>
+                    <label>$INFO[Window.Property(mu_pt)]</label>
+                </control>
+            </control>
+            <!-- the genre bar: the channel's name, never cut off (fit_font variants) -->
+            <control type="image">
+                <left>-20</left><top>396</top><width>1960</width><height>116</height>
+                <texture colordiffuse="FF1B5E7A">white.png</texture>
+            </control>
+            <control type="image">
+                <left>-20</left><top>506</top><width>1960</width><height>6</height>
+                <texture colordiffuse="FFFFC24A">white.png</texture>
+            </control>
+            <control type="label">
+                <left>324</left><top>414</top><width>1272</width><height>80</height>
+                <font>font45</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor>
+                <label>$INFO[Window.Property(mu_bar)]</label>
+                <visible>String.IsEqual(Window.Property(mu_gfit),font45)</visible>
+            </control>
+            <control type="label">
+                <left>324</left><top>420</top><width>1272</width><height>70</height>
+                <font>font37</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor>
+                <label>$INFO[Window.Property(mu_bar)]</label>
+                <visible>String.IsEqual(Window.Property(mu_gfit),font37)</visible>
+            </control>
+            <control type="label">
+                <left>324</left><top>424</top><width>1272</width><height>64</height>
+                <font>font32</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor>
+                <label>$INFO[Window.Property(mu_bar)]</label>
+                <visible>String.IsEqual(Window.Property(mu_gfit),font32)</visible>
+            </control>
+            <control type="label">
+                <left>324</left><top>428</top><width>1272</width><height>56</height>
+                <font>font27</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor>
+                <label>$INFO[Window.Property(mu_bar)]</label>
+                <visible>String.IsEqual(Window.Property(mu_gfit),font27)</visible>
+            </control>
+            <control type="textbox">
+                <left>324</left><top>404</top><width>1272</width><height>100</height>
+                <font>font27_narrow</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor>
+                <label>$INFO[Window.Property(mu_bar2)]</label>
+                <visible>String.EndsWith(Window.Property(mu_gfit),2)</visible>
+            </control>
+            <!-- the song: cover, artist, "title", album (year), a thin progress bar, coming up -->
+            <control type="group">
+                <visible>!String.IsEmpty(Window.Property(mu_son))</visible>
+                <animation effect="fade" start="0" end="100" time="400">Visible</animation>
+                <animation effect="fade" start="100" end="0" time="400">Hidden</animation>
+                <control type="image">
+                    <left>324</left><top>566</top><width>300</width><height>300</height>
+                    <aspectratio>keep</aspectratio>
+                    <texture fallback="DefaultAlbumCover.png" background="true">$INFO[MusicPlayer.Cover]</texture>
+                </control>
+                <control type="label">
+                    <left>664</left><top>580</top><width>932</width><height>70</height>
+                    <font>font45</font><textcolor>FFFFFFFF</textcolor><shadowcolor>FF000000</shadowcolor>
+                    <label>[B]$INFO[Window.Property(mu_artist)][/B]</label>
+                </control>
+                <control type="label">
+                    <left>664</left><top>654</top><width>932</width><height>60</height>
+                    <font>font37</font><textcolor>FFE6ECFF</textcolor>
+                    <label>$INFO[Window.Property(mu_title),“,”]</label>
+                </control>
+                <control type="label">
+                    <left>664</left><top>718</top><width>932</width><height>50</height>
+                    <font>font27</font><textcolor>FFB8C4E0</textcolor>
+                    <label>$INFO[Window.Property(mu_album)]</label>
+                </control>
+                <control type="progress">
+                    <left>664</left><top>792</top><width>932</width><height>8</height>
+                    <texturebg colordiffuse="40FFFFFF">white.png</texturebg>
+                    <midtexture colordiffuse="FFFFC24A">white.png</midtexture>
+                    <info>Player.Progress</info>
+                </control>
+                <control type="label">
+                    <left>664</left><top>820</top><width>932</width><height>46</height>
+                    <font>font27</font><textcolor>AAFFFFFF</textcolor>
+                    <label>$INFO[Window.Property(mu_next)]</label>
+                </control>
+            </control>
+        </control>
+
+        <!-- ============ Music channels Step 0: placeholder screen (musictest.py) ============
+             Still, inside the 4:3 safe area (x 312-1608, y 54-1026). -->
+        <control type="group" id="160">
+            <visible>String.IsEqual(Window.Property(mode),musictest)</visible>
+            <control type="image">
+                <left>0</left><top>0</top><width>1920</width><height>1080</height>
+                <texture colordiffuse="FF101820">white.png</texture>
+            </control>
+            <control type="label">
+                <left>312</left><top>90</top><width>1296</width><height>50</height>
+                <font>font27</font><textcolor>FFFFD24A</textcolor>
+                <label>$INFO[Window.Property(now_title)]   •   $INFO[System.Time]</label>
+            </control>
+            <control type="image">
+                <left>312</left><top>200</top><width>360</width><height>360</height>
+                <aspectratio>keep</aspectratio>
+                <texture background="true">$INFO[Player.Art(thumb)]</texture>
+            </control>
+            <control type="label">
+                <left>312</left><top>600</top><width>1296</width><height>80</height>
+                <font>font60</font><textcolor>FFFFFFFF</textcolor>
+                <label>$INFO[Window.Property(mt_artist)]</label>
+            </control>
+            <control type="label">
+                <left>312</left><top>690</top><width>1296</width><height>60</height>
+                <font>font37</font><textcolor>FFE0E8FF</textcolor>
+                <label>$INFO[Window.Property(mt_title),&quot;,&quot;]</label>
+            </control>
+            <control type="label">
+                <left>312</left><top>760</top><width>1296</width><height>50</height>
+                <font>font27</font><textcolor>FFB8C4E0</textcolor>
+                <label>$INFO[Window.Property(mt_album)]</label>
+            </control>
+            <control type="label">
+                <left>312</left><top>840</top><width>1296</width><height>50</height>
+                <font>font27</font><textcolor>FF8CE0A0</textcolor>
+                <label>$INFO[Window.Property(mt_tech)]   •   $INFO[Window.Property(mt_why)]</label>
+            </control>
+            <control type="label">
+                <left>312</left><top>910</top><width>1296</width><height>50</height>
+                <font>font27</font><textcolor>AAFFFFFF</textcolor>
+                <label>$INFO[Window.Property(mt_status)]</label>
+            </control>
+        </control>
+
         <!-- RETRO ADS START (tools/retro-ads/make_skin.py writes this block) -->
         <!-- ============ Retro ads: made-up commercials (resources/lib/ads.py, tv.start_retro) ============
              A blank background, lettered with pictures of letters placed by ads.Slots (Kodi 21 can't load

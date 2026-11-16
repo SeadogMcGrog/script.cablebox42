@@ -7343,3 +7343,259 @@ msgstr ""
 msgctxt "#34352"
 msgid "%s is pinned on %s at %s on %s and will air there too."
 msgstr ""
+
+msgctxt "#34353"
+msgid "Music test"
+msgstr ""
+
+msgctxt "#34354"
+msgid "Music test: on video channel %s (%s fps)"
+msgstr ""
+
+msgctxt "#34355"
+msgid "Music test: tuning from video to music"
+msgstr ""
+
+msgctxt "#34356"
+msgid "Music test: song changes (each song skipped to its last 20 seconds)"
+msgstr ""
+
+msgctxt "#34357"
+msgid "Music test: full songs for %d minutes - press nothing"
+msgstr ""
+
+msgctxt "#34358"
+msgid "Music test: tuning from music to video channel %s"
+msgstr ""
+
+msgctxt "#34359"
+msgid "Music test: tuning from video to music, joining mid-song"
+msgstr ""
+
+msgctxt "#34360"
+msgid "Music test done. Previous channel flips between music and video."
+msgstr ""
+
+msgctxt "#34361"
+msgid "Music test: not enough songs in the music library"
+msgstr ""
+
+msgctxt "#34362"
+msgid "Run the TV music test first"
+msgstr ""
+
+msgctxt "#34363"
+msgid "Music channel (songs around the clock, no breaks)"
+msgstr ""
+
+msgctxt "#34364"
+msgid "nothing yet"
+msgstr ""
+
+msgctxt "#34365"
+msgid "A genre"
+msgstr ""
+
+msgctxt "#34366"
+msgid "A decade"
+msgstr ""
+
+msgctxt "#34367"
+msgid "An artist"
+msgstr ""
+
+msgctxt "#34368"
+msgid "An album"
+msgstr ""
+
+msgctxt "#34369"
+msgid "A smart playlist"
+msgstr ""
+
+msgctxt "#34370"
+msgid "A music folder"
+msgstr ""
+
+msgctxt "#34371"
+msgid "Songs from"
+msgstr ""
+
+msgctxt "#34372"
+msgid "Your music library has no genres."
+msgstr ""
+
+msgctxt "#34373"
+msgid "%s  (%d songs)"
+msgstr ""
+
+msgctxt "#34374"
+msgid "None of your songs has a year."
+msgstr ""
+
+msgctxt "#34375"
+msgid "The %ss  (%d songs)"
+msgstr ""
+
+msgctxt "#34376"
+msgid "Artist"
+msgstr ""
+
+msgctxt "#34377"
+msgid "Album"
+msgstr ""
+
+msgctxt "#34378"
+msgid "Smart playlist"
+msgstr ""
+
+msgctxt "#34379"
+msgid "Music folder"
+msgstr ""
+
+msgctxt "#34380"
+msgid "Songs from: %s[CR]Add more?"
+msgstr ""
+
+msgctxt "#34381"
+msgid "Looking at the songs..."
+msgstr ""
+
+msgctxt "#34382"
+msgid "%s has only %d songs. A music channel needs at least %d."
+msgstr ""
+
+msgctxt "#34383"
+msgid "[B]+ Add songs[/B]"
+msgstr ""
+
+msgctxt "#34384"
+msgid "Songs on %s"
+msgstr ""
+
+msgctxt "#34385"
+msgid "A music channel needs at least one source of songs. Add another first."
+msgstr ""
+
+msgctxt "#34386"
+msgid "No songs found for %s. Check its sources, or scan your music into Kodi's library."
+msgstr ""
+
+msgctxt "#34387"
+msgid "%d songs: %.1f hours before a song comes round again."
+msgstr ""
+
+msgctxt "#34388"
+msgid "%d artists. Most songs: %s"
+msgstr ""
+
+msgctxt "#34389"
+msgid "%d songs have no artist tag: their file name is shown instead."
+msgstr ""
+
+msgctxt "#34390"
+msgid "Sample rates: %s"
+msgstr ""
+
+msgctxt "#34391"
+msgid "unknown"
+msgstr ""
+
+msgctxt "#34392"
+msgid "A music channel needs at least %d songs."
+msgstr ""
+
+msgctxt "#34393"
+msgid "Songs from: %s"
+msgstr ""
+
+msgctxt "#34394"
+msgid "[B]Check songs[/B] (how many, which artists)"
+msgstr ""
+
+msgctxt "#34395"
+msgid "Genre: %s"
+msgstr ""
+
+msgctxt "#34396"
+msgid "Songs from the %ss"
+msgstr ""
+
+msgctxt "#34397"
+msgid "Artist: %s"
+msgstr ""
+
+msgctxt "#34398"
+msgid "Album: %s"
+msgstr ""
+
+msgctxt "#34399"
+msgid "Music folder: %s"
+msgstr ""
+
+msgctxt "#34400"
+msgid "Track %d of %d"
+msgstr ""
+
+msgctxt "#34401"
+msgid "Track %d"
+msgstr ""
+
+msgctxt "#34402"
+msgid "From the album"
+msgstr ""
+
+msgctxt "#34403"
+msgid "Label"
+msgstr ""
+
+msgctxt "#34404"
+msgid "Written by"
+msgstr ""
+
+msgctxt "#34405"
+msgid "Also on this album"
+msgstr ""
+
+msgctxt "#34406"
+msgid "Formed %s"
+msgstr ""
+
+msgctxt "#34407"
+msgid "Born %s"
+msgstr ""
+
+msgctxt "#34408"
+msgid "Active %s"
+msgstr ""
+
+msgctxt "#34409"
+msgid "The artist"
+msgstr ""
+
+msgctxt "#34410"
+msgid "About %s"
+msgstr ""
+
+msgctxt "#34411"
+msgid "About the artist"
+msgstr ""
+
+msgctxt "#34412"
+msgid "No songs to play"
+msgstr ""
+
+msgctxt "#34413"
+msgid "Channel manager > this channel > Check songs"
+msgstr ""
+
+msgctxt "#34414"
+msgid "Coming up: %s"
+msgstr ""
+
+msgctxt "#34415"
+msgid "Music channel"
+msgstr ""
+
+msgctxt "#34416"
+msgid "Songs around the clock, no breaks"
+msgstr ""
