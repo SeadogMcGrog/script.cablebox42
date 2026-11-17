@@ -395,8 +395,8 @@ A task often starts as "implement `briefs\<name>.md`".
 
 ## Open items (as of 2026-11-08)
 
-- **Music channels** (`briefs/music-channels.md`, branch `feature/music-channels`, worktree
-  `G:\CableBox42\script.cablebox42-music`): built and checked offline and on Windows. Still to do on the
+- **Music channels** (`briefs/music-channels.md`, merged into `dev` in 5eeba9b): built and checked
+  offline, on Windows and in the rig. `musictest.py` (the Step 0 test) goes before release. Still to do on the
   N2: Step 0 (`briefs/music-channels-n2-test.md`: blackouts video <-> music with refresh "On start/stop",
   output reopen on 44.1/48/96 kHz changes, screensaver, gapless) - record it above and switch on
   `music.RATE_GROUPS` if rates reopen the output; then two hours on a music channel and ten flips.
