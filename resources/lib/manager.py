@@ -1568,7 +1568,7 @@ def _group_rows(ch, chans):
            ("programming", _("[B]Programming[/B]"),
             dot.join(label[k] for k in ("type", "sources") if k in label)),
            ("breaks", _("[B]Breaks & clips[/B]"),
-            dot.join(label[k] for k in ("clip:commercials", "clip:bumps"))),
+            dot.join(label[k] for k in ("clip:commercials", "clip:bumps") if k in label)),
            ("schedule", _("[B]Schedule[/B]"),
             dot.join(label[k] for k in ("offair", "lineup") if k in label)),
            ("preview", _("[B]Preview today's schedule[/B]"), ""),
