@@ -96,11 +96,26 @@ def _rpc(method, params):
     return K.rpc(method, params) or {}
 
 
+_NO_COMPOSER = []         # [True] once Kodi refused displaycomposer
+
+
+def _with_props(method, params):
+    """Kodi 21 fails the whole request (SQL 'AND ()', Internal error) when
+    displaycomposer is asked for and no song in the library has a composer:
+    ask again without it, and leave it out from then on."""
+    props = [p for p in SONG_PROPS if not (_NO_COMPOSER and p == "displaycomposer")]
+    res = _rpc(method, dict(params, properties=props))
+    if not res and "displaycomposer" in props:      # {} = an error (a result has at least 'limits')
+        _NO_COMPOSER.append(True)
+        res = _rpc(method, dict(params, properties=[p for p in props if p != "displaycomposer"]))
+    return res
+
+
 def _songs(filt=None):
-    params = {"properties": SONG_PROPS}
+    params = {}
     if filt is not None:
         params["filter"] = filt
-    return _rpc("AudioLibrary.GetSongs", params).get("songs", []) or []
+    return _with_props("AudioLibrary.GetSongs", params).get("songs", []) or []
 
 
 def library_has_music():
@@ -230,8 +245,7 @@ def _source_songs(src):
     if t == "malbum":
         return [_item(s) for s in _songs({"albumid": int(src.get("id"))})]
     if t == "mplaylist":
-        res = _rpc("Files.GetDirectory", {"directory": src.get("path", ""), "media": "music",
-                                          "properties": SONG_PROPS})
+        res = _with_props("Files.GetDirectory", {"directory": src.get("path", ""), "media": "music"})
         return [_item(f) for f in res.get("files", []) or [] if f.get("filetype") != "directory"]
     if t == "mfolder":
         path = src.get("path", "")
