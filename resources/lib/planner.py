@@ -223,9 +223,12 @@ class Planner(xbmcgui.WindowXMLDialog):
     # ---------------------------------------------------------------- model
     def save(self):
         chans = C.load()
+        before = json.dumps(chans, sort_keys=True)
         for i, c in enumerate(chans):
             if c["id"] == self.ch["id"]:
                 chans[i] = self.ch
+        if json.dumps(chans, sort_keys=True) != before:
+            self.saved = True                # open_planner tells the caller to check for a refresh
         C.save(chans)
 
     def load_marks(self):
@@ -645,7 +648,12 @@ class Planner(xbmcgui.WindowXMLDialog):
 
 
 def open_planner(cid):
+    """The weekly planner for one channel.  True if it saved a change (like the
+    channel editor's _edit_group): only then does the caller check for a refresh."""
     win = Planner("script-cablebox42-planner.xml", K.ADDON_PATH, "Default", "1080i")
     win.cid = cid
+    win.saved = False
     win.doModal()
+    saved = win.saved
     del win
+    return saved

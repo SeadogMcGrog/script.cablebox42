@@ -1152,7 +1152,21 @@ def start_series_over():
 
 
 # ------------------------------------------------------------------ manager
+# A station-folder screen was opened since the Channel manager opened: its clips
+# may have changed although channels.json didn't (manager() then reports a change).
+_FOLDERS_TOUCHED = [False]
+
+
+def _lineup_stamp():
+    return json.dumps(C.load(), sort_keys=True)
+
+
 def manager():
+    """The Channel manager.  True if anything was saved (the lineup, or a station
+    folder screen was used): only then are home channels worked out again (slow:
+    every source of every channel) and the caller checks for a refresh."""
+    start = _lineup_stamp()
+    _FOLDERS_TOUCHED[0] = False
     while True:
         chans = C.load()
         top = [_("[B]+ Add a channel[/B]"), _("[B]Rearrange channel numbers[/B]"),
@@ -1166,8 +1180,10 @@ def manager():
             rows.append("%3d   %s   [COLOR grey](%s)[/COLOR]" % (c["number"], c["name"], what))
         i = done_select(_("Channel manager"), rows)
         if i < 0:
-            refresh_assignments()
-            return
+            changed = _lineup_stamp() != start
+            if changed:
+                refresh_assignments()
+            return changed or _FOLDERS_TOUCHED[0]
         if i == 0:
             add_channel(chans)
         elif i == 1:
@@ -2042,6 +2058,7 @@ def station_folder(ch, chans):
     bumps, IDs, commercials, one folder per time-of-day name), what's in it, and
     making or repairing it.  Never deletes anything."""
     from . import stations
+    _FOLDERS_TOUCHED[0] = True
     while True:
         stations.clear_cache()
         root = K.setting("stations_folder")
@@ -3010,7 +3027,8 @@ def pick_planner_channel():
     j = D.select(_("Plan which channel?"), ["%3d  %s" % (c["number"], c["name"]) for c in progs])
     if j >= 0:
         from . import planner
-        planner.open_planner(progs[j]["id"])
+        return planner.open_planner(progs[j]["id"])     # True if it saved a change
+    return False
 
 
 # Tools reached from Settings > Tools (RunScript(script.cablebox42,tool,<name>)).
@@ -3251,6 +3269,7 @@ def make_station_folders(ask=True, report=True):
     """Settings > Tools: one folder per channel (bumps / ids / commercials, plus a
     folder per time block) inside the stations folder, so clips can just be dropped
     in - then a report of which folder each channel uses and what's in it."""
+    _FOLDERS_TOUCHED[0] = True
     root = K.setting("stations_folder")
     if not root:
         if ask and not D.yesno(TITLE, _("Choose where your station folders should go.[CR][CR]CableBox makes one folder per "
@@ -3644,11 +3663,11 @@ def _main_menu():
             K.save_json(K.STATE_FILE, st)
             D.notification(TITLE, _("Closed captions on") if on else _("Closed captions off"), time=2000)
         elif k == "manager":
-            manager()
-            refresh_if_changed()             # channels, branding and station clips
+            if manager():                    # only after a saved change: channels, branding, station clips
+                refresh_if_changed()
         elif k == "planner":
-            pick_planner_channel()
-            refresh_if_changed()
+            if pick_planner_channel():       # left with no change: nothing to check
+                refresh_if_changed()
         elif k == "settings":
             open_settings()
         elif k == "help":

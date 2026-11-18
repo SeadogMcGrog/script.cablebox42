@@ -208,6 +208,12 @@ A task often starts as "implement `briefs\<name>.md`".
 - **Anything that changes what schedules are planned from must end in
   `manager.refresh_if_changed()`** (settings, lineup, station clips; applied.json
   remembers what the last refresh used), holding `TOOL_BUSY` like any tool.
+  But only after something was saved: `planner.open_planner` returns True when it saved,
+  `manager()` when the lineup differs from when it opened (or a station-folder screen ran,
+  `_FOLDERS_TOUCHED`); the main menu skips the check otherwise. Working out home channels
+  (`refresh_assignments`) took 14.3 s on the N2 on every Channel manager exit with no edit
+  (first in a menu session; ~all4, 18 Nov); ~all5 with no edit: 0.4 s. `Lineup.refresh` works
+  them out itself.
 - **Kodi caches an add-on's strings until Kodi restarts.** After editing `strings.po`,
   restart Kodi before testing: `_()` finds the id in the new file but Kodi returns the
   old text for it (a changed `%s` count then raises "not enough arguments").
