@@ -6772,14 +6772,6 @@ msgctxt "#34209"
 msgid "Today's high %s, low %s"
 msgstr ""
 
-msgctxt "#34210"
-msgid "Guide top half"
-msgstr ""
-
-msgctxt "#34211"
-msgid "Text only"
-msgstr ""
-
 msgctxt "#34212"
 msgid "Tonight %s"
 msgstr ""

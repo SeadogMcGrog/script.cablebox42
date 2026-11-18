@@ -47,7 +47,6 @@
         <setting id="guide_title" type="text" label="32004" default="CableBox 42 Program Guide"/>
         <setting id="guide_music_path" type="folder" label="32003" source="music" default=""/>
         <setting id="guide_speed" type="enum" label="34186" lvalues="34187|34188|34189" default="1"/>
-        <setting id="guide_top" type="enum" label="34210" lvalues="33658|34211" default="0"/>
         <setting label="32020" type="lsep"/>
         <setting id="weather_source" type="enum" label="32021" lvalues="32026|32027|32028" default="0"/>
         <setting id="weather_location" type="text" label="32022" default=""/>

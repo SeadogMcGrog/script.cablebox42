@@ -269,11 +269,14 @@ A task often starts as "implement `briefs\<name>.md`".
   On the N2 a video frame reaches the screen only on a redraw, so at 23.98 Hz every other film frame
   was skipped (~12/s, Kodi's skip counter): stop motion. Found by elimination on the N2: dev's code
   with 1.2.0's skin = 60, dev's skin without the guide's videowindow = 59.5; the tick loop, the retro /
-  promo groups and the videowindow's squeeze animation made no difference. The guide's top half now
-  zooms control 10 into its frame (a Conditional zoom with absolute rectangles in guide mode; Kodi's
-  Python can't get a videowindow: "Unknown control type for python"), and the guide group sits *before*
-  control 10 in the skin so the video clears only its own rectangle of it. The Windows rig can't show
-  this (no vsync: plain Kodi 365 fps, any window over video ~160): measure on the N2 (`System.FPS`).
+  promo groups and the videowindow's squeeze animation made no difference. Moving control 10 into the
+  guide's frame instead failed on the N2: its hardware video layer doesn't follow a zoom on the video
+  control (absolute-rectangle or percentage: a black band, the picture too big and cropped; fine in the
+  rig, which draws video in software), and Kodi's Python can't get a videowindow at all ("Unknown
+  control type for python"). So the guide's top-half video was dropped (18 Nov): text and music, as in
+  1.2.0; the `guide_top` setting, `guide_top.json` and the service's TopReader went with it. Squeezed
+  credits zoom control 10 too: check them on the N2. The Windows rig can't show any of this (no vsync:
+  plain Kodi 365 fps, any window over video ~160): measure on the N2 (`System.FPS`, Kodi's skip counter).
 - **Captions mode only on CableBox's settled choice** (`Captions.showing_settled`): right after a start
   Kodi still reports the file's remembered "subtitles on" (late on CoreELEC), so `fs_wanted` read
   `cc.showing` with CC off and went full screen - which switches the display to the film's rate

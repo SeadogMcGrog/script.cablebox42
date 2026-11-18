@@ -121,9 +121,7 @@ def run():
         # few seconds of the TV opening a file (a channel change).  Anything else
         # playing, a tool open, a busy CPU (Linux): paused.
         from . import library
-        from . import guide
         reader = library.ChapterReader()
-        top = guide.TopReader()          # the guide's top half: its clips' frame rates
         was_busy = False
         chapters_status_line(force=True)
         while not monitor.abortRequested():
@@ -158,9 +156,6 @@ def run():
                             wait = 30.0
                             if reader.minute(force=True):
                                 chapters_status_line()
-                            # nothing left to read for the chapters: the guide's clips, gently
-                            if top.step():
-                                wait = 2.0 if on else 0.5
                         reader_left[0] = reader.left
                 if reader.minute():
                     chapters_status_line()

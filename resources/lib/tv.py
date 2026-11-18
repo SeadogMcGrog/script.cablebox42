@@ -2624,166 +2624,21 @@ class TVWindow(xbmcgui.WindowXML):
         self.top_tick(now)
 
     # ----------------------------------------------------------- the guide's top half
-    # Trailers, show promos and commercials in a small video window, in runs of one
-    # frame rate (one Kodi playlist a run: a TV that switches refresh rate blanks only
-    # between runs), text and guide music between them.  Each half hour's plan
-    # (guide.top_plan) is made once in a thread and kept in guide_top.json, so the TV
-    # joins it at the clock like any channel (flip away and back: same place).
+    # Text and the guide's music, as in 1.2.0.  Guide stage 3 played trailers, promos and
+    # commercials there in a small video window; dropped 18 Nov 2026: a second video
+    # control halved the TV window's redraw rate on the N2 (stop motion), and the N2's
+    # hardware video layer doesn't follow a zoom on the one video control
+    # (.claude/CLAUDE.md, Hard-won lessons).
     guide_on = None              # the guide channel's id while it's on screen
-    top = None                   # {"slot", "plan", "idx", "building", "seek", "paths", "pos"}
+    top = None                   # "text" once the guide's music is on
 
     def top_reset(self):
-        """A fresh start for the top half; a run that's playing is stopped only by
-        what plays next (leaving the guide) or by the next text stretch."""
-        self.top = {"slot": None, "plan": None, "idx": None, "building": False, "seek": None,
-                    "paths": [], "pos": -2, "tries": 0, "wait": 0}
-        for k in ("gtop", "gt_cap", "gt_title"):
-            if self.getProperty(k):
-                self.setProperty(k, "")
-
-    @staticmethod
-    def top_text_only():
-        return K.setting_int("guide_top", 0) == 1
-
-    def top_music(self):
-        self.setProperty("gtop", "")
-        self.setProperty("gt_cap", "")
-        self.setProperty("gt_title", "")
-        self.background_audio(K.setting("guide_music_path"))
+        self.top = None
 
     def top_tick(self, now):
-        st = self.top
-        if st is None:
-            self.top_reset()
-            st = self.top
-        if self.top_text_only():
-            if st["idx"] != "text":
-                st["idx"] = "text"
-                self.top_music()                 # exactly 1.2.0
-            return
-        slot = scheduler.floor_slot(now, 1800)
-        if st["slot"] != slot:
-            st.update(slot=slot, plan=None)
-            if not st["building"]:
-                st["building"] = True
-                t = threading.Thread(target=self.top_build, args=(st, slot, self.ch), name="cb42-guide-top")
-                t.daemon = True
-                t.start()
-        plan = st["plan"]
-        if not plan:
-            # being planned (a moment when the plan is saved): text and music meanwhile.
-            # Not at once - a play asked for just after a stop is dropped by Kodi, so a
-            # run ready in a moment replaces what plays, like a programme change does
-            if st["idx"] is None:
-                st["idx"], st["wait"] = "wait0", time.time()
-            if st["idx"] == "wait0" and time.time() - st["wait"] > 1.5 or \
-                    st["idx"] not in ("wait", "wait0") and not self.top_playing():
-                st["idx"] = "wait"
-                self.top_music()
-            return
-        i, it = guide.top_at(plan, now - slot)
-        if st["idx"] != i:
-            st["idx"] = i
-            if it["k"] == "run":
-                st["tries"] = 0
-                self.top_run(it, now - slot)
-            else:
-                self.top_music()
-            return
-        if it["k"] == "run":
-            if self.av_started_token != self.play_token and time.time() - self.play_started_at > 4 \
-                    and st["tries"] < 3 and not self.player.isPlaying():
-                # Kodi drops a play asked for while it's still stopping the static or
-                # turn-on clip (rig): start the run again, at the clock
-                st["tries"] += 1
-                K.log("guide run didn't start: again (%d)" % st["tries"], xbmc.LOGINFO)
-                self.top_run(it, now - slot)
-                return
-            self.top_follow(now)
-
-    def top_playing(self):
-        return self.getProperty("gtop") == "video" and self.playing_ours()
-
-    def top_build(self, st, slot, ch):
-        """Plan the top half of a half hour (a thread of its own): from guide_top.json
-        if the TV planned it already, else from the clips with measured frame rates."""
-        try:
-            path = os.path.join(K.PROFILE, guide.TOP_FILE)
-            saved = K.load_json(path, {}) or {}
-            key = "%s|%d" % (ch["id"], int(slot))
-            plan = saved.get(key)
-            if plan is None:
-                clips = guide.measured(guide.top_candidates(self.lineup, slot, ch, K.schedule_cfg()))
-                plan = guide.top_plan(key, 1800.0, clips)
-                keep = dict((k, v) for k, v in saved.items()
-                            if k.split("|")[-1].isdigit() and int(k.split("|")[-1]) >= slot - 3600)
-                keep[key] = plan
-                K.save_json(path, keep)
-                runs = [x for x in plan if x["k"] == "run"]
-                K.log("guide top half from %s: %d runs (%s) from %d measured clips" % (
-                    fmt_time(slot), len(runs), ", ".join(sorted(set(x["fam"] for x in runs))) or "text only",
-                    len(clips)), xbmc.LOGINFO)
-            st["plan"] = plan
-        except Exception as exc:
-            K.log_err("guide top half: %s" % exc)
-            st["plan"] = [{"k": "text", "s": 0, "e": 1800}]
-        finally:
-            st["building"] = False
-
-    def top_run(self, it, offset):
-        """Start a run as one playlist, joined at the clock: the clip on now, partway in."""
-        st = self.top
-        into = offset - it["s"]
-        start, acc = len(it["clips"]), 0.0
-        for k, c in enumerate(it["clips"]):
-            if acc + c["dur"] > into:
-                start = k
-                break
-            acc += c["dur"]
-        clips = [c for c in it["clips"][start:] if not self.file_missing(c["path"])]
-        if not clips:
-            self.top_music()
-            return
-        lead = into - acc if clips[0] is it["clips"][start] else 0.0
-        if lead > clips[0]["dur"] - 4 and len(clips) > 1:
-            clips, lead = clips[1:], 0.0     # the clip's last seconds: the next one, a moment early
-        pl = xbmc.PlayList(getattr(xbmc, "PLAYLIST_VIDEO", 1))
-        pl.clear()
-        for c in clips:
-            pl.add(c["path"])
-            self.our_files.add(c["path"])
-        st["paths"] = clips
-        st["pos"] = -2
-        # the seek is worked out when the picture is on: Kodi's open time (2-5 s) counts too
-        st["seek"] = (clips[0]["path"], lead, time.time(), clips[0]["dur"])
-        self.clear_music()
-        self.play_token += 1
-        self.play_started_at = time.time()
-        self.player.play(pl, windowed=True)
-        self.setProperty("gtop", "video")
-        K.log("guide run %s: %d clips, %d s (joined %d s in)" % (
-            it["fam"], len(clips), round(it["e"] - it["s"]), round(into)), xbmc.LOGINFO)
-
-    def top_follow(self, now):
-        """During a run: the seek to the clock once the picture is on, and the caption
-        of the clip playing (Kodi's playlist position)."""
-        st = self.top
-        try:
-            if st["seek"] and self.av_started_token == self.play_token and \
-                    self.requested(self.player.getPlayingFile()) == st["seek"][0]:
-                path, lead, t0, dur = st["seek"]
-                st["seek"] = None
-                to = lead + (time.time() - t0)
-                if 1.0 < to < dur - 1.5:     # not in a clip's last moments (Kodi's own move)
-                    self.player.seekTime(to)
-            pos = xbmc.PlayList(getattr(xbmc, "PLAYLIST_VIDEO", 1)).getposition()
-        except Exception:
-            return
-        if pos != st["pos"] and 0 <= pos < len(st["paths"]):
-            st["pos"] = pos
-            c = st["paths"][pos]
-            self.setProperty("gt_cap", guide.caption(c, fmt_time, now))
-            self.setProperty("gt_title", library.on_air(c.get("title", "")) if c.get("kind") != "ad" else "")
+        if self.top != "text":
+            self.top = "text"
+            self.background_audio(K.setting("guide_music_path"))
 
     def crawl_start(self):
         """The grid crawls up at a constant speed and never pauses: list 50 is a
