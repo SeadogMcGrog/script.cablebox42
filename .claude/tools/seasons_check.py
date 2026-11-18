@@ -209,7 +209,33 @@ TWO = {"custom": [custom("s_a", "A", {"type": "date", "month": 10, "day": 20}, {
                   custom("s_b", "B", None, {"type": "date", "month": 10, "day": 25})]}
 check("a big day beats a run-up (yours over Halloween's run-up)", phase(D(2026, 10, 25), TWO)[0], "s_a")
 check("two big days: the higher in the list", phase(D(2026, 10, 25), {"custom": TWO["custom"][::-1]})[0], "s_b")
-check("two run-ups: the higher in the list (Halloween first)", phase(D(2026, 10, 21), TWO)[0], "halloween")
+check("two run-ups: the one whose big days come first (yours before Halloween)", phase(D(2026, 10, 21), TWO)[0], "s_a")
+SAME = {"custom": [custom("s_c", "C", {"type": "date", "month": 10, "day": 20}, {"type": "date", "month": 10, "day": 31})]}
+check("two run-ups towards the same day: the higher in the list (Halloween)", phase(D(2026, 10, 21), SAME)[0],
+      "halloween")
+
+FESTIVUS = {"custom": [custom("s_festivus", "Festivus", {"type": "before", "days": 2}, {"type": "date", "month": 12, "day": 23},
+                              words=["festivus"])]}
+check("Festivus run-up 21 Dec beats Christmas's run-up", phase(D(2026, 12, 21), FESTIVUS), ("s_festivus", 0.1))
+check("Festivus run-up 22 Dec", phase(D(2026, 12, 22), FESTIVUS), ("s_festivus", 0.45))
+check("Festivus 23 Dec all day", phase(D(2026, 12, 23), FESTIVUS), ("s_festivus", 1.0))
+check("24 Dec is Christmas again", phase(D(2026, 12, 24), FESTIVUS), ("christmas", 1.0))
+check("20 Dec is Christmas's run-up", phase(D(2026, 12, 20), FESTIVUS)[0], "christmas")
+jaws2 = {"path": "/x/Seinfeld - The Strike (Festivus).mkv", "title": "Seinfeld", "sub": "The Strike"}
+check("Festivus with hold off hides nothing in July", NEW.out_of_season(jaws2, ts(D(2026, 7, 4)), cfg(extra=FESTIVUS)),
+      False)
+
+DIWALI = {"custom": [custom("s_diwali", "Diwali", {"type": "before", "days": 3},
+                            {"type": "years", "dates": {"2026": [11, 8], "2027": [10, 29]}}, 5)]}
+check("a years rule: 8 Nov 2026", phase(D(2026, 11, 8), DIWALI), ("s_diwali", 1.0))
+check("a years rule: 5 days, 12 Nov 2026", phase(D(2026, 11, 12), DIWALI), ("s_diwali", 1.0))
+check("a years rule: run-up 5 Nov 2026", phase(D(2026, 11, 5), DIWALI)[0], "s_diwali")
+check("a years rule: 29 Oct 2027 (beats Halloween's run-up)", phase(D(2027, 10, 29), DIWALI), ("s_diwali", 1.0))
+check("a years rule: nothing in a year without a date (2028)", [phase(D(2028, 11, x), DIWALI)[0] for x in range(1, 20)],
+      [None] * 19)
+check("clean keeps a years rule", NEW.clean(DIWALI)["custom"][0]["from"]["type"], "years")
+check("clean drops a broken years rule",
+      NEW.clean({"custom": [custom("s_x", "X", None, {"type": "years", "dates": {"2026": [2, 30]}})]})["custom"], [])
 
 LONG = {"custom": [custom("s_long", "Two weeks", {"type": "before", "days": 3}, {"type": "date", "month": 7, "day": 1}, 14)]}
 check("14 big days: 1 July is the first", phase(D(2026, 7, 1), LONG), ("s_long", 1.0))

@@ -4,7 +4,9 @@ A menu of every season; each season's page is a menu too (changes save as you go
 Done at the bottom).  The built-ins keep their Settings ids as storage (on, tags,
 genres, commercials and bumps folders); their dates, run-up intensity, extra title
 words and 'save for its season' go to seasons.json as overrides (seasons.py).
-Reset puts a built-in back as it ships.
+Reset puts a built-in back as it ships.  The viewer's own seasons live whole in
+seasons.json ('custom', in list order); adding one is step-by-step (a ready-made
+holiday or your own date, a name, Cancel / Add season), then its page.
 
 What a season is (dates as rules, which one wins, what counts as its material) is
 seasons.py; a changed season is planned in by the refresh that follows every
@@ -71,8 +73,24 @@ def set_value(sid, key, value):
     K.set_setting(setting, ("true" if value else "false") if key == "on" else value)
 
 
+def custom_of(data, sid):
+    for c in data["custom"]:
+        if c["id"] == sid:
+            return c
+    return None
+
+
 def put(sid, key, value):
     """Change one thing of a season, wherever it is kept."""
+    if sid not in S.NAMES:
+        data = S.load()
+        c = custom_of(data, sid)
+        if c is not None:
+            if key == "name" and not value:
+                return                          # one of yours always has a name
+            c[key] = [] if key == "words" and value is None else value
+            _save(data)
+        return
     if key in ("on", "tags", "genres", "ads", "bumps"):
         set_value(sid, key, value)
     else:
@@ -141,10 +159,17 @@ def open_seasons():
             head = _("Holiday seasons (Holiday programming is off in Settings)")
         else:
             head = _("Holiday seasons")
+        rows.append(M._menu_row(_("[B]+ Add a season...[/B]"),
+                                _("Any holiday, real or made up: Festivus, Bastille Day, Diwali...")))
         i = M.done_select(head, rows, useDetails=True)
         if i < 0:
             return
-        season_page(ids[i])
+        if i == len(ids):
+            sid = add_season()
+            if sid:
+                season_page(sid)
+        else:
+            season_page(ids[i])
 
 
 # ------------------------------------------------------------------ a season's page
@@ -175,6 +200,13 @@ def season_page(sid):
                  _("Keeps its episodes and films off the air the rest of the year"))]
         if sid in S.NAMES:
             rows.append(("reset", _("Reset to the built-in settings"), ""))
+        else:
+            mine = [x for x in S.order(sc) if x not in S.NAMES]
+            if mine.index(sid) > 0:
+                rows.append(("up", _("Move up"), _("Higher in the list wins when two seasons fall on the same days")))
+            if mine.index(sid) < len(mine) - 1:
+                rows.append(("down", _("Move down"), ""))
+            rows.append(("delete", _("Delete this season"), ""))
         i = M.done_select(name, [M._menu_row(r[1], r[2]) for r in rows], useDetails=True)
         if i < 0:
             return
@@ -213,6 +245,14 @@ def season_page(sid):
             v = D.input(_("Name"), name)
             if v is not None:
                 put(sid, "name", v.strip() or None)     # emptied: a built-in's own name again
+        elif key in ("up", "down"):
+            move(sid, -1 if key == "up" else 1)
+        elif key == "delete":
+            if M.confirm_remove(_("Delete the season %s?") % name, _("Delete")):
+                data = S.load()
+                data["custom"] = [c for c in data["custom"] if c["id"] != sid]
+                _save(data)
+                return
         elif key == "reset":
             if M.confirm(_("Put %s back as it ships: dates, tags, genres, title words, folders?") % name, _("Reset")):
                 reset_builtin(sid)
@@ -298,6 +338,9 @@ def ask_run_up(current=None):
 def _set_rule(sid, key, rule):
     """A rule of a season; for a built-in, an override only when it differs from the
     built-in's own (so going back to it leaves no override)."""
+    if sid not in S.NAMES:
+        put(sid, key, rule)
+        return
     if sid in S.RULES and json.dumps(S.RULES[sid][key], sort_keys=True) == json.dumps(rule, sort_keys=True):
         set_override(sid, key, None)
         return
@@ -407,3 +450,70 @@ def held_count(sid):
         return None
     finally:
         bar.close()
+
+
+# ------------------------------------------------------------------ your own seasons
+def _date(m, d):
+    return {"type": "date", "month": m, "day": d}
+
+
+# the ready-made holidays: (name, first big day, title words); all fixed dates or Easter
+READY = [
+    (_("New Year's Day"), _date(1, 1), ["new year", "new year's", "new years"]),
+    (_("Valentine's Day"), _date(2, 14), ["valentine", "valentines", "valentine's", "cupid"]),
+    (_("St. Patrick's Day"), _date(3, 17), ["st. patrick", "st patrick", "saint patrick", "leprechaun", "shamrock"]),
+    (_("Easter"), {"type": "easter", "offset": 0}, ["easter", "easter bunny", "egg hunt"]),
+    (_("May the 4th"), _date(5, 4), ["may the 4th", "may the fourth"]),
+    (_("Towel Day"), _date(5, 25), ["towel day"]),
+    (_("Canada Day"), _date(7, 1), ["canada day", "dominion day"]),
+    (_("Independence Day"), _date(7, 4), ["fourth of july", "4th of july", "independence day"]),
+    (_("Bastille Day"), _date(7, 14), ["bastille day", "bastille"]),
+    (_("Festivus"), _date(12, 23), ["festivus"]),
+    (_("Boxing Day"), _date(12, 26), ["boxing day"]),
+]
+
+
+def add_season():
+    """Step-by-step: a ready-made holiday or your own date, how many big days, the
+    run-up, a name, Cancel / Add season.  Back on any step cancels it.  Returns the
+    new season's id, or None.  Its shows (tags, genres, words) are set on its page."""
+    j = D.select(_("Add a season"), [r[0] for r in READY] + [_("My own date...")])
+    if j < 0:
+        return None
+    if j < len(READY):
+        name, frm, words = READY[j]
+    else:
+        got = E.ask_when()
+        if not got:
+            return None
+        (frm, name), words = got, []
+    days = ask_days(1)
+    if not days:
+        return None
+    run_up = ask_run_up(None)
+    if run_up is False:
+        return None
+    v = D.input(_("Name of the season"), name)
+    if not v or not v.strip():
+        return None
+    c = {"id": "s_" + S.specials.new_id(), "name": v.strip(), "on": True, "run_up": run_up, "from": frm,
+         "days": days, "intensity": None, "tags": "", "genres": "", "words": list(words), "ads": "", "bumps": "",
+         "hold": False}
+    if not M.confirm(_("%s: %s.[CR]Next, on its page: the Kodi tags, genres and title words that count as its shows.")
+                     % (c["name"], when_text(c["id"], c)), _("Add season")):
+        return None
+    data = S.load()
+    data["custom"].append(c)
+    _save(data)
+    return c["id"]
+
+
+def move(sid, step):
+    """One of your own seasons up or down among yours (the built-ins stay first)."""
+    data = S.load()
+    ids = [c["id"] for c in data["custom"]]
+    i = ids.index(sid)
+    j = i + step
+    if 0 <= j < len(ids):
+        data["custom"][i], data["custom"][j] = data["custom"][j], data["custom"][i]
+        _save(data)

@@ -3,7 +3,8 @@
     seasons_rig.py show [HOURS]  per channel: planned programmes that count for each season
                                  (by title words), from now on the seasons_today clock
 Cases: none, early (Halloween run-up from 15 Sep), canada, easter (two weeks of run-up),
-easter_hold (the same with Save for its season on), festivus (an extra Christmas word)."""
+easter_hold (the same with Save for its season on), festivus / festivus_hold (23 Dec, 2 days
+of run-up), diwali (dates typed for 2026 and 2027 only)."""
 import glob
 import json
 import os
@@ -23,6 +24,17 @@ CASES = {
 }
 CASES["easter_hold"] = json.loads(json.dumps(CASES["easter"]))
 CASES["easter_hold"]["custom"][0]["hold"] = True
+# Festivus: 23 Dec, 1 day, 2 days of run-up; its material in the rig: genre Western
+CASES["festivus"] = {"custom": [{"id": "s_festivus", "name": "Festivus", "on": True,
+                                 "run_up": {"type": "before", "days": 2},
+                                 "from": {"type": "date", "month": 12, "day": 23}, "days": 1,
+                                 "words": ["festivus"], "tags": "", "genres": "Western", "hold": False}]}
+CASES["festivus_hold"] = json.loads(json.dumps(CASES["festivus"]))
+CASES["festivus_hold"]["custom"][0]["hold"] = True
+# a holiday typed per year (no date for 2028)
+CASES["diwali"] = {"custom": [{"id": "s_diwali", "name": "Diwali", "on": True, "run_up": {"type": "before", "days": 3},
+                               "from": {"type": "years", "dates": {"2026": [11, 8], "2027": [10, 29]}}, "days": 5,
+                               "words": ["diwali"], "tags": "", "genres": "Western", "hold": False}]}
 
 
 def case(name):

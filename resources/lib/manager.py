@@ -2952,7 +2952,9 @@ first, more as the day gets closer, all day on the day itself.  Optional holiday
 commercial and bump folders.  The rest of the year Christmas and Thanksgiving episodes
 are saved for their season.  Settings > Holidays & events > Edit holiday seasons: each
 season's dates (Canadian Thanksgiving too), how much in the run-up, tags and genres
-ticked from your library, extra title words, and Show what matches.
+ticked from your library, extra title words, and Show what matches.  + Add a
+season adds any holiday, real or made up (Festivus, Bastille Day, Diwali with
+the dates you type for each year).
 
 [B]Holidays and specials[/B]
 Main menu > Holidays and specials (also Settings > Holidays & events, and Channel

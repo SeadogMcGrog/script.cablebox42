@@ -6,6 +6,15 @@ v1.2.0 (2026-11-12)
   tags and genres ticked from the library, extra title words, Show what
   matches, its folders, Save its shows for its season, Reset. The 15 holiday
   rows in Settings are now on these pages. No change = the same dates as before
+- New: any holiday as a season (Edit holiday seasons > + Add a season...):
+  ready-made New Year's Day, Valentine's Day, St. Patrick's Day, Easter, May
+  the 4th, Towel Day, Canada Day, Independence Day, Bastille Day, Festivus and
+  Boxing Day, or your own date; big days last 1-14 days; Move up / Move down,
+  Delete. Save its shows for its season starts off for your own. Between two
+  run-ups the holiday that comes first wins (Festivus inside Christmas's)
+- New: Dates for each year... in the date picker (seasons and specials) for
+  holidays of other calendars: you type each year's date, no date = nothing
+  that year
 - New: Holidays and specials (main menu, Settings > Holidays & events, and
   Channel manager > channel > Schedule): a marathon or a holiday lineup on a date, on one channel or
   several, all day, a broadcast day (6 AM to 6 AM) or hours you choose, every

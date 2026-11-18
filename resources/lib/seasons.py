@@ -16,9 +16,10 @@ The built-ins' rules (RULES) reproduce the dates CableBox has always used; the
 season editor (seasons_editor.py) stores changes to them, and the viewer's own
 seasons, in seasons.json (apply_file).  No file = exactly the built-ins.
 
-Which season is on: a big day beats any run-up; between two big days (or two
-run-ups) the season higher in the list wins: Thanksgiving, Halloween, Christmas,
-then the viewer's own in their order.
+Which season is on: a big day beats any run-up, and between two big days the
+season higher in the list wins (Thanksgiving, Halloween, Christmas, then the
+viewer's own in their order).  Between two run-ups, the one whose big days come
+first wins (Festivus's two days of run-up inside Christmas's), then the list.
 
 What counts as holiday material (in this order of importance):
   * Kodi tags on movies and TV shows - any tag containing one of the season's
@@ -288,12 +289,12 @@ def phase(ts, cfg):
         for t0, t1, f0, f1 in windows(name, d, day.year):
             if f0 <= day <= f1:
                 return name, FULL
-            if run is None and t0 and t0 <= day <= t1:
+            if t0 and t0 <= day <= t1 and (run is None or f0 < run[0]):
                 intensity = d.get("intensity")
                 lo, hi = RAMPS.get(sc.get("intensity", 1) if intensity is None else intensity, RAMPS[1])
                 span = max(1, (t1 - t0).days)
-                run = (name, lo + (hi - lo) * (day - t0).days / float(span))
-    return run or (None, 0.0)
+                run = (f0, name, lo + (hi - lo) * (day - t0).days / float(span))
+    return run[1:] if run else (None, 0.0)
 
 
 def describe(name, d, year):

@@ -83,6 +83,8 @@ def when_text(when):
         n = when["n"]
         txt = _("%s %s of %s") % (nth_names()[4 if n == -1 else n - 1] if n in (1, 2, 3, 4, -1) else _("5th"),
                                   P.day_names(False)[when["weekday"]], month(when["month"]))
+    elif kind == "years":
+        txt = years_text(when)
     else:
         off = when.get("offset", 0)
         txt = {0: _("Easter Sunday"), -2: _("Good Friday"), 1: _("Easter Monday")}.get(off) or (
@@ -95,6 +97,65 @@ def when_text(when):
     if shift:
         return (_("%d days after %s") if shift > 0 else _("%d days before %s")) % (abs(shift), txt)
     return txt
+
+
+def years_text(when):
+    """A rule typed per year in words: the next date and how many years have one,
+    or that this year has none ('no date for 2031')."""
+    t = today()
+    have = sorted(int(y) for y in when.get("dates") or {})
+    nxt = None
+    for y in have:
+        d = specials.date_for(dict(when, shift=0), y)
+        if d and d >= t:
+            nxt = d
+            break
+    if nxt is None:
+        return _("Dates for each year: none from today on")
+    txt = _("Dates for each year: next %s (%d years typed)") % (date_text(nxt), len(have))
+    if t.year not in have and nxt.year != t.year:
+        txt += "  " + _("no date for %d") % t.year
+    return txt
+
+
+def ask_years(current=None):
+    """A 'years' rule: the date typed for each year, this year and the nine after
+    (CableBox never works out lunar or other calendars: you type what yours says).
+    None on Back; a year left without a date has no season or special that year."""
+    dates = dict((current or {}).get("dates") or {})
+    first = today().year
+    months = [month(m) for m in range(1, 13)]
+    pos = 0
+    while True:
+        years = list(range(first, first + 10))
+        rows = []
+        for y in years:
+            md = dates.get(str(y))
+            rows.append("%d:  %s" % (y, ("%d %s" % (md[1], months[md[0] - 1])) if md else _("no date")))
+        rows.append(_("[B]Done[/B]"))
+        i = D.select(_("Dates for each year"), rows, preselect=pos)
+        if i < 0:
+            return None
+        if i == len(years):
+            if not dates:
+                D.ok(M.TITLE, _("Type the date of at least one year."))
+                continue
+            return {"type": "years", "dates": dates}
+        pos = i
+        y = years[i]
+        md = dates.get(str(y))
+        m = D.select(str(y), months + [_("No date this year")], preselect=(md[0] - 1) if md else 0)
+        if m < 0:
+            continue
+        if m == 12:
+            dates.pop(str(y), None)
+            continue
+        last = (datetime.date(y + (m + 1) // 12, (m + 1) % 12 + 1, 1) - datetime.timedelta(days=1)).day
+        d = D.select("%s %d" % (months[m], y), [str(k) for k in range(1, last + 1)],
+                     preselect=(md[1] - 1) if md and md[0] == m + 1 else 0)
+        if d >= 0:
+            dates[str(y)] = [m + 1, d + 1]
+            pos = min(i + 1, len(years))
 
 
 def repeat_text(sp):
@@ -610,9 +671,13 @@ def open_calendar(cid=None, day=None):
 def ask_when():
     """(rule, a name for it) or None."""
     i = D.select(_("When?"), [_("A date..."), _("A weekday of a month..."), _("Easter..."),
-                              _("A ready-made holiday...")])
+                              _("A ready-made holiday..."), _("Dates for each year...")])
     if i < 0:
         return None
+    if i == 4:
+        # Diwali, Hanukkah, Lunar New Year...: typed per year, no 'move by days'
+        when = ask_years()
+        return (when, when_text(when)) if when else None
     months = [month(m) for m in range(1, 13)]
     name = None
     if i == 0:

@@ -57,14 +57,17 @@ stage1)
   run s1210 2026-12-10; run c1210 2026-12-10 canada; total s1210 c1210
   ;;
 stage2)
-  start_with easter; start_with easter_hold
-  echo "== Easter (genre Western, two weeks of run-up, hold off)"
-  run s0328 2027-03-28; run x0328 2027-03-28 easter; total s0328 x0328
-  run s0320 2027-03-20; run x0320 2027-03-20 easter; total s0320 x0320
-  run s0501 2027-05-01; run x0501 2027-05-01 easter; total s0501 x0501
-  echo "== Easter with Save for its season on"
-  run h0501 2027-05-01 easter_hold; total s0501 h0501
-  run h0328 2027-03-28 easter_hold
+  start_with festivus; start_with festivus_hold; start_with diwali
+  echo "== Festivus: 23 Dec, 1 day, 2 days of run-up (genre Western), hold off"
+  run s1221 2026-12-21; run f1221 2026-12-21 festivus; total s1221 f1221
+  run s1223 2026-12-23; run f1223 2026-12-23 festivus; total s1223 f1223
+  run s0704 2026-07-04; run f0704 2026-07-04 festivus; total s0704 f0704
+  echo "== Festivus with Save for its season on, then off again (= the run without it above)"
+  run g0704 2026-07-04 festivus_hold; total s0704 g0704
+  run g1223 2026-12-23 festivus_hold; total f1223 g1223
+  echo "== Diwali, dates typed for 2026 and 2027 only"
+  run s1108 2026-11-08; run d1108 2026-11-08 diwali; total s1108 d1108
+  run s2028 2028-11-08; run d2028 2028-11-08 diwali; total s2028 d2028
   ;;
 stage3)
   echo "== Christmas Eve with one channel's seasons off (see the case's own notes)"

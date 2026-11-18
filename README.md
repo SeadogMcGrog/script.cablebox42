@@ -861,9 +861,27 @@ schedules take it in from each channel's next programme when you leave Settings.
 | Save its shows for its season | This season only; switching it on says how many episodes and films it will keep off the air the rest of the year |
 | Reset to the built-in settings | Back to the shipped dates, words, tags, genres and folders |
 
+**Any holiday, real or made up:** *+ Add a season...* at the bottom of the list
+offers New Year's Day, Valentine's Day, St. Patrick's Day, Easter, May the 4th,
+Towel Day, Canada Day, Independence Day, Bastille Day, Festivus and Boxing Day
+(each with a few title words), or *My own date...*. Then how many big days, the
+run-up, a name, and *Cancel* / *Add season*; its page opens, where you tick its
+tags and genres. Your own season's page also has *Move up* / *Move down* and
+*Delete this season*, and *Save its shows for its season* starts off (a broad tag
+would otherwise hide shows for most of the year).
+
+Holidays that follow another calendar (Diwali, Hanukkah, Eid, Lunar New Year,
+Passover) take **Dates for each year...** in the date picker: you type each
+year's date, and in a year with none the season simply doesn't run (*no date
+for 2031* on its page). CableBox never works those calendars out itself. The
+same picker is in *Plan holidays and specials*, so a Diwali marathon works too.
+Not supported: rules that repeat inside a year (every Friday the 13th).
+
 Which season is on: a big day beats any run-up (Canada's Thanksgiving in
-October beats Halloween's run-up); between two big days the season higher in
-the list wins. The changes live in `seasons.json` in CableBox's profile folder
+October beats Halloween's run-up), and between two big days the season higher
+in the list wins (Thanksgiving, Halloween, Christmas, then yours in your order).
+Between two run-ups, the holiday that comes first wins: Festivus's two days of
+run-up air inside Christmas's. The changes live in `seasons.json` in CableBox's profile folder
 (no file: the dates above); *Start over* removes it.
 
 ### Holidays and specials
@@ -1334,7 +1352,7 @@ Each category is in the order Settings shows it, under the same headings.
 | Setting | Default | |
 |---|---|---|
 | Plan holidays and specials... | | The month calendar of marathons and holiday lineups on exact dates ([Holidays and specials](#holidays-and-specials)). Also in the main menu |
-| Edit holiday seasons... | | Each season's page: on or off, dates, run-up, tags, genres, title words, folders ([Edit the seasons](#edit-the-seasons)) |
+| Edit holiday seasons... | | Each season's page: on or off, dates, run-up, tags, genres, title words, folders; and any holiday of your own ([Edit the seasons](#edit-the-seasons)) |
 | *Automatic holidays* | | |
 | Holiday programming (automatic) | On | Every holiday season. Off greys the two rows below |
 | How much in the weeks before | Some | A little / Some / Lots |

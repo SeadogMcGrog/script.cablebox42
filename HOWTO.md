@@ -1049,6 +1049,23 @@ A date... → September → 15*. *Tags* and *Genres* tick from what's
 in your library; *Show what matches* tells you what each channel will air. *Reset
 to the built-in settings* undoes it all.
 
+### Add Festivus
+
+1. *Settings → Holidays & events → Edit holiday seasons... → **+ Add a season...***
+   → *Festivus* (23 December).
+2. *How many big days?* → *1 day*. *Run-up* → *Starts some days before the big
+   days...* → **2**.
+3. *Name of the season*: keep *Festivus* → **Add season**. Its page opens.
+4. *Tags*: tick the tag you gave your Festivus episodes in Kodi (or leave the
+   title word *festivus* to find *The Strike*). *Show what matches* lists what
+   each channel has.
+
+On 21 and 22 December a share of each channel's Festivus shows airs (inside
+Christmas's run-up), all day on the 23rd where a channel has any; nothing is
+hidden the rest of the year unless you switch on *Save its shows for its season*.
+For Diwali or Lunar New Year use *My own date... → Dates for each year...* and
+type the dates from your calendar.
+
 ### Plan a Turkey Day marathon
 
 The seasons choose holiday programmes for you. When you want one exact thing

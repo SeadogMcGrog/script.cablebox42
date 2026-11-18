@@ -8,6 +8,11 @@
     {"type": "nth", "n": 4, "weekday": 3, "month": 11}      n 1-4, or -1 for the last;
                                                             weekday 0 = Monday
     {"type": "easter", "offset": -2}                        days from Easter Sunday
+    {"type": "years", "dates": {"2026": [11, 8], "2027": [10, 29]}}
+                                                            typed per year (Diwali, Hanukkah,
+                                                            Lunar New Year): no date that year,
+                                                            no special; CableBox never works
+                                                            out those calendars itself
 each with an optional "shift" in days (the day after Thanksgiving: shift 1).
 `repeat` is "yearly", or "once" with a "year".  A block's `start` and `end` are
 "HH:MM" on the special's date; an end at or before the start is the next morning
@@ -87,7 +92,16 @@ def valid(when):
                     and when["month"] in range(1, 13))
         if kind == "easter":
             return isinstance(when.get("offset", 0), int)
-    except (AttributeError, KeyError, TypeError, ValueError):
+        if kind == "years":
+            dates = when["dates"]
+            if not isinstance(dates, dict) or not dates:
+                return False
+            for y, md in dates.items():
+                datetime.date(int(y), md[0], md[1])
+                if len(md) != 2 or len(y) != 4:
+                    return False
+            return True
+    except (AttributeError, KeyError, TypeError, ValueError, IndexError):
         pass
     return False
 
@@ -106,6 +120,9 @@ def date_for(when, year):
             return None
     elif kind == "nth":
         day = nth_weekday(year, when["month"], when["weekday"], when["n"])
+    elif kind == "years":
+        md = when["dates"].get(str(year))
+        day = datetime.date(year, md[0], md[1]) if md else None
     else:
         day = easter(year) + datetime.timedelta(days=when.get("offset", 0))
     if day is None:
