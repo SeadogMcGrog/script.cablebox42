@@ -462,8 +462,19 @@ def shot(name):
             break
     else:
         sys.exit("No new screenshot in %s" % d)
-    time.sleep(0.5)        # let Kodi finish writing it
+    # let Kodi finish writing it: a 1080p PNG can take a few seconds on the N2 (a copy
+    # taken too early was 0 bytes); its size must be non-zero and the same twice
+    last = -1
+    for _ in range(40):
+        time.sleep(0.5)
+        size = ssh("stat -c %%s '%s' 2>/dev/null || echo 0" % now.decode(), check=False).strip()
+        size = int(size or 0)
+        if size > 0 and size == last:
+            break
+        last = size
     local = fetch(now.decode(), os.path.join(ROOT, "shots", name + ".png"))
+    if os.path.getsize(local) == 0:
+        sys.exit("Screenshot %s came back empty" % now.decode())
     print(local)
     return local
 
