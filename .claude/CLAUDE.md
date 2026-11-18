@@ -298,11 +298,8 @@ A task often starts as "implement `briefs\<name>.md`".
   *Settings → Advanced → Preview promo*.
 - **N2 over the network** (`.claude/tools/n2/`, `briefs/n2-remote-testing.md`): `bash .claude/tools/n2/n2 preflight`
   first (TV on, media drive awake), then `install ZIP`, `key`, `goto`, `shot`, `log`, `audio`, `set`, `time run`,
-  `snap`/`compare`, `restore`. Address and login in `G:\CableBox42
-2
-2.conf` (not in the repo); files under
-  `G:\CableBox42
-2\`. Ask the maintainer before every session; never change audio or Kodi's own settings.
+  `snap`/`compare`, `restore`. Address and login in `G:\CableBox42\n2\n2.conf` (not in the repo); files under
+  `G:\CableBox42\n2\`. Ask the maintainer before every session; never change audio or Kodi's own settings.
 - Hardware: the maintainer tests on the N2. On CoreELEC, `pastekodi` uploads the log;
   BusyBox tools (`ps`, `sed`) have fewer options than GNU.
 
