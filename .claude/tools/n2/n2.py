@@ -197,8 +197,11 @@ def preflight():
     if path.startswith("/"):
         t0 = time.time()
         quoted = "'" + path.replace("'", "'\"'\"'") + "'"
-        out = ssh("timeout 90 ls -d %s >/dev/null 2>&1 && echo yes || echo no" % quoted,
-                  check=False, timeout=120).decode().strip()
+        try:                 # CoreELEC's busybox has no `timeout`: the PC side times it
+            out = ssh("ls -d %s >/dev/null 2>&1 && echo yes || echo no" % quoted,
+                      check=False, timeout=90).decode().strip()
+        except subprocess.TimeoutExpired:
+            out = "timeout"
         took = time.time() - t0
         if out != "yes":
             print("FAIL  media drive: %s didn't answer in 90 s (a hung drive or NTFS driver: "
