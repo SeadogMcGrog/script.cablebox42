@@ -1,4 +1,4 @@
-"""Holidays and specials: the editor (Settings > Tools, and a channel's Schedule group).
+"""Holidays and specials: the editor (main menu, Settings > Holidays & events, and a channel's Schedule group).
 
 It opens on a month calendar (Calendar: a 6 x 7 grid of days, a star on the days with
 a special; OK on a day: its specials and 'Add a special on this day') or on the

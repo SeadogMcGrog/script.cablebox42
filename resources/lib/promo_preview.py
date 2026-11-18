@@ -1,4 +1,4 @@
-"""Settings > Advanced > Preview promo: one promo, full screen, exactly as it
+"""Settings > Breaks > Preview a promo: one promo, full screen, exactly as it
 airs in a break (same window, same card, same theme music: promos.air), with
 clean black before and after it for a screen recorder.
 

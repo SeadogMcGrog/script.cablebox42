@@ -1,6 +1,6 @@
 v1.2.0 (2026-11-12)
-- New: Holidays and specials (Settings > Tools, and Channel manager > channel >
-  Schedule): a marathon or a holiday lineup on a date, on one channel or
+- New: Holidays and specials (main menu, Settings > Holidays & events, and
+  Channel manager > channel > Schedule): a marathon or a holiday lineup on a date, on one channel or
   several, all day, a broadcast day (6 AM to 6 AM) or hours you choose, every
   year or this year only. Dates are rules worked out each year: a date, the
   n-th or last weekday of a month, Easter plus or minus days, ready-made
@@ -52,9 +52,14 @@ v1.2.0 (2026-11-12)
   'Finish setting up' in the main menu. Customise can give channels plain names
   (same shows, no stock brands). 'I'll set it up myself' starts with a plain
   Weather Channel
-- Changed: Settings is regrouped (Breaks, Channels, Viewing, Guide & Weather,
-  Seasons, Start-up & library, Tools, Advanced); no setting loses its value.
-  Lineup tools (Build my lineup, Move shows, Shows without a good channel,
+- Changed: Settings is regrouped (Breaks, Channels, On screen, Guide & Weather,
+  Holidays & events, Start-up & library, Tools, Advanced), with headings inside
+  each page and shorter labels that name their holiday; no setting loses its
+  value. Tools keeps only maintenance: Plan holidays and specials is the first
+  row of Holidays & events (and in the main menu), Remote CC button is in On
+  screen, Clean up my 'In progress' list in Start-up & library, Preview a promo
+  in Breaks, the corner-logo rows in On screen, the two captions workarounds in
+  Advanced. Lineup tools (Build my lineup, Move shows, Shows without a good channel,
   Sign-off and prime time for all channels, Station folders) moved from
   Settings > Tools to Channel manager > Lineup tools
 - Fixed: sign-off tools replaced channels' own off-air hours: Build my lineup

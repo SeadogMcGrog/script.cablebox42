@@ -78,7 +78,7 @@ PAUSE_ORIG = "cc_pause_orig"           # state.json key while the search is open
 
 KEYMAP = "special://profile/keymaps/cablebox42-captions.xml"
 KEYMAP_XML = """<?xml version="1.0" encoding="UTF-8"?>
-<!-- Written by CableBox 42 (Settings > Tools > Remote CC button).
+<!-- Written by CableBox 42 (Settings > On screen > Remote CC button).
      Lets the remote's subtitle button reach CableBox: Kodi normally maps it
      in its own full-screen player only.  Delete this file to undo. -->
 <keymap>
@@ -831,7 +831,7 @@ class Captions(object):
 
 # ------------------------------------------------------------------ remote CC button
 def keymap_tool():
-    """Settings > Tools: let the remote's subtitle button reach CableBox, or undo it."""
+    """Settings > On screen: let the remote's subtitle button reach CableBox, or undo it."""
     d = xbmcgui.Dialog()
     title = _("Remote CC button")
     if xbmcvfs.exists(KEYMAP):

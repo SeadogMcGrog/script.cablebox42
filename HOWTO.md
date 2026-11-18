@@ -460,8 +460,7 @@ folder for each channel* during setup, this is already done.
 
 ### Step 2 — Let CableBox make the folders
 
-*Settings → Tools → **Station folders: create, repair and see what each channel
-uses***. For every channel it makes whatever is missing and **never touches
+*Channel manager → Lineup tools → **Station folders***. For every channel it makes whatever is missing and **never touches
 what's already there** — an existing folder is reused, not copied. Then it shows
 a report:
 
@@ -579,7 +578,7 @@ and name each image after the channel's name, call letters or number
 channel editor (*Identity → Logo → Choose an image*). Kodi can't show SVG — convert
 to PNG.
 
-The corner logo ("bug") is set in *Settings → Channels*: on or off, which corner,
+The corner logo ("bug") is set in *Settings → On screen*: on or off, which corner,
 and opacity (30–100%).
 
 ---
@@ -638,7 +637,7 @@ one channel each, or allow repeats anywhere.
 
 ### Find the shows that need you — the Finder
 
-*Channel manager → **Shows without a good channel*** (also on *Settings → Tools*).
+*Channel manager → Lineup tools → **Shows without a good channel***.
 
 It lists:
 
@@ -796,7 +795,7 @@ While a programme is on: **Menu → Caption options…**
 
 Kodi only sends that button to its own player, so it needs a one-time setup:
 
-1. *Settings → Tools → **Remote CC button***
+1. *Settings → On screen → **Remote CC button***
 2. *Yes* — CableBox adds a small keymap. Now the button switches captions in
    CableBox (and still toggles subtitles of normal videos elsewhere in Kodi).
 
@@ -816,17 +815,17 @@ Run the same tool again to remove it.
 ### TV boxes (CoreELEC, Android, Raspberry Pi)
 
 Many boxes only draw subtitles in Kodi's full-screen player. With *Settings →
-Viewing → Captions: show programmes in Kodi's full-screen player* on (the
-default), programmes play full screen with CableBox's banner, logo and channel
-number on top. On CoreELEC, *Captions: rewind 1 second so embedded subtitles
-appear* (*Automatic*) works around a Kodi 21 quirk.
+Advanced → Captions: use Kodi's full-screen player* on (the default), programmes
+play full screen with CableBox's banner, logo and channel number on top. On
+CoreELEC, *Captions: rewind 1 second (embedded subtitles)* (*Automatic*, same
+page) works around a Kodi 21 quirk.
 
 ---
 
 ## 14. Commercials and bumps that fill the breaks properly
 
 1. *Settings → Breaks → Commercials folder* (shared by every channel), and
-   optionally *Bumps / station ID folder*.
+   optionally *Bumps folder*.
 2. Per-channel clips go in station folders ([section 7](#7-give-each-channel-its-own-logo-bumps-ids-and-commercials)).
 3. *Commercial breaks per half hour*: 0–4 (default 2).
 4. Run *Settings → Tools → **Check my videos*** — for every folder: how many
@@ -850,7 +849,7 @@ No commercials, or want more variety? Promos are made from your own library.
 3. *Promote*: *Up next and later today* (like a real station: breaks during a
    show tease the evening, the last one says what's up next), only what's on
    next, or only something later today.
-   *Promo style*: early-90s cable (bright bands, chunky italic letters, a bouncing
+   *Look of promos and retro ads* (under *House breaks and retro ads*): early-90s cable (bright bands, chunky italic letters, a bouncing
    time tab) or Modern (the sleek card).
 4. Watch a channel. During a break you'll see the channel's name, the show's
    picture and logo, the episode, *Up next* (or when it's on, e.g. *Tonight at
@@ -872,8 +871,8 @@ the programme on air keeps its breaks (a promo in them that would now be wrong i
 changed to what really follows). With promos off, breaks are exactly as they were
 before.
 
-**Check a promo without waiting for a break:** *Settings → Advanced →
-Preview promo*, pick the channel, then **Up next** (its next programme) or
+**Check a promo without waiting for a break:** *Settings → Breaks →
+Preview a promo...*, pick the channel, then **Up next** (its next programme) or
 **Later today** (pick from its programmes in the next 6 hours). The screen goes
 black for about 2 seconds, the promo plays exactly as it airs in a break, with
 its music, then 1 second of black and Settings come back — handy after adding a
@@ -1031,7 +1030,7 @@ never writes tags, NFOs or artwork.
 
 ## 16. Holidays
 
-*Settings → Seasons*. Halloween (October, all-out on the 31st), Thanksgiving (on
+*Settings → Holidays & events*. Halloween (October, all-out on the 31st), Thanksgiving (on
 the day) and Christmas (from the day after Thanksgiving, all-out on the 24th
 and 25th): each channel mixes in its own holiday episodes and movies — a few at
 first, more as the day gets closer.
@@ -1048,7 +1047,8 @@ episodes and movies for their season* keeps Christmas specials out of July.
 The seasons choose holiday programmes for you. When you want one exact thing
 on one day, add a **special**.
 
-1. *Settings → Tools → Holidays and specials*. A month calendar opens.
+1. Main menu → *Holidays and specials* (or *Settings → Holidays & events → Plan
+   holidays and specials...*). A month calendar opens.
 2. Press **CH+** until it shows November, move to the fourth Thursday and
    press **OK** → *Add a special on this day*.
 3. Choose *On the 4th Thursday of November every year*, so it moves with
@@ -1101,7 +1101,7 @@ day on the calendar and choose its rule, or use *Add a special* in the list:
 The rule is worked out again every year, so floating holidays land on the
 right day by themselves.
 
-**Summer reruns:** *Settings → Seasons → Summer reruns* → *Broadcast networks* (the
+**Summer reruns:** *Settings → Holidays & events → Summer reruns* → *Broadcast networks* (the
 broadcast networks) or *All channels*. From June to August each series reruns the
 episodes of its current season it has already shown, marked *(R)* in the guide and
 banner; in September it picks up with the next new episode. Your pinned slots are
@@ -1111,7 +1111,7 @@ never changed.
 
 ## 17. The look: static, CRT effect, turn-on and turn-off
 
-*Settings → Viewing*:
+*Settings → On screen*:
 
 | Setting | Options |
 |---|---|
@@ -1186,7 +1186,7 @@ No commercials folder is set for that channel, its commercials are switched off,
 or none of its clips can be read. *Breaks & clips* and *Check my videos*.
 
 **No static sound when changing channel (or only the first time).**
-*Settings → Viewing → Static plays as → Video clip* (common on Windows).
+*Settings → On screen → Static plays as → Video clip* (common on Windows).
 
 **The sound sputters, freezes or stops after a few channel changes.**
 Update to 1.1.1 or later, then restart Kodi (on CoreELEC: `systemctl restart kodi`).
@@ -1206,8 +1206,7 @@ rate, try *Static between channels → Video clip*, which also makes the turn-of
 a video with its own sound.
 
 **Captions don't appear on my TV box.**
-Make sure *Settings → Viewing → Captions: show programmes in Kodi's full-screen
-player* is on. On CoreELEC leave *rewind 1 second* on *Automatic*. Check the
+Make sure *Settings → Advanced → Captions: use Kodi's full-screen player* is on. On CoreELEC leave *rewind 1 second* on *Automatic*. Check the
 programme actually has a subtitle track or a sidecar `.srt` (*Menu → Caption
 options*).
 
@@ -1238,8 +1237,8 @@ else ever moves a show back: changing settings or channels, moving a show to
 another channel, or taking it off and adding it back later all keep its place.
 
 **My "In progress" list filled up with half-watched episodes.**
-From before the protection existed: *Settings → Tools → Clean up my 'In
-progress' list* — tick what you're really watching; the rest is cleared.
+From before the protection existed: *Settings → Start-up & library → Clean up
+my 'In progress' list* — tick what you're really watching; the rest is cleared.
 
 ---
 

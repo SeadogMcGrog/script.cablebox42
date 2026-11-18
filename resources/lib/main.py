@@ -19,7 +19,7 @@ def run(args):
         from . import manager
         manager.run_tool(args[1] if len(args) > 1 else "")
     elif args and args[0] == "preview_promo":
-        # Settings > Advanced > Preview promo, or RunScript(script.cablebox42,preview_promo,<tvshowid>)
+        # Settings > Breaks > Preview a promo, or RunScript(script.cablebox42,preview_promo,<tvshowid>)
         # (",settings": started from Settings, which it opens again when the promo is over)
         from . import promo_preview
         promo_preview.run(int(args[1]) if len(args) > 1 and args[1].isdigit() else None,

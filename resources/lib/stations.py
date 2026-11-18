@@ -5,7 +5,7 @@ Cam O Nite at night).
 Two sources, the second overriding the first:
   * built-in station kits (resources/stations) that the automatic setup gives
     to matching channels;
-  * the viewer's own stations folder (Settings > Viewing):
+  * the viewer's own stations folder (Settings > Channels):
         <Stations folder>/<channel name, call letters or number>/
             logo.png              the channel's logo
             bumps/ ids/ commercials/    clips used all day (optional)

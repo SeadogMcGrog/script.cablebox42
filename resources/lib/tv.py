@@ -51,7 +51,7 @@ CC_TOGGLE = {_a("ACTION_SHOW_SUBTITLES", 25)}      # the remote's CC / subtitles
 CC_NEXT = {_a("ACTION_NEXT_SUBTITLE", 26), _a("ACTION_CYCLE_SUBTITLE", 99)}
 CC_MENU = {_a("ACTION_BROWSE_SUBTITLE", 247)}
 # (Kodi's default keymaps send these in its own full-screen player only:
-#  Settings > Tools > Remote CC button maps the remote's subtitle key for CableBox)
+#  Settings > On screen > Remote CC button maps the remote's subtitle key for CableBox)
 DIGITS = dict((58 + i, i) for i in range(10))
 DIGITS.update(dict((140 + i, i) for i in range(2, 10)))  # JUMP_SMS2..9 numeric keypads
 

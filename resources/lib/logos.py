@@ -2,7 +2,7 @@
 logo in the channel banner.
 
 A channel's logo is the image picked for it in the channel editor, or else a
-file in the logo folder (Settings > Viewing) named after the channel's name,
+file in the logo folder (Settings > Channels) named after the channel's name,
 call letters or number - 'Comedy Channel.png', 'CC.png' or '5.png'.
 stations.brand() decides which logo a channel shows at a moment (and says where
 it came from); everything on screen asks it, never this module directly.
@@ -73,7 +73,7 @@ def folder_logo(*names):
 
 
 def bug_settings():
-    """(on, corner, opacity) from Settings > Viewing."""
+    """(on, corner, opacity) from Settings > On screen."""
     on = K.setting_bool("logo_bug", True)
     corner = CORNERS[max(0, min(3, K.setting_int("logo_corner", 3)))]
     opacity = OPACITY[max(0, min(3, K.setting_int("logo_opacity", 1)))]

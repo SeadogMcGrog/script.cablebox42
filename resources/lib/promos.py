@@ -431,7 +431,7 @@ def clear_cache():
 
 
 # ------------------------------------------------------------------ on screen
-# Shared by the TV window (a promo in a break), Settings > Advanced > Preview
+# Shared by the TV window (a promo in a break), Settings > Breaks > Preview
 # promo and the development contact sheet, so all three show the same card.
 # One time phrase per card, in the time label only (the heading is just the
 # channel).  Every phrase is a whole sentence in strings.po, so it translates
@@ -564,7 +564,7 @@ def card(inf, title, pt, now, ch=None, channel_name="", later=False, special=Non
 
 
 # ------------------------------------------------------------------ 90s style
-# Settings > Programming > Promo style: early-90s cable (default) or Modern.
+# Settings > Breaks > Look of promos and retro ads: early-90s cable (default) or Modern.
 # The 90s card's title and time tab are lettered with pictures of Bebas Neue
 # letters (media/promo90s/glyphs): Kodi 21 can't load a font from a script
 # add-on.  Anything the letters can't spell falls back to the skin's font.
@@ -729,7 +729,7 @@ def air(win, ch, pt, path, title, later, now, kicker=None, special=None):
     """Put one promo card on `win` (a window with the TV's layout,
     script-cablebox42-tv.xml) and return its music ('' for a silent card).
     The one way a promo goes on screen: in a break (tv.start_promo), in
-    Settings > Advanced > Preview promo and with the Developer tools cheat code.
+    Settings > Breaks > Preview a promo and with the Developer tools cheat code.
     The caller starts the music with ThemeAudio.start(music, end)."""
     try:
         inf = info(path, title or "")

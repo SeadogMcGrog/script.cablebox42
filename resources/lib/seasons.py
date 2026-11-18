@@ -11,7 +11,7 @@ What counts as holiday material (in this order of importance):
   * Kodi genres (Horror and Mystery for Halloween by default)
   * as a safety net, titles of movies and episodes ("Treehouse of Horror",
     "A Charlie Brown Christmas"), since Kodi can't tag single episodes
-The tag and genre words are editable per season in Settings > Seasons.
+The tag and genre words are editable per season in Settings > Holidays & events.
 """
 import calendar
 import datetime
@@ -24,7 +24,7 @@ from .kodiutil import log
 
 FULL = 1.0
 
-# default tag / genre words (Settings > Seasons can change them)
+# default tag / genre words (Settings > Holidays & events can change them)
 DEFAULT_TAGS = {"halloween": "halloween, spooky, horror", "thanksgiving": "thanksgiving",
                 "christmas": "christmas, xmas, holiday"}
 DEFAULT_GENRES = {"halloween": "Horror, Mystery", "thanksgiving": "", "christmas": "Christmas, Holiday"}

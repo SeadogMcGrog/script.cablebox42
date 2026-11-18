@@ -195,7 +195,7 @@ without a good channel** and **Move shows between channels**) and the
 | **Right** | "What's on now": every channel and its current show |
 | **OK / Info** | Show or hide the channel banner (now, next, progress) |
 | **Menu / Context** | **Closed captions** and caption options, what's on now, last channel, **sleep timer**, *Don't air this show here*, **CableBox menu** (channels and settings), turn off |
-| **Subtitle / CC button** | Captions on or off (once *Settings → Tools → Remote CC button* is set up) |
+| **Subtitle / CC button** | Captions on or off (once *Settings → On screen → Remote CC button* is set up) |
 | **Back / Stop** | Turn off the TV and go back to where you started it: the CableBox menu if you chose *Watch TV* there, otherwise Kodi |
 | **Volume / Mute** | Work as normal |
 | Pause, seek, skip | Ignored. It's live TV |
@@ -220,7 +220,7 @@ resume point, watched status and last-played date before airing it, and puts
 them back afterwards (even after a crash or power cut). Turn this off in
 *Settings → Start-up & library → Keep my watch progress untouched*. To tidy a list that
 filled up before this protection existed, use **Clean up my 'In progress'
-list** (*Settings → Tools*): tick what you're really watching and the rest is
+list** (*Settings → Start-up & library*): tick what you're really watching and the rest is
 cleared.
 
 **Sleep timer.** Menu → *Sleep timer* (15 minutes to 2 hours). There's an
@@ -342,6 +342,7 @@ on the same episode twice.
 | **Finish setting up** | Only while something a first setup left for later isn't set: commercials, bumps and station IDs, guide and weather music, music videos, weather city. Each row leaves once it's chosen or you pick *I don't need this* |
 | **Channel manager** | Add, edit, delete and renumber channels. Its **Lineup tools** work on the whole lineup (below) |
 | **Weekly planner** | Open a channel's 7-day grid |
+| **Holidays and specials** | The month calendar of marathons and holiday lineups on exact dates ([Holidays and specials](#holidays-and-specials)); the same as *Settings → Holidays & events → Plan holidays and specials* |
 | **Settings and tools** | All settings, plus the maintenance **Tools** page below |
 | **Help** | |
 
@@ -363,18 +364,20 @@ Everything that works on the whole lineup rather than one channel.
 ### Settings → Tools
 
 Maintenance jobs live on their own page in Settings, so the menu stays short.
-Each button closes Settings and opens the tool.
+Each button closes Settings and opens the tool; what you changed in Settings before
+pressing it is saved, as with OK. In the order Settings shows them,
+under *Schedules*, *Check* and *Reset*. *Holidays and specials* is in the main menu and
+*Settings → Holidays & events*; *Remote CC button* is in *Settings → On screen*;
+*Clean up my 'In progress' list* is in *Settings → Start-up & library*.
 
 | Tool | What it's for |
 |---|---|
-| **Holidays and specials** | Marathons and holiday lineups on dates: add, change, preview and remove them ([Holidays and specials](#holidays-and-specials)) |
-| **Check my videos** | Lists commercials, bumps and videos that can't be used, and why |
-| **Check extras** | Every movie's `Extras` folder (next to the movie's file, or in `VIDEO_TS` / `BDMV`): each video's cleaned-up title, length and *Air* or *Skipped* with the reason, plus totals at the top. Making-of pieces, documentaries, featurettes, interviews and other readably named videos air; deleted/extended/alternate scenes, bloopers, trailers and promos, galleries, music videos, short films, commentaries, anything under a minute and names like `title_t03` are skipped. Everything in an `Extras` subfolder named *Behind the scenes*, *Making of*, *Interviews*, *Featurettes* or *Documentaries* airs. CableBox lists and measures these folders in the background while the TV is off and never changes them. The summary shows *Lengths measured: X of Y*; while some are still to do, **Look now** (*Look for movie extras*) does the rest straight away (progress bar, *Cancel* keeps what's found so far) and says how much there is to air when it finishes. After the list it offers to look for the rest, or to add a Behind the scenes channel when there's enough and you have none. Videos whose length can't be read don't air |
-| **Check skipped episodes** | The TV episodes the last refresh left out for being shorter than *Skip episodes shorter than*, by series, with their length and file. Nothing is moved or hidden in Kodi |
-| **Check chapters** | *Chapters read: X of Y*, with *Read now* (Cancel keeps what's read). Every TV show with how many episodes have act breaks, scene chapters, automatic chapters or none, and how many aren't read yet. Pick a show for *Automatic* (default), *Always use chapters* or *Never use chapters*, or its episodes with where their breaks (and end credits) are |
-| **Clean up my 'In progress' list** | Clears resume points left by channel surfing. You keep the ones you tick |
 | **Refresh schedules (keep my place)** | The same refresh CableBox does by itself when something changes: from each channel's next programme, what's on air keeps playing, every show keeps its next episode. No question asked |
 | **Start series over…** | The only thing that sends shows back to their first episode: *All shows*, *One channel* (the shows it's home to, its own runs and pinned slots) or *One show*, then *Cancel* / *Start over* (Cancel has the focus) |
+| **Check my videos** | Lists commercials, bumps and videos that can't be used, and why |
+| **Check extras** | Every movie's `Extras` folder (next to the movie's file, or in `VIDEO_TS` / `BDMV`): each video's cleaned-up title, length and *Air* or *Skipped* with the reason, plus totals at the top. Making-of pieces, documentaries, featurettes, interviews and other readably named videos air; deleted/extended/alternate scenes, bloopers, trailers and promos, galleries, music videos, short films, commentaries, anything under a minute and names like `title_t03` are skipped. Everything in an `Extras` subfolder named *Behind the scenes*, *Making of*, *Interviews*, *Featurettes* or *Documentaries* airs. CableBox lists and measures these folders in the background while the TV is off and never changes them. The summary shows *Lengths measured: X of Y*; while some are still to do, **Look now** (*Look for movie extras*) does the rest straight away (progress bar, *Cancel* keeps what's found so far) and says how much there is to air when it finishes. After the list it offers to look for the rest, or to add a Behind the scenes channel when there's enough and you have none. Videos whose length can't be read don't air |
+| **Check chapters** | *Chapters read: X of Y*, with *Read now* (Cancel keeps what's read). Every TV show with how many episodes have act breaks, scene chapters, automatic chapters or none, and how many aren't read yet. Pick a show for *Automatic* (default), *Always use chapters* or *Never use chapters*, or its episodes with where their breaks (and end credits) are |
+| **Check skipped episodes** | The TV episodes the last refresh left out for being shorter than *Skip episodes shorter than*, by series, with their length and file. Nothing is moved or hidden in Kodi |
 | **Start over (factory reset)** | Back to a fresh install: deletes channels, planner pins and schedules (optionally all settings too), then shows the welcome screen. Your videos, bumps, commercials and station folders are never touched. Handy for setting up the new stations cleanly |
 
 ### Shows without a good channel
@@ -644,8 +647,8 @@ loudness and fades out by itself.)
 | Promos for what's coming up, in breaks | Off (default) / On. At most one per break |
 | How often | Every break / About half the breaks / Now and then |
 | Promote | Up next and later today (default): breaks inside a programme promote something later today on this channel (never the show you're watching, and not the same show twice in a row), the break before the next programme says *Up next* for it. On a movie channel, with breaks only between movies, that's always *Up next*. What's on next: always the next programme. Something later today: always a later show. Nothing later today to promote → the next programme |
-| Promo style | Early-90s cable (default): a chunky magenta band slides in, the show's name lands in heavy italic letters (or its logo), the time drops into a yellow tab, squiggles and confetti pop in; all motion ends within 3 seconds and stays inside a 4:3 area. Modern: the sleek card |
-| Promo music | The show's theme music / None (silent) |
+| Look of promos and retro ads | Early-90s cable (default): a chunky magenta band slides in, the show's name lands in heavy italic letters (or its logo), the time drops into a yellow tab, squiggles and confetti pop in; all motion ends within 3 seconds and stays inside a 4:3 area. Modern: the sleek card |
+| Music in promos and ads | The show's theme music / None (silent). Also house-break cards and retro ads, with Promos on or off |
 | Also use short promo clips from a show's Extras folder | Off (default). Videos in the show's `Extras` folder with *Promo* or *Trailer* in the name, up to 2 minutes, sometimes air instead (e.g. `Extras/1988 On-Air Season Two Promo.mkv`) |
 
 ### House breaks
@@ -653,7 +656,7 @@ loudness and fades out by itself.)
 *Settings → Breaks → House breaks* fills breaks with the cable system's own
 spots, the way cable did, when you have no commercials. Nothing new to download:
 everything comes from your library and CableBox's cards (same look as promos,
-*Promo style* and *Promo music* apply).
+*Look of promos and retro ads* and *Music in promos and ads* apply).
 
 | Choice | What happens |
 |---|---|
@@ -742,13 +745,13 @@ default; only used when house breaks are.
   back-to-back breaks at the end of a show count as one), and at most 1 in 6 of
   a channel's retro ads on *General* channels, 1 in 3 on *Movies*, 1 in 4 on the
   others. Past that, another ad that fits takes the slot.
-- *Promo style* sets how cards come in (snappy or soft); *Promo music* off makes
+- *Look of promos and retro ads* sets how cards come in (snappy or soft); *Music in promos and ads* off makes
   them silent. Your own commercials always win: retro ads are house-break content
   only, and with *Mix in with commercials* a normal break gets at most one house
   ad, retro or promo.
 - Phone numbers are all 555-0100–0199; brands, places and people are made up.
 
-**See one now:** *Settings → Advanced → Preview promo*: pick a channel, then
+**See one now:** *Settings → Breaks → Preview a promo*: pick a channel, then
 *Up next* or a programme in the next 6 hours, and its promo plays full screen
 exactly as in a break, between 2 s and 1 s of black (clean for a recording).
 
@@ -793,7 +796,7 @@ real TV.
 ## Holidays
 
 CableBox follows the holiday calendar the way the networks did
-(*Settings → Seasons*, on by default):
+(*Settings → Holidays & events*, on by default):
 
 | Season | Run-up | All-out |
 |---|---|---|
@@ -823,7 +826,7 @@ CableBox follows the holiday calendar the way the networks did
   Plain horror and monster shows still air all year. Slots you pinned yourself
   are never changed.
 
-**What counts as holiday programming** (*Settings → Seasons*, editable for each
+**What counts as holiday programming** (*Settings → Holidays & events*, editable for each
 season):
 
 1. **Kodi tags** on movies and TV shows: the main way. Any tag containing
@@ -841,8 +844,9 @@ season):
 
 The seasons above pick holiday programmes by themselves. A **special** is for
 saying exactly what you want on a date: a marathon, a holiday lineup, a movie
-night. *Settings → Tools → Holidays and specials*, or *Channel manager → a
-channel → Schedule → Holidays and specials* for that channel's.
+night. *Holidays and specials* in the main menu (also *Settings → Holidays &
+events → Plan holidays and specials*), or *Channel manager → a channel →
+Schedule → Holidays and specials* for that channel's.
 
 It opens on a **month calendar**. Days with a special show ★ and its name
 (or *★ 2 specials*); today is outlined in white. A special that runs past
@@ -931,7 +935,7 @@ another channel*, **Preview the day** (what will air, channel by channel) and
 ### Summer reruns
 
 The 90s TV year had a shape: new episodes in the fall, then a summer of reruns.
-With *Settings → Seasons → Summer reruns* on, from **1 June to 31 August** the
+With *Settings → Holidays & events → Summer reruns* on, from **1 June to 31 August** the
 channels air episodes of each series they've already shown instead of moving it on:
 
 - A series reruns its current season in order, from its first episode up to the
@@ -1081,7 +1085,7 @@ to it when the programme has captions (the same check as the CC button).
 - Not after a break, not on commercials, bumps, promos, station IDs, the guide,
   weather, music videos or *Behind the scenes*.
 - With the logo bug in the top-left corner, the box goes top right.
-- Off: *Settings → Viewing → Show rating at start of programmes*.
+- Off: *Settings → On screen → Show rating at start of programmes*.
 
 ### The corner logo ("bug")
 
@@ -1089,7 +1093,7 @@ to it when the programme has captions (the same check as the CC button).
   show starts. It stays off commercials, bumps, station IDs and the guide,
   like the real networks.
 - Choose the corner (bottom right by default) and the opacity (50% by
-  default) in *Settings → Channels*.
+  default) in *Settings → On screen*.
 - In the channel banner, the logo replaces the call letters under the
   channel number.
 - A plain **Logo folder** also works: images named after each channel's name,
@@ -1180,7 +1184,7 @@ Add smooth jazz under *Weather channel music folder* for the full effect.
 
 ## CRT effect
 
-*Settings → Viewing → CRT effect*:
+*Settings → On screen → CRT effect*:
 
 | Setting | What you get |
 |---|---|
@@ -1232,49 +1236,59 @@ tap to tune. Yatse custom commands can call the `RunScript` actions above.
 
 ## Settings reference
 
+Each category is in the order Settings shows it, under the same headings.
+
 **Breaks**
 
 | Setting | Default | |
 |---|---|---|
+| *Commercials and bumps* | | |
 | Commercials folder | – | Global commercials |
-| Bumps / station ID folder | – | Global bumps |
+| Bumps folder | – | Global bumps (station IDs are per channel: its station folder's `ids/` or its own folder) |
 | Commercial breaks per half hour | 2 | 0–4 |
 | Commercial breaks at chapter marks | On | An episode with good chapter marks gets its commercial breaks where the original broadcast's act breaks were (Seinfeld's "The Opposite": after the cold open, at 13:27 and before the end tag). Chapters are read once per file, in the background: whenever Kodi is idle, as fast as the drive answers quickly (it slows down at once for a busy or waking drive, and pauses on a busy CPU); with the TV on, the episodes airing in the next 6 hours first, gently; never while you watch something else in Kodi. The episodes they change are planned again. *Chapters read* below the setting shows how far it is; until then, and for files without usable chapters (none, one, evenly spaced automatic ones), breaks are evenly spaced as before. Scene chapters every couple of minutes keep the usual number of breaks, each moved to the nearest mark. The leftover time decides how many breaks there are (at least a minute each). *Tools → Check chapters* shows each show's episodes and lets you set a show to *Always* or *Never* use chapters. Files are only read, never changed |
-| House breaks | Automatic | See [House breaks](#house-breaks) |
-| Retro ads | On | Period ads in house breaks ([Retro ads](#retro-ads)) |
-| Promo style | Early-90s cable | Or Modern. Used by promos and by house breaks |
-| Promo music | The show's theme music | Or none (silent) |
+| *House breaks and retro ads* | | |
+| House breaks (the station's own ads and promos) | When there are no commercials | See [House breaks](#house-breaks) |
+| Retro ads | On | Period ads in house breaks ([Retro ads](#retro-ads)). Greyed when House breaks is Off |
+| Look of promos and retro ads | Early-90s cable | Or Modern. Used by promos, house breaks and the era of the retro ads |
+| Music in promos and ads | The show's theme music | Or none (silent). Also the jingles of house-break cards and retro ads, so it works with Promos off too |
+| *Promos* | | |
 | Promos for what's coming up, in breaks | Off | At most one per break ([Promos](#promos)) |
 | How often | About half the breaks | Every break / About half the breaks / Now and then |
 | Promote | Up next and later today | Or only what's on next, or only something later today |
 | Also use short promo clips from a show's Extras folder | Off | *Promo* / *Trailer* videos up to 2 minutes |
+| Preview a promo... | | Pick a channel, then *Up next* or *Later today* (its programmes in the next 6 hours): about 2 s of black, the promo exactly as in a break, 1 s of black, then Settings again. Changes nothing (schedules, breaks, series, *How often*). Back ends it. Works with Promos off. Also `RunScript(script.cablebox42,preview_promo,<tvshowid>)` for a skin button or a favourite. Not while the TV is on |
 
 **Channels**
 
 | Setting | Default | |
 |---|---|---|
+| *What airs where* | | |
 | Shows on more than one channel | TV shows on one channel each | Or everything on one channel each, or allow repeats |
 | Short programmes (under 12 min) | Pack several into one time slot | Back-to-back like a cartoon block (next episodes of the same series, or several short films), a break after each. Or *only where I pinned them* (skipped by the automatic schedule while anything longer is available), or *one per time slot* |
 | Skip episodes shorter than | 5 min | Off, 2, 5 or 10 min. A TV episode shorter than this (an intro, trailer or recap filed as an episode) is passed over and its series goes on to the next real episode. Not for series whose usual episode is that short (7-minute cartoons still air, packed), not for episodes of unknown length, never movies, short films, music videos or extras, and a pinned slot airs what you pinned. Files are never moved or hidden. *Tools → Check skipped episodes* lists them |
-| Stations folder | – | One folder per channel: logo, bumps, ids, commercials, and time-block subfolders (see [Stations and logos](#stations-and-logos)) |
-| Logo folder | – | Images named after each channel's name, call letters or number. Beats a built-in station logo |
-| Station logo in the corner | On | Only shows when a channel has a logo |
-| Corner / Logo opacity | Bottom right / 50% | |
-| Show the logo in the channel banner | On | Replaces the call letters |
+| *Folders* | | |
+| Stations folder (one folder per channel) | – | Each channel's folder holds its logo, bumps, ids, commercials, and time-block subfolders (see [Stations and logos](#stations-and-logos)) |
+| Logo folder (images named like the channel) | – | Images named after each channel's name, call letters or number. Beats a built-in station logo |
 
-**Viewing**
+**On screen**
 
 | Setting | Default | |
 |---|---|---|
-| Start on channel | 0 | 0 means the last channel watched (so does a number no channel has) |
+| *Banner, logo and rating* | | |
 | Show channel banner for | 6 s | 3, 6 or 10 seconds |
+| Show the logo in the channel banner | On | Replaces the call letters |
+| Station logo in the corner during programmes | On | Only shows when a channel has a logo |
+| Corner / Logo opacity | Bottom right / 50% | Greyed when the corner logo is off |
+| Show rating at start of programmes | On | The 1997-style *TV-PG* box in the top-left corner for the first 15 seconds of a show or movie (top right when the station logo is top left), with a *CC* box beside it when it has captions ([The rating box](#the-rating-box)) |
+| *Changing channels* | | |
 | TV turn-on and turn-off effect | On | Switching on: the picture warms up from a bright line, the CableBox 42 title card, then your channel - press any button to skip it. Switching off (Back, *Turn off* or the sleep timer): the picture shrinks to a dot - as a short clip on Windows, drawn over the picture elsewhere (a new video would make a TV that switches refresh rate blank out). Both with sound |
 | Static between channels / Static sound | On / On | |
 | Static plays as | Automatic | *Quick*: Kodi interface sound over the picture, the fastest. *Video clip*: a short static clip with its own sound, slightly slower but picture and sound always match. *Automatic* uses the clip on Windows, which drops interface sounds between videos, unless *Adjust display refresh rate* is on. |
+| *Picture* | | |
 | CRT effect | Off | Off / Subtle / Full |
-| Captions: show programmes in Kodi's full-screen player | On | Needed on most TV boxes |
-| Captions: rewind 1 second so embedded subtitles appear | Automatic | |
-| Show rating at start of programmes | On | The 1997-style *TV-PG* box in the top-left corner for the first 15 seconds of a show or movie (top right when the station logo is top left), with a *CC* box beside it when it has captions ([The rating box](#the-rating-box)) |
+| *Captions* | | |
+| Remote CC button... | | Lets the remote's subtitle button switch CableBox's captions, or undoes it |
 
 **Guide & Weather**
 
@@ -1289,30 +1303,37 @@ tap to tune. Yatse custom commands can call the `RunScript` actions above.
 | Weather channel title | *Your Local Forecast* | |
 | Weather channel music folder | – | |
 
----
-
-**Seasons** (see [Holidays](#holidays))
+**Holidays & events** (see [Holidays](#holidays))
 
 | Setting | Default | |
 |---|---|---|
-| Holiday programming | On | Halloween, Thanksgiving and Christmas |
+| Plan holidays and specials... | | The month calendar of marathons and holiday lineups on exact dates ([Holidays and specials](#holidays-and-specials)). Also in the main menu |
+| *Automatic holidays* | | |
+| Holiday programming (automatic) | On | Halloween, Thanksgiving and Christmas. Off greys every row below it but Summer reruns |
 | How much in the weeks before | Some | A little / Some / Lots |
-| Halloween / Thanksgiving / Christmas: On | On | Each season separately |
-| Holiday commercials folder | – | Optional, per season |
-| Holiday bumps folder | – | Optional, per season |
-| Tags | *halloween, spooky, horror* · *thanksgiving* · *christmas, xmas, holiday* | Any Kodi tag containing one of these words |
-| Genres | *Horror, Mystery* · – · *Christmas, Holiday* | Empty = don't use genres |
 | Save holiday episodes and movies for their season | On | Keeps Christmas episodes out of July |
-| Summer reruns | Off | *Broadcast networks* or *All channels*: June to August, series rerun episodes already shown ([Summer reruns](#summer-reruns)) |
+| *Halloween*, *Thanksgiving*, *Christmas*: the same five rows each | | |
+| Halloween on (Thanksgiving on, Christmas on) | On | Each season separately; off greys its four rows |
+| Halloween: commercials folder | – | Optional, per season |
+| Halloween: bumps folder | – | Optional, per season |
+| Halloween: tags (comma separated) | *halloween, spooky, horror* · *thanksgiving* · *christmas, xmas, holiday* | Any Kodi tag containing one of these words |
+| Halloween: genres (comma separated) | *Horror, Mystery* · – · *Christmas, Holiday* | Empty = don't use genres |
+| *Summer* | | |
+| Summer reruns (June to August) | Off | *Broadcast networks* or *All channels*: June to August, series rerun episodes already shown ([Summer reruns](#summer-reruns)) |
 
 **Start-up & library**
 
 | Setting | Default | |
 |---|---|---|
+| *Start-up* | | |
+| Start on channel | 0 | 0 means the last channel watched (so does a number no channel has) |
 | Go straight to TV when opened | Off | Skip the CableBox menu |
 | Turn the TV on when Kodi starts | Off | Only right after Kodi starts, and never if you've already started watching something else |
-| Keep my watch progress untouched | On | Puts back resume points, watched status and last-played dates after CableBox plays something |
+| *Sleep* | | |
 | Sleep timer also puts the TV in standby (CEC) | Off | |
+| *Your Kodi library* | | |
+| Keep my watch progress untouched | On | Puts back resume points, watched status and last-played dates after CableBox plays something |
+| Clean up my 'In progress' list... | | Clears resume points left by channel surfing. You keep the ones you tick |
 
 **Tools**: maintenance only, see [Settings → Tools](#settings--tools). Lineup tools are in the
 [Channel manager](#channel-manager--lineup-tools).
@@ -1321,10 +1342,15 @@ tap to tune. Yatse custom commands can call the `RunScript` actions above.
 
 | Setting | |
 |---|---|
-| AV1 videos | Automatic / Always skip / Always play (see below). Default: Automatic |
+| *Scheduling* | |
 | Schedule ahead (hours) | 6, 12 or 24. Default: 12 |
 | Also air extras with unrecognised names | Movie extras named like `title_t03.mkv` or "Bonus 2" count too (see *Check extras*). Default: off |
-| Preview promo | Pick a channel, then *Up next* or *Later today* (its programmes in the next 6 hours): about 2 s of black, the promo exactly as in a break, 1 s of black, then Settings again. Changes nothing (schedules, breaks, series, *How often*). Back ends it. Also `RunScript(script.cablebox42,preview_promo,<tvshowid>)` for a skin button or a favourite. Not while the TV is on |
+| *Playback and captions* | |
+| AV1 videos | Automatic / Always skip / Always play (see below). Default: Automatic |
+| Captions: use Kodi's full-screen player | Shows programmes with captions in Kodi's own full-screen player; needed on most TV boxes. Default: on |
+| Captions: rewind 1 second (embedded subtitles) | Makes Kodi show embedded subtitles on CoreELEC. Automatic (CoreELEC only) / Always / Never. Default: Automatic |
+| *Developer* | |
+| Developer tools | 0 0 0 while watching airs the channel's next promo at once (nothing in the schedule changes). Default: off |
 
 ## Video formats and AV1
 
@@ -1441,7 +1467,7 @@ that some skins make for add-ons placed on their home menu.
 
 **No static sound when changing channel, or only the first time.** Some
 systems, Windows especially, reset their audio output between videos and drop
-Kodi's interface sounds. Set *Settings → Viewing → Static plays as* to
+Kodi's interface sounds. Set *Settings → On screen → Static plays as* to
 **Video clip**. With *Quick*, CableBox handles Kodi's *Play GUI sounds* setting
 itself while the TV is on: button clicks stay silent during shows, the static
 still plays, and your own setting comes back when you turn the TV off. Avoid *Video clip* if your TV switches refresh rate

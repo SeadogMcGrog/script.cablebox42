@@ -2863,7 +2863,7 @@ from anywhere; Watch TV turns it back on, on the same channel.
 Main menu > Closed captions, or the Menu button while watching, switches captions
 on or off for every programme (like a TV's CC setting).  'Caption options' in that
 menu picks a track or loads a subtitle file.  To use the remote's subtitle button,
-run Settings > Tools > Remote CC button once.
+run Settings > On screen > Remote CC button once.
 
 [B]Station folders[/B]
 Set a Stations folder (Settings > Channels) and CableBox keeps one folder per channel,
@@ -2897,10 +2897,12 @@ Settings > Channels > 'Shows on more than one channel' changes this.
 
 [B]Menu and tools[/B]
 The menu keeps to the everyday things: Watch TV, What's on now (tune straight to a
-show), the Channel manager, the Weekly planner, Settings and Help.  Lineup tools
-(build my lineup, move shows, sign-off and prime time, station folders) are in the
-Channel manager; maintenance (check my videos, clean up In progress, refresh
-schedules, start series over, start over) is on the Tools page in Settings.
+show), the Channel manager, the Weekly planner, Holidays and specials, Settings and
+Help.  Lineup tools (build my lineup, move shows, sign-off and prime time, station
+folders) are in the Channel manager; maintenance (check my videos, refresh schedules,
+start series over, start over) is on the Tools page in Settings.  In Settings, OK
+saves and Back cancels; a button row there (a tool, Plan holidays and specials,
+Preview a promo) saves what you changed before it, like OK.
 Changes to settings, channels and station clips apply from
 each channel's next programme on their own: what's on stays on, and every show keeps
 its next episode.  Only Tools > Start series over sends shows back to episode one.
@@ -2930,7 +2932,7 @@ holidays and specials show in their own week, with a star on the day.
 [B]Your watch progress[/B]
 CableBox puts back resume points, watched status and last-played dates after it
 airs something, so surfing doesn't fill your 'In progress' list (Settings >
-Start-up & library).  Settings > Tools > 'Clean up my In progress list' tidies up an older list.
+Start-up & library).  'Clean up my In progress list' on the same page tidies up an older list.
 
 [B]Sign-off and prime time for all channels[/B]
 Channel manager > Lineup tools: overnight sign-off (default 12 AM - 5 AM) and automatic
@@ -2944,11 +2946,12 @@ after Thanksgiving, all-out on the 24th and 25th): each channel mixes in its own
 episodes and movies (Kodi tags first, then genres such as Horror and Mystery, then titles) - a few at
 first, more as the day gets closer, all day on the day itself.  Optional holiday
 commercial and bump folders.  The rest of the year Christmas and Thanksgiving episodes
-are saved for their season.  Settings > Seasons.
+are saved for their season.  Settings > Holidays & events.
 
 [B]Holidays and specials[/B]
-Settings > Tools > Holidays and specials (or Channel manager > channel > Schedule):
-a month calendar - OK on a day adds a special there, Menu shows them as a list.
+Main menu > Holidays and specials (also Settings > Holidays & events, and Channel
+manager > channel > Schedule): a month calendar - OK on a day adds a special there,
+Menu shows them as a list.
 A special is a marathon or a holiday lineup on a date - 31 December, the 4th Thursday of
 November, Good Friday - on one channel or several, all day or for hours you
 choose, back every year.  It airs instead of the channel's usual schedule for
@@ -2973,7 +2976,7 @@ Settings > Breaks > Promos: breaks now and then include a short promo for
 what this channel airs next - the episode's still, the show's logo, the episode
 title, a short synopsis when one fits, 'Up next' or the day and time, and the show's
 theme.mp3, all from your own library (nothing in it is changed).  Your own promo
-clips in a station folder's promos/ come first.  Settings > Advanced > Preview promo
+clips in a station folder's promos/ come first.  Settings > Breaks > Preview a promo
 plays one channel's next promo (or a later one) straight away.
 
 [B]Files[/B]
@@ -3031,7 +3034,8 @@ def pick_planner_channel():
     return False
 
 
-# Tools reached from Settings > Tools (RunScript(script.cablebox42,tool,<name>)).
+# Tools reached from Settings action rows (RunScript(script.cablebox42,tool,<name>)): the Tools
+# page, plus Plan holidays and specials, Remote CC button and Clean up my 'In progress' list.
 TOOLS = {
     "wizard": lambda: wizard(),
     "quick": lambda: quick_setup(),
@@ -3176,7 +3180,8 @@ def check_skipped():
 
 
 def open_specials():
-    """Settings > Tools > Holidays and specials."""
+    """Holidays and specials: the main menu, Settings > Holidays & events > Plan
+    holidays and specials..."""
     from . import specials_editor
     specials_editor.open_specials()
 
@@ -3187,7 +3192,7 @@ def run_finder():
 
 
 def cc_button():
-    """Settings > Tools > Remote CC button."""
+    """Settings > On screen > Remote CC button..."""
     from . import captions
     captions.keymap_tool()
 TOOL_BUSY = "script.cablebox42.tool"
@@ -3626,12 +3631,13 @@ def _main_menu():
                      _("On or off for every programme. While watching: the Menu button")),
                     ("manager", _("Channel manager"), _("Add, edit and renumber channels - plus the lineup tools")),
                     ("planner", _("Weekly planner"), _("Pin shows to days and times")),
+                    ("specials", _("Holidays and specials"), _("Marathons and holiday lineups on exact dates")),
                     ("settings", _("Settings and tools"),
-                     _("Commercials, music, weather, picture - plus maintenance tools")),
+                     _("Breaks, holidays, picture, weather - plus maintenance tools")),
                     ("help", _("Help"), _("How everything works"))]
         else:
             opts = [("wizard", _("[B]Build my lineup[/B]"), _("Builds a lineup from your Kodi library in a minute")),
-                    ("settings", _("Settings and tools"), _("Commercials, music, weather, picture")),
+                    ("settings", _("Settings and tools"), _("Breaks, holidays, picture, weather")),
                     ("help", _("Help"), _("How everything works"))]
         todo = setup_todo(chans) if chans else []
         if todo:                                # what a first setup left for later
@@ -3668,6 +3674,8 @@ def _main_menu():
         elif k == "planner":
             if pick_planner_channel():       # left with no change: nothing to check
                 refresh_if_changed()
+        elif k == "specials":
+            open_specials()                  # a saved special replans in the service (specials_replan.json)
         elif k == "settings":
             open_settings()
         elif k == "help":
