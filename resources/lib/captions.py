@@ -454,6 +454,14 @@ class Captions(object):
         self.showing = False
         self.cand = None
 
+    def showing_settled(self, now=None):
+        """Subtitles on screen that CableBox's own choice has left there: only once the
+        programme's captions are applied (not pending) and Kodi has settled.  Right
+        after a start Kodi still reports the file's remembered "subtitles on" (late on
+        CoreELEC), even with CC off: that must never send the picture full screen."""
+        now = time.time() if now is None else now
+        return self.showing and not self.pending and now >= self.quiet_until
+
     def take_note(self):
         n, self.note = self.note, ""
         return n

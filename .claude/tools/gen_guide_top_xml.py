@@ -1,4 +1,5 @@
-"""The guide's top half (stage 3) in the TV skin: video window, panel and caption
+"""The guide's top half (stage 3) in the TV skin: frame (the video is the window's own
+control 10, zoomed into it in guide mode - never a second videowindow), panel and caption
 while a run plays (Window.Property(gtop) = video); the 1.2.0 header otherwise."""
 import sys
 
@@ -59,9 +60,9 @@ rep('''            <control type="label">
                     <left>60</left><top>20</top><width>456</width><height>340</height>
                     <texture colordiffuse="FF000000">white.png</texture>
                 </control>
-                <control type="videowindow">
-                    <left>60</left><top>20</top><width>456</width><height>340</height>
-                </control>
+                <!-- the picture: the TV window's one video control (id 10) moved into this frame
+                     (a zoom on it in guide mode).  Never a second videowindow: with two in the window Kodi
+                     redraws at half the display rate (stop motion on the N2) -->
                 <!-- the panel: guide title and clock, then the caption -->
                 <control type="label">
                     <left>560</left><top>28</top><width>900</width><height>70</height>

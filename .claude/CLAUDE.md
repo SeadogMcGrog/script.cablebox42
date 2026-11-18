@@ -263,6 +263,21 @@ A task often starts as "implement `briefs\<name>.md`".
   password). Reach the Windows Kodi through its event server: `python G:/CableBox42/rig/kodisend.py
   "RunScript(...)"` (UDP 9777, what `kodi-send` does). Start Kodi as a normal app, not from a tool's
   shell: Kodi started with `Start-Process` from a tool closes when that shell ends.
+- **One videowindow per window, ever.** A second `videowindow` control in the TV skin (guide stage 3's
+  top-half frame), even hidden, made Kodi redraw the TV window at half the display rate while video
+  played (N2, 2026-11-18: 29.8 fps at 60 Hz, 11.7-12.2 at 23.98 Hz; 1.1.1 and 1.2.0 with one: 59.6).
+  On the N2 a video frame reaches the screen only on a redraw, so at 23.98 Hz every other film frame
+  was skipped (~12/s, Kodi's skip counter): stop motion. Found by elimination on the N2: dev's code
+  with 1.2.0's skin = 60, dev's skin without the guide's videowindow = 59.5; the tick loop, the retro /
+  promo groups and the videowindow's squeeze animation made no difference. The guide's top half now
+  zooms control 10 into its frame (a Conditional zoom with absolute rectangles in guide mode; Kodi's
+  Python can't get a videowindow: "Unknown control type for python"), and the guide group sits *before*
+  control 10 in the skin so the video clears only its own rectangle of it. The Windows rig can't show
+  this (no vsync: plain Kodi 365 fps, any window over video ~160): measure on the N2 (`System.FPS`).
+- **Captions mode only on CableBox's settled choice** (`Captions.showing_settled`): right after a start
+  Kodi still reports the file's remembered "subtitles on" (late on CoreELEC), so `fs_wanted` read
+  `cc.showing` with CC off and went full screen - which switches the display to the film's rate
+  (refresh "On start/stop") and left it at 23.98 Hz for the TV window afterwards.
 - `kodi-addon-checker` rejects `<news>` over 1500 characters. Keep the newest release
   notes there and the full history in `changelog.txt`.
 

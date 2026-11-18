@@ -566,7 +566,9 @@ class TVWindow(xbmcgui.WindowXML):
     def fs_wanted(self):
         # captions on - or any subtitle on screen: Blu-ray rips switch on a 'forced'
         # track for foreign-language scenes by themselves, and those need it too
-        if not (self.cc_fullscreen and self.overlay is not None and (self.cc.on or self.cc.showing)):
+        # (showing only once CableBox's own choice has applied: Kodi's remembered "on" from
+        # just after a start, with CC off, went full screen and switched the display's rate)
+        if not (self.cc_fullscreen and self.overlay is not None and (self.cc.on or self.cc.showing_settled())):
             return False
         if self.closing or self.power_on or self.prop_mode != "video" or self.squeezed or self.cover_mark:
             return False                 # (squeezed credits play in the TV window's video window)
