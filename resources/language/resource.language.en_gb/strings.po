@@ -8003,3 +8003,7 @@ msgstr ""
 msgctxt "#34536"
 msgid "Counting..."
 msgstr ""
+
+msgctxt "#34537"
+msgid "The day "
+msgstr ""

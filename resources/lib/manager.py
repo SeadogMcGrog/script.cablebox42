@@ -167,6 +167,7 @@ def search_pick(heading, items, multi=False, preselected=None, details=None, que
     details = details or {}
     chosen = list(preselected or [])
     pos = 0
+    last_head = None
     while True:
         matches = _matches(items, query)
         rows, actions = [], []
@@ -184,6 +185,9 @@ def search_pick(heading, items, multi=False, preselected=None, details=None, que
                 rows.append(xbmcgui.ListItem(_("[B]Show only selected[/B]"), ""))
                 actions.append("selected")
         head = len(rows)
+        if last_head is not None and head != last_head and pos >= last_head:
+            pos += head - last_head          # 'Show only selected' came or went: stay on the same item
+        last_head = head
         for m in matches:
             rows.append(xbmcgui.ListItem((CHECK if multi and m in chosen else "") + m, details.get(m, "")))
         title = "%s%s" % (heading, (_("  (%d selected)") % len(chosen)) if multi else "")

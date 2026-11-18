@@ -90,7 +90,10 @@ def when_text(sid, d):
         big = _("big days %s to %s") % (E.when_text(frm), E.when_text(to))
     if not run_up:
         return big[0].upper() + big[1:]
-    return _("From %s, %s") % (E.when_text(run_up), big)
+    start = E.when_text(run_up)
+    if start.startswith(_("The day ")):
+        start = start[0].lower() + start[1:]    # 'From the day after 4th Thursday of November'
+    return _("From %s, %s") % (start, big)
 
 
 def thanksgiving_kind(d):
