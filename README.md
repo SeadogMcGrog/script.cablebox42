@@ -826,19 +826,44 @@ CableBox follows the holiday calendar the way the networks did
   Plain horror and monster shows still air all year. Slots you pinned yourself
   are never changed.
 
-**What counts as holiday programming** (*Settings → Holidays & events*, editable for each
-season):
+**What counts as holiday programming** (each season's page in *Edit holiday seasons*):
 
 1. **Kodi tags** on movies and TV shows: the main way. Any tag containing
    one of the season's words counts, whatever the capitalisation. With the
    default *halloween*, the tags *Halloween*, *Halloween Classics* and
    *kids-halloween* all count. Defaults: *halloween, spooky, horror* ·
-   *thanksgiving* · *christmas, xmas, holiday*.
+   *thanksgiving* · *christmas, xmas, holiday*. In the editor you tick them
+   from the tags your library really has.
 2. **Kodi genres**: Horror and Mystery for Halloween, and Christmas and
-   Holiday for Christmas, by default. Empty the field to leave genres out.
+   Holiday for Christmas, by default. Untick them all to leave genres out.
 3. **Titles, as a safety net.** Kodi can't tag a single episode, so episode
    and movie titles such as *Treehouse of Horror* or *A Charlie Brown
-   Christmas* count too.
+   Christmas* count too. *Extra title words* adds your own (*Festivus*); for
+   Thanksgiving and Christmas they're also saved for the season, for Halloween
+   (where only explicit Halloween material is held back) they aren't.
+
+### Edit the seasons
+
+*Settings → Holidays & events → Edit holiday seasons...* lists each season with
+its dates. Select one for its page; every change is kept as you make it, and the
+schedules take it in from each channel's next programme when you leave Settings.
+
+| Row | What it does |
+|---|---|
+| On / Off | The season on its own (*Holiday programming* in Settings switches them all) |
+| When | *Run-up starts*, *Big days from* and *Big days to*, each picked like a special's date: a date, a weekday of a month, Easter ± days or a ready-made holiday, optionally moved by days. *No run-up* is a choice. A season whose big days run past 31 December carries on into January. Thanksgiving offers *US (4th Thursday of November)*, *Canada (2nd Monday of October)* or *My own rule* |
+| How much in the run-up | *Same as Settings*, *A little*, *Some* or *Lots* for this season only |
+| Tags / Genres | Ticked from a list of what's in your library (with *Search...*). A word that no tag in your library contains stays in the list, ticked, until you untick it |
+| Extra title words | Typed, comma separated; added to the built-in list, never replacing it |
+| Show what matches | For each channel, how many of its episodes and films count, and some titles |
+| Commercials folder / Bumps folder | Optional, as before |
+| Save its shows for its season | This season only; switching it on says how many episodes and films it will keep off the air the rest of the year |
+| Reset to the built-in settings | Back to the shipped dates, words, tags, genres and folders |
+
+Which season is on: a big day beats any run-up (Canada's Thanksgiving in
+October beats Halloween's run-up); between two big days the season higher in
+the list wins. The changes live in `seasons.json` in CableBox's profile folder
+(no file: the dates above); *Start over* removes it.
 
 ### Holidays and specials
 
@@ -1308,16 +1333,11 @@ Each category is in the order Settings shows it, under the same headings.
 | Setting | Default | |
 |---|---|---|
 | Plan holidays and specials... | | The month calendar of marathons and holiday lineups on exact dates ([Holidays and specials](#holidays-and-specials)). Also in the main menu |
+| Edit holiday seasons... | | Each season's page: on or off, dates, run-up, tags, genres, title words, folders ([Edit the seasons](#edit-the-seasons)) |
 | *Automatic holidays* | | |
-| Holiday programming (automatic) | On | Halloween, Thanksgiving and Christmas. Off greys every row below it but Summer reruns |
+| Holiday programming (automatic) | On | Every holiday season. Off greys the two rows below |
 | How much in the weeks before | Some | A little / Some / Lots |
-| Save holiday episodes and movies for their season | On | Keeps Christmas episodes out of July |
-| *Halloween*, *Thanksgiving*, *Christmas*: the same five rows each | | |
-| Halloween on (Thanksgiving on, Christmas on) | On | Each season separately; off greys its four rows |
-| Halloween: commercials folder | – | Optional, per season |
-| Halloween: bumps folder | – | Optional, per season |
-| Halloween: tags (comma separated) | *halloween, spooky, horror* · *thanksgiving* · *christmas, xmas, holiday* | Any Kodi tag containing one of these words |
-| Halloween: genres (comma separated) | *Horror, Mystery* · – · *Christmas, Holiday* | Empty = don't use genres |
+| Save holiday episodes and movies for their season | On | Keeps Christmas episodes out of July (the three built-in seasons; each can differ in its own page) |
 | *Summer* | | |
 | Summer reruns (June to August) | Off | *Broadcast networks* or *All channels*: June to August, series rerun episodes already shown ([Summer reruns](#summer-reruns)) |
 

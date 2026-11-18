@@ -2946,7 +2946,9 @@ after Thanksgiving, all-out on the 24th and 25th): each channel mixes in its own
 episodes and movies (Kodi tags first, then genres such as Horror and Mystery, then titles) - a few at
 first, more as the day gets closer, all day on the day itself.  Optional holiday
 commercial and bump folders.  The rest of the year Christmas and Thanksgiving episodes
-are saved for their season.  Settings > Holidays & events.
+are saved for their season.  Settings > Holidays & events > Edit holiday seasons: each
+season's dates (Canadian Thanksgiving too), how much in the run-up, tags and genres
+ticked from your library, extra title words, and Show what matches.
 
 [B]Holidays and specials[/B]
 Main menu > Holidays and specials (also Settings > Holidays & events, and Channel
@@ -3053,6 +3055,7 @@ TOOLS = {
     "skipped": lambda: check_skipped(),
     "chapters": lambda: check_chapters(),
     "specials": lambda: open_specials(),
+    "seasons": lambda: open_seasons(),       # refreshes after (not in NO_REFRESH): seasons are settings
 }
 
 
@@ -3186,6 +3189,12 @@ def open_specials():
     specials_editor.open_specials()
 
 
+def open_seasons():
+    """Settings > Holidays & events > Edit holiday seasons..."""
+    from . import seasons_editor
+    seasons_editor.open_seasons()
+
+
 def run_finder():
     from . import finder
     finder.run()
@@ -3203,7 +3212,7 @@ CLIP_KINDS = ("bumps", "ids", "commercials")
 # only a cache of how long each video is and how it's encoded - kept, so a fresh
 # setup doesn't have to measure the whole library again.
 RESET_FILES = ("channels.json", "assign.json", "state.json", "unplayable.json", "weather_cache.json", "calendar.json",
-               "finder.json")
+               "finder.json", "seasons.json")
 
 
 def default_settings():

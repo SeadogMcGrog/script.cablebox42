@@ -811,7 +811,7 @@ class ChannelSchedule(object):
         """The holiday episodes and movies of this channel's own programming (its
         sources and its time blocks'), found by seasons.items(): each show with only
         its holiday episodes, in series order."""
-        if season not in seasons.SEASONS:
+        if season not in seasons.SEASONS and season not in ((self.cfg or {}).get("seasons") or {}):
             return {"series": [], "singles": []}
         hit = getattr(self, "_hol_pool", None)
         if hit and hit[0] == season and abs(time.time() - hit[1]) < 300:

@@ -1042,6 +1042,13 @@ tag your holiday episodes in Kodi (*Information → Manage → Manage tags*).
 Each holiday can have its own commercials and bumps folders. *Save holiday
 episodes and movies for their season* keeps Christmas specials out of July.
 
+**Change a season:** *Settings → Holidays & events → **Edit holiday seasons...***,
+pick the season. For Canadian Thanksgiving: *Thanksgiving → When → Canada (2nd
+Monday of October)*. For a longer Halloween: *Halloween → When → Run-up starts →
+On a date... → A date... → September → 15*. *Tags* and *Genres* tick from what's
+in your library; *Show what matches* tells you what each channel will air. *Reset
+to the built-in settings* undoes it all.
+
 ### Plan a Turkey Day marathon
 
 The seasons choose holiday programmes for you. When you want one exact thing

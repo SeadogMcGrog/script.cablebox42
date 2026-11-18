@@ -201,17 +201,8 @@ msgctxt "#32062"
 msgid "Lots"
 msgstr ""
 
-msgctxt "#32063"
-msgid "Halloween - October, all-out on the 31st"
-msgstr ""
 
-msgctxt "#32064"
-msgid "Thanksgiving - on the day"
-msgstr ""
 
-msgctxt "#32065"
-msgid "Christmas - from the day after Thanksgiving, all-out Dec 24-25"
-msgstr ""
 
 msgctxt "#32066"
 msgid "On"
@@ -2848,7 +2839,7 @@ msgstr ""
 
 # Added in 1.0.15
 msgctxt "#33075"
-msgid "[B]Remote control[/B]\nCH+ / CH-, Up / Down, Page Up / Down ... change channel\nNumber keys ...................................... go to channel\nLeft ................................................... last channel\nRight ................................................ what's on now\nOK / Info ........................................... channel banner\nMenu / Context ............ captions, sleep timer & more\nBack / Stop ...................................... turn off the TV\n\nBack takes you to where you switched the TV on: this menu if you chose Watch TV\nhere, otherwise Kodi.  Menu > CableBox menu turns the TV off and opens this menu\nfrom anywhere; Watch TV turns it back on, on the same channel.\n\n[B]Closed captions[/B]\nMain menu > Closed captions, or the Menu button while watching, switches captions\non or off for every programme (like a TV's CC setting).  'Caption options' in that\nmenu picks a track or loads a subtitle file.  To use the remote's subtitle button,\nrun Settings > On screen > Remote CC button once.\n\n[B]Station folders[/B]\nSet a Stations folder (Settings > Channels) and CableBox keeps one folder per channel,\nnamed after the channel (or its call letters, or 'Channel 7'): logo.png, bumps/,\nids/ and commercials/, plus a folder per time-of-day name such as CAM Jr.  Channel\nmanager > channel > Breaks & clips shows the clips the channel really uses and where\nthey come from; Identity > Station folder makes or repairs its folders.  Renaming a\nchannel offers to rename its folder too.\n\n[B]Stations and your own channels[/B]\nA built-in station (Comedy Corner, Chameleon...) is a brand - name, call letters,\nlogo, names by time of day - plus its shows.  Channel manager > channel > Identity:\n'Make this channel my own' takes the brand away and keeps the name and all the\nprogramming; rename it and give it your own logo.  Any logo of yours (the image you\npicked, the station folder's, the logo folder's) beats a built-in one.\n\n[B]How the schedule works[/B]\nNothing to compile.  Each channel pulls from your Kodi library (shows, genres,\ndecades, movies, smart playlists) or from folders, and its schedule writes itself\nas time goes by.  'Same show same time every day' channels air a fixed daily\nlineup and series always continue with the next episode.  Time blocks let you put\ncartoons on Saturday mornings or movies in prime time.\n\nEdit a channel and the change applies from its next programme - every show keeps its place.\n\n[B]One channel per show[/B]\nEach TV show has one home channel - the one it fits best (your own picks first,\nthen folders/tags/studios, then its main genre).  A show whose genres are too\nsmall for a channel of their own goes on the biggest genre network.  And the same show is never on two channels at the same time.\nSettings > Channels > 'Shows on more than one channel' changes this.\n\n[B]Menu and tools[/B]\nThe menu keeps to the everyday things: Watch TV, What's on now (tune straight to a\nshow), the Channel manager, the Weekly planner, Holidays and specials, Settings and\nHelp.  Lineup tools (build my lineup, move shows, sign-off and prime time, station\nfolders) are in the Channel manager; maintenance (check my videos, refresh schedules,\nstart series over, start over) is on the Tools page in Settings.  In Settings, OK\nsaves and Back cancels; a button row there (a tool, Plan holidays and specials,\nPreview a promo) saves what you changed before it, like OK.\nChanges to settings, channels and station clips apply from\neach channel's next programme on their own: what's on stays on, and every show keeps\nits next episode.  Only Tools > Start series over sends shows back to episode one.\n\n[B]Fine-tuning[/B]\nChannel manager > Lineup tools > 'Move shows between channels': pick a show (say, Good Eats)\nand tick the channels it should air on.\nUnticking hides it there even if the channel's genre includes it.\nEach channel also has 'What's on this channel' - a checklist of everything it airs.\nChannel manager > 'Shows without a good channel' lists shows no channel picks up\nand shows that only just fit where they are, with the reason, so you can move them.\n\n[B]Studio channels[/B]\nAdd programming > 'A studio / network' makes e.g. a Disney channel from every movie\nand show whose studio contains 'Disney'.  Kodi tags work the same way.\n\n[B]Weekly planner[/B]\nEach channel has a 7-day grid (Channel manager > channel > Weekly planner, or\nWeekly planner in the main menu).  Press OK on a half-hour to pin a show there -\ne.g. Seinfeld, Fridays 8:00 PM, one hour, in order: every week it continues with\nthe next episodes.  Pinned slots always start on time; the automatic scheduler\nfills everything else and never runs into them.  You can also paint off-air\nhours, copy a day to other days, or clear a day (Menu button).\nRight past Sunday goes to the next week, Left past Monday to the week before;\nholidays and specials show in their own week, with a star on the day.\n\n[B]Your watch progress[/B]\nCableBox puts back resume points, watched status and last-played dates after it\nairs something, so surfing doesn't fill your 'In progress' list (Settings >\nStart-up & library).  'Clean up my In progress list' on the same page tidies up an older list.\n\n[B]Sign-off and prime time for all channels[/B]\nChannel manager > Lineup tools: overnight sign-off (default 12 AM - 5 AM) and automatic\nprime-time lineups (default 8 - 11 PM) for every channel at once.  Channels that\nalready have off-air hours keep them unless you say otherwise.  Prime-time\nslots appear in the weekly planner; edit any of them and it becomes yours.\n\n[B]Holidays[/B]\nHalloween (October, all-out on the 31st), Thanksgiving Day and Christmas (from the day\nafter Thanksgiving, all-out on the 24th and 25th): each channel mixes in its own holiday\nepisodes and movies (Kodi tags first, then genres such as Horror and Mystery, then titles) - a few at\nfirst, more as the day gets closer, all day on the day itself.  Optional holiday\ncommercial and bump folders.  The rest of the year Christmas and Thanksgiving episodes\nare saved for their season.  Settings > Holidays & events.\n\n[B]Holidays and specials[/B]\nMain menu > Holidays and specials (also Settings > Holidays & events, and Channel\nmanager > channel > Schedule): a month calendar - OK on a day adds a special there,\nMenu shows them as a list.\nA special is a marathon or a holiday lineup on a date - 31 December, the 4th Thursday of\nNovember, Good Friday - on one channel or several, all day or for hours you\nchoose, back every year.  It airs instead of the channel's usual schedule for\nthose hours, and breaks promote it in the days before.\n\n[B]Off the air[/B]\nOff-air hours show a 1950s 'Please stand by' test card (or color bars), with an\noptional sign-off clip (anthem, farewell) and sign-on clip from your own folders.\n\n[B]Station IDs[/B]\nGive a channel a folder of station ID clips (\"You're watching...\") and one plays\nbetween programs, right before the next show starts.\n\n[B]Commercials & bumps[/B]\nPoint Settings at a folder of commercials and (optionally) bumps.  Breaks are cut\ninto shows to fill each half hour, like real cable.  Movie channels play commercials\nbetween films.  Without commercials the gap is filled with an 'Up next' card.\nSettings > Tools > 'Check my videos' shows which clips can't be used.\n\n[B]Promos[/B]\nSettings > Breaks > Promos: breaks now and then include a short promo for\nwhat this channel airs next - the episode's still, the show's logo, the episode\ntitle, a short synopsis when one fits, 'Up next' or the day and time, and the show's\ntheme.mp3, all from your own library (nothing in it is changed).  Your own promo\nclips in a station folder's promos/ come first.  Settings > Breaks > Preview a promo\nplays one channel's next promo (or a later one) straight away.\n\n[B]Files[/B]\nYour lineup lives in userdata/addon_data/script.cablebox42/channels.json if you\nprefer editing it by hand.\n\n[B]Step-by-step guide[/B]\nHOWTO.md in the add-on's folder, or online:\ngithub.com/SeadogMcGrog/script.cablebox42/blob/main/HOWTO.md\n\n[B]About[/B]\nCableBox 42 is designed, tested and maintained by Seadog McGrog.  Much of the code\nwas written with the help of Claude, an AI assistant made by Anthropic.  Anthropic is\nnot affiliated with this project and has not reviewed or endorsed it.\nInspired by FieldStation42 by Shane Mason (no shared code)."
+msgid "[B]Remote control[/B]\nCH+ / CH-, Up / Down, Page Up / Down ... change channel\nNumber keys ...................................... go to channel\nLeft ................................................... last channel\nRight ................................................ what's on now\nOK / Info ........................................... channel banner\nMenu / Context ............ captions, sleep timer & more\nBack / Stop ...................................... turn off the TV\n\nBack takes you to where you switched the TV on: this menu if you chose Watch TV\nhere, otherwise Kodi.  Menu > CableBox menu turns the TV off and opens this menu\nfrom anywhere; Watch TV turns it back on, on the same channel.\n\n[B]Closed captions[/B]\nMain menu > Closed captions, or the Menu button while watching, switches captions\non or off for every programme (like a TV's CC setting).  'Caption options' in that\nmenu picks a track or loads a subtitle file.  To use the remote's subtitle button,\nrun Settings > On screen > Remote CC button once.\n\n[B]Station folders[/B]\nSet a Stations folder (Settings > Channels) and CableBox keeps one folder per channel,\nnamed after the channel (or its call letters, or 'Channel 7'): logo.png, bumps/,\nids/ and commercials/, plus a folder per time-of-day name such as CAM Jr.  Channel\nmanager > channel > Breaks & clips shows the clips the channel really uses and where\nthey come from; Identity > Station folder makes or repairs its folders.  Renaming a\nchannel offers to rename its folder too.\n\n[B]Stations and your own channels[/B]\nA built-in station (Comedy Corner, Chameleon...) is a brand - name, call letters,\nlogo, names by time of day - plus its shows.  Channel manager > channel > Identity:\n'Make this channel my own' takes the brand away and keeps the name and all the\nprogramming; rename it and give it your own logo.  Any logo of yours (the image you\npicked, the station folder's, the logo folder's) beats a built-in one.\n\n[B]How the schedule works[/B]\nNothing to compile.  Each channel pulls from your Kodi library (shows, genres,\ndecades, movies, smart playlists) or from folders, and its schedule writes itself\nas time goes by.  'Same show same time every day' channels air a fixed daily\nlineup and series always continue with the next episode.  Time blocks let you put\ncartoons on Saturday mornings or movies in prime time.\n\nEdit a channel and the change applies from its next programme - every show keeps its place.\n\n[B]One channel per show[/B]\nEach TV show has one home channel - the one it fits best (your own picks first,\nthen folders/tags/studios, then its main genre).  A show whose genres are too\nsmall for a channel of their own goes on the biggest genre network.  And the same show is never on two channels at the same time.\nSettings > Channels > 'Shows on more than one channel' changes this.\n\n[B]Menu and tools[/B]\nThe menu keeps to the everyday things: Watch TV, What's on now (tune straight to a\nshow), the Channel manager, the Weekly planner, Holidays and specials, Settings and\nHelp.  Lineup tools (build my lineup, move shows, sign-off and prime time, station\nfolders) are in the Channel manager; maintenance (check my videos, refresh schedules,\nstart series over, start over) is on the Tools page in Settings.  In Settings, OK\nsaves and Back cancels; a button row there (a tool, Plan holidays and specials,\nPreview a promo) saves what you changed before it, like OK.\nChanges to settings, channels and station clips apply from\neach channel's next programme on their own: what's on stays on, and every show keeps\nits next episode.  Only Tools > Start series over sends shows back to episode one.\n\n[B]Fine-tuning[/B]\nChannel manager > Lineup tools > 'Move shows between channels': pick a show (say, Good Eats)\nand tick the channels it should air on.\nUnticking hides it there even if the channel's genre includes it.\nEach channel also has 'What's on this channel' - a checklist of everything it airs.\nChannel manager > 'Shows without a good channel' lists shows no channel picks up\nand shows that only just fit where they are, with the reason, so you can move them.\n\n[B]Studio channels[/B]\nAdd programming > 'A studio / network' makes e.g. a Disney channel from every movie\nand show whose studio contains 'Disney'.  Kodi tags work the same way.\n\n[B]Weekly planner[/B]\nEach channel has a 7-day grid (Channel manager > channel > Weekly planner, or\nWeekly planner in the main menu).  Press OK on a half-hour to pin a show there -\ne.g. Seinfeld, Fridays 8:00 PM, one hour, in order: every week it continues with\nthe next episodes.  Pinned slots always start on time; the automatic scheduler\nfills everything else and never runs into them.  You can also paint off-air\nhours, copy a day to other days, or clear a day (Menu button).\nRight past Sunday goes to the next week, Left past Monday to the week before;\nholidays and specials show in their own week, with a star on the day.\n\n[B]Your watch progress[/B]\nCableBox puts back resume points, watched status and last-played dates after it\nairs something, so surfing doesn't fill your 'In progress' list (Settings >\nStart-up & library).  'Clean up my In progress list' on the same page tidies up an older list.\n\n[B]Sign-off and prime time for all channels[/B]\nChannel manager > Lineup tools: overnight sign-off (default 12 AM - 5 AM) and automatic\nprime-time lineups (default 8 - 11 PM) for every channel at once.  Channels that\nalready have off-air hours keep them unless you say otherwise.  Prime-time\nslots appear in the weekly planner; edit any of them and it becomes yours.\n\n[B]Holidays[/B]\nHalloween (October, all-out on the 31st), Thanksgiving Day and Christmas (from the day\nafter Thanksgiving, all-out on the 24th and 25th): each channel mixes in its own holiday\nepisodes and movies (Kodi tags first, then genres such as Horror and Mystery, then titles) - a few at\nfirst, more as the day gets closer, all day on the day itself.  Optional holiday\ncommercial and bump folders.  The rest of the year Christmas and Thanksgiving episodes\nare saved for their season.  Settings > Holidays & events > Edit holiday seasons: each\nseason's dates (Canadian Thanksgiving too), how much in the run-up, tags and genres\nticked from your library, extra title words, and Show what matches.\n\n[B]Holidays and specials[/B]\nMain menu > Holidays and specials (also Settings > Holidays & events, and Channel\nmanager > channel > Schedule): a month calendar - OK on a day adds a special there,\nMenu shows them as a list.\nA special is a marathon or a holiday lineup on a date - 31 December, the 4th Thursday of\nNovember, Good Friday - on one channel or several, all day or for hours you\nchoose, back every year.  It airs instead of the channel's usual schedule for\nthose hours, and breaks promote it in the days before.\n\n[B]Off the air[/B]\nOff-air hours show a 1950s 'Please stand by' test card (or color bars), with an\noptional sign-off clip (anthem, farewell) and sign-on clip from your own folders.\n\n[B]Station IDs[/B]\nGive a channel a folder of station ID clips (\"You're watching...\") and one plays\nbetween programs, right before the next show starts.\n\n[B]Commercials & bumps[/B]\nPoint Settings at a folder of commercials and (optionally) bumps.  Breaks are cut\ninto shows to fill each half hour, like real cable.  Movie channels play commercials\nbetween films.  Without commercials the gap is filled with an 'Up next' card.\nSettings > Tools > 'Check my videos' shows which clips can't be used.\n\n[B]Promos[/B]\nSettings > Breaks > Promos: breaks now and then include a short promo for\nwhat this channel airs next - the episode's still, the show's logo, the episode\ntitle, a short synopsis when one fits, 'Up next' or the day and time, and the show's\ntheme.mp3, all from your own library (nothing in it is changed).  Your own promo\nclips in a station folder's promos/ come first.  Settings > Breaks > Preview a promo\nplays one channel's next promo (or a later one) straight away.\n\n[B]Files[/B]\nYour lineup lives in userdata/addon_data/script.cablebox42/channels.json if you\nprefer editing it by hand.\n\n[B]Step-by-step guide[/B]\nHOWTO.md in the add-on's folder, or online:\ngithub.com/SeadogMcGrog/script.cablebox42/blob/main/HOWTO.md\n\n[B]About[/B]\nCableBox 42 is designed, tested and maintained by Seadog McGrog.  Much of the code\nwas written with the help of Claude, an AI assistant made by Anthropic.  Anthropic is\nnot affiliated with this project and has not reviewed or endorsed it.\nInspired by FieldStation42 by Shane Mason (no shared code)."
 msgstr ""
 
 msgctxt "#33078"
@@ -7783,4 +7774,232 @@ msgstr ""
 
 msgctxt "#34479"
 msgid "Marathons and holiday lineups on exact dates"
+msgstr ""
+
+msgctxt "#34480"
+msgid "Edit holiday seasons..."
+msgstr ""
+
+msgctxt "#34481"
+msgid "(no name)"
+msgstr ""
+
+msgctxt "#34482"
+msgid "No run-up"
+msgstr ""
+
+msgctxt "#34483"
+msgid "big day %s"
+msgstr ""
+
+msgctxt "#34484"
+msgid "big days %s to %s"
+msgstr ""
+
+msgctxt "#34485"
+msgid "From %s, %s"
+msgstr ""
+
+msgctxt "#34486"
+msgid "Holiday seasons (Holiday programming is off in Settings)"
+msgstr ""
+
+msgctxt "#34487"
+msgid "Holiday seasons"
+msgstr ""
+
+msgctxt "#34488"
+msgid "On / Off: %s"
+msgstr ""
+
+msgctxt "#34489"
+msgid "When"
+msgstr ""
+
+msgctxt "#34490"
+msgid "How much in the run-up: %s"
+msgstr ""
+
+msgctxt "#34491"
+msgid "Same as Settings"
+msgstr ""
+
+msgctxt "#34492"
+msgid "Tags: %s"
+msgstr ""
+
+msgctxt "#34493"
+msgid "Kodi tags containing these words count"
+msgstr ""
+
+msgctxt "#34494"
+msgid "Genres: %s"
+msgstr ""
+
+msgctxt "#34495"
+msgid "Kodi genres containing these words count"
+msgstr ""
+
+msgctxt "#34496"
+msgid "Extra title words: %s"
+msgstr ""
+
+msgctxt "#34497"
+msgid "Episode and movie titles with these words count too"
+msgstr ""
+
+msgctxt "#34498"
+msgid "Show what matches"
+msgstr ""
+
+msgctxt "#34499"
+msgid "How many episodes and films each channel has for it"
+msgstr ""
+
+msgctxt "#34500"
+msgid "Commercials folder: %s"
+msgstr ""
+
+msgctxt "#34501"
+msgid "Optional: plays in its breaks"
+msgstr ""
+
+msgctxt "#34502"
+msgid "Bumps folder: %s"
+msgstr ""
+
+msgctxt "#34503"
+msgid "Save its shows for its season: %s"
+msgstr ""
+
+msgctxt "#34504"
+msgid "Keeps its episodes and films off the air the rest of the year"
+msgstr ""
+
+msgctxt "#34505"
+msgid "Reset to the built-in settings"
+msgstr ""
+
+msgctxt "#34506"
+msgid "How much in the run-up?"
+msgstr ""
+
+msgctxt "#34507"
+msgid "Extra title words for %s (comma separated)"
+msgstr ""
+
+msgctxt "#34508"
+msgid "%s: %d episodes and films match. They'll stay off the air the rest of the year."
+msgstr ""
+
+msgctxt "#34509"
+msgid "Save them"
+msgstr ""
+
+msgctxt "#34510"
+msgid "Put %s back as it ships: dates, tags, genres, title words, folders?"
+msgstr ""
+
+msgctxt "#34511"
+msgid "Which Thanksgiving?"
+msgstr ""
+
+msgctxt "#34512"
+msgid "US (4th Thursday of November)"
+msgstr ""
+
+msgctxt "#34513"
+msgid "Canada (2nd Monday of October)"
+msgstr ""
+
+msgctxt "#34514"
+msgid "My own rule..."
+msgstr ""
+
+msgctxt "#34515"
+msgid "Run-up starts: %s"
+msgstr ""
+
+msgctxt "#34516"
+msgid "Big days from: %s"
+msgstr ""
+
+msgctxt "#34517"
+msgid "Big days to: %s"
+msgstr ""
+
+msgctxt "#34518"
+msgid "the same day"
+msgstr ""
+
+msgctxt "#34519"
+msgid "Run-up starts"
+msgstr ""
+
+msgctxt "#34520"
+msgid "On a date..."
+msgstr ""
+
+msgctxt "#34521"
+msgid "Big days from"
+msgstr ""
+
+msgctxt "#34522"
+msgid "Big days to"
+msgstr ""
+
+msgctxt "#34523"
+msgid "The same day as the first"
+msgstr ""
+
+msgctxt "#34524"
+msgid "A later date..."
+msgstr ""
+
+msgctxt "#34525"
+msgid "Any tag containing this word"
+msgstr ""
+
+msgctxt "#34526"
+msgid "Any genre containing this word"
+msgstr ""
+
+msgctxt "#34527"
+msgid "%s: tags"
+msgstr ""
+
+msgctxt "#34528"
+msgid "%s: genres"
+msgstr ""
+
+msgctxt "#34529"
+msgid "Kodi lists none in your library"
+msgstr ""
+
+msgctxt "#34530"
+msgid "Choose another folder..."
+msgstr ""
+
+msgctxt "#34531"
+msgid "Don't use one"
+msgstr ""
+
+msgctxt "#34532"
+msgid "Looking through every channel..."
+msgstr ""
+
+msgctxt "#34533"
+msgid "No channel has anything for %s yet. Tag episodes or movies in Kodi, or add title words."
+msgstr ""
+
+msgctxt "#34534"
+msgid "[B]%d %s[/B]: %d episodes, %d films"
+msgstr ""
+
+msgctxt "#34535"
+msgid "%s: what matches"
+msgstr ""
+
+msgctxt "#34536"
+msgid "Counting..."
 msgstr ""

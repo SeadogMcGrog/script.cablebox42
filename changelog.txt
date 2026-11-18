@@ -1,4 +1,10 @@
 v1.2.0 (2026-11-12)
+- New: Edit holiday seasons (Settings > Holidays & events): each season's own
+  page: on or off, its dates as rules like a special's (run-up start, first and
+  last big day; Canadian Thanksgiving with one choice), how much in the run-up,
+  tags and genres ticked from the library, extra title words, Show what
+  matches, its folders, Save its shows for its season, Reset. The 15 holiday
+  rows in Settings are now on these pages. No change = the same dates as before
 - New: Holidays and specials (main menu, Settings > Holidays & events, and
   Channel manager > channel > Schedule): a marathon or a holiday lineup on a date, on one channel or
   several, all day, a broadcast day (6 AM to 6 AM) or hours you choose, every

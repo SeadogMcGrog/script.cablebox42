@@ -77,28 +77,24 @@ LAYOUT = [
     ("Guide & Weather", None),          # unchanged, copied as it is
     ("Holidays & events", [
         ("tool_specials", "Plan holidays and specials..."),
+        ("tool_seasons", "Edit holiday seasons..."),
         (H, "Automatic holidays"),
         ("seasons_on", "Holiday programming (automatic)"),
         ("season_intensity", None, on("seasons_on")),
         ("season_hold", None, on("seasons_on")),
-    ] + [row for name in ("halloween", "thanksgiving", "christmas")
-         for row in [
-             (H, {"halloween": "Halloween - October, all-out on the 31st",
-                  "thanksgiving": "Thanksgiving - on the day",
-                  "christmas": "Christmas - from the day after Thanksgiving, all-out Dec 24-25"}[name]),
-             ("%s_on" % name, "%s on" % name.capitalize(), on("seasons_on")),
-             ("%s_commercials" % name, "%s: commercials folder" % name.capitalize(),
-              on("seasons_on") + on("%s_on" % name)),
-             ("%s_bumps" % name, "%s: bumps folder" % name.capitalize(), on("seasons_on") + on("%s_on" % name)),
-             ("%s_tags" % name, "%s: tags (comma separated)" % name.capitalize(),
-              on("seasons_on") + on("%s_on" % name)),
-             ("%s_genres" % name, "%s: genres (comma separated)" % name.capitalize(),
-              on("seasons_on") + on("%s_on" % name)),
-         ]] + [
+    ] + [  # the built-ins' own rows: storage for the season editor (seasons_editor.py), not shown
+        (sid, label, None, "false") for name in ("halloween", "thanksgiving", "christmas")
+        for sid, label in (("%s_on" % name, "%s on" % name.capitalize()),
+                           ("%s_commercials" % name, "%s: commercials folder" % name.capitalize()),
+                           ("%s_bumps" % name, "%s: bumps folder" % name.capitalize()),
+                           ("%s_tags" % name, "%s: tags (comma separated)" % name.capitalize()),
+                           ("%s_genres" % name, "%s: genres (comma separated)" % name.capitalize()))
+    ] + [
         (H, "Summer"),
         ("summer_reruns", "Summer reruns (June to August)"),
         ("rerun_today",),
         ("specials_today",),
+        ("seasons_today",),                 # hidden: a date for testing seasons (the rig)
     ]),
     ("Start-up & library", [
         (H, "Start-up"),
@@ -232,6 +228,9 @@ def write():
             tag = set_attr(tag, "help", str(sid(HELP[row[0]])) if row[0] in HELP else None)
             for key, deps in (("enable", row[2] if len(row) > 2 else None),
                               ("visible", row[3] if len(row) > 3 else None)):
+                if deps == "false":
+                    tag = set_attr(tag, key, "false")
+                    continue
                 if deps is None:
                     if key == "enable" and attr(tag, "enable") not in (None, "false"):
                         tag = set_attr(tag, "enable", None)      # an old offset never survives a move

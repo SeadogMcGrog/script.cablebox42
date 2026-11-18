@@ -65,32 +65,31 @@
     <!-- Holidays & events -->
     <category label="34447">
         <setting id="tool_specials" type="action" label="34448" action="RunScript(script.cablebox42,tool,specials)" option="close"/>
+        <setting id="tool_seasons" type="action" label="34480" action="RunScript(script.cablebox42,tool,seasons)" option="close"/>
         <setting label="34449" type="lsep"/>
         <setting id="seasons_on" type="bool" label="34450" default="true"/>
         <setting id="season_intensity" type="enum" label="32059" lvalues="32060|32061|32062" default="1" enable="eq(-1,true)"/>
         <setting id="season_hold" type="bool" label="32069" default="true" enable="eq(-2,true)"/>
-        <setting label="32063" type="lsep"/>
-        <setting id="halloween_on" type="bool" label="34451" default="true" enable="eq(-4,true)"/>
-        <setting id="halloween_commercials" type="folder" label="34452" source="video" default="" enable="eq(-5,true)+eq(-1,true)"/>
-        <setting id="halloween_bumps" type="folder" label="34453" source="video" default="" enable="eq(-6,true)+eq(-2,true)"/>
-        <setting id="halloween_tags" type="text" label="34454" default="halloween, spooky, horror" enable="eq(-7,true)+eq(-3,true)"/>
-        <setting id="halloween_genres" type="text" label="34455" default="Horror, Mystery" enable="eq(-8,true)+eq(-4,true)"/>
-        <setting label="32064" type="lsep"/>
-        <setting id="thanksgiving_on" type="bool" label="34456" default="true" enable="eq(-10,true)"/>
-        <setting id="thanksgiving_commercials" type="folder" label="34457" source="video" default="" enable="eq(-11,true)+eq(-1,true)"/>
-        <setting id="thanksgiving_bumps" type="folder" label="34458" source="video" default="" enable="eq(-12,true)+eq(-2,true)"/>
-        <setting id="thanksgiving_tags" type="text" label="34459" default="thanksgiving" enable="eq(-13,true)+eq(-3,true)"/>
-        <setting id="thanksgiving_genres" type="text" label="34460" default="" enable="eq(-14,true)+eq(-4,true)"/>
-        <setting label="32065" type="lsep"/>
-        <setting id="christmas_on" type="bool" label="34461" default="true" enable="eq(-16,true)"/>
-        <setting id="christmas_commercials" type="folder" label="34462" source="video" default="" enable="eq(-17,true)+eq(-1,true)"/>
-        <setting id="christmas_bumps" type="folder" label="34463" source="video" default="" enable="eq(-18,true)+eq(-2,true)"/>
-        <setting id="christmas_tags" type="text" label="34464" default="christmas, xmas, holiday" enable="eq(-19,true)+eq(-3,true)"/>
-        <setting id="christmas_genres" type="text" label="34465" default="Christmas, Holiday" enable="eq(-20,true)+eq(-4,true)"/>
+        <setting id="halloween_on" type="bool" label="34451" default="true" visible="false"/>
+        <setting id="halloween_commercials" type="folder" label="34452" source="video" default="" visible="false"/>
+        <setting id="halloween_bumps" type="folder" label="34453" source="video" default="" visible="false"/>
+        <setting id="halloween_tags" type="text" label="34454" default="halloween, spooky, horror" visible="false"/>
+        <setting id="halloween_genres" type="text" label="34455" default="Horror, Mystery" visible="false"/>
+        <setting id="thanksgiving_on" type="bool" label="34456" default="true" visible="false"/>
+        <setting id="thanksgiving_commercials" type="folder" label="34457" source="video" default="" visible="false"/>
+        <setting id="thanksgiving_bumps" type="folder" label="34458" source="video" default="" visible="false"/>
+        <setting id="thanksgiving_tags" type="text" label="34459" default="thanksgiving" visible="false"/>
+        <setting id="thanksgiving_genres" type="text" label="34460" default="" visible="false"/>
+        <setting id="christmas_on" type="bool" label="34461" default="true" visible="false"/>
+        <setting id="christmas_commercials" type="folder" label="34462" source="video" default="" visible="false"/>
+        <setting id="christmas_bumps" type="folder" label="34463" source="video" default="" visible="false"/>
+        <setting id="christmas_tags" type="text" label="34464" default="christmas, xmas, holiday" visible="false"/>
+        <setting id="christmas_genres" type="text" label="34465" default="Christmas, Holiday" visible="false"/>
         <setting label="34466" type="lsep"/>
         <setting id="summer_reruns" type="enum" label="34206" lvalues="33454|34204|33471" default="0"/>
         <setting id="rerun_today" type="text" label="34203" default="" visible="false"/>
         <setting id="specials_today" type="text" label="34215" default="" visible="false"/>
+        <setting id="seasons_today" type="text" label="34450" default="" visible="false"/>
     </category>
     <!-- Start-up & library -->
     <category label="34116">

@@ -141,6 +141,18 @@ def seasons_cfg():
         out[name] = {"on": setting_bool("%s_on" % name, True),
                      "ads": setting("%s_commercials" % name), "bumps": setting("%s_bumps" % name),
                      "tags": _raw("%s_tags" % name), "genres": _raw("%s_genres" % name)}
+    from . import seasons                  # seasons.json: the editor's changes and the viewer's own seasons
+    seasons.apply_file(out, load_json(seasons.path(), None))
+    today = setting("seasons_today", "")   # hidden: a date for testing seasons (YYYY-MM-DD)
+    if today:
+        try:
+            import time
+            y, m, d = [int(x) for x in today.split("-")]
+            lt = time.localtime()
+            out["shift"] = (time.mktime((y, m, d, 0, 0, 0, 0, 0, -1))
+                            - time.mktime((lt.tm_year, lt.tm_mon, lt.tm_mday, 0, 0, 0, 0, 0, -1)))
+        except (ValueError, OverflowError):
+            pass
     return out
 
 
