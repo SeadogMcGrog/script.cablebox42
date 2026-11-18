@@ -851,7 +851,8 @@ schedules take it in from each channel's next programme when you leave Settings.
 | Row | What it does |
 |---|---|
 | On / Off | The season on its own (*Holiday programming* in Settings switches them all) |
-| When | *Run-up starts*, *Big days from* and *Big days to*, each picked like a special's date: a date, a weekday of a month, Easter ± days or a ready-made holiday, optionally moved by days. *No run-up* is a choice. A season whose big days run past 31 December carries on into January. Thanksgiving offers *US (4th Thursday of November)*, *Canada (2nd Monday of October)* or *My own rule* |
+| Name | Any name, any language (emptied: a built-in's own name again) |
+| When | *Big days start*, picked like a special's date: a date, a weekday of a month, Easter ± days or a ready-made holiday, optionally moved by days. *Big days last* 1 to 14 days (past 31 December they carry on into January). *Run-up*: none, *some days before the big days*, or *starts on a date* (the same picker; its last date before the big days). Thanksgiving offers *US (4th Thursday of November)*, *Canada (2nd Monday of October)* or *My own rule* |
 | How much in the run-up | *Same as Settings*, *A little*, *Some* or *Lots* for this season only |
 | Tags / Genres | Ticked from a list of what's in your library (with *Search...*). A word that no tag in your library contains stays in the list, ticked, until you untick it |
 | Extra title words | Typed, comma separated; added to the built-in list, never replacing it |

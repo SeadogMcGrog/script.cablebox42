@@ -5,11 +5,13 @@ and its big days ("full": holiday programming all day, wherever the channel
 has any).  Holiday material always comes from the channel's own programming,
 so a kids' channel never suddenly airs a slasher film.
 
-When a season is on is a set of date rules, in the format of the specials
-(specials.py: a date, the n-th weekday of a month, Easter +- days, with a shift):
-    run_up   the first day of the run-up (None: no run-up); it ends the day before
-             the big days
-    from/to  the first and last big day (to before from: across New Year)
+When a season is on (the format of the specials' date rules, specials.py: a date,
+the n-th weekday of a month, Easter +- days, each with a shift):
+    from     the first big day (a date rule)
+    days     how many big days, 1-14 (past 31 December: into the next year)
+    run_up   None (no run-up), {"type": "before", "days": N} (N days before the big
+             days) or a date rule (its latest date before them: a run-up from
+             26 December leads into New Year's Day); it ends the day before the big days
 The built-ins' rules (RULES) reproduce the dates CableBox has always used; the
 season editor (seasons_editor.py) stores changes to them, and the viewer's own
 seasons, in seasons.json (apply_file).  No file = exactly the built-ins.
@@ -83,15 +85,14 @@ THANKSGIVING_US = {"type": "nth", "n": 4, "weekday": 3, "month": 11}
 THANKSGIVING_CA = {"type": "nth", "n": 2, "weekday": 0, "month": 10}
 RULES = {
     "halloween": {"run_up": {"type": "date", "month": 10, "day": 1},
-                  "from": {"type": "date", "month": 10, "day": 31}, "to": {"type": "date", "month": 10, "day": 31}},
-    "thanksgiving": {"run_up": None, "from": THANKSGIVING_US, "to": THANKSGIVING_US},
+                  "from": {"type": "date", "month": 10, "day": 31}, "days": 1},
+    "thanksgiving": {"run_up": None, "from": THANKSGIVING_US, "days": 1},
     "christmas": {"run_up": dict(THANKSGIVING_US, shift=1),
-                  "from": {"type": "date", "month": 12, "day": 24}, "to": {"type": "date", "month": 12, "day": 25}},
+                  "from": {"type": "date", "month": 12, "day": 24}, "days": 2},
 }
-RULE_KEYS = ("run_up", "from", "to")
-# what seasons.json may change for a built-in, and holds for one of the viewer's own
-OVERRIDE_KEYS = RULE_KEYS + ("intensity", "words", "hold")
-CUSTOM_KEYS = ("name", "on", "ads", "bumps", "tags", "genres") + OVERRIDE_KEYS
+RULE_KEYS = ("run_up", "from", "days")
+MAX_DAYS = 14
+MAX_BEFORE = 90
 
 # share of programmes in the run-up: (first day, last day), by intensity setting
 RAMPS = {0: (0.05, 0.25), 1: (0.10, 0.45), 2: (0.25, 0.70)}
@@ -112,6 +113,20 @@ def _rule_ok(rule, may_be_none=False):
     return (rule is None and may_be_none) or specials.valid(rule)
 
 
+def _run_up_ok(rule):
+    if isinstance(rule, dict) and rule.get("type") == "before":
+        return isinstance(rule.get("days"), int) and 1 <= rule["days"] <= MAX_BEFORE
+    return _rule_ok(rule, True)
+
+
+def _days_ok(n):
+    return isinstance(n, int) and not isinstance(n, bool) and 1 <= n <= MAX_DAYS
+
+
+def _name_ok(n):
+    return isinstance(n, str) and n.strip() != ""
+
+
 def _words_ok(w):
     return isinstance(w, list) and all(isinstance(x, str) for x in w)
 
@@ -126,9 +141,14 @@ def clean(data):
         if name not in BUILTIN or not isinstance(ov, dict):
             continue
         keep = {}
-        for k in RULE_KEYS:
-            if k in ov and _rule_ok(ov[k], k == "run_up"):
-                keep[k] = ov[k]
+        if "run_up" in ov and _run_up_ok(ov["run_up"]):
+            keep["run_up"] = ov["run_up"]
+        if _rule_ok(ov.get("from")):
+            keep["from"] = ov["from"]
+        if _days_ok(ov.get("days")):
+            keep["days"] = ov["days"]
+        if _name_ok(ov.get("name")):
+            keep["name"] = ov["name"].strip()
         if ov.get("intensity") in (0, 1, 2):
             keep["intensity"] = ov["intensity"]
         if _words_ok(ov.get("words")) and ov["words"]:
@@ -140,13 +160,13 @@ def clean(data):
     seen = set()
     for c in data.get("custom") or () if isinstance(data.get("custom"), list) else ():
         if not isinstance(c, dict) or not isinstance(c.get("id"), str) or not c["id"].startswith("s_") \
-                or c["id"] in seen or not _rule_ok(c.get("from")) or not _rule_ok(c.get("to")) \
-                or not _rule_ok(c.get("run_up"), True):
+                or c["id"] in seen or not _rule_ok(c.get("from")) or not _run_up_ok(c.get("run_up")):
             continue
         seen.add(c["id"])
         out["custom"].append({
             "id": c["id"], "name": c.get("name") if isinstance(c.get("name"), str) else "",
-            "on": c.get("on") is not False, "run_up": c.get("run_up"), "from": c["from"], "to": c["to"],
+            "on": c.get("on") is not False, "run_up": c.get("run_up"), "from": c["from"],
+            "days": c["days"] if _days_ok(c.get("days")) else 1,
             "intensity": c.get("intensity") if c.get("intensity") in (0, 1, 2) else None,
             "tags": c.get("tags") if isinstance(c.get("tags"), str) else "",
             "genres": c.get("genres") if isinstance(c.get("genres"), str) else "",
@@ -196,7 +216,7 @@ def order(sc):
 
 
 def rules(name, d):
-    """(run_up, from, to) of a season's config d: its own, or the built-in's."""
+    """(run_up, from, days) of a season's config d: its own, or the built-in's."""
     base = RULES.get(name, {})
     return tuple(d[k] if k in d else base.get(k) for k in RULE_KEYS)
 
@@ -204,32 +224,28 @@ def rules(name, d):
 _WIN = {}
 
 
-def window(run_up, frm, to, year):
+def window(run_up, frm, days, year):
     """(run-up start, run-up end, first big day, last big day) for the big days that
     start in `year`, as dates (end inclusive); run-up None when there is none; None
-    when the year has no such date.  The run-up ends the day before the big days and
-    starts on its rule's latest date before them (so a run-up from 26 December
-    leads into New Year's Day)."""
-    key = (json.dumps([run_up, frm, to], sort_keys=True), year)
+    when the year has no such date.  The run-up ends the day before the big days."""
+    key = (json.dumps([run_up, frm, days], sort_keys=True), year)
     if key in _WIN:
         return _WIN[key]
     out = None
     f0 = specials.date_for(frm, year)
     if f0 is not None:
-        f1 = specials.date_for(to, year) if to else f0
-        if f1 is not None and f1 < f0:
-            f1 = specials.date_for(to, year + 1)
-        if f1 is None:
-            f1 = f0
+        f1 = f0 + DAY * (max(1, min(MAX_DAYS, days or 1)) - 1)
         t0 = t1 = None
-        if run_up:
+        if isinstance(run_up, dict) and run_up.get("type") == "before":
+            t0 = f0 - DAY * run_up["days"]
+        elif run_up:
             t0 = specials.date_for(run_up, year)
             if t0 is not None and t0 >= f0:
                 t0 = specials.date_for(run_up, year - 1)
-            if t0 is not None and t0 < f0:
-                t1 = f0 - DAY
-            else:
-                t0 = None
+        if t0 is not None and t0 < f0:
+            t1 = f0 - DAY
+        else:
+            t0 = None
         out = (t0, t1, f0, f1)
     _WIN[key] = out
     return out

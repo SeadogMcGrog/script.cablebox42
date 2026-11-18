@@ -33,9 +33,11 @@ def config():
 
 
 def name_of(sid, d=None):
+    if (d or {}).get("name"):
+        return d["name"]
     if sid in S.NAMES:
         return E.SEASON.get(sid, S.NAMES[sid])
-    return (d or {}).get("name") or _("(no name)")
+    return _("(no name)")
 
 
 def set_override(sid, key, value):
@@ -78,22 +80,34 @@ def put(sid, key, value):
 
 
 # ------------------------------------------------------------------ words
-def rule_text(rule):
-    return E.when_text(rule) if rule else _("No run-up")
+def _lower(text):
+    """'The day after ...' inside a sentence: 'from the day after ...'."""
+    return text[0].lower() + text[1:] if text.startswith(_("The day ")) else text
+
+
+def run_up_text(rule):
+    if not rule:
+        return _("none")
+    if rule.get("type") == "before":
+        return _("%d days before the big days") % rule["days"]
+    return _("from %s") % _lower(E.when_text(rule))
+
+
+def big_text(frm, days):
+    if days <= 1:
+        return _("big day %s") % _lower(E.when_text(frm))
+    return _("big days from %s, %d days") % (_lower(E.when_text(frm)), days)
 
 
 def when_text(sid, d):
-    run_up, frm, to = S.rules(sid, d)
-    if json.dumps(frm, sort_keys=True) == json.dumps(to, sort_keys=True):
-        big = _("big day %s") % E.when_text(frm)
-    else:
-        big = _("big days %s to %s") % (E.when_text(frm), E.when_text(to))
+    """'From 1 October, big day 31 October' / 'Run-up 2 days, big day 23 December'."""
+    run_up, frm, days = S.rules(sid, d)
+    big = big_text(frm, days or 1)
     if not run_up:
         return big[0].upper() + big[1:]
-    start = E.when_text(run_up)
-    if start.startswith(_("The day ")):
-        start = start[0].lower() + start[1:]    # 'From the day after 4th Thursday of November'
-    return _("From %s, %s") % (start, big)
+    if run_up.get("type") == "before":
+        return _("Run-up %d days, %s") % (run_up["days"], big)
+    return _("From %s, %s") % (_lower(E.when_text(run_up)), big)
 
 
 def thanksgiving_kind(d):
@@ -146,6 +160,7 @@ def season_page(sid):
         tags, genres = S._season_words(sid, {"seasons": sc})
         extra = d.get("words") or []
         rows = [("on", _("On / Off: %s") % on_text(d.get("on")), ""),
+                ("name", _("Name: %s") % name, _("Any name, any language")),
                 ("when", _("When"), when_text(sid, d)),
                 ("intensity", _("How much in the run-up: %s") % (
                     _("Same as Settings") if intensity is None else INTENSITY[intensity]), ""),
@@ -194,6 +209,10 @@ def season_page(sid):
                         _("Save them")):
                     continue
             put(sid, "hold", not hold)
+        elif key == "name":
+            v = D.input(_("Name"), name)
+            if v is not None:
+                put(sid, "name", v.strip() or None)     # emptied: a built-in's own name again
         elif key == "reset":
             if M.confirm(_("Put %s back as it ships: dates, tags, genres, title words, folders?") % name, _("Reset")):
                 reset_builtin(sid)
@@ -227,46 +246,53 @@ def edit_when(sid, d):
         if j < 0:
             return
         if j < 2:
-            rule = S.THANKSGIVING_US if j == 0 else S.THANKSGIVING_CA
-            if j == 0:
-                set_override(sid, "from", None)
-                set_override(sid, "to", None)
-            else:
-                set_override(sid, "from", rule)
-                set_override(sid, "to", rule)
+            _set_rule(sid, "from", S.THANKSGIVING_US if j == 0 else S.THANKSGIVING_CA)
             return
     while True:
         d = config().get(sid) or {}
-        run_up, frm, to = S.rules(sid, d)
-        same = json.dumps(frm, sort_keys=True) == json.dumps(to, sort_keys=True)
-        rows = [_("Run-up starts: %s") % rule_text(run_up),
-                _("Big days from: %s") % E.when_text(frm),
-                _("Big days to: %s") % (_("the same day") if same else E.when_text(to))]
+        run_up, frm, days = S.rules(sid, d)
+        rows = [_("Big days start: %s") % E.when_text(frm),
+                _("Big days last: %s") % (_("1 day") if days == 1 else _("%d days") % days),
+                _("Run-up: %s") % run_up_text(run_up)]
         i = M.done_select(_("When"), rows)
         if i < 0:
             return
         if i == 0:
-            j = D.select(_("Run-up starts"), [_("On a date..."), _("No run-up")])
-            if j == 1:
-                _set_rule(sid, "run_up", None)
-            elif j == 0:
-                rule = ask_rule(_("Run-up starts"))
-                if rule:
-                    _set_rule(sid, "run_up", rule)
-        elif i == 1:
-            rule = ask_rule(_("Big days from"))
+            rule = ask_rule(_("Big days start"))
             if rule:
                 _set_rule(sid, "from", rule)
-                if same:
-                    _set_rule(sid, "to", rule)
+        elif i == 1:
+            n = ask_days(days)
+            if n:
+                _set_rule(sid, "days", n)
         else:
-            j = D.select(_("Big days to"), [_("The same day as the first"), _("A later date...")])
-            if j == 0:
-                _set_rule(sid, "to", frm)
-            elif j == 1:
-                rule = ask_rule(_("Big days to"))
-                if rule:
-                    _set_rule(sid, "to", rule)
+            rule = ask_run_up(run_up)
+            if rule is not False:
+                _set_rule(sid, "run_up", rule)
+
+
+def ask_days(current=1):
+    """1-14 big days, or None on Back."""
+    j = D.select(_("How many big days?"), [_("1 day")] + [_("%d days") % n for n in range(2, S.MAX_DAYS + 1)],
+                 preselect=max(0, min(S.MAX_DAYS, current or 1) - 1))
+    return None if j < 0 else j + 1
+
+
+def ask_run_up(current=None):
+    """The run-up: None (none), {'type': 'before', 'days': N} or a date rule; False on Back."""
+    j = D.select(_("Run-up"), [_("No run-up"), _("Starts some days before the big days..."), _("Starts on a date...")])
+    if j < 0:
+        return False
+    if j == 0:
+        return None
+    if j == 1:
+        n = current.get("days") if isinstance(current, dict) and current.get("type") == "before" else 7
+        v = D.numeric(0, _("How many days before the big days?"), str(n))
+        if not v or not (1 <= int(v) <= S.MAX_BEFORE):
+            return False
+        return {"type": "before", "days": int(v)}
+    rule = ask_rule(_("Run-up starts"))
+    return rule if rule else False
 
 
 def _set_rule(sid, key, rule):

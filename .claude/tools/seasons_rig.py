@@ -14,11 +14,10 @@ D = "/root/.kodi/userdata/addon_data/script.cablebox42"
 F = os.path.join(D, "seasons.json")
 CASES = {
     "early": {"builtin": {"halloween": {"run_up": {"type": "date", "month": 9, "day": 15}}}},
-    "canada": {"builtin": {"thanksgiving": {"from": {"type": "nth", "n": 2, "weekday": 0, "month": 10},
-                                            "to": {"type": "nth", "n": 2, "weekday": 0, "month": 10}}}},
+    "canada": {"builtin": {"thanksgiving": {"from": {"type": "nth", "n": 2, "weekday": 0, "month": 10}}}},
     "easter": {"custom": [{"id": "s_easter", "name": "Easter", "on": True,
                            "run_up": {"type": "easter", "offset": -14}, "from": {"type": "easter", "offset": 0},
-                           "to": {"type": "easter", "offset": 0}, "words": ["easter", "bunny", "egg"],
+                           "days": 1, "words": ["easter", "bunny", "egg"],
                            "tags": "", "genres": "", "hold": False}]},
     "festivus": {"builtin": {"christmas": {"words": ["festivus"]}}},
 }

@@ -1,7 +1,8 @@
 v1.2.0 (2026-11-12)
 - New: Edit holiday seasons (Settings > Holidays & events): each season's own
-  page: on or off, its dates as rules like a special's (run-up start, first and
-  last big day; Canadian Thanksgiving with one choice), how much in the run-up,
+  page: on or off, its name, its dates as rules like a special's (big days
+  start on a date and last 1-14 days; a run-up some days before or from a
+  date; Canadian Thanksgiving with one choice), how much in the run-up,
   tags and genres ticked from the library, extra title words, Show what
   matches, its folders, Save its shows for its season, Reset. The 15 holiday
   rows in Settings are now on these pages. No change = the same dates as before

@@ -153,7 +153,7 @@ def phase(day, extra, **kw):
     return s, round(lv, 4)
 
 
-CA = {"builtin": {"thanksgiving": {"from": NEW.THANKSGIVING_CA, "to": NEW.THANKSGIVING_CA}}}
+CA = {"builtin": {"thanksgiving": {"from": NEW.THANKSGIVING_CA}}}
 check("Canada: 2nd Monday of October 2026 is Thanksgiving (beats Halloween's run-up)",
       phase(D(2026, 10, 12), CA)[0], "thanksgiving")
 check("Canada: the day before is Halloween's run-up", phase(D(2026, 10, 11), CA)[0], "halloween")
@@ -172,8 +172,8 @@ check("Halloween with its own intensity Lots", phase(D(2026, 10, 1), {"builtin":
       ("halloween", 0.25))
 
 
-def custom(sid, name, run_up, frm, to=None, **kw):
-    c = {"id": sid, "name": name, "on": True, "run_up": run_up, "from": frm, "to": to or frm}
+def custom(sid, name, run_up, frm, days=1, **kw):
+    c = {"id": sid, "name": name, "on": True, "run_up": run_up, "from": frm, "days": days}
     c.update(kw)
     return c
 
@@ -190,7 +190,7 @@ check("Easter switched off", phase(D(2027, 3, 28), {"custom": [dict(EASTER["cust
 check("all seasons off (Settings) switches yours off too", phase(D(2027, 3, 28), EASTER, on=False), (None, 0.0))
 
 NY = {"custom": [custom("s_ny", "New Year", {"type": "date", "month": 12, "day": 26},
-                        {"type": "date", "month": 12, "day": 31}, {"type": "date", "month": 1, "day": 1})]}
+                        {"type": "date", "month": 12, "day": 31}, 2)]}
 check("New Year run-up on 26 Dec 2026", phase(D(2026, 12, 26), NY)[0], "s_ny")
 check("Christmas Day still Christmas", phase(D(2026, 12, 25), NY), ("christmas", 1.0))
 check("31 Dec 2026 big day", phase(D(2026, 12, 31), NY), ("s_ny", 1.0))
@@ -211,6 +211,17 @@ check("a big day beats a run-up (yours over Halloween's run-up)", phase(D(2026, 
 check("two big days: the higher in the list", phase(D(2026, 10, 25), {"custom": TWO["custom"][::-1]})[0], "s_b")
 check("two run-ups: the higher in the list (Halloween first)", phase(D(2026, 10, 21), TWO)[0], "halloween")
 
+LONG = {"custom": [custom("s_long", "Two weeks", {"type": "before", "days": 3}, {"type": "date", "month": 7, "day": 1}, 14)]}
+check("14 big days: 1 July is the first", phase(D(2026, 7, 1), LONG), ("s_long", 1.0))
+check("14 big days: 14 July is the last", phase(D(2026, 7, 14), LONG), ("s_long", 1.0))
+check("14 big days: 15 July is nothing", phase(D(2026, 7, 15), LONG), (None, 0.0))
+check("run-up 3 days before: 28 June starts it", phase(D(2026, 6, 28), LONG), ("s_long", 0.1))
+check("run-up 3 days before: 30 June ends it", phase(D(2026, 6, 30), LONG), ("s_long", 0.45))
+check("run-up 3 days before: 27 June is nothing", phase(D(2026, 6, 27), LONG), (None, 0.0))
+check("days past 14 are cut to 14", phase(D(2026, 7, 20), {"custom": [dict(LONG["custom"][0], days=30)]}), (None, 0.0))
+check("a built-in's own name", cfg(extra={"builtin": {"christmas": {"name": "Noel"}}})["seasons"]["christmas"]["name"],
+      "Noel")
+
 # extra title words
 WORDS = {"builtin": {"christmas": {"words": ["Festivus"]}}}
 it = {"path": "/tv/Seinfeld S09E10 The Strike.mkv", "title": "Seinfeld", "sub": "The Strike - Festivus"}
@@ -224,7 +235,7 @@ check("an extra Halloween word isn't held (only explicit Halloween is)",
 
 # holds of the viewer's own seasons
 SHARK = custom("s_shark", "Shark Week", {"type": "date", "month": 7, "day": 25}, {"type": "date", "month": 8, "day": 1},
-               {"type": "date", "month": 8, "day": 7}, words=["shark"])
+               7, words=["shark"])
 jaws = {"path": "/movies/Jaws.mkv", "title": "Jaws: The Shark", "sub": ""}
 check("hold off (the default): a Shark Week film airs in March",
       NEW.out_of_season(jaws, ts(D(2026, 3, 1)), cfg(extra={"custom": [SHARK]})), False)
@@ -243,12 +254,14 @@ check("... Thanksgiving still held",
 bad = {"builtin": {"halloween": {"run_up": {"type": "date", "month": 13, "day": 1}, "intensity": 7, "words": "x"},
                    "easter": {"from": {"type": "date", "month": 1, "day": 1}}},
        "custom": [{"id": "nope", "from": {"type": "date", "month": 1, "day": 1}},
-                  {"id": "s_ok", "from": {"type": "date", "month": 1, "day": 1}, "to": {"type": "date", "month": 1, "day": 2}},
-                  {"id": "s_ok", "from": {"type": "date", "month": 1, "day": 1}, "to": {"type": "date", "month": 1, "day": 2}},
-                  {"id": "s_bad", "from": {"type": "nth", "n": 9}, "to": None}]}
+                  {"id": "s_ok", "from": {"type": "date", "month": 1, "day": 1}, "days": 2},
+                  {"id": "s_ok", "from": {"type": "date", "month": 1, "day": 1}, "days": 2},
+                  {"id": "s_bad", "from": {"type": "nth", "n": 9}},
+                  {"id": "s_bad2", "from": {"type": "date", "month": 1, "day": 1}, "run_up": {"type": "before", "days": 0}}]}
 got = NEW.clean(bad)
 check("clean: broken overrides and seasons are left out", (got["builtin"], [c["id"] for c in got["custom"]]),
       ({}, ["s_ok"]))
+check("clean: a season keeps its days", got["custom"][0]["days"], 2)
 check("clean: a custom season's hold is off unless set", got["custom"][0]["hold"], False)
 check("clean(garbage)", NEW.clean([1, 2]), {"builtin": {}, "custom": []})
 c = cfg(extra={"custom": [SHARK]})["seasons"]

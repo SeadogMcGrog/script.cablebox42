@@ -7792,9 +7792,6 @@ msgctxt "#34483"
 msgid "big day %s"
 msgstr ""
 
-msgctxt "#34484"
-msgid "big days %s to %s"
-msgstr ""
 
 msgctxt "#34485"
 msgid "From %s, %s"
@@ -7916,45 +7913,18 @@ msgctxt "#34514"
 msgid "My own rule..."
 msgstr ""
 
-msgctxt "#34515"
-msgid "Run-up starts: %s"
-msgstr ""
 
-msgctxt "#34516"
-msgid "Big days from: %s"
-msgstr ""
 
-msgctxt "#34517"
-msgid "Big days to: %s"
-msgstr ""
 
-msgctxt "#34518"
-msgid "the same day"
-msgstr ""
 
 msgctxt "#34519"
 msgid "Run-up starts"
 msgstr ""
 
-msgctxt "#34520"
-msgid "On a date..."
-msgstr ""
 
-msgctxt "#34521"
-msgid "Big days from"
-msgstr ""
 
-msgctxt "#34522"
-msgid "Big days to"
-msgstr ""
 
-msgctxt "#34523"
-msgid "The same day as the first"
-msgstr ""
 
-msgctxt "#34524"
-msgid "A later date..."
-msgstr ""
 
 msgctxt "#34525"
 msgid "Any tag containing this word"
@@ -8006,4 +7976,68 @@ msgstr ""
 
 msgctxt "#34537"
 msgid "The day "
+msgstr ""
+
+msgctxt "#34538"
+msgid "%d days before the big days"
+msgstr ""
+
+msgctxt "#34539"
+msgid "from %s"
+msgstr ""
+
+msgctxt "#34540"
+msgid "big days from %s, %d days"
+msgstr ""
+
+msgctxt "#34541"
+msgid "Run-up %d days, %s"
+msgstr ""
+
+msgctxt "#34542"
+msgid "Any name, any language"
+msgstr ""
+
+msgctxt "#34543"
+msgid "Big days start: %s"
+msgstr ""
+
+msgctxt "#34544"
+msgid "Big days last: %s"
+msgstr ""
+
+msgctxt "#34545"
+msgid "1 day"
+msgstr ""
+
+msgctxt "#34546"
+msgid "%d days"
+msgstr ""
+
+msgctxt "#34547"
+msgid "Run-up: %s"
+msgstr ""
+
+msgctxt "#34548"
+msgid "Big days start"
+msgstr ""
+
+msgctxt "#34549"
+msgid "How many big days?"
+msgstr ""
+
+msgctxt "#34550"
+msgid "Run-up"
+msgstr ""
+
+msgctxt "#34551"
+msgid "Starts some days before the big days..."
+msgstr ""
+
+msgctxt "#34552"
+msgid "Starts on a date..."
+msgstr ""
+
+msgctxt "#34553"
+msgid "How many days before the big days?"
 msgstr ""

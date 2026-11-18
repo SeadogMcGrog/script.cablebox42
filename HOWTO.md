@@ -1044,8 +1044,8 @@ episodes and movies for their season* keeps Christmas specials out of July.
 
 **Change a season:** *Settings → Holidays & events → **Edit holiday seasons...***,
 pick the season. For Canadian Thanksgiving: *Thanksgiving → When → Canada (2nd
-Monday of October)*. For a longer Halloween: *Halloween → When → Run-up starts →
-On a date... → A date... → September → 15*. *Tags* and *Genres* tick from what's
+Monday of October)*. For a longer Halloween: *Halloween → When → Run-up → Starts on a date... →
+A date... → September → 15*. *Tags* and *Genres* tick from what's
 in your library; *Show what matches* tells you what each channel will air. *Reset
 to the built-in settings* undoes it all.
 
