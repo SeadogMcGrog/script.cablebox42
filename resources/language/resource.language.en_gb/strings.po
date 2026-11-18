@@ -7889,7 +7889,7 @@ msgid "Extra title words for %s (comma separated)"
 msgstr ""
 
 msgctxt "#34508"
-msgid "%s: %d episodes and films match. They'll stay off the air the rest of the year."
+msgid "%s: episodes and films that match: %d. They'll stay off the air the rest of the year."
 msgstr ""
 
 msgctxt "#34509"

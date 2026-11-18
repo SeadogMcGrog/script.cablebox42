@@ -190,7 +190,7 @@ def season_page(sid):
             if not hold:
                 n = held_count(sid)
                 if n is not None and not M.confirm(
-                        _("%s: %d episodes and films match. They'll stay off the air the rest of the year.") % (name, n),
+                        _("%s: episodes and films that match: %d. They'll stay off the air the rest of the year.") % (name, n),
                         _("Save them")):
                     continue
             put(sid, "hold", not hold)
