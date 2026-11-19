@@ -8182,3 +8182,7 @@ msgstr ""
 msgctxt "#34604"
 msgid "House breaks"
 msgstr ""
+
+msgctxt "#34605"
+msgid "The CableBox menu comes back in a moment"
+msgstr ""

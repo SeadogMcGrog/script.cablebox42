@@ -3606,6 +3606,11 @@ def watch_from_menu(channel=None):
 
 def main_menu():
     home = xbmcgui.Window(10000)
+    if home.getProperty(MENU_OPEN):
+        # the menu that opened Settings (or a tool) is waiting for it and comes back
+        # on its own: a second one would stack on top of it
+        D.notification(TITLE, _("The CableBox menu comes back in a moment"), time=3000)
+        return
     home.setProperty(MENU_OPEN, "1")
     try:
         _main_menu()
