@@ -3609,7 +3609,7 @@ def main_menu():
     if home.getProperty(MENU_OPEN):
         # the menu that opened Settings (or a tool) is waiting for it and comes back
         # on its own: a second one would stack on top of it
-        D.notification(TITLE, _("The CableBox menu comes back in a moment"), time=3000)
+        D.notification(TITLE, _("The menu comes back in a moment"), time=3000)
         return
     home.setProperty(MENU_OPEN, "1")
     try:
