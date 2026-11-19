@@ -113,8 +113,11 @@ def run():
         text = K._("%d of %d") % (r, total) if total else ""
         if force or text != status_shown[0]:
             status_shown[0] = text
-            if K.ADDON.getSetting("chapters_status") != text:
-                K.ADDON.setSetting("chapters_status", text)
+            # a fresh Addon object (K.set_setting), never the service's K.ADDON: an object
+            # made before the viewer's last OK in Settings writes its old values of every
+            # setting back with this one (Promo look went back to Early-90s, 19 Nov)
+            if K.setting("chapters_status") != text:
+                K.set_setting("chapters_status", text)
 
     def chapter_reader():
         # Commercial breaks at chapter marks: each episode file's chapters, read once

@@ -312,6 +312,10 @@ A task often starts as "implement `briefs\<name>.md`".
   (`promos_on`, `house_breaks` 1, `promo_extras`, `summer_reruns` 1) reach 1.1.1 users because 1.1.1 had
   none of those rows; profiles saved by a 1.2.0 test build keep the old values. Changing an existing
   setting's default needs a one-time step in the add-on, or it changes nothing for existing users.
+- **Never write a setting through a long-lived `xbmcaddon.Addon` object** (the service's `K.ADDON`): in another
+  process it still holds the values from when it was made, and `setSetting` writes them all back (rig, 19 Nov:
+  a script's old object wrote `chapters_status` and Promo look went back to Early-90s after the viewer's OK).
+  Write with `K.set_setting` (a fresh object each time); read with `K.setting`.
 - `kodi-addon-checker` rejects `<news>` over 1500 characters. Keep the newest release
   notes there and the full history in `changelog.txt`.
 
