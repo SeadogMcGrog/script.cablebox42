@@ -12,6 +12,13 @@ v1.2.0 (2026-11-12)
   Boxing Day, or your own date; big days last 1-14 days; Move up / Move down,
   Delete. Save its shows for its season starts off for your own. Between two
   run-ups the holiday that comes first wins (Festivus inside Christmas's)
+- New: Holidays & events in the main menu: Calendar, Add a special, Holiday
+  seasons. The calendar shades each season's big days and run-up, and a day's
+  line says what the season does there (and, on a special's day, what the other
+  channels do); OK on a shaded day opens the season. One list of holidays: a
+  special's When? offers A holiday from my list (yours included), and Holiday
+  episodes of this channel's shows works for every holiday with its own tags.
+  A new season asks Plan something for it too?
 - New: Dates for each year... in the date picker (seasons and specials) for
   holidays of other calendars: you type each year's date, no date = nothing
   that year

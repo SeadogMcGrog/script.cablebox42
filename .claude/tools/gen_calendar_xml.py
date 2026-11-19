@@ -5,7 +5,9 @@ filled from window properties by specials_editor.Calendar.
     python .claude/tools/gen_calendar_xml.py
 
 Per cell i (0-41, row by row): B<i> its picture, N<i> the day number, L<i> the star
-line; `cur` is the cell under the cursor, `today` today's cell (or empty).
+line; `cur` is the cell under the cursor, `today` today's cell (or empty).  B<i> is
+also how the holiday seasons are shaded (calendar_season_big.png / _run.png, set by
+specials_editor.Calendar): one window, no controls beyond the 42 cells.
 """
 import io
 import os

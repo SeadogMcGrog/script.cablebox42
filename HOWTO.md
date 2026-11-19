@@ -1066,13 +1066,26 @@ hidden the rest of the year unless you switch on *Save its shows for its season*
 For Diwali or Lunar New Year use *My own date... → Dates for each year...* and
 type the dates from your calendar.
 
+### Plan a Festivus marathon
+
+1. Right after *Add season*, CableBox asks *Plan something for Festivus too?* →
+   **Plan a special** (or later: main menu → *Holidays & events → Add a special →
+   A holiday from my list... → Festivus*).
+2. *How often?* → *Every year*. Pick the channel and the hours.
+3. *What to air?* → *Festivus episodes of this channel's shows*: the channel's
+   own episodes with Festivus's tags or title words, each once. Or *Choose
+   programming...* for a whole show (all of Seinfeld).
+4. **Add special.** On the 23rd that channel airs the marathon; the other
+   channels keep the Festivus season.
+
 ### Plan a Turkey Day marathon
 
 The seasons choose holiday programmes for you. When you want one exact thing
 on one day, add a **special**.
 
-1. Main menu → *Holidays and specials* (or *Settings → Holidays & events → Plan
-   holidays and specials...*). A month calendar opens.
+1. Main menu → *Holidays & events → Calendar* (or *Settings → Holidays & events →
+   Plan holidays and specials...*). A month calendar opens; the holiday seasons
+   are shaded (big days red, run-ups plum).
 2. Press **CH+** until it shows November, move to the fourth Thursday and
    press **OK** → *Add a special on this day*.
 3. Choose *On the 4th Thursday of November every year*, so it moves with

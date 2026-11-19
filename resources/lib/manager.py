@@ -2901,7 +2901,7 @@ Settings > Channels > 'Shows on more than one channel' changes this.
 
 [B]Menu and tools[/B]
 The menu keeps to the everyday things: Watch TV, What's on now (tune straight to a
-show), the Channel manager, the Weekly planner, Holidays and specials, Settings and
+show), the Channel manager, the Weekly planner, Holidays & events, Settings and
 Help.  Lineup tools (build my lineup, move shows, sign-off and prime time, station
 folders) are in the Channel manager; maintenance (check my videos, refresh schedules,
 start series over, start over) is on the Tools page in Settings.  In Settings, OK
@@ -2957,9 +2957,11 @@ season adds any holiday, real or made up (Festivus, Bastille Day, Diwali with
 the dates you type for each year).
 
 [B]Holidays and specials[/B]
-Main menu > Holidays and specials (also Settings > Holidays & events, and Channel
-manager > channel > Schedule): a month calendar - OK on a day adds a special there,
-Menu shows them as a list.
+Main menu > Holidays & events > Calendar (also Settings > Holidays & events, and
+Channel manager > channel > Schedule): a month calendar - OK on a day adds a special
+there, Menu shows them as a list.  The holiday seasons are shaded on it (big days red,
+run-up plum) and seasons and specials share one list of holidays: When? > A holiday
+from my list, and Holiday episodes work for every holiday.
 A special is a marathon or a holiday lineup on a date - 31 December, the 4th Thursday of
 November, Good Friday - on one channel or several, all day or for hours you
 choose, back every year.  It airs instead of the channel's usual schedule for
@@ -3189,10 +3191,40 @@ def check_skipped():
 
 
 def open_specials():
-    """Holidays and specials: the main menu, Settings > Holidays & events > Plan
-    holidays and specials..."""
+    """Holidays and specials: main menu > Holidays & events > Calendar, Settings >
+    Holidays & events > Plan holidays and specials..."""
     from . import specials_editor
     specials_editor.open_specials()
+
+
+def holidays_menu():
+    """Main menu > Holidays & events: one place for the exact kind (specials) and the
+    automatic kind (holiday seasons).  A saved special replans in the service
+    (specials_replan.json); a changed season is checked for a refresh on the way out."""
+    from . import specials_editor as E
+    from . import seasons_editor
+    while True:
+        rows = [_menu_row(_("Calendar"), _("Specials on their days, the seasons shaded")),
+                _menu_row(_("Add a special"), _("A marathon or a holiday lineup on a date, back every year")),
+                _menu_row(_("Holiday seasons (automatic)"),
+                          _("Halloween, Christmas, your own: dates and what counts"))]
+        i = done_select(_("Holidays & events"), rows, useDetails=True)
+        if i < 0:
+            return
+        if i == 0:
+            E.set_view("calendar")
+            E.open_specials()
+        elif i == 1:
+            chans = C.load()
+            if not [c for c in chans if c["type"] in AIR_TYPES]:
+                D.ok(TITLE, _("Add a channel first."))
+                continue
+            sid = E.add_special(E.load(chans), chans)
+            if sid:
+                E.special_page(sid)
+        else:
+            seasons_editor.open_seasons()
+            refresh_if_changed()
 
 
 def open_seasons():
@@ -3646,7 +3678,8 @@ def _main_menu():
                      _("On or off for every programme. While watching: the Menu button")),
                     ("manager", _("Channel manager"), _("Add, edit and renumber channels - plus the lineup tools")),
                     ("planner", _("Weekly planner"), _("Pin shows to days and times")),
-                    ("specials", _("Holidays and specials"), _("Marathons and holiday lineups on exact dates")),
+                    ("holidays", _("Holidays & events"),
+                     _("The calendar, specials on exact dates, and the automatic holiday seasons")),
                     ("settings", _("Settings and tools"),
                      _("Breaks, holidays, picture, weather - plus maintenance tools")),
                     ("help", _("Help"), _("How everything works"))]
@@ -3689,8 +3722,8 @@ def _main_menu():
         elif k == "planner":
             if pick_planner_channel():       # left with no change: nothing to check
                 refresh_if_changed()
-        elif k == "specials":
-            open_specials()                  # a saved special replans in the service (specials_replan.json)
+        elif k == "holidays":
+            holidays_menu()
         elif k == "settings":
             open_settings()
         elif k == "help":

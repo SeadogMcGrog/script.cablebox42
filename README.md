@@ -342,7 +342,7 @@ on the same episode twice.
 | **Finish setting up** | Only while something a first setup left for later isn't set: commercials, bumps and station IDs, guide and weather music, music videos, weather city. Each row leaves once it's chosen or you pick *I don't need this* |
 | **Channel manager** | Add, edit, delete and renumber channels. Its **Lineup tools** work on the whole lineup (below) |
 | **Weekly planner** | Open a channel's 7-day grid |
-| **Holidays and specials** | The month calendar of marathons and holiday lineups on exact dates ([Holidays and specials](#holidays-and-specials)); the same as *Settings → Holidays & events → Plan holidays and specials* |
+| **Holidays & events** | *Calendar* (specials on their days, the holiday seasons shaded), *Add a special*, *Holiday seasons (automatic)* ([Holidays and specials](#holidays-and-specials), [Edit the seasons](#edit-the-seasons)); the same as *Settings → Holidays & events → Plan holidays and specials* and *Edit holiday seasons* |
 | **Settings and tools** | All settings, plus the maintenance **Tools** page below |
 | **Help** | |
 
@@ -366,7 +366,7 @@ Everything that works on the whole lineup rather than one channel.
 Maintenance jobs live on their own page in Settings, so the menu stays short.
 Each button closes Settings and opens the tool; what you changed in Settings before
 pressing it is saved, as with OK. In the order Settings shows them,
-under *Schedules*, *Check* and *Reset*. *Holidays and specials* is in the main menu and
+under *Schedules*, *Check* and *Reset*. *Holidays & events* is in the main menu and
 *Settings → Holidays & events*; *Remote CC button* is in *Settings → On screen*;
 *Clean up my 'In progress' list* is in *Settings → Start-up & library*.
 
@@ -888,13 +888,25 @@ run-up air inside Christmas's. The changes live in `seasons.json` in CableBox's 
 
 The seasons above pick holiday programmes by themselves. A **special** is for
 saying exactly what you want on a date: a marathon, a holiday lineup, a movie
-night. *Holidays and specials* in the main menu (also *Settings → Holidays &
-events → Plan holidays and specials*), or *Channel manager → a channel →
-Schedule → Holidays and specials* for that channel's.
+night. *Holidays & events → Calendar* or *Add a special* in the main menu (also
+*Settings → Holidays & events → Plan holidays and specials*), or *Channel
+manager → a channel → Schedule → Holidays and specials* for that channel's.
 
 It opens on a **month calendar**. Days with a special show ★ and its name
 (or *★ 2 specials*); today is outlined in white. A special that runs past
-midnight marks its own date only.
+midnight marks its own date only. The holiday seasons are shaded: a season's
+big days in red, its run-up in plum. The line under the grid says what the day
+holds (*Christmas run-up (Some)*), and on a day with a special also what the
+other channels do (*★ Turkey Day Marathon - 4 Keystone · other channels:
+Thanksgiving: all day*). OK on a shaded day lists the season too; selecting it
+opens that season's page.
+
+Seasons and specials share **one list of holidays**: *When? → A holiday from my
+list...* offers the built-ins and every holiday you added (Festivus, Diwali...)
+with its name and date, then the ready-made dates. A special on a holiday's day
+offers *Holiday episodes of this channel's shows* for that holiday (with the
+tags, genres and title words you gave it), or of another holiday from the list.
+A new season you add asks *Plan something for it too?*.
 
 | Button | Action |
 |---|---|

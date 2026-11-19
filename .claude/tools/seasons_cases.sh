@@ -6,6 +6,11 @@
 # next 24 h on the seasons_today clock, per run.
 AB=.claude/tools/ab.sh
 S=.claude/kodi21-test-vm.sh
+safe() {   # safe SECS: wait until no :00 / :30 programme boundary falls within the next SECS
+  local now left
+  now=$(date +%s); left=$(( 1800 - now % 1800 ))
+  if [ $left -lt ${1:-100} ]; then sleep $(( left + 20 )); fi
+}
 zip=${1:?zip}; stage=${2:?stage}
 COMMON="seasons_on=true halloween_on=true thanksgiving_on=true christmas_on=true season_hold=true specials_today= horizon_hours=24 halloween_genres=Western thanksgiving_genres=Western christmas_genres=Western"
 
@@ -49,25 +54,25 @@ case $stage in
 stage1)
   start_with early; start_with canada
   echo "== Halloween run-up from 15 September"
-  run s0920 2026-09-20; run e0920 2026-09-20 early; total s0920 e0920
-  run s1126 2026-11-26; run e1126 2026-11-26 early; total s1126 e1126
+  safe 100; run s0920 2026-09-20; run e0920 2026-09-20 early; total s0920 e0920
+  safe 100; run s1126 2026-11-26; run e1126 2026-11-26 early; total s1126 e1126
   echo "== Canadian Thanksgiving (genre Western)"
-  run s1012 2026-10-12; run c1012 2026-10-12 canada; total s1012 c1012
-  run c1126 2026-11-26 canada; total s1126 c1126
-  run s1210 2026-12-10; run c1210 2026-12-10 canada; total s1210 c1210
+  safe 100; run s1012 2026-10-12; run c1012 2026-10-12 canada; total s1012 c1012
+  safe 100; run s1126 2026-11-26; run c1126 2026-11-26 canada; total s1126 c1126
+  safe 100; run s1210 2026-12-10; run c1210 2026-12-10 canada; total s1210 c1210
   ;;
 stage2)
   start_with festivus; start_with festivus_hold; start_with diwali
   echo "== Festivus: 23 Dec, 1 day, 2 days of run-up (genre Western), hold off"
-  run s1221 2026-12-21; run f1221 2026-12-21 festivus; total s1221 f1221
-  run s1223 2026-12-23; run f1223 2026-12-23 festivus; total s1223 f1223
-  run s0704 2026-07-04; run f0704 2026-07-04 festivus; total s0704 f0704
+  safe 100; run s1221 2026-12-21; run f1221 2026-12-21 festivus; total s1221 f1221
+  safe 100; run s1223 2026-12-23; run f1223 2026-12-23 festivus; total s1223 f1223
+  safe 100; run s0704 2026-07-04; run f0704 2026-07-04 festivus; total s0704 f0704
   echo "== Festivus with Save for its season on, then off again (= the run without it above)"
-  run g0704 2026-07-04 festivus_hold; total s0704 g0704
-  run g1223 2026-12-23 festivus_hold; total f1223 g1223
+  safe 100; run s0704 2026-07-04; run g0704 2026-07-04 festivus_hold; total s0704 g0704
+  safe 100; run f1223 2026-12-23 festivus; run g1223 2026-12-23 festivus_hold; total f1223 g1223
   echo "== Diwali, dates typed for 2026 and 2027 only"
-  run s1108 2026-11-08; run d1108 2026-11-08 diwali; total s1108 d1108
-  run s2028 2028-11-08; run d2028 2028-11-08 diwali; total s2028 d2028
+  safe 100; run s1108 2026-11-08; run d1108 2026-11-08 diwali; total s1108 d1108
+  safe 100; run s2028 2028-11-08; run d2028 2028-11-08 diwali; total s2028 d2028
   ;;
 stage3)
   echo "== Christmas Eve with one channel's seasons off (see the case's own notes)"

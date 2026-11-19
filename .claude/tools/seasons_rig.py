@@ -31,6 +31,11 @@ CASES["festivus"] = {"custom": [{"id": "s_festivus", "name": "Festivus", "on": T
                                  "words": ["festivus"], "tags": "", "genres": "Western", "hold": False}]}
 CASES["festivus_hold"] = json.loads(json.dumps(CASES["festivus"]))
 CASES["festivus_hold"]["custom"][0]["hold"] = True
+# hold by title words that match single episodes ("Friends episode 1", "Seinfeld episode 1"...): a
+# hold skips held episodes within a series; a series whose every episode is held still airs
+CASES["ep1_hold"] = {"custom": [{"id": "s_ep1", "name": "Episode One Day", "on": True, "run_up": None,
+                                 "from": {"type": "date", "month": 12, "day": 23}, "days": 1,
+                                 "words": ["episode 1"], "tags": "", "genres": "", "hold": True}]}
 # a holiday typed per year (no date for 2028)
 CASES["diwali"] = {"custom": [{"id": "s_diwali", "name": "Diwali", "on": True, "run_up": {"type": "before", "days": 3},
                                "from": {"type": "years", "dates": {"2026": [11, 8], "2027": [10, 29]}}, "days": 5,

@@ -167,6 +167,7 @@ def open_seasons():
         if i == len(ids):
             sid = add_season()
             if sid:
+                plan_for(sid)
                 season_page(sid)
         else:
             season_page(ids[i])
@@ -506,6 +507,23 @@ def add_season():
     data["custom"].append(c)
     _save(data)
     return c["id"]
+
+
+def plan_for(sid):
+    """A new holiday: plan a special on it straight away?  (One list of holidays:
+    its name and date fill in When?.)"""
+    sc = config()
+    d = sc.get(sid) or {}
+    name = name_of(sid, d)
+    if not M.confirm(_("Plan something for %s too: a marathon or a lineup on the day?") % name, _("Plan a special"),
+                     _("Not now")):
+        return
+    from . import channels as C
+    chans = C.load()
+    rule = S.rules(sid, d)[1]
+    new = E.add_special(E.load(chans), chans, picked=(json.loads(json.dumps(rule)), name, ("yearly", None)))
+    if new:
+        E.special_page(new)
 
 
 def move(sid, step):

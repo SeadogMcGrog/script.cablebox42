@@ -158,6 +158,46 @@ def ask_years(current=None):
             pos = min(i + 1, len(years))
 
 
+# ------------------------------------------------------------------ the holiday list (seasons.py)
+def seasons_cfg():
+    """The holiday seasons as planning sees them, without the rig's test date."""
+    sc = dict(K.seasons_cfg())
+    sc.pop("shift", None)
+    return sc
+
+
+def season_name(sid, sc=None):
+    """A holiday's name: its own (seasons.json), the built-in's, or its id."""
+    d = (sc if sc is not None else seasons_cfg()).get(sid) or {}
+    return d.get("name") or SEASON.get(sid) or sid
+
+
+def holidays(sc=None):
+    """[(id, name, its first big day as a rule, has material)] in list order: the
+    built-ins and every holiday the viewer added (Settings > Edit holiday seasons)."""
+    from . import seasons
+    sc = sc if sc is not None else seasons_cfg()
+    out = []
+    for sid in seasons.order(sc):
+        d = sc.get(sid) or {}
+        tags, genres = seasons._season_words(sid, {"seasons": sc})
+        stuff = bool(tags or genres or seasons.title_words(sid, sc))
+        out.append((sid, season_name(sid, sc), seasons.rules(sid, d)[1], stuff))
+    return out
+
+
+def holiday_of_rule(when, sc=None):
+    """The holidays a special's date is the big day of: the season whose first big
+    day is this rule, and for the built-ins any of their big days (25 December is
+    Christmas too)."""
+    key = json.dumps(when, sort_keys=True)
+    out = [sid for sid, _n, rule, _s in holidays(sc) if json.dumps(rule, sort_keys=True) == key]
+    builtin = specials.season_of(when)
+    if builtin and builtin not in out:
+        out.append(builtin)
+    return out
+
+
 def repeat_text(sp):
     return _("Every year") if sp.get("repeat") != "once" else _("Only in %d") % sp.get("year", 0)
 
@@ -174,7 +214,7 @@ def hours_text(blk):
 def source_text(blk):
     season = scheduler.ChannelSchedule._holiday_source(blk)
     if season is not None:
-        return _("%s episodes") % SEASON.get(season, season)
+        return _("%s episodes") % season_name(season)
     srcs = blk.get("sources") or [{}]
     return P.source_label(srcs[0]) + ((" +%d" % (len(srcs) - 1)) if len(srcs) > 1 else "")
 
@@ -445,6 +485,37 @@ def on_days(cal, first, last, cid=None):
     return out
 
 
+INTENSITY_WORDS = (_("A little"), _("Some"), _("Lots"))
+
+
+def season_days(first, last, sc=None):
+    """{date: (season id, True on a big day / False in the run-up)} for first..last:
+    what the automatic holiday seasons do on each day (seasons.phase at noon, the
+    real calendar, not the rig's test date)."""
+    from . import seasons
+    sc = sc if sc is not None else seasons_cfg()
+    cfg = {"seasons": sc}
+    out = {}
+    d = first
+    while d <= last:
+        sid, level = seasons.phase(time.mktime((d.year, d.month, d.day, 12, 0, 0, 0, 0, -1)), cfg)
+        if sid:
+            out[d] = (sid, level >= seasons.FULL)
+        d += datetime.timedelta(days=1)
+    out[None] = sc
+    return out
+
+
+def season_text(sea, sc):
+    """'Christmas run-up (Some)' / 'Thanksgiving: all day'."""
+    sid, big = sea
+    name = season_name(sid, sc)
+    if big:
+        return _("%s: all day") % name
+    n = (sc.get(sid) or {}).get("intensity")
+    return _("%s run-up (%s)") % (name, INTENSITY_WORDS[sc.get("intensity", 1) if n is None else n])
+
+
 def rules_for(day):
     """The every-year rules a date picked on the calendar can mean, weekday rules
     first where they fit: [(rule, its words)]."""
@@ -474,8 +545,9 @@ def ask_day_rule(day):
         return None
     once = j == len(rules)
     when = {"type": "date", "month": day.month, "day": day.day} if once else rules[j][0]
-    name = next((_("Thanksgiving") if key == "thanksgiving" else PRESET[key]
-                 for key, rule in specials.PRESETS if rule == when), when_text(when))
+    mine = [n for _sid, n, rule, _s in holidays() if rule == when]
+    name = mine[0] if mine else next((_("Thanksgiving") if key == "thanksgiving" else PRESET[key]
+                                     for key, rule in specials.PRESETS if rule == when), when_text(when))
     return when, name, (("once", day.year) if once else ("yearly", None))
 
 
@@ -534,6 +606,7 @@ class Calendar(xbmcgui.WindowXMLDialog):
         with self.lock:
             self.chans = C.load()
             self.cal = load(self.chans)
+            self.sc = seasons_cfg()             # read once: holding CH+ draws months without asking Kodi again
             self.shown = None
             self.day = self.want
             self.refresh()
@@ -548,6 +621,7 @@ class Calendar(xbmcgui.WindowXMLDialog):
         if self.shown != (self.day.year, self.day.month):       # another month: its 42 days
             self.shown = (self.day.year, self.day.month)
             self.days = on_days(self.cal, first, first + datetime.timedelta(days=41), self.cid)
+            self.seas = season_days(first, first + datetime.timedelta(days=41), self.sc)
             head = (_("Holidays and specials - %s") % self.only["name"]) if self.only else _("Holidays and specials")
             title = "%s  -  %s %d" % (head, month(self.day.month), self.day.year)
             self.setProperty("title", title)
@@ -558,7 +632,9 @@ class Calendar(xbmcgui.WindowXMLDialog):
                 d = first + datetime.timedelta(days=i)
                 sps = self.days.get(d) or []
                 here = d.month == self.day.month
+                sea = self.seas.get(d)
                 self.setProperty("B%d" % i, "planner_special.png" if sps else
+                                 ("calendar_season_big.png" if sea[1] else "calendar_season_run.png") if sea else
                                  ("planner_auto.png" if here else "planner_auto_alt.png"))
                 self.setProperty("N%d" % i, ("[B]%d[/B]" if here else "[COLOR 66FFFFFF]%d[/COLOR]") % d.day)
                 self.setProperty("L%d" % i, (u"\u2605 " + (sps[0]["name"] if len(sps) == 1 else _("%d specials") % len(sps)))
@@ -572,13 +648,21 @@ class Calendar(xbmcgui.WindowXMLDialog):
         d = self.day
         where = "%s %d %s" % (P.day_names(False)[d.weekday()], d.day, month(d.month))
         sps = self.days.get(d) or []
-        if len(sps) == 1:
-            blocks = sps[0]["blocks"]
-            what = block_text(self.chans, blocks[0]) if len(blocks) == 1 else _("%d channels") % len(
-                set(b["channel"] for b in blocks))
-            return u"%s:  [B]\u2605 %s[/B]  -  %s" % (where, sps[0]["name"], what)
+        sea = self.seas.get(d)
+        season = season_text(sea, self.seas[None]) if sea else ""
         if sps:
-            return u"%s:  [B]\u2605 %s[/B]" % (where, ", ".join(sp["name"] for sp in sps))
+            if len(sps) == 1:
+                blocks = sps[0]["blocks"]
+                what = block_text(self.chans, blocks[0]) if len(blocks) == 1 else _("%d channels") % len(
+                    set(b["channel"] for b in blocks))
+                text = u"%s:  [B]\u2605 %s[/B]  -  %s" % (where, sps[0]["name"], what)
+            else:
+                text = u"%s:  [B]\u2605 %s[/B]" % (where, ", ".join(sp["name"] for sp in sps))
+            if sea:     # the special beats the season on its channels; the others keep it
+                text += DOT + _("other channels: %s") % season
+            return text
+        if sea:
+            return u"%s:  %s" % (where, season)
         if d < today():
             return where
         return _("%s:  no special  -  press OK to add one") % where
@@ -636,6 +720,9 @@ class Calendar(xbmcgui.WindowXMLDialog):
             D.notification(M.TITLE, _("A past day can't be changed"), time=2500)
             return
         rows = [u"\u2605 " + sp["name"] for sp in sps]
+        sea = self.seas.get(d)
+        if sea:
+            rows.append(season_text(sea, self.seas[None]))
         if not past:
             rows.append(_("+ Add a special on this day"))
         rows.append(_("Cancel"))
@@ -644,6 +731,10 @@ class Calendar(xbmcgui.WindowXMLDialog):
             return
         if j < len(sps):
             open_special(self.cal, sps[j], self.chans)
+        elif sea and j == len(sps):
+            from . import seasons_editor           # the season's own page
+            seasons_editor.season_page(sea[0])
+            M.refresh_if_changed()
         else:
             r = ask_day_rule(d)
             sid = add_special(self.cal, self.chans, self.cid, picked=r) if r else None
@@ -671,7 +762,7 @@ def open_calendar(cid=None, day=None):
 def ask_when():
     """(rule, a name for it) or None."""
     i = D.select(_("When?"), [_("A date..."), _("A weekday of a month..."), _("Easter..."),
-                              _("A ready-made holiday..."), _("Dates for each year...")])
+                              _("A holiday from my list..."), _("Dates for each year...")])
     if i < 0:
         return None
     if i == 4:
@@ -714,12 +805,21 @@ def ask_when():
             off = min(int(v), 300) * (-1 if j == 3 else 1)
         when = {"type": "easter", "offset": off}
     else:
-        j = D.select(_("A ready-made holiday"), [PRESET[k] for k, _r in specials.PRESETS])
+        # the holiday seasons (built-ins and the viewer's own: one list of holidays),
+        # then the ready-made dates that aren't one of them
+        mine = [(n, rule) for _sid, n, rule, _s in holidays()]
+        have = set(json.dumps(r, sort_keys=True) for _n, r in mine)
+        ready = [(_("Thanksgiving") if k == "thanksgiving" else PRESET[k], r) for k, r in specials.PRESETS
+                 if json.dumps(r, sort_keys=True) not in have]
+        rows = [M._menu_row(n, when_text(r)) for n, r in mine] + \
+            [M._menu_row(n, when_text(r) + DOT + _("ready-made")) for n, r in ready]
+        j = D.select(_("A holiday from my list"), rows, useDetails=True)
         if j < 0:
             return None
-        key, rule = specials.PRESETS[j]
-        when = dict(rule)
-        name = _("Thanksgiving") if key == "thanksgiving" else PRESET[key]
+        name, rule = (mine + ready)[j]
+        when = json.loads(json.dumps(rule))
+        if when.get("type") == "years":
+            return when, name           # dates typed per year: nothing to move
     j = D.select(when_text(when), [_("On the day itself"), _("The day after"), _("The day before"),
                                    _("Move by days...")])
     if j < 0:
@@ -781,16 +881,27 @@ def ask_hours(blk=None):
 
 
 def ask_source(sp):
-    """One source for a block, or None.  For Halloween, Thanksgiving and Christmas:
-    also the holiday episodes of the channel's own shows."""
-    season = specials.season_of(sp["when"])
-    if season:
-        j = D.select(_("What to air?"), [_("%s episodes of this channel's shows") % SEASON[season],
-                                         _("Choose programming...")])
+    """One source for a block, or None: the holiday episodes of the channel's own
+    shows for the holiday on this date (any holiday in the list, with its own tags,
+    genres and words), those of another holiday, or programming chosen as usual."""
+    sc = seasons_cfg()
+    own = holiday_of_rule(sp["when"], sc)
+    others = [(sid, n) for sid, n, _r, stuff in holidays(sc) if stuff and sid not in own]
+    rows = [_("%s episodes of this channel's shows") % season_name(sid, sc) for sid in own]
+    if others:
+        rows.append(_("Holiday episodes of another holiday..."))
+    rows.append(_("Choose programming..."))
+    if len(rows) > 1:
+        j = D.select(_("What to air?"), rows)
         if j < 0:
             return None
-        if j == 0:
-            return {"type": "holiday", "season": season}
+        if j < len(own):
+            return {"type": "holiday", "season": own[j]}
+        if others and j == len(own):
+            k = D.select(_("Holiday episodes of"), [n for _sid, n in others])
+            if k < 0:
+                return None
+            return {"type": "holiday", "season": others[k][0]}
     return M.pick_source()
 
 
@@ -863,13 +974,13 @@ def checks(cal, sp, blk, chans, kept=None, clashes=None):
         items = [e for ser in pool["series"] for e in ser["episodes"]] + pool["singles"]
         if not items:
             D.ok(_("Holidays and specials"), _("%s has no %s episodes.[CR]It will air its normal programming "
-                                                "on the day.") % (ch["name"], SEASON.get(season, season)))
+                                                "on the day.") % (ch["name"], season_name(season)))
         elif day:
             # none of them twice in the day: when they run out, the channel's normal programming
             st, en = specials.window(blk, day)
             have = sum(float(e.get("dur") or 0) for e in items)
             if have < en - st:
-                name, what = ch["name"], SEASON.get(season, season)
+                name, what = ch["name"], season_name(season)
                 if len(items) == 1:
                     text = _("%s has 1 %s episode (%s) for %s.") % (
                         name, what, length_text(have, about=True), length_text(en - st))
