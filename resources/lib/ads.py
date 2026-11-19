@@ -662,7 +662,8 @@ def station_card(name, number, logo="", tagline="", genre="", headline=None, res
     """{"fmt": "station", "zones", "logo", "label"...}: the channel's logo fitted in
     the box, its number on the badge, its name on the gold band, the tagline in
     the bottom strip.  No logo: the name in the logo box, the tagline (or the
-    genre) on the band, the strip empty.  Never cut off: shrink, then two lines.
+    genre; neither: the sign-off's return time, else "Channel N") on the band,
+    the strip empty.  Never cut off: shrink, then two lines.
     headline: instead of "You're watching" (signoff_card); resume: a line between
     the logo box and the band."""
     head = _("You're watching") if headline is None else headline
@@ -692,6 +693,18 @@ def station_card(name, number, logo="", tagline="", genre="", headline=None, res
                 z += _lines(sname, "sb", 120, 900, 960, 440, "ffffff", "070d33", minsize=120)
         band = _spelled(tagline, "sb") if tagline else None
         band = band or (_spelled(genre, "sb") if genre else None)
+        if not band:
+            # nothing of the channel's own for the band: never leave it empty -
+            # the sign-off's "We return at ..." moves onto it, an ID card says "Channel N"
+            if resume:
+                band = _spelled(resume, "sb")
+                if band:
+                    resume = ""
+            else:
+                try:
+                    band = _spelled(_("Channel %d") % int(number), "sb")
+                except (TypeError, ValueError):
+                    band = None
         if band:
             z += _lines(band, "sb", 92, 1400, 960, 798, "14257a", upper=False)
     if resume:
