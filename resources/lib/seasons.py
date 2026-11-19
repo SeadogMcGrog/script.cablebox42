@@ -24,12 +24,12 @@ first wins (Festivus's two days of run-up inside Christmas's), then the list.
 What counts as holiday material (in this order of importance):
   * Kodi tags on movies and TV shows - any tag containing one of the season's
     words, any capitalisation ("Halloween", "halloween classics", "XMAS")
-  * Kodi genres (Horror and Mystery for Halloween by default)
+  * Kodi genres (Horror for Halloween by default; plain Mystery was too broad)
   * as a safety net, titles of movies and episodes ("Treehouse of Horror",
     "A Charlie Brown Christmas"), since Kodi can't tag single episodes; the
     viewer's extra title words are added to the built-in ones
-The tag and genre words are editable per season (Settings > Holidays & events >
-Edit holiday seasons...).
+The tag and genre words are editable per season (main menu > Holidays & events >
+Holiday seasons).
 """
 import datetime
 import json
@@ -47,19 +47,21 @@ DAY = datetime.timedelta(days=1)
 # default tag / genre words (the season editor and Settings can change them)
 DEFAULT_TAGS = {"halloween": "halloween, spooky, horror", "thanksgiving": "thanksgiving",
                 "christmas": "christmas, xmas, holiday"}
-DEFAULT_GENRES = {"halloween": "Horror, Mystery", "thanksgiving": "", "christmas": "Christmas, Holiday"}
+DEFAULT_GENRES = {"halloween": "Horror", "thanksgiving": "", "christmas": "Christmas, Holiday"}
 # a tag containing one of these marks an item as belonging *only* to that
 # holiday (kept back the rest of the year); horror and mystery are fine all year
 HOLIDAY_WORDS = {"halloween": ["halloween"], "thanksgiving": ["thanksgiving"], "christmas": ["christmas", "xmas"]}
 
 SEASONS = {
     "halloween": {
-        "words": ["halloween", "treehouse of horror", "trick or treat", "trick-or-treat", "pumpkin",
-                  "jack-o-lantern", "haunted", "haunting", "ghost", "ghosts", "ghoul", "witch", "witches",
-                  "vampire", "vampires", "dracula", "frankenstein", "werewolf", "zombie", "zombies", "mummy",
-                  "monster mash", "spooky", "scary", "creepy", "costume party", "headless horseman",
+        # clearly Halloween or horror only (~all10): 'ghost', 'witch', 'boo', 'mummy', 'scary',
+        # 'creepy', 'pumpkin' and 'costume party' matched hundreds of ordinary episodes
+        "words": ["halloween", "treehouse of horror", "trick or treat", "trick-or-treat",
+                  "jack-o-lantern", "haunted", "haunting", "ghoul", "ghouls",
+                  "vampire", "vampires", "dracula", "frankenstein", "werewolf", "zombie", "zombies",
+                  "monster mash", "spooky", "headless horseman",
                   "sleepy hollow", "great pumpkin", "hocus pocus", "beetlejuice", "addams family",
-                  "munsters", "goosebumps", "boo"],
+                  "munsters", "goosebumps"],
     },
     "thanksgiving": {
         "tags": ["thanksgiving"],

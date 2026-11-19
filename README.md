@@ -342,7 +342,7 @@ on the same episode twice.
 | **Finish setting up** | Only while something a first setup left for later isn't set: commercials, bumps and station IDs, guide and weather music, music videos, weather city. Each row leaves once it's chosen or you pick *I don't need this* |
 | **Channel manager** | Add, edit, delete and renumber channels. Its **Lineup tools** work on the whole lineup (below) |
 | **Weekly planner** | Open a channel's 7-day grid |
-| **Holidays & events** | *Calendar* (specials on their days, the holiday seasons shaded), *Add a special*, *Holiday seasons (automatic)* ([Holidays and specials](#holidays-and-specials), [Edit the seasons](#edit-the-seasons)); the same as *Settings → Holidays & events → Plan holidays and specials* and *Edit holiday seasons* |
+| **Holidays & events** | *Calendar* (specials on their days, the holiday seasons shaded), *Add a special*, *Holiday seasons (automatic)* ([Holidays and specials](#holidays-and-specials), [Edit the seasons](#edit-the-seasons)). The only place for them: *Settings → Holidays & events* holds just the options |
 | **Settings and tools** | All settings, plus the maintenance **Tools** page below |
 | **Help** | |
 
@@ -366,8 +366,8 @@ Everything that works on the whole lineup rather than one channel.
 Maintenance jobs live on their own page in Settings, so the menu stays short.
 Each button closes Settings and opens the tool; what you changed in Settings before
 pressing it is saved, as with OK. In the order Settings shows them,
-under *Schedules*, *Check* and *Reset*. *Holidays & events* is in the main menu and
-*Settings → Holidays & events*; *Remote CC button* is in *Settings → On screen*;
+under *Schedules*, *Check* and *Reset*. *Holidays & events* is in the main menu (its options in
+*Settings → Holidays & events*); *Remote CC button* is in *Settings → On screen*;
 *Clean up my 'In progress' list* is in *Settings → Start-up & library*.
 
 | Tool | What it's for |
@@ -644,12 +644,12 @@ loudness and fades out by itself.)
 
 | Setting | Choices |
 |---|---|
-| Promos for what's coming up, in breaks | Off (default) / On. At most one per break |
+| Promos for what's coming up, in breaks | On (default) / Off. At most one per break |
 | How often | Every break / About half the breaks / Now and then |
 | Promote | Up next and later today (default): breaks inside a programme promote something later today on this channel (never the show you're watching, and not the same show twice in a row), the break before the next programme says *Up next* for it. On a movie channel, with breaks only between movies, that's always *Up next*. What's on next: always the next programme. Something later today: always a later show. Nothing later today to promote → the next programme |
 | Look of promos and retro ads | Early-90s cable (default): a chunky magenta band slides in, the show's name lands in heavy italic letters (or its logo), the time drops into a yellow tab, squiggles and confetti pop in; all motion ends within 3 seconds and stays inside a 4:3 area. Modern: the sleek card |
 | Music in promos and ads | The show's theme music / None (silent). Also house-break cards and retro ads, with Promos on or off |
-| Also use short promo clips from a show's Extras folder | Off (default). Videos in the show's `Extras` folder with *Promo* or *Trailer* in the name, up to 2 minutes, sometimes air instead (e.g. `Extras/1988 On-Air Season Two Promo.mkv`) |
+| Also use short promo clips from a show's Extras folder | On (default). Videos in the show's `Extras` folder with *Promo* or *Trailer* in the name, up to 2 minutes, sometimes air instead (e.g. `Extras/1988 On-Air Season Two Promo.mkv`) |
 
 ### House breaks
 
@@ -660,8 +660,8 @@ everything comes from your library and CableBox's cards (same look as promos,
 
 | Choice | What happens |
 |---|---|
-| When there are no commercials (default) | Channels without commercials get house breaks of about a minute at the usual break points; channels with commercials are unchanged |
-| Mix in with commercials | As above, and now and then one house ad inside a normal commercial break (at most one per break) |
+| When there are no commercials | Channels without commercials get house breaks of about a minute at the usual break points; channels with commercials are unchanged |
+| Mix in with commercials (default) | As above, and now and then one house ad inside a normal commercial break (at most one per break) |
 | Off | No house breaks: without commercials a show plays straight through and the end of the slot shows *Up next* |
 
 A house break has, in some order: a promo for this channel's own shows, promos
@@ -826,7 +826,7 @@ CableBox follows the holiday calendar the way the networks did
   Plain horror and monster shows still air all year. Slots you pinned yourself
   are never changed.
 
-**What counts as holiday programming** (each season's page in *Edit holiday seasons*):
+**What counts as holiday programming** (each season's page in *Holidays & events → Holiday seasons*):
 
 1. **Kodi tags** on movies and TV shows: the main way. Any tag containing
    one of the season's words counts, whatever the capitalisation. With the
@@ -834,7 +834,7 @@ CableBox follows the holiday calendar the way the networks did
    *kids-halloween* all count. Defaults: *halloween, spooky, horror* ·
    *thanksgiving* · *christmas, xmas, holiday*. In the editor you tick them
    from the tags your library really has.
-2. **Kodi genres**: Horror and Mystery for Halloween, and Christmas and
+2. **Kodi genres**: Horror for Halloween, and Christmas and
    Holiday for Christmas, by default. Untick them all to leave genres out.
 3. **Titles, as a safety net.** Kodi can't tag a single episode, so episode
    and movie titles such as *Treehouse of Horror* or *A Charlie Brown
@@ -844,9 +844,9 @@ CableBox follows the holiday calendar the way the networks did
 
 ### Edit the seasons
 
-*Settings → Holidays & events → Edit holiday seasons...* lists each season with
+Main menu → *Holidays & events → Holiday seasons (automatic)* lists each season with
 its dates. Select one for its page; every change is kept as you make it, and the
-schedules take it in from each channel's next programme when you leave Settings.
+schedules take it in from each channel's next programme when you leave the list.
 
 | Row | What it does |
 |---|---|
@@ -874,7 +874,7 @@ Holidays that follow another calendar (Diwali, Hanukkah, Eid, Lunar New Year,
 Passover) take **Dates for each year...** in the date picker: you type each
 year's date, and in a year with none the season simply doesn't run (*no date
 for 2031* on its page). CableBox never works those calendars out itself. The
-same picker is in *Plan holidays and specials*, so a Diwali marathon works too.
+same picker is in *Add a special*, so a Diwali marathon works too.
 Not supported: rules that repeat inside a year (every Friday the 13th).
 
 Which season is on: a big day beats any run-up (Canada's Thanksgiving in
@@ -888,8 +888,7 @@ run-up air inside Christmas's. The changes live in `seasons.json` in CableBox's 
 
 The seasons above pick holiday programmes by themselves. A **special** is for
 saying exactly what you want on a date: a marathon, a holiday lineup, a movie
-night. *Holidays & events → Calendar* or *Add a special* in the main menu (also
-*Settings → Holidays & events → Plan holidays and specials*), or *Channel
+night. *Holidays & events → Calendar* or *Add a special* in the main menu, or *Channel
 manager → a channel → Schedule → Holidays and specials* for that channel's.
 
 It opens on a **month calendar**. Days with a special show ★ and its name
@@ -991,8 +990,8 @@ another channel*, **Preview the day** (what will air, channel by channel) and
 ### Summer reruns
 
 The 90s TV year had a shape: new episodes in the fall, then a summer of reruns.
-With *Settings → Holidays & events → Summer reruns* on, from **1 June to 31 August** the
-channels air episodes of each series they've already shown instead of moving it on:
+With *Settings → Holidays & events → Summer reruns* on (*Broadcast networks* unless you change it), from
+**1 June to 31 August** the channels air episodes of each series they've already shown instead of moving it on:
 
 - A series reruns its current season in order, from its first episode up to the
   last one that aired, then round again. If fewer than three episodes of the
@@ -1304,15 +1303,15 @@ Each category is in the order Settings shows it, under the same headings.
 | Commercial breaks per half hour | 2 | 0–4 |
 | Commercial breaks at chapter marks | On | An episode with good chapter marks gets its commercial breaks where the original broadcast's act breaks were (Seinfeld's "The Opposite": after the cold open, at 13:27 and before the end tag). Chapters are read once per file, in the background: whenever Kodi is idle, as fast as the drive answers quickly (it slows down at once for a busy or waking drive, and pauses on a busy CPU); with the TV on, the episodes airing in the next 6 hours first, gently; never while you watch something else in Kodi. The episodes they change are planned again. *Chapters read* below the setting shows how far it is; until then, and for files without usable chapters (none, one, evenly spaced automatic ones), breaks are evenly spaced as before. Scene chapters every couple of minutes keep the usual number of breaks, each moved to the nearest mark. The leftover time decides how many breaks there are (at least a minute each). *Tools → Check chapters* shows each show's episodes and lets you set a show to *Always* or *Never* use chapters. Files are only read, never changed |
 | *House breaks and retro ads* | | |
-| House breaks (the station's own ads and promos) | When there are no commercials | See [House breaks](#house-breaks) |
+| House breaks | Mix in with commercials | See [House breaks](#house-breaks) |
 | Retro ads | On | Period ads in house breaks ([Retro ads](#retro-ads)). Greyed when House breaks is Off |
 | Look of promos and retro ads | Early-90s cable | Or Modern. Used by promos, house breaks and the era of the retro ads |
 | Music in promos and ads | The show's theme music | Or none (silent). Also the jingles of house-break cards and retro ads, so it works with Promos off too |
 | *Promos* | | |
-| Promos for what's coming up, in breaks | Off | At most one per break ([Promos](#promos)) |
+| Promos for what's coming up, in breaks | On | At most one per break ([Promos](#promos)) |
 | How often | About half the breaks | Every break / About half the breaks / Now and then |
 | Promote | Up next and later today | Or only what's on next, or only something later today |
-| Also use short promo clips from a show's Extras folder | Off | *Promo* / *Trailer* videos up to 2 minutes |
+| Also use short promo clips from a show's Extras folder | On | *Promo* / *Trailer* videos up to 2 minutes |
 | Preview a promo... | | Pick a channel, then *Up next* or *Later today* (its programmes in the next 6 hours): about 2 s of black, the promo exactly as in a break, 1 s of black, then Settings again. Changes nothing (schedules, breaks, series, *How often*). Back ends it. Works with Promos off. Also `RunScript(script.cablebox42,preview_promo,<tvshowid>)` for a skin button or a favourite. Not while the TV is on |
 
 **Channels**
@@ -1359,18 +1358,16 @@ Each category is in the order Settings shows it, under the same headings.
 | Weather channel title | *Your Local Forecast* | |
 | Weather channel music folder | – | |
 
-**Holidays & events** (see [Holidays](#holidays))
+**Holidays & events** (see [Holidays](#holidays); the calendar, specials and each season's page are in the main menu's *Holidays & events*)
 
 | Setting | Default | |
 |---|---|---|
-| Plan holidays and specials... | | The month calendar of marathons and holiday lineups on exact dates ([Holidays and specials](#holidays-and-specials)). Also in the main menu |
-| Edit holiday seasons... | | Each season's page: on or off, dates, run-up, tags, genres, title words, folders; and any holiday of your own ([Edit the seasons](#edit-the-seasons)) |
 | *Automatic holidays* | | |
 | Holiday programming (automatic) | On | Every holiday season. Off greys the two rows below |
 | How much in the weeks before | Some | A little / Some / Lots |
 | Save holiday episodes and movies for their season | On | Keeps Christmas episodes out of July (the three built-in seasons; each can differ in its own page) |
 | *Summer* | | |
-| Summer reruns (June to August) | Off | *Broadcast networks* or *All channels*: June to August, series rerun episodes already shown ([Summer reruns](#summer-reruns)) |
+| Summer reruns (June to August) | Broadcast networks | *Off*, *Broadcast networks* or *All channels*: June to August, series rerun episodes already shown ([Summer reruns](#summer-reruns)) |
 
 **Start-up & library**
 
@@ -1515,6 +1512,13 @@ videos.** It's very likely AV1 on a device without AV1 hardware decoding. See
 **The CableBox menu opens by itself at startup or after a movie.** Update to
 the latest version. Early test builds didn't understand the content requests
 that some skins make for add-ons placed on their home menu.
+
+**Frozen picture and no sound after a DTS programme (also in Kodi afterwards).**
+Kodi 21 can misread the first frame of a DTS / DTS-HD track opened partway in, and
+then can't open the sound output again until it restarts (passthrough on). CableBox
+opens DTS programmes at the start and jumps to the position, which avoids it; if
+Kodi's sound gets stuck anyway, CableBox restarts Kodi and comes back on the same
+channel (TV on) or asks first (TV off).
 
 **No static sound when changing channel, or only the first time.** Some
 systems, Windows especially, reset their audio output between videos and drop

@@ -842,9 +842,10 @@ next* card. Station IDs play between programmes, right before the next show.
 
 ### Promos for what's coming up
 
-No commercials, or want more variety? Promos are made from your own library.
+No commercials, or want more variety? Promos are made from your own library, and
+they are on from the start.
 
-1. *Settings → Breaks → **Promos for what's coming up, in breaks*** → On.
+1. *Settings → Breaks → **Promos for what's coming up, in breaks*** (On; Off switches them off).
 2. *How often*: every break, about half of them, or now and then.
 3. *Promote*: *Up next and later today* (like a real station: breaks during a
    show tease the evening, the last one says what's up next), only what's on
@@ -861,9 +862,9 @@ For the best-looking promos, keep the usual artwork in each show's folder:
 them still gets a clean promo: its title in CableBox's type over the station
 background, with a short built-in tune.
 
-**Real promos from the era:** turn on *Also use short promo clips from a show's
-Extras folder* and put them in the show's `Extras` folder with *Promo* or
-*Trailer* in the name (2 minutes at most). Or put your own promo clips in a
+**Real promos from the era:** put them in the show's `Extras` folder with *Promo* or
+*Trailer* in the name (2 minutes at most); *Also use short promo clips from a show's
+Extras folder* (on unless you switch it off) airs them now and then. Or put your own promo clips in a
 channel's station folder under `promos/`; those always come first.
 
 A change applies from each channel's next programme when you close Settings;
@@ -1030,19 +1031,21 @@ never writes tags, NFOs or artwork.
 
 ## 16. Holidays
 
-*Settings → Holidays & events*. Halloween (October, all-out on the 31st), Thanksgiving (on
+Main menu → *Holidays & events* (the calendar, specials and each season's page; *Settings →
+Holidays & events* holds the on/off options). Halloween (October, all-out on the 31st), Thanksgiving (on
 the day) and Christmas (from the day after Thanksgiving, all-out on the 24th
 and 25th): each channel mixes in its own holiday episodes and movies — a few at
 first, more as the day gets closer.
 
 CableBox finds holiday content by **Kodi tags** first (any tag containing
-*halloween*, *christmas*…), then **genres**, then **titles**. The surest way:
+*halloween*, *christmas*…), then **genres** (Horror for Halloween), then **titles**
+(clearly Halloween ones such as *Treehouse of Horror*, *Dracula*, *haunted*). The surest way:
 tag your holiday episodes in Kodi (*Information → Manage → Manage tags*).
 
 Each holiday can have its own commercials and bumps folders. *Save holiday
 episodes and movies for their season* keeps Christmas specials out of July.
 
-**Change a season:** *Settings → Holidays & events → **Edit holiday seasons...***,
+**Change a season:** main menu → *Holidays & events → **Holiday seasons (automatic)***,
 pick the season. For Canadian Thanksgiving: *Thanksgiving → When → Canada (2nd
 Monday of October)*. For a longer Halloween: *Halloween → When → Run-up → Starts on a date... →
 A date... → September → 15*. *Tags* and *Genres* tick from what's
@@ -1051,7 +1054,7 @@ to the built-in settings* undoes it all.
 
 ### Add Festivus
 
-1. *Settings → Holidays & events → Edit holiday seasons... → **+ Add a season...***
+1. Main menu → *Holidays & events → Holiday seasons (automatic) → **+ Add a season...***
    → *Festivus* (23 December).
 2. *How many big days?* → *1 day*. *Run-up* → *Starts some days before the big
    days...* → **2**.
@@ -1083,8 +1086,7 @@ type the dates from your calendar.
 The seasons choose holiday programmes for you. When you want one exact thing
 on one day, add a **special**.
 
-1. Main menu → *Holidays & events → Calendar* (or *Settings → Holidays & events →
-   Plan holidays and specials...*). A month calendar opens; the holiday seasons
+1. Main menu → *Holidays & events → Calendar*. A month calendar opens; the holiday seasons
    are shaded (big days red, run-ups plum).
 2. Press **CH+** until it shows November, move to the fourth Thursday and
    press **OK** → *Add a special on this day*.
@@ -1138,8 +1140,8 @@ day on the calendar and choose its rule, or use *Add a special* in the list:
 The rule is worked out again every year, so floating holidays land on the
 right day by themselves.
 
-**Summer reruns:** *Settings → Holidays & events → Summer reruns* → *Broadcast networks* (the
-broadcast networks) or *All channels*. From June to August each series reruns the
+**Summer reruns:** on for the broadcast networks unless you change it: *Settings → Holidays & events →
+Summer reruns* → *Off*, *Broadcast networks* or *All channels*. From June to August each series reruns the
 episodes of its current season it has already shown, marked *(R)* in the guide and
 banner; in September it picks up with the next new episode. Your pinned slots are
 never changed.
@@ -1229,6 +1231,22 @@ or none of its clips can be read. *Breaks & clips* and *Check my videos*.
 Update to 1.1.1 or later, then restart Kodi (on CoreELEC: `systemctl restart kodi`).
 Older versions switched Kodi's audio setup on every channel change, which some
 HDMI boxes couldn't keep up with.
+
+**The picture froze and there's no sound, also in Kodi's own player afterwards.**
+Kodi's sound output got stuck after a DTS / DTS-HD programme: Kodi 21 can misread
+the first DTS frame when a file is opened partway in, and from then on it can't
+open the sound output until Kodi restarts (with passthrough on). From 1.2.0
+CableBox opens DTS programmes at the start and jumps to the right place, which
+avoids it. If it happens anyway, CableBox notices within a second: with the TV
+on, it restarts Kodi (about 20 seconds) and comes back on the same channel; with
+the TV off it asks *Restart Kodi* / *Not now*. By hand: restart Kodi (on CoreELEC:
+`systemctl restart kodi`).
+
+**Subtitles show although captions are off.**
+Update to 1.2.0. Before it, two saves at the same moment (as when the TV comes
+on) could empty CableBox's own settings file, and with it your captions choice,
+the last channel and the backup of *Play GUI sounds*. Switch captions off once
+more (*Menu → Closed captions*) and it stays off.
 
 **I hear a click when I press a button while watching.**
 That's Kodi's own button sound. While the TV is on, CableBox lets Kodi play

@@ -940,11 +940,12 @@ class ChannelSchedule(object):
         rr = st.setdefault("rr", {})
         if blk.get("order") == "first":
             # a new date: every show from its first episode again
-            mark = "ev:%s" % sp["id"]
+            # (not `mark`: that's the holiday-episodes helper above, called below)
+            ev = "ev:%s" % sp["id"]
             day = time.strftime("%Y-%m-%d", time.localtime(s0 + specials_shift(self.cfg)))
-            if st.get(mark) != day:
-                self._undo("st", mark, st.get(mark))
-                st[mark] = day
+            if st.get(ev) != day:
+                self._undo("st", ev, st.get(ev))
+                st[ev] = day
                 for k in [k for k in st["last"] if k.startswith(rid + "|")]:
                     self._undo("l", k, st["last"][k])
                     del st["last"][k]
@@ -2801,7 +2802,7 @@ class ChannelSchedule(object):
         return out
 
     def _extras_promo(self, i, path, b):
-        """Opt-in: a short 'Promo' / 'Trailer' video from the show's Extras
+        """Settings' promo_extras (on by default): a short 'Promo' / 'Trailer' video from the show's Extras
         folder airs instead of the card, now and then.  It takes the card's
         place and as much of the spots after it as it needs; a spot it runs
         into starts from the top and is cut off, like a late switch-over."""

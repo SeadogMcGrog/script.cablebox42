@@ -2905,8 +2905,7 @@ show), the Channel manager, the Weekly planner, Holidays & events, Settings and
 Help.  Lineup tools (build my lineup, move shows, sign-off and prime time, station
 folders) are in the Channel manager; maintenance (check my videos, refresh schedules,
 start series over, start over) is on the Tools page in Settings.  In Settings, OK
-saves and Back cancels; a button row there (a tool, Plan holidays and specials,
-Preview a promo) saves what you changed before it, like OK.
+saves and Back cancels; a button row there (a tool, Preview a promo) saves what you changed before it, like OK.
 Changes to settings, channels and station clips apply from
 each channel's next programme on their own: what's on stays on, and every show keeps
 its next episode.  Only Tools > Start series over sends shows back to episode one.
@@ -2947,18 +2946,18 @@ slots appear in the weekly planner; edit any of them and it becomes yours.
 [B]Holidays[/B]
 Halloween (October, all-out on the 31st), Thanksgiving Day and Christmas (from the day
 after Thanksgiving, all-out on the 24th and 25th): each channel mixes in its own holiday
-episodes and movies (Kodi tags first, then genres such as Horror and Mystery, then titles) - a few at
+episodes and movies (Kodi tags first, then genres such as Horror, then titles) - a few at
 first, more as the day gets closer, all day on the day itself.  Optional holiday
 commercial and bump folders.  The rest of the year Christmas and Thanksgiving episodes
-are saved for their season.  Settings > Holidays & events > Edit holiday seasons: each
+are saved for their season.  Main menu > Holidays & events > Holiday seasons: each
 season's dates (Canadian Thanksgiving too), how much in the run-up, tags and genres
 ticked from your library, extra title words, and Show what matches.  + Add a
 season adds any holiday, real or made up (Festivus, Bastille Day, Diwali with
 the dates you type for each year).
 
 [B]Holidays and specials[/B]
-Main menu > Holidays & events > Calendar (also Settings > Holidays & events, and
-Channel manager > channel > Schedule): a month calendar - OK on a day adds a special
+Main menu > Holidays & events > Calendar (also Channel manager > channel >
+Schedule): a month calendar - OK on a day adds a special
 there, Menu shows them as a list.  The holiday seasons are shaded on it (big days red,
 run-up plum) and seasons and specials share one list of holidays: When? > A holiday
 from my list, and Holiday episodes work for every holiday.
@@ -3045,7 +3044,8 @@ def pick_planner_channel():
 
 
 # Tools reached from Settings action rows (RunScript(script.cablebox42,tool,<name>)): the Tools
-# page, plus Plan holidays and specials, Remote CC button and Clean up my 'In progress' list.
+# page, plus Remote CC button and Clean up my 'In progress' list.  'specials' and 'seasons' stay
+# for old favourites / skin shortcuts: Holidays & events is in the main menu only.
 TOOLS = {
     "wizard": lambda: wizard(),
     "quick": lambda: quick_setup(),
@@ -3191,8 +3191,7 @@ def check_skipped():
 
 
 def open_specials():
-    """Holidays and specials: main menu > Holidays & events > Calendar, Settings >
-    Holidays & events > Plan holidays and specials..."""
+    """Holidays and specials: main menu > Holidays & events > Calendar (tool 'specials')."""
     from . import specials_editor
     specials_editor.open_specials()
 
@@ -3228,7 +3227,7 @@ def holidays_menu():
 
 
 def open_seasons():
-    """Settings > Holidays & events > Edit holiday seasons..."""
+    """Main menu > Holidays & events > Holiday seasons (tool 'seasons')."""
     from . import seasons_editor
     seasons_editor.open_seasons()
 
@@ -3501,7 +3500,7 @@ SETUP_ITEMS = ("commercials", "bumps", "music", "musicvideos", "city")
 
 def setup_todo(chans):
     """[(key, label, detail)] of what's still not set (and not dismissed)."""
-    skipped = set(K.load_json(K.STATE_FILE, {}).get("setup_skipped") or [])
+    skipped = set(K.load_state().get("setup_skipped") or [])
     todo = []
 
     def add(key, unset, label, detail):
@@ -3522,9 +3521,9 @@ def setup_todo(chans):
 
 
 def _setup_skip(key):
-    st = K.load_json(K.STATE_FILE, {})
-    st["setup_skipped"] = sorted(set(st.get("setup_skipped") or []) | set([key]))
-    K.save_json(K.STATE_FILE, st)
+    def add(st):
+        st["setup_skipped"] = sorted(set(st.get("setup_skipped") or []) | set([key]))
+    K.update_state(fn=add)
 
 
 def _setup_choose(key, chans):
@@ -3586,7 +3585,7 @@ def finish_setup():
 
 def captions_on():
     """The TV's CC setting, the same one the in-TV menu switches."""
-    return K.load_json(K.STATE_FILE, {}).get("cc_on") is True
+    return K.load_state().get("cc_on") is True
 
 
 MENU_OPEN = "cablebox42.main_menu"     # home-window property while the main menu is open
@@ -3628,12 +3627,12 @@ def note_unplaced():
         hidden = set(x.lower() for c in C.load() for x in c.get("exclude", []))
         unplaced = sorted(s["title"] for s in library.all_tvshows()
                           if s["title"].lower() not in placed and s["title"].lower() not in hidden)
-        st = K.load_json(K.STATE_FILE, {})
-        known = st.get("unplaced_known")
-        fresh = [] if known is None else [t for t in unplaced if t not in known]
-        st["unplaced_known"] = unplaced
-        st["unplaced_new"] = [t for t in sorted(set(st.get("unplaced_new", [])) | set(fresh)) if t in unplaced]
-        K.save_json(K.STATE_FILE, st)
+        def note(st):
+            known = st.get("unplaced_known")
+            fresh = [] if known is None else [t for t in unplaced if t not in known]
+            st["unplaced_known"] = unplaced
+            st["unplaced_new"] = [t for t in sorted(set(st.get("unplaced_new", [])) | set(fresh)) if t in unplaced]
+        K.update_state(fn=note)
     except Exception as exc:
         K.log_err("new shows: %s" % exc)
 
@@ -3642,22 +3641,20 @@ def menu_notes():
     """Things the TV and the background service noticed, said once in the menu
     (never over the TV)."""
     home = xbmcgui.Window(10000)
-    st = K.load_json(K.STATE_FILE, {})
+    st = K.load_state()
     new = st.get("unplaced_new") or []
     if new:
-        st["unplaced_new"] = []              # once per batch of new shows
-        K.save_json(K.STATE_FILE, st)
+        K.update_state({"unplaced_new": []})     # once per batch of new shows
         text = (_("A new show isn't on a channel yet: %s") % new[0]) if len(new) == 1 else \
             (_("%d new shows aren't on a channel yet.") % len(new))
         if D.yesno(TITLE, text, nolabel=_("Not now"), yeslabel=_("OK")):
             run_finder()
             refresh_if_changed()
-        st = K.load_json(K.STATE_FILE, {})
+        st = K.load_state()
     at = st.get("missing_at", 0)
     if at > st.get("missing_told", 0) and not home.getProperty("cablebox42.missing_told"):
         home.setProperty("cablebox42.missing_told", "1")         # at most once per Kodi session
-        st["missing_told"] = at
-        K.save_json(K.STATE_FILE, st)
+        K.update_state({"missing_told": at})
         D.notification(TITLE, _("Some planned episodes are missing; schedules updated"), time=5000)
 
 
@@ -3712,9 +3709,7 @@ def _main_menu():
             refresh_if_changed()             # new clip folders, a new channel
         elif k == "cc":
             on = not captions_on()
-            st = K.load_json(K.STATE_FILE, {})
-            st["cc_on"] = on
-            K.save_json(K.STATE_FILE, st)
+            K.update_state({"cc_on": on})
             D.notification(TITLE, _("Closed captions on") if on else _("Closed captions off"), time=2000)
         elif k == "manager":
             if manager():                    # only after a saved change: channels, branding, station clips

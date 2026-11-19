@@ -150,18 +150,18 @@ def _set_setting(sid, value):
 def restore_leftovers():
     """Kodi closed while the subtitle search was open: put its setting back.
     Called when the TV starts and by the service when Kodi starts."""
-    st = K.load_json(K.STATE_FILE, {})
+    st = K.load_state()
     if PAUSE_ORIG not in st:
         return
-    _set_setting(PAUSE_SETTING, bool(st.pop(PAUSE_ORIG)))
-    K.save_json(K.STATE_FILE, st)
+    _set_setting(PAUSE_SETTING, bool(st[PAUSE_ORIG]))
+    K.update_state({PAUSE_ORIG: K.DELETE})
 
 
 class Captions(object):
     def __init__(self, player):
         self.player = player
         restore_leftovers()
-        st = K.load_json(K.STATE_FILE, {})
+        st = K.load_state()
         self.on = st.get("cc_on")            # None: never touched -> leave Kodi alone
         self.lang = st.get("cc_lang", "")
         self.files = {}                       # video path -> subtitle file loaded for it (this session)
@@ -521,10 +521,7 @@ class Captions(object):
 
     # ----------------------------------------------------------- choices
     def _remember(self):
-        st = K.load_json(K.STATE_FILE, {})
-        st["cc_on"] = self.on
-        st["cc_lang"] = self.lang
-        K.save_json(K.STATE_FILE, st)
+        K.update_state({"cc_on": self.on, "cc_lang": self.lang})
 
     def set_off(self):
         self.on = False
@@ -773,9 +770,7 @@ class Captions(object):
         before, before_cur, before_on = self.tracks()
         swapped = _get_setting(PAUSE_SETTING) is True
         if swapped:
-            st = K.load_json(K.STATE_FILE, {})
-            st[PAUSE_ORIG] = True                    # put back next start if Kodi closes meanwhile
-            K.save_json(K.STATE_FILE, st)
+            K.update_state({PAUSE_ORIG: True})       # put back next start if Kodi closes meanwhile
             _set_setting(PAUSE_SETTING, False)
         mon = xbmc.Monitor()
         try:
@@ -791,9 +786,7 @@ class Captions(object):
         finally:
             if swapped:
                 _set_setting(PAUSE_SETTING, True)
-                st = K.load_json(K.STATE_FILE, {})
-                st.pop(PAUSE_ORIG, None)
-                K.save_json(K.STATE_FILE, st)
+                K.update_state({PAUSE_ORIG: K.DELETE})
         if xbmc.getCondVisibility("Player.Paused"):  # Kodi paused anyway: carry on, back on the clock
             try:
                 self.player.pause()

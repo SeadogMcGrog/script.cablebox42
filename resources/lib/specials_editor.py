@@ -1,4 +1,4 @@
-"""Holidays and specials: the editor (main menu, Settings > Holidays & events, and a channel's Schedule group).
+"""Holidays and specials: the editor (main menu > Holidays & events, and a channel's Schedule group).
 
 It opens on a month calendar (Calendar: a 6 x 7 grid of days, a star on the days with
 a special; OK on a day: its specials and 'Add a special on this day') or on the
@@ -174,7 +174,7 @@ def season_name(sid, sc=None):
 
 def holidays(sc=None):
     """[(id, name, its first big day as a rule, has material)] in list order: the
-    built-ins and every holiday the viewer added (Settings > Edit holiday seasons)."""
+    built-ins and every holiday the viewer added (Holidays & events > Holiday seasons)."""
     from . import seasons
     sc = sc if sc is not None else seasons_cfg()
     out = []
@@ -385,14 +385,12 @@ def drop_channel(cid):
 # ------------------------------------------------------------------ the list
 def view():
     """'calendar' (to start with) or 'list': the one used last."""
-    return "list" if K.load_json(K.STATE_FILE, {}).get("specials_view") == "list" else "calendar"
+    return "list" if K.load_state().get("specials_view") == "list" else "calendar"
 
 
 def set_view(name):
-    st = K.load_json(K.STATE_FILE, {})
-    if st.get("specials_view") != name:
-        st["specials_view"] = name
-        K.save_json(K.STATE_FILE, st)
+    if K.load_state().get("specials_view") != name:
+        K.update_state({"specials_view": name})
 
 
 def open_specials(cid=None):
@@ -633,7 +631,9 @@ class Calendar(xbmcgui.WindowXMLDialog):
                 sps = self.days.get(d) or []
                 here = d.month == self.day.month
                 sea = self.seas.get(d)
-                self.setProperty("B%d" % i, "planner_special.png" if sps else
+                # a special on a season's day: the season's shade with a gold border (both show)
+                self.setProperty("B%d" % i, ("calendar_special_big.png" if sea[1] else "calendar_special_run.png")
+                                 if sps and sea else "planner_special.png" if sps else
                                  ("calendar_season_big.png" if sea[1] else "calendar_season_run.png") if sea else
                                  ("planner_auto.png" if here else "planner_auto_alt.png"))
                 self.setProperty("N%d" % i, ("[B]%d[/B]" if here else "[COLOR 66FFFFFF]%d[/COLOR]") % d.day)

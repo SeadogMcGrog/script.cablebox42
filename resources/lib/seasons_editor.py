@@ -1,4 +1,4 @@
-"""Holiday seasons: the editor (Settings > Holidays & events > Edit holiday seasons...).
+"""Holiday seasons: the editor (main menu > Holidays & events > Holiday seasons).
 
 A menu of every season; each season's page is a menu too (changes save as you go,
 Done at the bottom).  The built-ins keep their Settings ids as storage (on, tags,
@@ -147,7 +147,7 @@ def list_text(text):
 
 # ------------------------------------------------------------------ the list
 def open_seasons():
-    """Settings > Holidays & events > Edit holiday seasons..."""
+    """Main menu > Holidays & events > Holiday seasons."""
     while True:
         sc = config()
         ids = list(S.order(sc))

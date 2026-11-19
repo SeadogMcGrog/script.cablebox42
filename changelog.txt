@@ -1,12 +1,39 @@
 v1.2.0 (2026-11-12)
-- New: Edit holiday seasons (Settings > Holidays & events): each season's own
+- On from the start: promos in breaks, house ads mixed in with commercials,
+  a show's own Promo / Trailer clips from its Extras folder, and summer reruns
+  on the broadcast networks (1 June to 31 August). Updating from 1.1.1 switches
+  them on too (1.1.1 had none of these settings). Each can be switched off in
+  Settings > Breaks and Settings > Holidays & events
+- Fixed: tuning into some DTS-HD programmes partway in froze the picture and
+  left Kodi without sound until Kodi restarted (also in Kodi's own player
+  afterwards). Kodi 21 can misread the first DTS frame when a file is opened
+  at a position (Planet Earth II S01E03 at 19:05-19:07, every time); CableBox
+  now opens DTS files with passthrough at the start and jumps to the position,
+  which never got stuck (N2: 158 fast channel changes, 65 DTS starts, 40 starts
+  at the bad spots). If Kodi's sound output gets stuck anyway, CableBox notices
+  within a second: with the TV on it restarts Kodi and comes back on the same
+  channel; with the TV off it asks (nothing inside a running Kodi clears it)
+- Fixed: subtitles showing with CC off, the last channel and the Play GUI
+  sounds backup forgotten: two saves of CableBox's state file at once (as when
+  the TV comes on) could leave it empty. Saves now take a lock, change only
+  their own keys, use a temp file of their own, and never write over a file
+  they couldn't read. The Play GUI sounds backup has a file of its own
+- Holidays & events lives in the main menu only; Settings > Holidays & events
+  keeps just the options (on/off, how much, saving shows for their season)
+- Halloween matches only clearly Halloween or horror programmes: the Mystery
+  genre and the words ghost, witch, boo, mummy, scary, creepy, pumpkin and
+  costume party are out (a stored old default 'Horror, Mystery' becomes Horror)
+- Month calendar: on a special's day in a season, the season's shade shows with
+  a gold border
+- Settings > Breaks: 'House breaks' (the long label was cut off at 1080p)
+- New: Holiday seasons (main menu > Holidays & events): each season's own
   page: on or off, its name, its dates as rules like a special's (big days
   start on a date and last 1-14 days; a run-up some days before or from a
   date; Canadian Thanksgiving with one choice), how much in the run-up,
   tags and genres ticked from the library, extra title words, Show what
   matches, its folders, Save its shows for its season, Reset. The 15 holiday
   rows in Settings are now on these pages. No change = the same dates as before
-- New: any holiday as a season (Edit holiday seasons > + Add a season...):
+- New: any holiday as a season (Holiday seasons > + Add a season...):
   ready-made New Year's Day, Valentine's Day, St. Patrick's Day, Easter, May
   the 4th, Towel Day, Canada Day, Independence Day, Bastille Day, Festivus and
   Boxing Day, or your own date; big days last 1-14 days; Move up / Move down,
@@ -213,7 +240,7 @@ v1.2.0 (2026-11-12)
   and a station ID card. At the end of a show, house breaks run back to back and
   the 'Up next' card, the last thing before the next show, lasts at most about
   90 seconds. Settings > Programming > House breaks: When there are no
-  commercials (default) / Mix in with commercials (one house ad now and then in
+  commercials / Mix in with commercials (default: one house ad now and then in
   normal breaks too) / Off. Promo style and Promo music now apply with promos off
   too, since house breaks use them
 - After an update, the first start refreshes the schedules (keep my place), so
@@ -306,7 +333,7 @@ v1.2.0 (2026-11-12)
   read, never changed, and CableBox never changes your volume.
 - Your own promo clips in a station folder's promos/ come first; optionally,
   short Promo/Trailer videos in a show's Extras folder air as its promo
-- Off by default; with promos off breaks are exactly as before
+- On by default; with promos off breaks are exactly as before
 - Promote: 'Up next and later today' (the default) - breaks inside a programme
   promote something later today on the channel ('Tonight at 8:00'), never the
   same show twice in a row, and the break before the next programme says

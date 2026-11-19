@@ -4,6 +4,7 @@ Playback is plain xbmc.Player (windowed into our videowindow control), so on
 every device each file goes through the same hardware decoder as it
 does when you play it from the library.
 """
+import json
 import math
 import os
 import random
@@ -26,7 +27,6 @@ from . import promos
 from . import musicvideos
 from . import ads
 from . import guide
-from . import musictest
 from . import musictv
 from .kodiutil import _
 
@@ -189,8 +189,6 @@ class TVWindow(xbmcgui.WindowXML):
         self.fs_at = 0
         self.fs_retry_at = 0
         self.music = musictv.MusicScreen(self)   # music channels
-        self.mtest = None            # Step 0 music test (musictest.py), only when asked for
-        self.music_test_wanted = False
 
     _props = None
 
@@ -244,16 +242,13 @@ class TVWindow(xbmcgui.WindowXML):
             t = threading.Thread(target=target, name=name)
             t.start()
             self.threads.append(t)
-        if self.music_test_wanted:
-            self.mtest = musictest.MusicTest(self)
-            self.threads.append(self.mtest.start())
 
     def start_channel(self):
         if getattr(self, "wanted_channel", None):
             ch = self.lineup.by_number(self.wanted_channel)
             if ch:
                 return ch
-        state = K.load_json(K.STATE_FILE, {})
+        state = K.load_state()
         fixed = K.setting_int("start_channel", 0)
         if fixed and not self.lineup.by_number(fixed):
             fixed = 0                    # no such channel (any more): the last one watched
@@ -289,10 +284,7 @@ class TVWindow(xbmcgui.WindowXML):
         self.tone_off()                      # the off-air tone: repeat off; the player is stopped below
         self.promo_stop(stop_music=False)    # forget the theme; the player is stopped below
         if self.ch:
-            st = K.load_json(K.STATE_FILE, {})
-            st["last_channel"] = self.ch["number"]
-            st["last_channel_id"] = self.ch["id"]
-            K.save_json(K.STATE_FILE, st)
+            K.update_state({"last_channel": self.ch["number"], "last_channel_id": self.ch["id"]})
         self.cc.leave()                  # the file's own caption state back before Kodi saves it
         self.fs_leave(wait=True)         # the turn-off and everything after happen in the TV window
         stopped = time.time()            # when the programme stopped playing
@@ -400,6 +392,7 @@ class TVWindow(xbmcgui.WindowXML):
             self.cc.leave()                  # before the static clip replaces the programme
             self.music.leave()               # a music channel's screen and queue start afresh
             self.ch = ch
+            xbmcgui.Window(10000).setProperty("cablebox42.channel", str(ch.get("number", "")))  # audiowatch's restart
             self.cur_key = None
             self.failed_key = None
             self.retries = 0
@@ -422,8 +415,7 @@ class TVWindow(xbmcgui.WindowXML):
                 self.static_until = time.time() + 0.45
                 if self.static_sound:
                     xbmc.playSFX(K.media("static.wav"), False)
-            if ch.get("type") != "musictest":
-                self.lineup.schedule(ch)
+            self.lineup.schedule(ch)
             self.tick()
             self.update_banner()
             if not self.power_on:            # after the turn-on clip instead
@@ -743,10 +735,6 @@ class TVWindow(xbmcgui.WindowXML):
             self.end_dev_promo()
         if self.power_on:
             self.end_power_on()
-        if self.ch.get("type") == "musictest":
-            if self.mtest:
-                self.mtest.tick(now)
-            return
         if self.ch.get("type") == "music":
             self.music.tick(now)
             if self.banner_until:
@@ -1026,7 +1014,7 @@ class TVWindow(xbmcgui.WindowXML):
             nxt = sched.entry_at(e["e"] + 0.01)
         except Exception:
             pass
-        if not (nxt and nxt.get("k") == "promo" and (nxt.get("h") or K.setting_bool("promos_on", False))):
+        if not (nxt and nxt.get("k") == "promo" and (nxt.get("h") or K.setting_bool("promos_on", True))):
             self.setProperty("promo_preload", "")
             return
         _pt, path, title, _later = self.promo_subject(sched, nxt)
@@ -1048,7 +1036,7 @@ class TVWindow(xbmcgui.WindowXML):
         sched = self.lineup.schedule(self.ch, ensure=False)
         pt, path, title, later = self.promo_subject(sched, e)
         house = bool(e.get("h"))             # house breaks run promos whatever the Promos setting
-        if not (house or K.setting_bool("promos_on", False)) or not pt or pt < now:
+        if not (house or K.setting_bool("promos_on", True)) or not pt or pt < now:
             self.card_for({"k": "card", "sub": "id"}, now)     # promos switched off since: a station ID
             return
         special = {"end": e.get("pe"), "sub": e.get("sub")} if e.get("sp") else None
@@ -1179,7 +1167,7 @@ class TVWindow(xbmcgui.WindowXML):
             return False
         self.digits = ""
         self.clear_overlays()                # nothing on screen but the promo
-        if not K.setting_bool("promos_on", False) or not self.ch or self.power_on \
+        if not K.setting_bool("promos_on", True) or not self.ch or self.power_on \
                 or self.ch.get("type") not in scheduler.PROMO_TYPES:
             return True                      # promos off: the code shows nothing
         now = time.time()
@@ -1259,6 +1247,61 @@ class TVWindow(xbmcgui.WindowXML):
     start_good = []              # Kodi's open + seek time of the last good tune-ins (s)
     start_odd = []               # ...and of the last ones left out
     start_ask = None             # (path, entry, delay added) of a tune-in partway in, measured at AV start
+    seek_after = None            # (token, path, entry, mark or None): a DTS file opened at 0, seek at AV start
+    SEEK_LEAD = 0.4              # s Kodi's seek takes (N2)
+    DTS_CODECS = ("dca", "dts", "dtshd_ma", "dtshd_hra", "dts_hd", "dtshd")
+    audio_codecs = {}            # path -> the first audio track's codec ('' unknown), for this Kodi session
+    pt_dts = None
+    pt_read_at = 0.0
+
+    def dts_risky(self, path):
+        """True for a file whose audio is DTS with DTS passthrough on.  Opened partway in
+        (StartOffset), Kodi 21 on the N2 can misread the first DTS-HD frame at some
+        positions (Planet Earth II S01E03 at 19:05-19:07, every time, Kodi's own player
+        too): ALSA can't open that 'layout' and Kodi's audio output stays stuck until Kodi
+        restarts.  Opened at 0 and then seeked to the same spots it never did: the stream
+        is already set up as DTS-HD when the seek's misread comes, and Kodi keeps it."""
+        if not path:
+            return False
+        now = time.time()
+        if now - self.pt_read_at > 60:
+            self.pt_read_at = now
+            try:
+                on = K.rpc("Settings.GetSettingValue", {"setting": "audiooutput.passthrough"}).get("value")
+                dts = K.rpc("Settings.GetSettingValue", {"setting": "audiooutput.dtspassthrough"}).get("value")
+                type(self).pt_dts = bool(on) and bool(dts)
+            except Exception:
+                type(self).pt_dts = True     # unknown: the safe way costs only a seek
+        if not self.pt_dts:
+            return False
+        c = self.audio_codecs.get(path)
+        if c is None:
+            c = ""
+            try:
+                raw = xbmc.executeJSONRPC(json.dumps({"jsonrpc": "2.0", "id": 1, "method": "Files.GetFileDetails",
+                                                      "params": {"file": path, "media": "video",
+                                                                 "properties": ["streamdetails"]}}))
+                fd = (json.loads(raw).get("result") or {}).get("filedetails") or {}
+                aud = (fd.get("streamdetails") or {}).get("audio") or []
+                c = (aud[0].get("codec") or "").lower() if aud else ""
+            except Exception:
+                pass
+            self.audio_codecs[path] = c
+        return c in self.DTS_CODECS or c.startswith("dts")
+
+    def seek_dts(self, path):
+        """At AV start of a DTS file opened at 0 (dts_risky): to the mark, or to the
+        clock's point for a tune-in."""
+        sa, self.seek_after = self.seek_after, None
+        if not sa or sa[0] != self.play_token or sa[1] != path:
+            return
+        e, mark = sa[2], sa[3]
+        target = mark if mark is not None else float(e.get("o", 0)) + (time.time() - e["s"]) + self.SEEK_LEAD
+        try:
+            self.player.seekTime(target)
+            K.log("DTS start: opened at 0, seeked to %.1f s" % target, xbmc.LOGINFO)
+        except Exception as exc:
+            K.log_err("DTS start: seek failed: %s" % exc)
 
     def play(self, e, now):
         self.clear_music()
@@ -1278,12 +1321,18 @@ class TVWindow(xbmcgui.WindowXML):
                 # with subtitles on never flashes them with CC off
                 self.cover_mark = (e["p"], None, time.time() + 6.0)
                 self.set_cover(True)
-        li = self.list_item(e, offset)
+        # DTS passthrough: never open the file at the offset (see dts_risky); open it at
+        # the start and seek once the picture is up (on_av_started)
+        dts = offset > 1.0 and self.dts_risky(e.get("p"))
+        if dts:
+            self.start_ask = None            # not a tune-in delay sample: Kodi starts at 0 here
+        li = self.list_item(e, 0.0 if dts else offset)
         if offset > 1.0:
             # starting partway in is a jump, and Kodi's skin shows its seek bar for
             # 3 s after any jump in its full-screen player: do it in the TV window
             self.fs_leave()
         self.play_token += 1
+        self.seek_after = (self.play_token, e["p"], e, o if late < PART_START and o > 1.0 else None) if dts else None
         self.play_started_at = time.time()
         self.our_files.add(e["p"])
         self.pending_play = (e["p"], time.time())
@@ -1795,9 +1844,7 @@ class TVWindow(xbmcgui.WindowXML):
             return
         if self.really_bad(path):            # the folder is there: the file is gone
             library.mark_bad(path, _("The file is missing"))
-        st = K.load_json(K.STATE_FILE, {})
-        st["missing_at"] = time.time()
-        K.save_json(K.STATE_FILE, st)
+        K.update_state({"missing_at": time.time()})
         ch = self.ch
         ne, real = None, False
         try:
@@ -2105,11 +2152,10 @@ class TVWindow(xbmcgui.WindowXML):
     def first_tip(self):
         """The first time the TV is switched on: where captions and the rest live."""
         try:
-            st = K.load_json(K.STATE_FILE, {})
-            if st.get("tip_menu"):
+            if K.load_state().get("tip_menu"):
                 return
-            st["tip_menu"] = 1
-            K.save_json(K.STATE_FILE, st)
+            if K.update_state({"tip_menu": 1}) is None:
+                return
             self.toast(_("Press Menu for captions, sleep timer and more"), 6)
         except Exception as exc:
             K.log_err("tip: %s" % exc)
@@ -2242,7 +2288,7 @@ class TVWindow(xbmcgui.WindowXML):
             self.adopt_playing()
         if self.closing or not self.playing_ours():
             return
-        if self.ch and self.ch.get("type") in ("music", "musictest"):
+        if self.ch and self.ch.get("type") == "music":
             return                       # songs: no captions, resume points or learned lengths
         tok = self.play_token
         self.av_started_token = tok
@@ -2268,6 +2314,8 @@ class TVWindow(xbmcgui.WindowXML):
         except Exception:
             actual = ""
         path = self.requested(actual)
+        if self.seek_after:
+            self.seek_dts(path)
         self.start_measured(path)
         try:
             self.progress.release(keep=path)   # the file before this one
@@ -2569,11 +2617,6 @@ class TVWindow(xbmcgui.WindowXML):
 
     def update_banner(self):
         if not self.ch:
-            return
-        if self.ch.get("type") == "musictest":
-            self.setProperty("now_title", _("Music test"))
-            for k in ("now_sub", "now_time", "next_line"):
-                self.setProperty(k, "")
             return
         now = time.time()
         sched = self.lineup.schedule(self.ch, ensure=False)
@@ -3000,18 +3043,39 @@ class GuiSounds(object):
         except Exception as exc:
             K.log_err("gui sounds: %s" % exc)
 
+    FILE = os.path.join(K.PROFILE, "gui_sounds.json")     # {"orig": n, "active": bool}; GuiSounds writes it alone
+
+    def _saved(self):
+        """The backup file (and, once, the old state.json key) as {"orig", "active"};
+        None when the file is there but can't be read."""
+        try:
+            d = K._read_state(self.FILE)
+        except K.StateUnreadable as exc:
+            K.log_err("gui sounds: %s unreadable (%s)" % (os.path.basename(self.FILE), exc))
+            return None
+        legacy = K.load_state().get("gui_sounds_orig")      # builds before ~all10 kept it in state.json
+        if legacy is not None and not d.get("active"):
+            d = {"orig": int(legacy), "active": True}
+        return d
+
     def start(self):
-        """Once, before anything plays: Always, for the whole time the TV is on."""
+        """Once, before anything plays: Always, for the whole time the TV is on.  The
+        viewer's own value goes to gui_sounds.json first (only this class writes it, so
+        nothing else can wipe it); a session Kodi closed before it ended left
+        "active": true there, and its "orig" is the one to keep."""
         cur = self._get()
         if cur is None:
             return
-        st = K.load_json(K.STATE_FILE, {})
-        orig = st.get("gui_sounds_orig")          # left over if Kodi closed while CableBox was on
-        if orig is None:
+        saved = self._saved()
+        if saved and saved.get("active") and saved.get("orig") is not None:
+            orig = int(saved["orig"])               # left over: Kodi closed while CableBox was on
+        else:
             orig = cur
-            st["gui_sounds_orig"] = orig
-            K.save_json(K.STATE_FILE, st)
-        self.orig = int(orig)
+        self.orig = orig
+        if saved is not None:                       # never written over when it couldn't be read
+            K.update_state({"orig": orig, "active": True}, path=self.FILE)
+        K.update_state({"gui_sounds_orig": K.DELETE})
+        K.log("gui sounds: viewer's setting %d (now %d)" % (orig, cur), xbmc.LOGINFO)
         if cur != GUI_SOUNDS_ALWAYS:
             self._set(GUI_SOUNDS_ALWAYS)
             xbmc.sleep(150)                         # Kodi's audio output reopens once, before any programme
@@ -3029,17 +3093,20 @@ class GuiSounds(object):
         if not self.active:
             return
         self.active = False
-        if self.orig is not None and self.orig != GUI_SOUNDS_ALWAYS:
-            self._set(self.orig)
-        st = K.load_json(K.STATE_FILE, {})
-        st.pop("gui_sounds_orig", None)
-        K.save_json(K.STATE_FILE, st)
+        orig = self.orig
+        saved = self._saved()                       # read again: right even if start's read failed
+        if saved and saved.get("active") and saved.get("orig") is not None:
+            orig = int(saved["orig"])
+        if orig is not None and orig != GUI_SOUNDS_ALWAYS:
+            self._set(orig)
+        if saved is not None and orig is not None:
+            K.update_state({"orig": orig, "active": False}, path=self.FILE)
 
 
 last_exit = None     # how the last TV session ended (see run())
 
 
-def run(channel=None, music_test=False):
+def run(channel=None):
     """Turn the TV on until the viewer turns it off.  Returns how it ended:
     "back" (Back / Stop / Turn off TV: return to where it was started from),
     "menu" (Menu > CableBox menu: open the main menu), "sleep" (the sleep
@@ -3048,7 +3115,6 @@ def run(channel=None, music_test=False):
     K.ensure_dirs()
     win = TVWindow("script-cablebox42-tv.xml", K.ADDON_PATH, "Default", "1080i")
     win.wanted_channel = channel
-    win.music_test_wanted = music_test
     win.doModal()
     win.shutdown()
     # a turn-off from the TV's own thread (sleep timer) may still be tidying up:

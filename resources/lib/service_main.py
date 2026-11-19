@@ -36,6 +36,8 @@ class Monitor(xbmc.Monitor):
 def run():
     monitor = Monitor()
     home = xbmcgui.Window(10000)
+    from . import audiowatch
+    audiowatch.start()                       # stuck HDMI audio after a DTS start: from Kodi's start, TV on or off
 
     def tv_running():
         return home.getProperty("cablebox42.running") == "1"
@@ -205,7 +207,23 @@ def run():
             manager.refresh_if_changed(clips=False, quiet=True)
         except Exception as exc:
             K.log_err("refresh after an update failed: %s" % exc)
-    if K.setting_bool("autostart", False) and os.path.exists(K.CHANNELS_FILE):
+    try:
+        resume = audiowatch.resume_tv()      # Kodi restarted for stuck sound with the TV on
+    except Exception as exc:
+        resume = None
+        K.log_err("resume after an audio restart: %s" % exc)
+    if resume is not None and os.path.exists(K.CHANNELS_FILE):
+        for _tick in range(60):
+            if monitor.waitForAbort(1):
+                return
+            if xbmc.getCondVisibility("Player.HasMedia"):
+                break
+            if xbmc.getCondVisibility("Window.IsActive(home)") and                     not xbmc.getCondVisibility("System.HasModalDialog"):
+                K.log("audio watch: Kodi is back - the TV on again%s" % (" on %d" % resume if resume else ""),
+                      xbmc.LOGINFO)
+                xbmc.executebuiltin("RunScript(script.cablebox42,watch%s)" % (",%d" % resume if resume else ""))
+                break
+    elif K.setting_bool("autostart", False) and os.path.exists(K.CHANNELS_FILE):
         # wait for the home screen, then switch the TV on
         # Only right after Kodi starts, and never once the viewer has started
         # watching something else (otherwise stopping that video would land

@@ -28,17 +28,12 @@ def run(args):
         # RunScript(script.cablebox42,preview_ad,P01): one retro ad (screenshots, checks on the box)
         from . import promo_preview
         promo_preview.run_ad(args[1])
-    elif args and args[0] == "musictest_kodi":
-        # Music channels Step 0: the test queue in Kodi's own music player, for comparison
-        from . import musictest
-        musictest.run_kodi_player()
     elif "watch" in args:
         # a Kodi shortcut, widget or RunScript(script.cablebox42,watch,7): Back goes to Kodi,
         # Menu > CableBox menu opens the main menu
         nums = [a for a in args if a.isdigit()]
         from . import tv
-        # ",musictest": Music channels Step 0 (musictest.py) runs in the TV
-        if tv.run(int(nums[0]) if nums else None, music_test="musictest" in args) == "menu":
+        if tv.run(int(nums[0]) if nums else None) == "menu":
             from . import manager
             manager.main_menu()
     elif "wizard" in args:
