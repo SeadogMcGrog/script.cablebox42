@@ -397,11 +397,11 @@ def ask_bumpers(pending):
     if K.setting("bumps_path") or K.setting("stations_folder"):
         return False
     rows = [_menu_row(_("One folder for every channel"),
-                      _("Choose a folder of bumps / station IDs (short clips played right before the "
-                        "show comes back). All channels share it.")),
+                      _("A folder of bumps / station IDs (short clips played right before the show "
+                        "comes back), shared by all channels.")),
             _menu_row(_("A folder for each channel"),
-                      _("Choose where (your media drive is best) - CableBox makes a folder per channel "
-                        "with bumps, ids and commercials inside, ready for clips.")),
+                      _("Choose where (your media drive is best): CableBox makes a folder per channel "
+                        "for bumps, IDs and commercials.")),
             _menu_row(_("Skip for now"), _("Add them later in Settings.")),
             _menu_row(_("Cancel setup"), _("Leave without changing anything."))]
     j = 0
@@ -727,8 +727,8 @@ def _ask_names():
     rows = [_menu_row(_("CableBox's stations"),
                       _("Comedy Corner, Orbit TV, Chameleon... each with its name, logo and call letters.")),
             _menu_row(_("Plain names, I'll brand them myself"),
-                      _("Comedy Channel, Sci-Fi Channel, Kids TV... the same shows on each, no logos. "
-                        "Rename them and add your own logos in the Channel manager.")),
+                      _("Comedy Channel, Kids TV... the same shows, no logos. Rename them and add logos "
+                        "in the Channel manager.")),
             _menu_row(_("Cancel setup"), _("Leave without changing anything."))]
     j = D.select(_("Channel names"), rows, useDetails=True)
     if j in (-1, 2):

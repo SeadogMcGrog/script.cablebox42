@@ -2053,7 +2053,7 @@ msgid "One folder for every channel"
 msgstr ""
 
 msgctxt "#32601"
-msgid "Choose a folder of bumps / station IDs (short clips played right before the show comes back). All channels share it."
+msgid "A folder of bumps / station IDs (short clips played right before the show comes back), shared by all channels."
 msgstr ""
 
 msgctxt "#32602"
@@ -2061,7 +2061,7 @@ msgid "A folder for each channel"
 msgstr ""
 
 msgctxt "#32603"
-msgid "Choose where (your media drive is best) - CableBox makes a folder per channel with bumps, ids and commercials inside, ready for clips."
+msgid "Choose where (your media drive is best): CableBox makes a folder per channel for bumps, IDs and commercials."
 msgstr ""
 
 msgctxt "#32604"
@@ -6581,7 +6581,7 @@ msgid "A logo shows in the corner and on the channel banner. You can add one lat
 msgstr ""
 
 msgctxt "#34177"
-msgid "Comedy Channel, Sci-Fi Channel, Kids TV... the same shows on each, no logos. Rename them and add your own logos in the Channel manager."
+msgid "Comedy Channel, Kids TV... the same shows, no logos. Rename them and add logos in the Channel manager."
 msgstr ""
 
 msgctxt "#34178"
