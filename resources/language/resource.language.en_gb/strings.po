@@ -1929,7 +1929,7 @@ msgid "Welcome to CableBox 42"
 msgstr ""
 
 msgctxt "#32545"
-msgid "Reads your Kodi library and builds a full lineup - channels, guide, weather, overnight sign-off, prime time. About a minute."
+msgid "Builds channels, guide, weather, sign-off and prime time from your Kodi library. About a minute."
 msgstr ""
 
 msgctxt "#32546"
@@ -2013,7 +2013,7 @@ msgid "Use the same music for the Weather Channel?"
 msgstr ""
 
 msgctxt "#32574"
-msgid "Do you have a folder of background music?[CR][CR]It plays behind the TV Guide and Weather channels - smooth jazz and elevator music are the classic choice. You can add this later in Settings."
+msgid "Do you have a folder of background music?[CR][CR]It plays behind the TV Guide and Weather channels - smooth jazz is the classic. You can add it later in Settings."
 msgstr ""
 
 msgctxt "#32576"
@@ -2872,7 +2872,7 @@ msgid "Prime-time lineup"
 msgstr ""
 
 msgctxt "#33206"
-msgid "8 - 11 PM: each channel's best shows in weekly slots (movie channels: a movie at 8). Change them in the weekly planner."
+msgid "8 - 11 PM: each channel's best shows (movie channels: a movie at 8). Change them in the weekly planner."
 msgstr ""
 
 msgctxt "#33207"

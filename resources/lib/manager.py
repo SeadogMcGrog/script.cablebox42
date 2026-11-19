@@ -428,8 +428,7 @@ def ask_music(pending):
     if K.setting("guide_music_path") and K.setting("weather_music_path"):
         return
     msg = _("Do you have a folder of background music?[CR][CR]It plays behind the TV Guide "
-            "and Weather channels - smooth jazz and elevator music are the classic choice. "
-            "You can add this later in Settings.")
+            "and Weather channels - smooth jazz is the classic. You can add it later in Settings.")
     while True:
         if not _ask3(msg, _("Choose folder"), _("Skip")):
             return
@@ -649,8 +648,8 @@ def _ask_extras():
     rows = [_menu_row(_("Sign off overnight"),
                       _("12 AM - 5 AM a 'Please stand by' card shows; the guide and weather stay on.")),
             _menu_row(_("Prime-time lineup"),
-                      _("8 - 11 PM: each channel's best shows in weekly slots (movie channels: a movie "
-                        "at 8). Change them in the weekly planner."))]
+                      _("8 - 11 PM: each channel's best shows (movie channels: a movie at 8). Change "
+                        "them in the weekly planner."))]
     sel = D.multiselect(_("Extras (untick what you don't want)"), rows, preselect=[0, 1], useDetails=True)
     if sel is None:
         raise _Cancelled()
@@ -3468,8 +3467,8 @@ def _settings_and_tools():
 def welcome():
     """First start on a new install.  Returns True if the viewer went on to watch TV."""
     rows = [_menu_row(_("[B]Build my lineup[/B]"),
-                      _("Reads your Kodi library and builds a full lineup - channels, guide, weather, "
-                        "overnight sign-off, prime time. About a minute.")),
+                      _("Builds channels, guide, weather, sign-off and prime time from your Kodi "
+                        "library. About a minute.")),
             _menu_row(_("I'll set it up myself"),
                       _("Starts with just the TV Guide and Weather Channel. You add channels in the "
                         "Channel manager.")),
