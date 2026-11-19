@@ -18,6 +18,16 @@ v1.2.0 (2026-11-12)
   the TV comes on) could leave it empty. Saves now take a lock, change only
   their own keys, use a temp file of their own, and never write over a file
   they couldn't read. The Play GUI sounds backup has a file of its own
+- Fixed: a special set to 'From the first episode' failed to plan, and its
+  channel had nothing after the programme on air
+- Fixed: a setting changed in Settings (seen with Promo look) could switch
+  back by itself a moment after OK
+- Fixed: opening CableBox while its menu waited for Settings or a refresh
+  stacked a second menu on top
+- Sign-off and station ID cards: a channel with no logo, tagline or genre no
+  longer shows an empty gold band ('We return at ...' / 'Channel N')
+- Build my lineup: the Welcome and Extras descriptions and the background
+  music question fit their boxes
 - Holidays & events lives in the main menu only; Settings > Holidays & events
   keeps just the options (on/off, how much, saving shows for their season)
 - Halloween matches only clearly Halloween or horror programmes: the Mystery
