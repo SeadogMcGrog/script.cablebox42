@@ -1,0 +1,95 @@
+"""Promo audio gate, Step 2 (briefs/promo-audio-n2-test.md): CableBox's TV with promos and mixed house ads on.
+
+    python .claude/tools/n2/promo_hour.py MINUTES_PER_CHANNEL CH,CH,...
+
+Turns the TV on at the first channel, types each next channel (three digits) every MINUTES, polls every
+2 s (read-only): the playing file, the TV window's mode (video / promo / house / retro ...), System.FPS,
+the audio codec, Kodi's pid.  Logs every change of file or mode, FPS while a card is up, and at the end
+kodi.log's counts (layout errors, DTS misreads, audio watch, Traceback).  Turns the TV off at the end.
+Writes n2/logs/promo-audio/hour.txt.  Changes no setting."""
+import os
+import sys
+import time
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import n2  # noqa: E402
+
+per = float(sys.argv[1]) * 60
+chans = [int(x) for x in sys.argv[2].split(",")]
+OUT = os.path.join(n2.ROOT, "logs", "promo-audio")
+lines = []
+fps_card, fps_video = [], []
+
+
+def say(s):
+    print(s, flush=True)
+    lines.append(s)
+
+
+def pid():
+    return n2.ssh("pidof kodi.bin", check=False).decode().strip()
+
+
+def tune(ch):
+    for d in "%03d" % ch:
+        n2.rpc("Input.ExecuteAction", {"action": "number" + d}, timeout=5)
+        time.sleep(0.08)
+
+
+since = time.strftime("%H:%M:%S")
+pid0 = pid()
+say("== promo hour from %s, %d min a channel: %s (Kodi pid %s)" % (since, per / 60, chans, pid0))
+n2.rpc("Addons.ExecuteAddon", {"addonid": "script.cablebox42", "params": ["watch", str(chans[0])]})
+t0 = time.time()
+cur_ch, last, stalls = chans[0], None, 0
+say("%7.1f  TV on, channel %d" % (0, cur_ch))
+for i, ch in enumerate(chans):
+    if i:
+        tune(ch)
+        cur_ch = ch
+        say("%7.1f  tune %d" % (time.time() - t0, ch))
+    end = t0 + per * (i + 1)
+    while time.time() < end:
+        time.sleep(2)
+        try:
+            lab = n2.labels("Player.Filenameandpath", "Window.Property(mode)", "System.FPS", "VideoPlayer.AudioCodec",
+                            "MusicPlayer.Codec", "System.CurrentWindow")
+        except Exception as exc:
+            stalls += 1
+            say("%7.1f  Kodi not answering (%s)" % (time.time() - t0, exc))
+            continue
+        mode = lab["Window.Property(mode)"]
+        fps = float(lab["System.FPS"] or 0)
+        (fps_card if mode in ("promo", "house", "retro", "station", "upnext") else fps_video).append(fps)
+        key = (os.path.basename(lab["Player.Filenameandpath"]), mode)
+        if key != last:
+            say("%7.1f  ch %2d  %-8s %-50s audio=%-9s fps=%5.1f %s" % (
+                time.time() - t0, cur_ch, mode or "-", key[0][:50], lab["VideoPlayer.AudioCodec"] or lab["MusicPlayer.Codec"],
+                fps, "" if lab["System.CurrentWindow"].startswith("script") else lab["System.CurrentWindow"]))
+            last = key
+    p = pid()
+    if p != pid0:
+        say("%7.1f  Kodi pid changed %s -> %s (a restart)" % (time.time() - t0, pid0, p))
+        pid0 = p
+n2.rpc("Input.ExecuteAction", {"action": "stop"}, timeout=5)
+say("%7.1f  TV off (Stop)" % (time.time() - t0))
+time.sleep(3)
+log = n2.read_log(None)
+win = [l for l in log.splitlines() if l[11:19] >= since]
+
+
+def count(s):
+    return sum(s in l for l in win)
+
+
+med = lambda xs: sorted(xs)[len(xs) // 2] if xs else 0  # noqa: E731
+say("-- polls: %d with a card up (median FPS %.1f), %d otherwise (median FPS %.1f); Kodi not answering %d" % (
+    len(fps_card), med(fps_card), len(fps_video), med(fps_video), stalls))
+for s in ("requested channel layout", "syncword: 0x5b48fc8e", "audio watch", "Traceback", "DTS start",
+          "Opened device \"hdmi", "Opened device \"surround71"):
+    say("-- kodi.log %-30s %d" % (s, count(s)))
+os.makedirs(OUT, exist_ok=True)
+with open(os.path.join(OUT, "hour.txt"), "w", encoding="utf-8") as f:
+    f.write("\n".join(lines) + "\n")
+with open(os.path.join(OUT, "hour-kodi.log"), "w", encoding="utf-8") as f:
+    f.write("\n".join(win) + "\n")

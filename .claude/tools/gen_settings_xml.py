@@ -35,7 +35,7 @@ LAYOUT = [
         ("chapter_breaks",),
         ("chapters_status", None, None, on("chapter_breaks")),
         (H, "House breaks and retro ads"),
-        ("house_breaks", "House breaks (the station's own ads and promos)"),
+        ("house_breaks", "House breaks"),                # the long label was cut off at 1080p next to its value
         ("retro_ads", None, [("house_breaks", "2", True)]),
         ("promo_style", "Look of promos and retro ads"),
         # plays under house-break cards and retro ads too (ads.music), so not greyed with Promos
@@ -76,8 +76,6 @@ LAYOUT = [
     ]),
     ("Guide & Weather", None),          # unchanged, copied as it is
     ("Holidays & events", [
-        ("tool_specials", "Plan holidays and specials..."),
-        ("tool_seasons", "Edit holiday seasons..."),
         (H, "Automatic holidays"),
         ("seasons_on", "Holiday programming (automatic)"),
         ("season_intensity", None, on("seasons_on")),
@@ -132,8 +130,10 @@ LAYOUT = [
     ]),
 ]
 
+DROPPED = {"tool_specials", "tool_seasons"}
+
 # a help line per row: Estuary's add-on settings dialog shows none for the old format
-# (rig, 18 Nov: help="id" on tool_specials changed nothing on screen), so none are written
+# (rig, 18 Nov: help="id" on an action row changed nothing on screen), so none are written
 HELP = {}
 
 # a category's comment in the file (as before) and, for the two renamed ones, its new label
@@ -244,7 +244,8 @@ def write():
             out.append("        " + tag)
         out.append("    </category>")
     out.append("</settings>")
-    missing = set(rows_by_id) - placed
+    # action rows taken out on purpose (no stored value): Holidays & events is in the main menu only
+    missing = set(rows_by_id) - placed - DROPPED
     assert not missing, "settings left out: %s" % sorted(missing)
     open(XML, "w", encoding="utf-8", newline="\n").write("\n".join(out) + "\n")
     if new:

@@ -15,7 +15,7 @@ timeout 120 bash $S install "$ZIP" | tail -1
 timeout 120 bash $S lineup "$LINEUP" | tail -1
 timeout 120 bash $S stop >/dev/null
 timeout 60 bash $S sh 'cd /root/.kodi/userdata/addon_data/script.cablebox42 && rm -rf schedules series.json'
-timeout 120 bash $S setting house_breaks=0 commercials_path= retro_ads=true promo_style=0 horizon_hours=24 shorts_mode=${SHORTS:-0} skip_short=${SKIP:-2} | tail -1
+timeout 120 bash $S setting house_breaks=0 promos_on=false promo_extras=false summer_reruns=0 commercials_path= retro_ads=true promo_style=0 horizon_hours=24 shorts_mode=${SHORTS:-0} skip_short=${SKIP:-2} | tail -1
 timeout 120 bash $S start >/dev/null
 timeout 420 bash $S sh "sleep 5; kodi-send --action='RunScript(script.cablebox42,watch,3)' >/dev/null; sleep 60; \
   kodi-send --action='ActivateWindow(home)' >/dev/null; sleep 3; cd $T; \

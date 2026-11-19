@@ -14,7 +14,7 @@ run() {   # run TITLE CASE TODAY [show args] -- [settings...]
   echo "=================== $title"
   bash $S lineup .claude/tools/lineup-specials.json | tail -1
   bash $S sh "$R case $c" | tail -1
-  bash $S setting horizon_hours=24 specials_today=$today rerun_today= summer_reruns=0 thanksgiving_genres= promos_on=false promo_every=1 "$@" | tail -1
+  bash $S setting horizon_hours=24 specials_today=$today rerun_today= summer_reruns=0 thanksgiving_genres= promos_on=false promo_every=1 house_breaks=0 promo_extras=false "$@" | tail -1
   bash $S start | tail -1
   sleep 40
   bash $S sh "$R show 24 ${args[*]}" > ../rig/hol_case_$c.txt 2>&1

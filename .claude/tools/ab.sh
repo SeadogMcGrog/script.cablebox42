@@ -6,9 +6,12 @@
 #   bash .claude/tools/ab.sh diff A B [CH_ID...]  # entries from the refresh point on: identical?
 # AB_START=NAME runs from /root/test/NAME instead of the saved start.
 # AB_IGNORE=t,sub compares entries without those keys (e.g. names only may differ).
+# Every run pins the four defaults that changed in 1.2.0~defaults1 to their old values (OLD_DEFAULTS),
+# so a build from before that compares with one after it; a run's own ID=VALUE wins. AB_NEW_DEFAULTS=1: no pin.
 # Both runs must start within the same programme (refresh plans from the end of what's on air).
 S=.claude/kodi21-test-vm.sh
 D=/root/.kodi/userdata/addon_data/script.cablebox42
+OLD_DEFAULTS="promos_on=false house_breaks=0 promo_extras=false summer_reruns=0"
 case "$1" in
   save) bash $S sh "rm -rf /root/test/ab_start && cp -a $D /root/test/ab_start && echo saved" ;;
   run)
@@ -16,7 +19,8 @@ case "$1" in
     bash $S stop >/dev/null 2>&1
     bash $S sh "rm -rf $D && cp -a /root/test/${AB_START:-ab_start} $D && python3 -c \"
 import json; f='$D/applied.json'; d=json.load(open(f)); d.pop('code', None); json.dump(d, open(f, 'w'))\""   # every run replans
-    [ $# -gt 0 ] && bash $S setting "$@" | tail -1
+    pin=$OLD_DEFAULTS; [ "${AB_NEW_DEFAULTS:-}" = 1 ] && pin=
+    [ -n "$pin$*" ] && bash $S setting $pin "$@" | tail -1
     bash $S install "$zip" | tail -1
     bash $S sh "for i in \$(seq 1 30); do grep -q 'Refresh schedules' /root/.kodi/temp/kodi.log && break; sleep 1; done; \
       grep -E 'Schedules:|Refresh schedules' /root/.kodi/temp/kodi.log | tail -2 | cut -c1-150; \
