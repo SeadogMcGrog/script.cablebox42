@@ -8,6 +8,7 @@ every show's next episode stay.
 """
 import json
 import os
+import threading
 import time
 
 import xbmc
@@ -1040,41 +1041,100 @@ def code_fingerprint():
     return h.hexdigest()
 
 
-def refresh_now(quiet=False):
+class Busy(object):
+    """Kodi's small progress bar in the corner, for work the viewer waits on (the
+    refresh after Settings, the Channel manager, the planner...).  It appears once
+    the work has taken DELAY s, so a quick check never flashes, says what is being
+    done and stays until close().  quiet=True (the background service): nothing."""
+    DELAY = 0.5
+
+    def __init__(self, text, quiet=False):
+        self.text, self.pct, self.bar, self.done = text, 0, None, bool(quiet)
+        self.lock = threading.Lock()
+        self.timer = None
+        if not quiet:
+            self.timer = threading.Timer(self.DELAY, self._show)
+            self.timer.daemon = True
+            self.timer.start()
+
+    def _show(self):
+        with self.lock:
+            if self.done or self.bar is not None:
+                return
+            try:
+                self.bar = xbmcgui.DialogProgressBG()
+                self.bar.create(TITLE, self.text)
+                self.bar.update(self.pct, TITLE, self.text)
+            except Exception as exc:
+                K.log_err("progress bar: %s" % exc)
+                self.bar = None
+
+    def update(self, pct=None, text=None):
+        with self.lock:
+            if pct is not None:
+                self.pct = max(0, min(100, int(pct)))
+            if text:
+                self.text = text
+            if self.bar is not None and not self.done:
+                self.bar.update(self.pct, TITLE, self.text)
+
+    def close(self):
+        with self.lock:
+            self.done = True
+            if self.timer is not None:
+                self.timer.cancel()
+            if self.bar is not None:
+                self.bar.close()
+                self.bar = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_exc):
+        self.close()
+
+
+def refresh_now(quiet=False, busy=None):
     """Refresh schedules, keep my place.  Holds TOOL_BUSY (open_settings waits for
-    it, so the menu never opens over this); a small progress bar shows only if it
-    takes more than a moment, never with quiet=True (the background service)."""
+    it, so the menu never opens over this).  Unless quiet (the background service),
+    the corner bar says what is happening from the start (Busy): working out home
+    channels, then each channel's schedule.  busy: the caller's bar to carry on."""
     home = xbmcgui.Window(10000)
     mine = not home.getProperty(TOOL_BUSY)
     if mine:
         home.setProperty(TOOL_BUSY, "refresh")
-    bar, t0 = [None], time.time()
+    own = busy is None
+    if own:
+        busy = Busy(_("Updating schedules..."), quiet)
+
+    def stage(_name):
+        busy.update(5, _("Working out which channel each show belongs on..."))
 
     def progress(i, n, _c):
-        if quiet:
-            return
-        if bar[0] is None and time.time() - t0 > 0.7:
-            bar[0] = xbmcgui.DialogProgressBG()
-            bar[0].create(TITLE, _("Updating schedules..."))
-        if bar[0] is not None:
-            bar[0].update(int(100.0 * i / max(1, n)), TITLE, _("Updating schedules..."))
+        busy.update(10 + 90.0 * i / max(1, n), _("Updating schedules..."))
     try:
-        scheduler.Lineup(K.schedule_cfg()).refresh(progress=progress)
+        scheduler.Lineup(K.schedule_cfg()).refresh(progress=progress, stage=stage)
+        busy.update(100, _("Updating schedules..."))
         library.durations().save()
         K.save_json(APPLIED_FILE, schedule_inputs(lib=True))
         note_unplaced()
     finally:
-        if bar[0] is not None:
-            bar[0].close()
+        if own:
+            busy.close()
         if mine:
             home.clearProperty(TOOL_BUSY)
 
 
-def refresh_if_changed(clips=True, quiet=False, lib=False):
+def refresh_if_changed(clips=True, quiet=False, lib=False, busy=None):
     """Refresh if anything schedules are planned from changed since the last
     refresh (clips=False: settings and lineup only, cheap enough to poll;
     lib=True: Kodi's video library too, after a scan or clean).  True if it
-    refreshed."""
+    refreshed.  Unless quiet, the corner bar shows from the first half second
+    (reading the station folders can take a while on a USB drive), and a short
+    notice says when the schedules were refreshed.  busy: a bar the caller
+    already put up (open_settings starts it as Settings closes)."""
+    if busy is None:
+        busy = Busy(_("Checking your changes..."), quiet)
     try:
         cur = schedule_inputs(clips, lib)
         old = K.load_json(APPLIED_FILE, None)
@@ -1090,11 +1150,16 @@ def refresh_if_changed(clips=True, quiet=False, lib=False):
             return False
         K.log("Schedules: %s changed - refreshing" % ", ".join(k for k, v in cur.items() if old.get(k) != v),
               xbmc.LOGINFO)
-        refresh_now(quiet)
+        refresh_now(quiet, busy=busy)
+        busy.close()
+        if not quiet:
+            D.notification(TITLE, _("Schedules refreshed"), time=2000)
         return True
     except Exception as exc:
         K.log_err("refresh after a change: %s" % exc)
         return False
+    finally:
+        busy.close()
 
 
 def refresh_tool():
@@ -3438,8 +3503,7 @@ def run_tool(name):
 def open_settings():
     """Settings, then (once Settings and whatever was started from it are done) a
     refresh if anything schedules are planned from changed."""
-    _settings_and_tools()
-    refresh_if_changed()
+    refresh_if_changed(busy=_settings_and_tools())
 
 
 def _settings_and_tools():
@@ -3447,21 +3511,24 @@ def _settings_and_tools():
     finish before showing the menu again (so two dialogs never collide).
     Preview promo marks itself busy too (it sets TOOL_BUSY like the tools) and
     opens Settings again when its promo is over: then wait for that Settings
-    and for whatever is picked there."""
+    and for whatever is picked there.  Returns the corner bar it put up as Settings
+    closed (for refresh_if_changed to carry on), or None after a tool."""
     K.ADDON.openSettings()
     home = xbmcgui.Window(10000)
     mon = xbmc.Monitor()
     while True:
+        busy = Busy(_("Checking your changes..."))   # from the moment Settings closes
         for _i in range(8):                  # the tool starts a moment after Settings closes
             if home.getProperty(TOOL_BUSY) or mon.waitForAbort(0.25):
                 break
         name = home.getProperty(TOOL_BUSY)
         if not name:
-            return
+            return busy
+        busy.close()                         # the tool shows its own progress
         while home.getProperty(TOOL_BUSY) and not mon.waitForAbort(0.3):
             pass
         if name != "preview_promo" or mon.abortRequested():
-            return
+            return None
 
 
 def welcome():

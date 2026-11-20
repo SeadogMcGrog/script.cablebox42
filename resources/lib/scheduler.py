@@ -3096,11 +3096,12 @@ class Lineup(object):
                     log("Removed channel %s: %s" % (f, exc))
         return len(names)
 
-    def refresh(self, now=None, progress=None):
+    def refresh(self, now=None, progress=None, stage=None):
         """Refresh schedules, keep my place: settings, channels and clips as they are
         now apply from the end of each channel's programme on air; what's on air and
         every show's next episode stay.  progress(i, n, channel) is called per
-        channel.  Returns how long it took (s)."""
+        channel, stage("assign") before the home channels are worked out (the slow
+        part before the first channel).  Returns how long it took (s)."""
         skip_short_begin()
         t0 = time.time()
         now = now or t0
@@ -3108,6 +3109,8 @@ class Lineup(object):
         stations.clear_cache()               # in every Kodi process
         with self.lock:
             self.reload_channels()
+            if stage:
+                stage("assign")
             self.refresh_assignment()
             if not bookmarks.exists():
                 self.migrate(now)

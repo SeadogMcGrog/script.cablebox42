@@ -22,6 +22,10 @@ v1.2.0 (2026-11-12)
   channel had nothing after the programme on air
 - Fixed: a setting changed in Settings (seen with Promo look) could switch
   back by itself a moment after OK
+- After Settings, the Channel manager, the weekly planner or holiday seasons,
+  a small progress bar in the corner says what CableBox is doing (checking
+  your changes, working out home channels, updating schedules) until it's
+  done, then 'Schedules refreshed'; it used to work silently for up to a minute
 - Fixed: opening CableBox while its menu waited for Settings or a refresh
   stacked a second menu on top
 - Sign-off and station ID cards: a channel with no logo, tagline or genre no
