@@ -6,8 +6,8 @@ Turns the TV on at the first channel, types each next channel (three digits) eve
 2 s (read-only): the playing file, the TV window's mode (video / promo / house / retro ...), System.FPS,
 the audio codec, Kodi's pid.  Logs every change of file or mode, FPS while a card is up, and at the end
 kodi.log's counts (layout errors, DTS misreads, audio watch, Traceback).  Turns the TV off at the end.
-If Kodi restarts (pid change) or the TV window closes, the TV is opened again on the current channel
-(at most once a minute), so the rest of the hour still watches something.
+If Kodi restarts (pid change), the TV is opened again on the current channel, so the rest of the hour
+still watches something.  A moment with another window and no file playing is logged (with the window).
 Writes n2/logs/promo-audio/hour[-TAG].txt and hour[-TAG]-kodi.log (kodi.old.log included after a
 restart).  Changes no setting."""
 import os
@@ -47,6 +47,7 @@ n2.rpc("Addons.ExecuteAddon", {"addonid": "script.cablebox42", "params": ["watch
 t0 = time.time()
 cur_ch, last, stalls = chans[0], None, 0
 restarts, reopened_at = [], t0          # t0: the TV was just turned on
+other_win = [None]
 
 
 def tv_back(why):
@@ -76,18 +77,24 @@ for i, ch in enumerate(chans):
             stalls += 1
             say("%7.1f  Kodi not answering (%s)" % (time.time() - t0, exc))
             continue
-        on_tv = lab["System.CurrentWindow"].startswith("script") or bool(lab["Player.Filenameandpath"])
-        if not on_tv and time.time() - reopened_at > 60:
-            p = pid()
-            if p and p != pid0:
-                say("%7.1f  Kodi pid changed %s -> %s (a restart)" % (time.time() - t0, pid0, p))
-                restarts.append(time.strftime("%H:%M:%S"))
-                pid0 = p
-                time.sleep(15)                      # let Kodi's start-up settle
-                tv_back("after a Kodi restart")
-            else:
-                tv_back("the TV window was closed")
-            continue
+        win = lab["System.CurrentWindow"]
+        if not win.startswith("script") and not lab["Player.Filenameandpath"]:
+            # between two items Kodi can report its busy dialog and no file: only a restart
+            # (a new pid) reopens the TV; a "watch" sent while the TV is on takes it to Home
+            if win != other_win[0]:
+                say("%7.1f  ch %2d  window %r, no file playing" % (time.time() - t0, cur_ch, win))
+                other_win[0] = win
+            if time.time() - reopened_at > 60:
+                p = pid()
+                if p and p != pid0:
+                    say("%7.1f  Kodi pid changed %s -> %s (a restart)" % (time.time() - t0, pid0, p))
+                    restarts.append(time.strftime("%H:%M:%S"))
+                    pid0 = p
+                    time.sleep(15)                  # let Kodi's start-up settle
+                    tv_back("after a Kodi restart")
+                    continue
+        else:
+            other_win[0] = None
         mode = lab["Window.Property(mode)"]
         fps = float(lab["System.FPS"] or 0)
         (fps_card if mode in ("promo", "house", "retro", "station", "upnext") else fps_video).append(fps)
