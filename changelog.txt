@@ -26,6 +26,10 @@ v1.2.0 (2026-11-12)
   a small progress bar in the corner says what CableBox is doing (checking
   your changes, working out home channels, updating schedules) until it's
   done, then 'Schedules refreshed'; it used to work silently for up to a minute
+- Fixed: flipping to an episode could squeeze its picture for the credits at
+  once and keep it squeezed: for a moment after a channel change Kodi still
+  reports the previous file's position. The squeeze now waits until this
+  episode's own picture is up and its position is inside the file
 - Fixed: opening CableBox while its menu waited for Settings or a refresh
   stacked a second menu on top
 - Sign-off and station ID cards: a channel with no logo, tagline or genre no

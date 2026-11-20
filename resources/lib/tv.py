@@ -2488,13 +2488,24 @@ class TVWindow(xbmcgui.WindowXML):
         if not e or e.get("k") != "show" or not e.get("cr") or now - self.squeeze_checked < 0.25:
             return
         self.squeeze_checked = now
+        # Right after a new item starts Kodi still plays (or reports) the file before it:
+        # getTime() is then that file's position (N2: 8590 s in a 1554 s episode), which
+        # squeezed at tune-in.  Only this entry's file, after its AV start, at a position
+        # inside it.  tune() runs a tick before start_entry: the entry is still the old
+        # channel's then (cur_key None), and its file still plays.
+        ck = self.cur_key
+        if not isinstance(ck, tuple) or ck[0] != self.ch.get("id") or self.av_started_token != self.play_token:
+            return
         try:
             if not (self.playing_ours() and self.player.isPlayingVideo()):
                 return
+            if self.requested(self.player.getPlayingFile()) != e.get("p"):
+                return
             pos = self.player.getTime()
+            total = self.player.getTotalTime()
         except Exception:
             return
-        if pos < float(e["cr"]) - 0.3:
+        if pos < float(e["cr"]) - 0.3 or not total or pos > total + 2:
             return
         try:
             sched = self.lineup.schedule(self.ch, ensure=False)
