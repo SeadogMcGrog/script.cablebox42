@@ -17,6 +17,11 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import n2  # noqa: E402
 
+try:                                          # file names with any character (a full-width quote stopped a run)
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 per = float(sys.argv[1]) * 60
 chans = [int(x) for x in sys.argv[2].split(",")]
 TAG = ("-" + sys.argv[3]) if len(sys.argv) > 3 else ""
