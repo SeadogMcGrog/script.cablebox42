@@ -45,6 +45,12 @@ Commands
   compare A B                 what differs between two snaps
   rpc METHOD [JSON]           any JSON-RPC call
   info LABEL [LABEL...]       Kodi info labels (System.CurrentWindow, Control.GetLabel(...)...)
+  bool COND [COND...]         Kodi info booleans (Window.IsVisible(progressdialog), Library.IsScanningVideo...);
+                              `info` can't read these: a boolean asked as a label comes back empty
+  drive [NAME]                the moment a refresh or the drive seems stuck: a library folder listed
+                              (timed on the PC, 90 s), disk reads/writes over 5 s, the NTFS driver's
+                              threads and what they wait on, Kodi's memory, is Kodi scanning, CableBox's
+                              tool flag, the window -> printed and n2\\logs\\drive-<time>[-NAME].txt
   wait-idle [SECS]            until the add-on's tools are idle
 
 Never touches the library, sources, Kodi's own settings or audio settings.
@@ -60,6 +66,9 @@ Learned on the N2 (2026-11-16); `preflight` checks the first two before a sessio
 - 1.1.1's Rebuild question is Cancel / Rebuild (the yes button is control 11); ~hol7 asks nothing
   and logs "Refresh schedules: N channels ..., X s". `time run` handles both.
 - The add-on's script windows show as odd names in System.CurrentWindow ("Immediate HDD spindown").
+- CoreELEC's busybox has **no `timeout`** (exit 127, at once): `timeout 60 ls X || echo hung` reports a
+  hang that isn't one (20 Nov). Time remote commands on the PC side (ssh(..., timeout=)), as
+  `preflight` and `drive` do.
 """
 import base64
 import configparser
@@ -188,21 +197,12 @@ def preflight():
     # a folder of the video library: the drive it's on must answer (a sleeping drive takes ~60 s)
     path = ""
     try:
-        got = rpc("VideoLibrary.GetEpisodes", {"limits": {"end": 1}, "properties": ["file"]}).get("episodes") or \
-            rpc("VideoLibrary.GetMovies", {"limits": {"end": 1}, "properties": ["file"]}).get("movies") or []
-        path = os.path.dirname(got[0]["file"]) if got else ""
+        path = library_folder()
     except Exception as exc:
         print("FAIL  library: %s" % exc)
         ok = False
     if path.startswith("/"):
-        t0 = time.time()
-        quoted = "'" + path.replace("'", "'\"'\"'") + "'"
-        try:                 # CoreELEC's busybox has no `timeout`: the PC side times it
-            out = ssh("ls -d %s >/dev/null 2>&1 && echo yes || echo no" % quoted,
-                      check=False, timeout=90).decode().strip()
-        except subprocess.TimeoutExpired:
-            out = "timeout"
-        took = time.time() - t0
+        out, took = list_timed(path)     # CoreELEC's busybox has no `timeout`: the PC side times it
         if out != "yes":
             print("FAIL  media drive: %s didn't answer in 90 s (a hung drive or NTFS driver: "
                   "power-cycle the drive or reboot the N2)" % path)
@@ -233,6 +233,75 @@ def preflight():
 
 
 # ------------------------------------------------------------------ Kodi up / down
+def library_folder():
+    """A folder of the video library (its drive must answer), or ''."""
+    got = rpc("VideoLibrary.GetEpisodes", {"limits": {"end": 1}, "properties": ["file"]}).get("episodes") or \
+        rpc("VideoLibrary.GetMovies", {"limits": {"end": 1}, "properties": ["file"]}).get("movies") or []
+    return os.path.dirname(got[0]["file"]) if got else ""
+
+
+def list_timed(path, secs=90):
+    """ls -d PATH on the N2, timed on the PC (busybox has no `timeout`): (answer, seconds)."""
+    t0 = time.time()
+    quoted = "'" + path.replace("'", "'\"'\"'") + "'"
+    try:
+        out = ssh("ls -d %s >/dev/null 2>&1 && echo yes || echo no" % quoted,
+                  check=False, timeout=secs).decode().strip()
+    except subprocess.TimeoutExpired:
+        out = "no answer"
+    return out, time.time() - t0
+
+
+DRIVE_SCRIPT = r"""cat /proc/uptime; free -m | head -2
+for d in /sys/block/sd?; do echo "$d $(cat $d/stat)"; done
+for p in $(pidof mount.ntfs ntfs-3g kodi.bin | tr ' ' '\n' | sort -u); do
+  echo "pid $p $(tr '\0' ' ' < /proc/$p/cmdline | cut -c1-60)"
+  grep -E 'State|VmRSS' /proc/$p/status | tr '\n' ' '; echo
+  if [ $(ls /proc/$p/task | wc -l) -lt 8 ]; then
+    for t in /proc/$p/task/*; do echo "  thread ${t##*/} $(cut -d' ' -f3 $t/stat) $(cat $t/wchan)"; done
+  else
+    echo "  threads in D state: $(for t in /proc/$p/task/*; do cut -d' ' -f3 $t/stat; done | grep -c D)"
+  fi
+done
+sleep 5
+for d in /sys/block/sd?; do echo "$d $(cat $d/stat)"; done
+"""
+
+
+def drive(name=""):
+    """What to record the moment a refresh or the drive seems stuck
+    (briefs/parked/refresh-during-library-scan.md)."""
+    lines = ["N2 drive report %s" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")]
+    try:
+        b = booleans("Library.IsScanningVideo", "Library.IsScanningMusic", "Window.IsVisible(progressdialog)")
+        lb = labels("System.CurrentWindow", BUSY_PROP, "System.Memory(used.percent)")
+        lines.append("Kodi: window %r, progress box %s, scanning video %s / music %s, CableBox tool %r, memory used %s"
+                     % (lb.get("System.CurrentWindow"), b.get("Window.IsVisible(progressdialog)"),
+                        b.get("Library.IsScanningVideo"), b.get("Library.IsScanningMusic"),
+                        lb.get(BUSY_PROP), lb.get("System.Memory(used.percent)")))
+    except Exception as exc:
+        lines.append("Kodi JSON-RPC: no answer (%s)" % exc)
+    try:
+        lines.append(ssh(DRIVE_SCRIPT, check=False, timeout=40).decode("utf-8", "replace").rstrip())
+    except subprocess.TimeoutExpired:
+        lines.append("ssh: no answer in 40 s")
+    lines.append("(disk stat fields: reads, -, sectors read, ms reading, writes, -, -, -, in flight, ms busy, -)")
+    path = ""
+    try:
+        path = library_folder()
+    except Exception as exc:
+        lines.append("library: %s" % exc)
+    if path.startswith("/"):
+        out, took = list_timed(path)
+        lines.append("drive test: ls -d %s -> %s in %.1f s" % (path, out, took))
+    text = "\n".join(lines)
+    print(text)
+    dest = os.path.join(ROOT, "logs", "drive-%s%s.txt" % (stamp(), "-" + name if name else ""))
+    with open(dest, "w", encoding="utf-8") as f:
+        f.write(text + "\n")
+    print(dest)
+
+
 def kodi_up():
     try:
         return rpc("JSONRPC.Ping", timeout=3) == "pong"
@@ -756,6 +825,11 @@ def main(argv):
     elif cmd == "info":
         for k, v in labels(*a).items():
             print("%s = %s" % (k, v))
+    elif cmd == "bool":
+        for k, v in booleans(*a).items():
+            print("%s = %s" % (k, v))
+    elif cmd == "drive":
+        drive(a[0] if a else "")
     elif cmd == "wait-idle":
         print("idle" if wait_idle(float(a[0]) if a else 180) else "still busy")
     else:

@@ -8202,3 +8202,7 @@ msgstr ""
 msgctxt "#34609"
 msgid "The menu comes back when this is done."
 msgstr ""
+
+msgctxt "#34610"
+msgid "Still working - the menu comes back when it's done"
+msgstr ""

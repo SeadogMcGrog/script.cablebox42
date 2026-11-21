@@ -27,7 +27,9 @@ v1.2.0 (2026-11-12)
   CableBox is doing (checking your changes, working out home channels,
   updating schedules) and that the menu comes back when it's done, then
   'Schedules refreshed'; it used to work silently for up to a minute. The
-  update can't be stopped halfway, so Cancel only says so
+  update can't be stopped halfway, so Cancel only says so; if nothing has
+  moved for a minute, Cancel gives the screen back and a small bar in the
+  corner shows the update until it's done
 - Fixed: flipping to an episode could squeeze its picture for the credits at
   once and keep it squeezed: for a moment after a channel change Kodi still
   reports the previous file's position. The squeeze now waits until this

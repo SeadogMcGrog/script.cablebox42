@@ -255,9 +255,12 @@ A task often starts as "implement `briefs\<name>.md`".
   (creating a DialogProgress from a thread works, rig); `open_settings` arms it only after its 2 s tool
   wait (`later=True`, `go()`), so OK with nothing changed shows no box. Kodi 21 after Cancel or Back
   (rig, 20 Nov): the box stays open, the heading gains ' : Cancelling...', the button doesn't grey, and
-  `iscanceled()` stays True while it is open (a new DialogProgress object too), so only the first press
-  can be answered: `create()` again puts the heading back, *Almost done - this can't be stopped* shows
-  for 3 s. Never stop a refresh halfway (channels cut but not planned again).
+  `iscanceled()` stays True until the box has really closed (a new DialogProgress opened at once still
+  says True). So each press closes the box, waits until `Window.IsVisible(progressdialog)` is false
+  (~0.3 s) and opens a new one (re-armed for the next press) with *Almost done - this can't be stopped*
+  for 3 s; after `STALL` (60 s) with no change of stage or percentage the press turns it into Kodi's
+  corner bar (*Still working - the menu comes back when it's done*) instead, so a stuck refresh never
+  holds the screen. Never stop a refresh halfway (channels cut but not planned again).
 - **Kodi's music player (PAPlayer) overlaps short files at a repeat or playlist step:** a 2 s or 4 s
   WAV on repeat-one (or the same file queued 4 times) starts each repeat 0.4 s before the previous
   one ends - two copies at once, +6 dB for 0.4 s every loop (plain Kodi 21.3 in the rig, crossfade
@@ -344,8 +347,12 @@ A task often starts as "implement `briefs\<name>.md`".
   *Settings → Breaks → Preview a promo*.
 - **N2 over the network** (`.claude/tools/n2/`, `briefs/n2-remote-testing.md`): `bash .claude/tools/n2/n2 preflight`
   first (TV on, media drive awake), then `install ZIP`, `key`, `goto`, `shot`, `log`, `audio`, `set`, `time run`,
-  `snap`/`compare`, `restore`. Address and login in `G:\CableBox42\n2\n2.conf` (not in the repo); files under
-  `G:\CableBox42\n2\`. Ask the maintainer before every session; never change audio or Kodi's own settings.
+  `snap`/`compare`, `restore`, `drive` (a refresh or the drive seems stuck: record it before anything restarts),
+  `bool` (Kodi booleans such as `Window.IsVisible(...)`; `info` reads labels and gets them empty). Address and
+  login in `G:\CableBox42\n2\n2.conf` (not in the repo); files under `G:\CableBox42\n2\`. Ask the maintainer
+  before every session; never change audio or Kodi's own settings. **CoreELEC's busybox has no `timeout`**
+  (exit 127 at once): `timeout 60 ls X || echo hung` reports a hang that isn't one (20 Nov, which led to a
+  reboot on a wrong reading). Time remote commands on the PC side (`n2.ssh(..., timeout=)`, `n2 drive`).
 - Hardware: the maintainer tests on the N2. On CoreELEC, `pastekodi` uploads the log;
   BusyBox tools (`ps`, `sed`) have fewer options than GNU.
 

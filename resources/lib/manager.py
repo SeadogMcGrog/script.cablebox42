@@ -1046,20 +1046,24 @@ class Busy(object):
     Settings, the Channel manager, the planner...): *Updating your channels*, what
     is being done, *The menu comes back when this is done.* and a percentage.  It
     appears once the work has taken DELAY s, so a quick check never flashes, and
-    stays until close().  Cancel / Back can't stop the work (channels cut but not
-    planned again): they only say so for HOLD s.  Its own thread shows it and
-    answers Cancel while the work gives no update.  quiet=True (the background
-    service): nothing; never over the TV."""
+    stays until close().  Cancel / Back never stop the work (channels cut but not
+    planned again): they say so for HOLD s; after STALL s with no progress they
+    turn the box into Kodi's corner bar instead, so a stuck update never holds the
+    screen.  Its own thread shows it and answers Cancel while the work gives no
+    update.  quiet=True (the background service): nothing; never over the TV."""
     DELAY = 0.5
     HOLD = 3.0
     TICK = 0.2
+    STALL = 60.0
 
     def __init__(self, text, quiet=False, later=False):
         """later=True: the DELAY starts only at go() (open_settings: not while it
         waits 2 s for a tool from Settings' Tools page, so OK with nothing changed
         never flashes the box)."""
         self.text, self.pct, self.box, self.done = text, 0, None, bool(quiet)
-        self.hold_until, self.canceled = 0.0, False
+        self.bar = None                      # the corner bar, after Cancel on a stalled update
+        self.hold_until = 0.0
+        self.moved = time.time()             # the last change of stage or percentage
         self.lock = threading.Lock()
         self.stop = threading.Event()
         self.armed = threading.Event()
@@ -1077,6 +1081,12 @@ class Busy(object):
     def go(self):
         self.armed.set()
 
+    def _open(self):
+        """Under the lock."""
+        self.box = xbmcgui.DialogProgress()
+        self.box.create(_("Updating your channels"), self._message())
+        self.box.update(self.pct, self._message())
+
     def _run(self):
         self.armed.wait()
         if self.stop.wait(self.DELAY):
@@ -1087,9 +1097,7 @@ class Busy(object):
             if xbmcgui.Window(10000).getProperty("cablebox42.running") == "1":
                 return                       # never over the TV
             try:
-                self.box = xbmcgui.DialogProgress()
-                self.box.create(_("Updating your channels"), self._message())
-                self.box.update(self.pct, self._message())
+                self._open()
             except Exception as exc:
                 K.log_err("progress box: %s" % exc)
                 self.box = None
@@ -1098,37 +1106,61 @@ class Busy(object):
             with self.lock:
                 if self.done or self.box is None:
                     return
-                self._tick()
+                try:
+                    hit = self.box.iscanceled()
+                except Exception:
+                    hit = False
+                if not hit:
+                    if self.hold_until and time.time() >= self.hold_until:
+                        self.hold_until = 0.0
+                        self.box.update(self.pct, self._message())
+                    continue
+                old, self.box = self.box, None
+                stalled = time.time() - self.moved >= self.STALL
+            # Kodi 21 (rig): after Cancel / Back the box stays open, its heading gains
+            # ' : Cancelling...' and iscanceled() stays True until the box has really
+            # closed; a new box opened only then answers the next press again.
+            old.close()
+            self._gone()
+            with self.lock:
+                if self.done:
+                    return
+                try:
+                    if stalled:
+                        K.log("progress box: Cancel after %d s without progress - corner bar, the update goes on"
+                              % (time.time() - self.moved), xbmc.LOGINFO)
+                        self.bar = xbmcgui.DialogProgressBG()
+                        self.bar.create(TITLE, _("Still working - the menu comes back when it's done"))
+                        self.bar.update(self.pct, TITLE, _("Still working - the menu comes back when it's done"))
+                        return
+                    K.log("progress box: Cancel pressed - the update goes on", xbmc.LOGINFO)
+                    self.hold_until = time.time() + self.HOLD
+                    self._open()
+                except Exception as exc:
+                    K.log_err("progress box: %s" % exc)
+                    self.box = None
+                    return
 
-    def _tick(self):
-        """Under the lock: Cancel / Back pressed -> say it can't be stopped for HOLD s.
-        Kodi 21 (rig): the box stays open, its heading gains ' : Cancelling...' and
-        iscanceled() stays True while the box is open (a new DialogProgress too), so
-        only the first press can be answered; create() again puts the heading back."""
-        now = time.time()
-        if not self.canceled:
-            try:
-                hit = self.box.iscanceled()
-            except Exception:
-                hit = False
-            if hit:
-                self.canceled = True
-                self.hold_until = now + self.HOLD
-                K.log("progress box: Cancel pressed - the update goes on", xbmc.LOGINFO)
-                self.box.create(_("Updating your channels"), self._message())
-                self.box.update(self.pct, self._message())
-        elif self.hold_until and now >= self.hold_until:
-            self.hold_until = 0.0
-            self.box.update(self.pct, self._message())
+    def _gone(self, most=1.0):
+        t0 = time.time()
+        while xbmc.getCondVisibility("Window.IsVisible(progressdialog)") and time.time() - t0 < most:
+            time.sleep(0.02)
 
     def update(self, pct=None, text=None):
         with self.lock:
+            old = (self.pct, self.text)
             if pct is not None:
                 self.pct = max(0, min(100, int(pct)))
             if text:
                 self.text = text
-            if self.box is not None and not self.done:
+            if (self.pct, self.text) != old:
+                self.moved = time.time()
+            if self.done:
+                return
+            if self.box is not None:
                 self.box.update(self.pct, self._message())
+            elif self.bar is not None:
+                self.bar.update(self.pct, TITLE, _("Still working - the menu comes back when it's done"))
 
     def close(self):
         with self.lock:
@@ -1138,6 +1170,9 @@ class Busy(object):
             if self.box is not None:
                 self.box.close()
                 self.box = None
+            if self.bar is not None:
+                self.bar.close()
+                self.bar = None
 
     def __enter__(self):
         return self
