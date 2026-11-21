@@ -23,9 +23,11 @@ v1.2.0 (2026-11-12)
 - Fixed: a setting changed in Settings (seen with Promo look) could switch
   back by itself a moment after OK
 - After Settings, the Channel manager, the weekly planner or holiday seasons,
-  a small progress bar in the corner says what CableBox is doing (checking
-  your changes, working out home channels, updating schedules) until it's
-  done, then 'Schedules refreshed'; it used to work silently for up to a minute
+  a box in the middle of the screen says 'Updating your channels', what
+  CableBox is doing (checking your changes, working out home channels,
+  updating schedules) and that the menu comes back when it's done, then
+  'Schedules refreshed'; it used to work silently for up to a minute. The
+  update can't be stopped halfway, so Cancel only says so
 - Fixed: flipping to an episode could squeeze its picture for the credits at
   once and keep it squeezed: for a moment after a channel change Kodi still
   reports the previous file's position. The squeeze now waits until this

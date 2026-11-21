@@ -249,6 +249,15 @@ A task often starts as "implement `briefs\<name>.md`".
 - **Anything started from a Settings button must set `manager.TOOL_BUSY`** while it runs (tools via
   `run_tool`, Preview promo itself): `open_settings` waits only 2 s for it, then the CableBox menu
   opens again - over whatever is on screen.
+- **`manager.Busy` is Kodi's centred, non-cancellable progress box** (`DialogProgress`: *Updating your
+  channels*, the stage, *The menu comes back when this is done.*) for the refresh the viewer waits on;
+  quiet (the service) or the TV on (`cablebox42.running`): no box. Shown by its own thread after 0.5 s
+  (creating a DialogProgress from a thread works, rig); `open_settings` arms it only after its 2 s tool
+  wait (`later=True`, `go()`), so OK with nothing changed shows no box. Kodi 21 after Cancel or Back
+  (rig, 20 Nov): the box stays open, the heading gains ' : Cancelling...', the button doesn't grey, and
+  `iscanceled()` stays True while it is open (a new DialogProgress object too), so only the first press
+  can be answered: `create()` again puts the heading back, *Almost done - this can't be stopped* shows
+  for 3 s. Never stop a refresh halfway (channels cut but not planned again).
 - **Kodi's music player (PAPlayer) overlaps short files at a repeat or playlist step:** a 2 s or 4 s
   WAV on repeat-one (or the same file queued 4 times) starts each repeat 0.4 s before the previous
   one ends - two copies at once, +6 dB for 0.4 s every loop (plain Kodi 21.3 in the rig, crossfade

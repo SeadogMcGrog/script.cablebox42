@@ -8190,3 +8190,15 @@ msgstr ""
 msgctxt "#34606"
 msgid "Checking your changes..."
 msgstr ""
+
+msgctxt "#34607"
+msgid "Updating your channels"
+msgstr ""
+
+msgctxt "#34608"
+msgid "Almost done - this can't be stopped"
+msgstr ""
+
+msgctxt "#34609"
+msgid "The menu comes back when this is done."
+msgstr ""

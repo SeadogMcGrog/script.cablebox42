@@ -1042,32 +1042,84 @@ def code_fingerprint():
 
 
 class Busy(object):
-    """Kodi's small progress bar in the corner, for work the viewer waits on (the
-    refresh after Settings, the Channel manager, the planner...).  It appears once
-    the work has taken DELAY s, so a quick check never flashes, says what is being
-    done and stays until close().  quiet=True (the background service): nothing."""
+    """Kodi's centred progress box, for work the viewer waits on (the refresh after
+    Settings, the Channel manager, the planner...): *Updating your channels*, what
+    is being done, *The menu comes back when this is done.* and a percentage.  It
+    appears once the work has taken DELAY s, so a quick check never flashes, and
+    stays until close().  Cancel / Back can't stop the work (channels cut but not
+    planned again): they only say so for HOLD s.  Its own thread shows it and
+    answers Cancel while the work gives no update.  quiet=True (the background
+    service): nothing; never over the TV."""
     DELAY = 0.5
+    HOLD = 3.0
+    TICK = 0.2
 
-    def __init__(self, text, quiet=False):
-        self.text, self.pct, self.bar, self.done = text, 0, None, bool(quiet)
+    def __init__(self, text, quiet=False, later=False):
+        """later=True: the DELAY starts only at go() (open_settings: not while it
+        waits 2 s for a tool from Settings' Tools page, so OK with nothing changed
+        never flashes the box)."""
+        self.text, self.pct, self.box, self.done = text, 0, None, bool(quiet)
+        self.hold_until, self.canceled = 0.0, False
         self.lock = threading.Lock()
-        self.timer = None
+        self.stop = threading.Event()
+        self.armed = threading.Event()
+        if not later:
+            self.armed.set()
         if not quiet:
-            self.timer = threading.Timer(self.DELAY, self._show)
-            self.timer.daemon = True
-            self.timer.start()
+            t = threading.Thread(target=self._run, name="cablebox42-busy")
+            t.daemon = True
+            t.start()
 
-    def _show(self):
+    def _message(self):
+        line = _("Almost done - this can't be stopped") if time.time() < self.hold_until else self.text
+        return "%s[CR]%s" % (line, _("The menu comes back when this is done."))
+
+    def go(self):
+        self.armed.set()
+
+    def _run(self):
+        self.armed.wait()
+        if self.stop.wait(self.DELAY):
+            return
         with self.lock:
-            if self.done or self.bar is not None:
+            if self.done:
                 return
+            if xbmcgui.Window(10000).getProperty("cablebox42.running") == "1":
+                return                       # never over the TV
             try:
-                self.bar = xbmcgui.DialogProgressBG()
-                self.bar.create(TITLE, self.text)
-                self.bar.update(self.pct, TITLE, self.text)
+                self.box = xbmcgui.DialogProgress()
+                self.box.create(_("Updating your channels"), self._message())
+                self.box.update(self.pct, self._message())
             except Exception as exc:
-                K.log_err("progress bar: %s" % exc)
-                self.bar = None
+                K.log_err("progress box: %s" % exc)
+                self.box = None
+                return
+        while not self.stop.wait(self.TICK):
+            with self.lock:
+                if self.done or self.box is None:
+                    return
+                self._tick()
+
+    def _tick(self):
+        """Under the lock: Cancel / Back pressed -> say it can't be stopped for HOLD s.
+        Kodi 21 (rig): the box stays open, its heading gains ' : Cancelling...' and
+        iscanceled() stays True while the box is open (a new DialogProgress too), so
+        only the first press can be answered; create() again puts the heading back."""
+        now = time.time()
+        if not self.canceled:
+            try:
+                hit = self.box.iscanceled()
+            except Exception:
+                hit = False
+            if hit:
+                self.canceled = True
+                self.hold_until = now + self.HOLD
+                K.log("progress box: Cancel pressed - the update goes on", xbmc.LOGINFO)
+                self.box.create(_("Updating your channels"), self._message())
+                self.box.update(self.pct, self._message())
+        elif self.hold_until and now >= self.hold_until:
+            self.hold_until = 0.0
+            self.box.update(self.pct, self._message())
 
     def update(self, pct=None, text=None):
         with self.lock:
@@ -1075,17 +1127,17 @@ class Busy(object):
                 self.pct = max(0, min(100, int(pct)))
             if text:
                 self.text = text
-            if self.bar is not None and not self.done:
-                self.bar.update(self.pct, TITLE, self.text)
+            if self.box is not None and not self.done:
+                self.box.update(self.pct, self._message())
 
     def close(self):
         with self.lock:
             self.done = True
-            if self.timer is not None:
-                self.timer.cancel()
-            if self.bar is not None:
-                self.bar.close()
-                self.bar = None
+            self.stop.set()
+            self.armed.set()
+            if self.box is not None:
+                self.box.close()
+                self.box = None
 
     def __enter__(self):
         return self
@@ -1097,8 +1149,8 @@ class Busy(object):
 def refresh_now(quiet=False, busy=None):
     """Refresh schedules, keep my place.  Holds TOOL_BUSY (open_settings waits for
     it, so the menu never opens over this).  Unless quiet (the background service),
-    the corner bar says what is happening from the start (Busy): working out home
-    channels, then each channel's schedule.  busy: the caller's bar to carry on."""
+    the centred box says what is happening from the start (Busy): working out home
+    channels, then each channel's schedule.  busy: the caller's box to carry on."""
     home = xbmcgui.Window(10000)
     mine = not home.getProperty(TOOL_BUSY)
     if mine:
@@ -1129,9 +1181,9 @@ def refresh_if_changed(clips=True, quiet=False, lib=False, busy=None):
     """Refresh if anything schedules are planned from changed since the last
     refresh (clips=False: settings and lineup only, cheap enough to poll;
     lib=True: Kodi's video library too, after a scan or clean).  True if it
-    refreshed.  Unless quiet, the corner bar shows from the first half second
+    refreshed.  Unless quiet, the centred box shows from the first half second
     (reading the station folders can take a while on a USB drive), and a short
-    notice says when the schedules were refreshed.  busy: a bar the caller
+    notice says when the schedules were refreshed.  busy: a box the caller
     already put up (open_settings starts it as Settings closes)."""
     if busy is None:
         busy = Busy(_("Checking your changes..."), quiet)
@@ -3511,18 +3563,19 @@ def _settings_and_tools():
     finish before showing the menu again (so two dialogs never collide).
     Preview promo marks itself busy too (it sets TOOL_BUSY like the tools) and
     opens Settings again when its promo is over: then wait for that Settings
-    and for whatever is picked there.  Returns the corner bar it put up as Settings
+    and for whatever is picked there.  Returns the box it started as Settings
     closed (for refresh_if_changed to carry on), or None after a tool."""
     K.ADDON.openSettings()
     home = xbmcgui.Window(10000)
     mon = xbmc.Monitor()
     while True:
-        busy = Busy(_("Checking your changes..."))   # from the moment Settings closes
+        busy = Busy(_("Checking your changes..."), later=True)   # from the moment Settings closes
         for _i in range(8):                  # the tool starts a moment after Settings closes
             if home.getProperty(TOOL_BUSY) or mon.waitForAbort(0.25):
                 break
         name = home.getProperty(TOOL_BUSY)
         if not name:
+            busy.go()                        # no tool: the box after DELAY of the check
             return busy
         busy.close()                         # the tool shows its own progress
         while home.getProperty(TOOL_BUSY) and not mon.waitForAbort(0.3):
