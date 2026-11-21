@@ -162,7 +162,9 @@ class Captions(object):
         self.player = player
         restore_leftovers()
         st = K.load_state()
-        self.on = st.get("cc_on")            # None: never touched -> leave Kodi alone
+        # never chosen = off, as the menu says (it used to leave Kodi's per-file
+        # "subtitles on" memory alone: subtitles popped on and went full screen)
+        self.on = st.get("cc_on") is True
         self.lang = st.get("cc_lang", "")
         self.files = {}                       # video path -> subtitle file loaded for it (this session)
         self.picks = {}                       # video path -> {"lang", "name"} of the track chosen for it
@@ -627,8 +629,6 @@ class Captions(object):
 
     def apply(self, video_path):
         """A programme segment has started: put the viewer's caption choice back."""
-        if self.on is None:
-            return ""
         try:
             if not self.on and video_path in self.allowed:
                 return ""                     # switched on from outside for this programme: as Kodi has it
@@ -690,7 +690,7 @@ class Captions(object):
         path = self.cur["path"] if self.cur else None
         # a forced track Kodi switched on by itself isn't captions: first press = on;
         # a programme switched off from a phone: the CC button brings them back
-        if (self.on and path not in self.muted) or (self.on is None and self._full_showing(tracks, cur, enabled)):
+        if self.on and path not in self.muted:
             self.set_off()
             return _("Captions off")
         t = self._best(tracks, self.cur["path"] if self.cur else None)

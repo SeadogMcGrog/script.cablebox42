@@ -3,11 +3,12 @@
     python3 cc_off_check.py setup          two .srt files next to every movie, and Kodi's own
                                            per-file memory set to subtitles on (each movie is
                                            played, subtitles switched on, stopped: Kodi saves it)
-    python3 cc_off_check.py run off|on [N] [--reshow]
+    python3 cc_off_check.py run off|on|unset [N] [--reshow]
                                            tune in mid-film on Drama Movies (6) N times (10);
                                            --reshow: switch Kodi's remembered track back on
                                            2.6 s (odd rounds) or 7 s (even) in, as Windows
-                                           Kodi 21 did by itself
+                                           Kodi 21 did by itself; unset: no cc_on in
+                                           state.json (never chosen), must act as off
     python3 cc_off_check.py clean          remove the .srt files and the per-file settings
 
 The lineup must have Drama Movies on 6 and another channel on 4 (lineup-gaps.json).
@@ -181,7 +182,10 @@ def film_window(min_left=20, min_in=30):
 def set_cc(on):
     st_file = DATA + "state.json"
     st = json.load(open(st_file)) if os.path.exists(st_file) else {}
-    st["cc_on"] = on
+    if on is None:
+        st.pop("cc_on", None)
+    else:
+        st["cc_on"] = on
     json.dump(st, open(st_file, "w"))
 
 
@@ -211,8 +215,9 @@ def run(mode, rounds, reshow):
     """reshow: switch Kodi's remembered track (0) back on partway in, as Windows Kodi 21
     did ~2.6 s after CableBox's check; odd rounds at 2.6 s, even rounds at 7 s."""
     want_on = mode == "on"
+    want_cc = None if mode == "unset" else want_on
     rpc("Player.Stop", {"playerid": 1})
-    set_cc(want_on)
+    set_cc(want_cc)
     send("RunScript(%s,watch,4)" % ADDON)
     time.sleep(14)
     fails = 0
@@ -273,7 +278,7 @@ def run(mode, rounds, reshow):
         # the CC setting changes only with CableBox's own CC button / menu: never because
         # Kodi switched subtitles on by itself (its per-file memory, a re-show)
         cc = cc_setting()
-        if cc != want_on:
+        if cc != want_cc:
             ok = False
             what += "; CC SETTING IS NOW %s" % ("ON" if cc else cc)
         fails += not ok
@@ -295,7 +300,7 @@ if __name__ == "__main__":
         setup()
     elif cmd == "clean":
         clean()
-    elif cmd == "run" and len(sys.argv) > 2 and sys.argv[2] in ("off", "on"):
+    elif cmd == "run" and len(sys.argv) > 2 and sys.argv[2] in ("off", "on", "unset"):
         args = [x for x in sys.argv[3:] if not x.startswith("--")]
         run(sys.argv[2], int(args[0]) if args else 10, "--reshow" in sys.argv)
     else:

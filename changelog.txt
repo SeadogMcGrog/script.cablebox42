@@ -30,6 +30,10 @@ v1.2.0 (2026-11-12)
   once and keep it squeezed: for a moment after a channel change Kodi still
   reports the previous file's position. The squeeze now waits until this
   episode's own picture is up and its position is inside the file
+- Fixed: with Closed captions never switched on or off, subtitles could pop up
+  on programmes Kodi remembers subtitles for (and the picture went full
+  screen), although the menu said Off. Captions are now off until you switch
+  them on
 - Fixed: opening CableBox while its menu waited for Settings or a refresh
   stacked a second menu on top
 - Sign-off and station ID cards: a channel with no logo, tagline or genre no

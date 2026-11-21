@@ -157,7 +157,9 @@ A task often starts as "implement `briefs\<name>.md`".
   outside - Kodi re-applying its per-file "subtitles on", a phone remote, Kodi's menu - is
   for that programme only (`allowed` / `muted` sets), never the setting: Kodi's own re-show
   used to switch CC on for good (the Godfather setup). `cc_off_check.py` fails a round when
-  the CC setting has changed.
+  the CC setting has changed. **A cc_on never set (no key) is Off** (`Captions.on` is True/False only):
+  it used to mean "leave Kodi alone" while the menu said Off, so Kodi's per-file "subtitles on"
+  showed and went captions mode (full screen, 23.98 Hz) on the N2 (20 Nov).
 - **guide_check.py switches the TV off with the Stop key first:** in captions mode (Kodi's
   full-screen player under CableBox's overlay dialog) Kodi refuses ActivateWindow(home)
   ("active modal dialogs") and the guide never comes up.

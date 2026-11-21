@@ -338,7 +338,7 @@ on the same episode twice.
 |---|---|
 | **Watch TV** | Turn the TV on |
 | **What's on now** | Every channel with the show airing right now. Pick one to tune straight to it |
-| **Closed captions** | On or off for every programme - the same setting as Menu → Closed captions while watching |
+| **Closed captions** | On or off for every programme (off until you switch them on) - the same setting as Menu → Closed captions while watching |
 | **Finish setting up** | Only while something a first setup left for later isn't set: commercials, bumps and station IDs, guide and weather music, music videos, weather city. Each row leaves once it's chosen or you pick *I don't need this* |
 | **Channel manager** | Add, edit, delete and renumber channels. Its **Lineup tools** work on the whole lineup (below) |
 | **Weekly planner** | Open a channel's 7-day grid |

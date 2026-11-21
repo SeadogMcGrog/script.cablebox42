@@ -773,6 +773,7 @@ networks (3–5) come with a full network day of blocks already.
 ## 13. Closed captions
 
 Captions work like a TV's CC setting: **on means on for every programme**.
+They start off.
 
 ### Switch them on or off
 
