@@ -1,4 +1,4 @@
-v1.2.0 (2026-11-12)
+v1.2.0 (2026-11-25)
 - On from the start: promos in breaks, house ads mixed in with commercials,
   a show's own Promo / Trailer clips from its Extras folder, and summer reruns
   on the broadcast networks (1 June to 31 August). Updating from 1.1.1 switches
@@ -52,6 +52,50 @@ v1.2.0 (2026-11-12)
 - Month calendar: on a special's day in a season, the season's shade shows with
   a gold border
 - Settings > Breaks: 'House breaks' (the long label was cut off at 1080p)
+- New: music channels, like the old DMX and Music Choice cable channels
+  (Channel manager > Add a channel > Music channel; Build my lineup never adds
+  one, and Replace my lineup keeps yours): songs from a genre, decade, artist
+  or album of Kodi's music library, a music smart playlist or a music folder,
+  back to back on the real clock with no breaks, gapless, tuning in mid-song.
+  Never the same artist twice in a row, no song again until all have played.
+  A mostly still screen with the logo, the song, its cover and 'Coming up',
+  and an info panel from the song's tags and Kodi's library facts; the layout
+  moves a few pixels every 3 minutes against burn-in. The guide shows hour
+  blocks with their artists. Your music is only read, never changed
+- New: the guide channel crawls like the 90s preview channel: the grid moves
+  up at a steady speed and never stops (Settings > Guide & Weather > Guide
+  scroll speed: Slow / Normal / Fast), past a title row and one to three ads
+  from the 'cable company' (your own first, from a guide.txt in the guide
+  channel's station folder). Channels show their number and call letters
+  ('3 KEY'); listings add a film's year and rating, (CC) and (Stereo) from the
+  library, dropped before a long title is shrunk. Movies, sports and kids'
+  programmes get cells of their own colour
+- New: a 1997-style rating box ('TV' over 'PG', '14', 'MA'...) in the top-left
+  corner for the first 15 seconds of a show or movie, with a CC box beside it
+  when the programme has captions. Movies get the TV rating they'd have had
+  (PG-13 is TV-14, R is TV-MA); no rating in the library, no box. Top right
+  when the logo bug is top left. Settings > On screen > Show rating at start
+  of programmes (on)
+- New: summer reruns (Settings > Holidays & events > Summer reruns: Off /
+  Broadcast networks / All channels): from 1 June to 31 August each series
+  reruns its current season in order, up to the last episode that aired (the
+  season before when fewer than three have), with (R) in the guide and the
+  banner. In September every series carries on where it stopped in May.
+  Pinned slots air as you set them; holiday rules still apply
+- New: the weather channel's 90s pages: Latest Observations (temperature and
+  sky in 6-8 nearby cities) and a drawn Regional Map with the bigger cities
+  around you (shipped with CableBox, from Natural Earth's public-domain maps;
+  only the temperatures come from Open-Meteo). The ticker adds today's high
+  and low and runs on every page. Sunrise, sunset, hours and day names are
+  the forecast place's own local time
+- New: off-air screen 'Color bars with tone': the colour bars with a steady
+  1 kHz tone, played through Kodi's music player (no refresh-rate switch),
+  stopping as soon as programming resumes or you change channel
+- New: built-in sign-off card at the start of off-air hours ('This concludes
+  our broadcast day', 'We return at 7:00 AM'): 25 seconds, silent, on by
+  default. Channel manager > channel > Schedule > Off-air hours > Sign-off
+  clip: None / Built-in sign-off card / Choose folder... (a clip of your own
+  wins; channels that had a sign-off folder keep it)
 - New: Holiday seasons (main menu > Holidays & events): each season's own
   page: on or off, its name, its dates as rules like a special's (big days
   start on a date and last 1-14 days; a run-up some days before or from a
@@ -75,8 +119,8 @@ v1.2.0 (2026-11-12)
 - New: Dates for each year... in the date picker (seasons and specials) for
   holidays of other calendars: you type each year's date, no date = nothing
   that year
-- New: Holidays and specials (main menu, Settings > Holidays & events, and
-  Channel manager > channel > Schedule): a marathon or a holiday lineup on a date, on one channel or
+- New: Holidays and specials (main menu > Holidays & events, and Channel
+  manager > channel > Schedule): a marathon or a holiday lineup on a date, on one channel or
   several, all day, a broadcast day (6 AM to 6 AM) or hours you choose, every
   year or this year only. Dates are rules worked out each year: a date, the
   n-th or last weekday of a month, Easter plus or minus days, ready-made
@@ -150,7 +194,7 @@ v1.2.0 (2026-11-12)
   local businesses (Big Earl's Furniture Barn), public service announcements and
   'Now on videocassette' for movies really in your library. 119 ads plus the
   videocassette cards; they fit the time of day, the season and the channel.
-  Settings > Programming > House breaks > Retro ads (on by default; only where
+  Settings > Breaks > Retro ads (on by default; only where
   house breaks run, so your own commercials always win). Channel manager > a
   channel > Ad flavour: Auto (from its type and genres), General, Kids, Sports,
   Movies, Late night; a Kids channel only gets ads made for kids. No ad twice in
@@ -184,7 +228,7 @@ v1.2.0 (2026-11-12)
   clear logo, season and episode (a film's year, rating and running time), episode
   title, synopsis, start time, channel and a live countdown; on Boombox the block's
   artists. Nothing on it is cut off; its stripes drift and a glint loops
-- New: commercial breaks at chapter marks (Settings > Programming, on): an
+- New: commercial breaks at chapter marks (Settings > Breaks, on): an
   episode with act-break chapters gets its breaks where the broadcast's were.
   Chapters are read once per file in the background (MKV, MP4) and kept in
   chapters.json; no chapters, automatic chapters or not read yet: evenly spaced
@@ -195,7 +239,7 @@ v1.2.0 (2026-11-12)
   with the TV on, the episodes airing in the next 6 hours first, then the rest
   gently; never while something else plays. The episodes they change are planned
   again (what's on air stays). Check chapters shows how many are read and has
-  Read now; Settings > Programming shows the count too
+  Read now; Settings > Breaks shows the count too
 - New: squeezed credits: at the end of an episode with chapters (a credits
   chapter, or the last 30 s of a short tag-and-credits chapter) the picture
   shrinks into a window, still playing with its own sound, and the rest of the
@@ -225,7 +269,7 @@ v1.2.0 (2026-11-12)
 - Breaks at chapter marks are exact: the show cuts to the break when its picture
   reaches the mark (no frame of the next act before the break), and the next act
   starts exactly at the mark after the break
-- New: Settings > Programming > Skip episodes shorter than (Off / 2 / 5 / 10 min,
+- New: Settings > Channels > Skip episodes shorter than (Off / 2 / 5 / 10 min,
   default 5): an intro, trailer or recap filed as an episode no longer fills a
   whole slot; its series goes on to the next real episode. Short-form series,
   short films, pinned slots and episodes of unknown length are left alone.
@@ -265,7 +309,7 @@ v1.2.0 (2026-11-12)
   really planned there), ads for the guide and weather channels and tonight's lineup,
   and a station ID card. At the end of a show, house breaks run back to back and
   the 'Up next' card, the last thing before the next show, lasts at most about
-  90 seconds. Settings > Programming > House breaks: When there are no
+  90 seconds. Settings > Breaks > House breaks: When there are no
   commercials / Mix in with commercials (default: one house ad now and then in
   normal breaks too) / Off. Promo style and Promo music now apply with promos off
   too, since house breaks use them
@@ -350,7 +394,7 @@ v1.2.0 (2026-11-12)
   'music' in its name or MTV/CMT shows); existing channels keep their branding
 - Fixed: a music video renamed after the library scan (only the case changed,
   e.g. '9 to 5' to '9 To 5') couldn't be played; CableBox uses the name on disk
-- New: schedule promos. With Settings > Programming > Promos on, breaks include
+- New: schedule promos. With Settings > Breaks > Promos on, breaks include
   a short promo for what the channel airs next ('Up next', 'Tonight at 8:00'),
   made from your own library: the episode's still (or fanart, landscape,
   poster), the show's clearlogo (or its title), the episode title, a short
@@ -369,7 +413,7 @@ v1.2.0 (2026-11-12)
   Mute did nothing (CableBox passed the keys on although Kodi already handles them)
 - Promo style: early-90s cable (default) - a sliding magenta band, the show's name
   in chunky italic letters, a bouncing time tab, squiggles and confetti - or Modern
-- Settings > Advanced > Preview promo: pick a channel, then Up next or one of
+- Settings > Breaks > Preview a promo: pick a channel, then Up next or one of
   its programmes in the next 6 hours; the promo plays full screen exactly as in
   a break, with 2 seconds of black before it and 1 after (clean for a screen
   recording), then Settings come back. Nothing is changed: no schedule, break,
@@ -418,7 +462,7 @@ v1.2.0 (2026-11-12)
   movie, or in VIDEO_TS / BDMV) with each video's title, length and whether it
   will air on the Behind the scenes channel, and why not. The folders
   are listed and measured in the background while the TV is off, read-only.
-- Settings > Programming > Also air extras with unrecognised names (off)
+- Settings > Advanced > Also air extras with unrecognised names (off)
 
 v1.1.1 (2026-11-05)
 - Fixed: after several channel changes the sound could sputter, freeze or stop

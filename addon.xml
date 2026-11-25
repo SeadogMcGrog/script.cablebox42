@@ -12,28 +12,26 @@
         <description lang="en_GB">CableBox 42 turns your Kodi library into a live cable TV lineup. Shows air on a real-time schedule with commercial breaks and bumps from your own clip folders, a scrolling program guide channel, a retro weather channel, static between channels and a channel banner. Lineups build themselves from your library (genres, decades, studios, tags, smart playlists or folders) and can be fine-tuned show by show - there is no schedule to compile. Playback uses Kodi's own player, so hardware decoding works exactly as it does for the rest of your library.[CR][CR]Inspired by the FieldStation42 project; not affiliated with it.</description>
         <disclaimer lang="en_GB">Plays only media from your own Kodi library and folders. The optional weather channel uses Kodi's weather service or, if you enter a location, fetches forecasts (and nearby cities' temperatures) from open-meteo.com. Map data: Natural Earth (public domain).</disclaimer>
         <news>1.2.0
-- New: schedule promos ("Up next", "Tonight at 8:00") made from your library
-- On by default: promos, house ads in commercial breaks, summer reruns
-- New: house breaks for channels without commercials (promos, guide and weather ads)
-- New: retro ads: made-up commercials with jingles in house breaks
-- New: station ID card with the channel logo; long channel names are never cut off
-- New: Behind the scenes channel from movies' Extras folders
-- New: Boombox TV music-video channel with captions
-- New: Red Thread TV for Korean and Chinese dramas
-- New: Start series over (all shows, one channel or one show)
-- Library scans reach the schedules by themselves
-- Changes apply by themselves; Refresh schedules keeps your place
-- One place per show in its series, kept when it moves channel
+- New: Holidays and specials: marathons and holiday lineups on a calendar
+- New: holiday seasons for any holiday, each with its own page
+- New: promos and retro ads in breaks, made from your library
+- New: house breaks for channels without commercials
+- New: station ID, Up next and sign-off cards; colour bars with tone
+- New: breaks at chapter marks; squeezed credits
+- New: 90s guide crawl, rating box, 90s weather, summer reruns
+- New: Behind the scenes, Boombox TV, music channels, Red Thread TV
+- New: Start series over; skip episodes shorter than 5 min
+- On by default: promos, retro ads, chapter breaks, rating box, reruns
+- Changes and library scans apply by themselves; your place is kept
 - Tight breaks: quick cuts between spots, no black gaps
-- Proper names from NFO files; no file paths or release tags on screen
-- Build my lineup: OK/Cancel on every screen, fewer near-empty channels
-- Consistent menus and questions everywhere
-- Holidays &amp; events only in the main menu; narrower Halloween matches
-- Fixed: frozen picture and no sound after tuning into some DTS-HD programmes
-- Fixed: subtitles on with CC off (CableBox's settings file could be wiped)
+- Settings regrouped; lineup tools in the Channel manager
+- Proper names on screen; no file paths or release tags
+- Build my lineup: OK/Cancel on every screen
+- Fixed: frozen picture and no sound on some DTS-HD programmes
+- Fixed: subtitles showing with captions off
+- Fixed: a setting could switch back after OK
 - Fixed: Volume and Mute while watching
-- Fixed: missing files no longer cause black screens
-- Fixed: deleted or renamed episode files no longer restart a show
+- Fixed: missing or renamed files no longer cause black or restart a show
 Restart Kodi after updating.</news>
         <platform>all</platform>
         <license>MPL-2.0</license>

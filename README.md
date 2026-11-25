@@ -97,12 +97,13 @@ hardware video decoding works exactly as it does for the rest of your library.
 - **Commercials, bumps and station IDs** from your own folders.
 - **Promos.** "Channel 7 — Seinfeld: \"The Contest\" — Up next", with the
   episode's still, the show's logo and its theme music, made from your own
-  library (opt-in).
+  library (on by default).
 - **Guide channel.** A Prevue-style grid that crawls up without stopping: call
   letters, titles with year, rating, *(CC)* and *(Stereo)*, colour-coded movies,
   sports and kids' shows, and cable-company ads.
-- **Weather channel.** Current conditions, a text forecast, a 4-day outlook and
-  the next few hours, with a ticker and optional background music.
+- **Weather channel.** Current conditions, Latest Observations from nearby
+  cities, a text forecast, a regional map, a 4-day outlook and the next few
+  hours, with a ticker and optional background music.
 - **The look of a CRT.** Static and a static sound between channels, a glowing
   green "CH 03" channel number, and an optional CRT effect: scanlines,
   curved-glass corners, a phosphor mask and a rolling hum bar.
@@ -204,6 +205,13 @@ without a good channel** and **Move shows between channels**) and the
 channel number and call letters, the current show (with season, episode and
 episode title), its time slot and progress, and what's on next.
 
+**Names on screen** come from your library: on air, titles leave the year out
+(*The Fugitive*, not *The Fugitive (1993)*), except for two shows that share a
+name or a year that's part of the title. Commercials, bumps, station clips and
+folder channels use the clip's NFO `<title>`, else the file name cleaned up (no
+dots, release tags such as *720p* or *WEB-DL*, or file paths). Menus where you
+pick things keep the years. NFOs are only read, never written.
+
 **Leaving the TV.** Press Back to turn it off. If you switched it on from
 CableBox's main menu, you're back in that menu (Back again goes to Kodi); from
 a Kodi shortcut, a widget, or with *Skip the menu* on, you're back in Kodi.
@@ -272,7 +280,10 @@ Settings, the Channel manager, the Weekly planner or a tool and CableBox
 refreshes the schedules if anything they're planned from changed (channels,
 pins, station clips, commercials, promo and break settings). What's on air keeps
 playing, and every show stays on its next episode — wherever it moves. Picture,
-sound and other device settings don't touch the schedules.
+sound and other device settings don't touch the schedules. While it works, a box
+in the middle of the screen says *Updating your channels* and what it's doing;
+the menu comes back when it's done. If nothing moves for a minute, *Cancel* gives
+the screen back and a small bar in the corner shows the update until it ends.
 
 **Your library too:** about 30 seconds after Kodi finishes scanning or cleaning
 the video library, new episodes, movies and shows (on channels whose sources
@@ -604,8 +615,8 @@ USB disks or network shares.
 | **Commercials** | Settings → Breaks (global), or per channel | In breaks during and between programs |
 | **Bumps** | Settings → Breaks (global), or per channel | At the end of each break ("…and now back to") |
 | **Station IDs** | Per channel | Right before each new program ("You're watching…") |
-| **Sign-off clips** | Per channel → Off-air hours | When the channel signs off (anthem, farewell), instead of the built-in sign-off card |
-| **Sign-on clips** | Per channel → Off-air hours | When the channel comes back on the air |
+| **Sign-off clips** | Per channel → Schedule → Off-air hours | When the channel signs off (anthem, farewell), instead of the built-in sign-off card |
+| **Sign-on clips** | Per channel → Schedule → Off-air hours | When the channel comes back on the air |
 | **Guide / weather music** | Settings | Behind the guide and weather channels |
 | **Promos** | Station folder `promos/` (optional) | In breaks, with *Promos* on (see below) |
 
@@ -765,7 +776,7 @@ Settings or the Channel manager.
 ## Off the air
 
 Paint off-air hours in the **weekly planner** (OK → *Make off-air from here*)
-or set them in *Channel manager → channel → Off-air hours*. Each window has a
+or set them in *Channel manager → channel → Schedule → Off-air hours*. Each window has a
 sign-off time, a sign-on time and the nights it applies to.
 
 While a channel is off the air it shows either:
@@ -1002,7 +1013,7 @@ With *Settings → Holidays & events → Summer reruns* on (*Broadcast networks*
   it stopped in May: the summer never moves a series on. Turning the setting off
   does the same at once.
 - The guide and the banner show *(R)* after a rerun's title.
-- *Broadcast networks*: Keystone, Beacon,
+- *Broadcast networks*: the three networks on 3, 4 and 5 (Keystone, Beacon,
   Horizon). *All channels*: every show channel. Movie channels, Boombox, *Behind the
   scenes*, the guide and weather never rerun.
 - Only the automatic schedule reruns. Slots you pinned in the weekly planner air as
