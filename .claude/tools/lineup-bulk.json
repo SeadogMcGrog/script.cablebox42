@@ -1,0 +1,417 @@
+{
+ "version": 2,
+ "channels": [
+  {
+   "id": "guide002",
+   "number": 2,
+   "name": "TV Guide",
+   "type": "guide",
+   "sources": [],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": false,
+   "midroll": false,
+   "bumps": false,
+   "lineup": "shuffle",
+   "slot": 30,
+   "callsign": "TG"
+  },
+  {
+   "id": "bulk0020",
+   "number": 20,
+   "name": "Bulk 1",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 01"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 02"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 03"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 04"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 05"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "callsign": "BK1"
+  },
+  {
+   "id": "bulk0021",
+   "number": 21,
+   "name": "Bulk 2",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 06"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 07"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 08"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 09"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 10"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "callsign": "BK2"
+  },
+  {
+   "id": "bulk0022",
+   "number": 22,
+   "name": "Bulk 3",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 11"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 12"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 13"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 14"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 15"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "callsign": "BK3"
+  },
+  {
+   "id": "bulk0023",
+   "number": 23,
+   "name": "Bulk 4",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 16"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 17"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 18"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 19"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 20"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "callsign": "BK4"
+  },
+  {
+   "id": "bulk0024",
+   "number": 24,
+   "name": "Bulk 5",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 21"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 22"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 23"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 24"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 25"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "callsign": "BK5"
+  },
+  {
+   "id": "bulk0025",
+   "number": 25,
+   "name": "Bulk 6",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 26"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 27"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 28"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 29"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 30"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "callsign": "BK6"
+  },
+  {
+   "id": "bulk0026",
+   "number": 26,
+   "name": "Bulk 7",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 31"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 32"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 33"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 34"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 35"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "callsign": "BK7"
+  },
+  {
+   "id": "bulk0027",
+   "number": 27,
+   "name": "Bulk 8",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 36"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 37"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 38"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 39"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 40"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "callsign": "BK8"
+  },
+  {
+   "id": "bulk0028",
+   "number": 28,
+   "name": "Bulk 9",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 41"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 42"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 43"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 44"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 45"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "callsign": "BK9"
+  },
+  {
+   "id": "bulk0029",
+   "number": 29,
+   "name": "Bulk 10",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 46"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 47"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 48"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 49"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 50"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "callsign": "BK10"
+  },
+  {
+   "id": "bulk0030",
+   "number": 30,
+   "name": "Bulk 11",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 51"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 52"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 53"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 54"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 55"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "callsign": "BK11"
+  },
+  {
+   "id": "bulk0031",
+   "number": 31,
+   "name": "Bulk 12",
+   "type": "network",
+   "sources": [
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 56"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 57"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 58"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 59"
+    },
+    {
+     "type": "tvshow",
+     "value": "Bulk Show 60"
+    }
+   ],
+   "dayparts": [],
+   "offair": [],
+   "slots": [],
+   "commercials": true,
+   "callsign": "BK12"
+  }
+ ]
+}
