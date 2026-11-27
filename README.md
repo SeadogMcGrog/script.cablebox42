@@ -14,6 +14,10 @@ channel, static between channels, a "CH 03" channel number, and a 1950s
 *Please Stand By* card when a station signs off for the night. You pick up the
 remote, flip to channel 5, and whatever is on is already halfway through.
 
+[![Watch CableBox 42 in action](https://img.youtube.com/vi/728ycRE_oTc/maxresdefault.jpg)](https://youtu.be/728ycRE_oTc)
+
+▶ **[Watch the demo on YouTube](https://youtu.be/728ycRE_oTc)**: channel flipping, commercial breaks, the guide channel, the weather channel and the CRT effects.
+
 It's inspired by [FieldStation42](https://github.com/shane-mason/FieldStation42),
 but it's a separate implementation built for Kodi. It runs inside Kodi on
 anything Kodi 21 runs on, and plays every file through Kodi's own player, so
